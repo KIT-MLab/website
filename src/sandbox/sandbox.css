@@ -1,0 +1,460 @@
+/* サンドボックス。色・罫線・角丸・余白は design/DECISIONS.md の決定トークンに従う */
+
+.sb {
+  margin-top: var(--space-lg);
+}
+
+/* ---- ステージ選択 ---- */
+.sb-stages {
+  display: flex;
+  flex-wrap: wrap;
+  gap: calc(6px * var(--sp));
+  padding-bottom: var(--space-md);
+  border-bottom: var(--rule);
+}
+
+.sb-stages__btn {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.5em;
+  font-family: inherit;
+  font-size: 0.78rem;
+  line-height: 1.5;
+  color: var(--color-ink);
+  background: var(--color-card);
+  border: 1.5px solid var(--color-line);
+  border-radius: var(--radius);
+  box-shadow: 3px 3px 0 var(--color-line);
+  padding: calc(6px * var(--sp)) calc(12px * var(--sp));
+  cursor: pointer;
+  transition: background 0.12s var(--ease-out), color 0.12s var(--ease-out);
+}
+
+.sb-stages__btn:hover {
+  background: var(--color-accent);
+  color: var(--color-card);
+}
+
+.sb-stages__btn:active {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0 var(--color-line);
+}
+
+.sb-stages__btn[aria-pressed="true"] {
+  background: var(--color-accent);
+  color: var(--color-card);
+}
+
+.sb-stages__no {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  opacity: 0.75;
+}
+
+/* ---- ステージ見出し ---- */
+.sb-head {
+  margin: var(--space-lg) 0 var(--space-md);
+}
+
+.sb-head__title {
+  margin: 0;
+  font-family: var(--font-head);
+  font-size: clamp(1.1rem, 2.8vw, 1.4rem);
+  line-height: 1.6;
+  border-left: 5px solid var(--color-accent);
+  padding-left: var(--space-md);
+}
+
+.sb-head__no {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.16em;
+  color: var(--color-ink-2);
+}
+
+.sb-head__lead {
+  margin: var(--space-md) 0 0;
+  max-width: 44em;
+  font-size: 0.92rem;
+  color: var(--color-ink-2);
+}
+
+/* ---- 窓の並び ---- */
+/* 窓はステージごとに増えるが、列数は変えず2列に固定する。
+   ステージが進んでも窓の位置が動かないほうが追いやすいため */
+.sb-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-md);
+}
+
+@media (min-width: 700px) {
+  .sb-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.sb-panel {
+  min-width: 0;
+  background: var(--color-card);
+  border: 1.5px solid var(--color-line);
+  border-radius: var(--radius);
+  padding: var(--space-md);
+}
+
+.sb-panel--wide {
+  grid-column: 1 / -1;
+}
+
+.sb-panel__t {
+  margin: 0 0 var(--space-md);
+  font-family: var(--font-head);
+  font-size: 0.86rem;
+  letter-spacing: 0.08em;
+  padding-bottom: calc(6px * var(--sp));
+  border-bottom: var(--rule-thin);
+}
+
+.sb-panel__sub {
+  margin: calc(6px * var(--sp)) 0 0;
+  font-size: 0.75rem;
+  color: var(--color-ink-2);
+  text-align: center;
+}
+
+/* ---- つまみ ---- */
+.sb-group + .sb-group {
+  margin-top: var(--space-md);
+}
+
+.sb-group__t {
+  margin: 0 0 calc(6px * var(--sp));
+  font-size: 0.72rem;
+  letter-spacing: 0.14em;
+  color: var(--color-ink-2);
+}
+
+.sb-slider {
+  display: grid;
+  grid-template-columns: 2.2em 1fr 3.4em;
+  align-items: center;
+  gap: 0.5em;
+  padding: 2px 0;
+}
+
+.sb-slider__label {
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+}
+
+.sb-slider__value {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  text-align: right;
+  color: var(--color-ink-2);
+}
+
+.sb-slider input {
+  width: 100%;
+  accent-color: var(--color-accent);
+}
+
+.sb-acts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.sb-acts__btn {
+  font-family: inherit;
+  font-size: 0.74rem;
+  color: var(--color-ink);
+  background: var(--color-paper);
+  border: 1.5px solid var(--color-line);
+  border-radius: var(--radius);
+  padding: 3px 8px;
+  cursor: pointer;
+}
+
+.sb-acts__btn[aria-pressed="true"] {
+  background: var(--color-accent);
+  color: var(--color-card);
+}
+
+.sb-reset,
+.sb-next {
+  margin-top: var(--space-md);
+  font-family: inherit;
+  font-size: 0.78rem;
+  color: var(--color-ink);
+  background: var(--color-card);
+  border: 1.5px solid var(--color-line);
+  border-radius: var(--radius);
+  box-shadow: 3px 3px 0 var(--color-line);
+  padding: calc(6px * var(--sp)) calc(14px * var(--sp));
+  cursor: pointer;
+}
+
+.sb-reset:hover,
+.sb-next:hover {
+  background: var(--color-accent);
+  color: var(--color-card);
+}
+
+.sb-reset:active,
+.sb-next:active {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0 var(--color-line);
+}
+
+/* ---- ネットワーク図 ---- */
+.sb-diagram {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.sb-diagram__w {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  fill: var(--color-ink);
+}
+
+.sb-diagram__label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  fill: var(--color-ink-2);
+}
+
+.sb-diagram__val {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  fill: var(--color-ink);
+}
+
+.sb-diagram__b {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  fill: var(--color-ink-2);
+}
+
+/* ---- 計算の中身 ---- */
+.sb-calc + .sb-calc {
+  margin-top: var(--space-md);
+  padding-top: var(--space-md);
+  border-top: var(--rule-thin);
+}
+
+.sb-calc__row {
+  display: flex;
+  gap: 0.6em;
+  align-items: baseline;
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  line-height: 2.1;
+  flex-wrap: wrap;
+}
+
+.sb-calc__lhs {
+  width: 1.2em;
+  flex: none;
+  color: var(--color-ink-2);
+}
+
+.sb-calc__rhs b {
+  color: var(--color-accent);
+  font-weight: 700;
+}
+
+.sb-calc__op {
+  color: var(--color-ink-2);
+}
+
+.sb-calc__note {
+  font-family: var(--font-body);
+  font-size: 0.68rem;
+  color: var(--color-ink-2);
+}
+
+.sb-calc__result {
+  border-bottom: 3px solid var(--color-accent);
+}
+
+/* ---- 活性化関数のグラフ ---- */
+.sb-actchart svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.sb-axis {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  fill: var(--color-ink-2);
+}
+
+.sb-actchart__formula {
+  margin: calc(6px * var(--sp)) 0 0;
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  text-align: center;
+}
+
+.sb-actchart__note {
+  margin: calc(8px * var(--sp)) 0 0;
+  font-size: 0.76rem;
+  line-height: 1.8;
+  color: var(--color-ink-2);
+}
+
+.sb-actchart__now {
+  margin: calc(8px * var(--sp)) 0 0;
+  font-family: var(--font-mono);
+  font-size: 0.76rem;
+}
+
+/* ---- 真理値表 ---- */
+.sb-truth table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+}
+
+.sb-truth th {
+  font-weight: 400;
+  font-size: 0.72rem;
+  color: var(--color-ink-2);
+  border-bottom: var(--rule-thin);
+  padding: 4px 2px;
+}
+
+.sb-truth td {
+  text-align: center;
+  padding: 5px 2px;
+  border-bottom: 1px solid rgba(58, 58, 58, 0.15);
+  cursor: pointer;
+}
+
+.sb-truth__z {
+  color: var(--color-ink-2);
+}
+
+.sb-truth__ng .sb-truth__mark {
+  color: var(--color-accent);
+  font-weight: 700;
+}
+
+.sb-truth__sel td {
+  background: rgba(179, 64, 42, 0.09);
+}
+
+.sb-truth__score {
+  margin: var(--space-md) 0 0;
+  font-size: 0.78rem;
+}
+
+.sb-truth__hint {
+  margin: 4px 0 0;
+  font-size: 0.68rem;
+  color: var(--color-ink-2);
+}
+
+/* ---- 入力平面 ---- */
+.sb-plane svg {
+  display: block;
+  width: 100%;
+  max-width: 280px;
+  height: auto;
+  margin: 0 auto;
+}
+
+.sb-plane__pt {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  fill: var(--color-ink-2);
+}
+
+.sb-plane__ng {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 700;
+  fill: var(--color-accent);
+}
+
+.sb-plane__legend {
+  margin: var(--space-md) 0 0;
+  font-size: 0.68rem;
+  color: var(--color-ink-2);
+  line-height: 2;
+}
+
+.sb-plane__key {
+  display: inline-block;
+  width: 11px;
+  height: 11px;
+  margin-right: 4px;
+  vertical-align: -1px;
+  border: 2px solid var(--color-ink);
+  border-radius: 50%;
+}
+
+.sb-plane__key--on {
+  background: var(--color-ink);
+}
+
+.sb-plane__key--off {
+  background: var(--color-card);
+}
+
+.sb-plane__key--zone {
+  border-radius: 2px;
+  border: 1px solid var(--color-accent);
+  background: rgba(179, 64, 42, 0.12);
+}
+
+/* ---- 補足の枠 ---- */
+.sb-note {
+  margin-top: var(--space-lg);
+  background: var(--color-card);
+  border: 1.5px solid var(--color-line);
+  border-radius: var(--radius);
+  padding: var(--space-md);
+  font-size: 0.85rem;
+  line-height: 1.9;
+}
+
+.sb-note p {
+  margin: 0;
+}
+
+.sb-note p + p {
+  margin-top: var(--space-md);
+}
+
+.sb-note--ok {
+  border-left: 5px solid var(--color-accent);
+}
+
+.sb-note__t {
+  font-family: var(--font-head);
+  font-weight: 700;
+  border-bottom: 3px solid var(--color-accent);
+  display: inline-block;
+}
+
+.sb-note--hint summary {
+  cursor: pointer;
+  font-size: 0.82rem;
+}
+
+.sb-note--hint[open] summary {
+  margin-bottom: var(--space-md);
+  padding-bottom: calc(6px * var(--sp));
+  border-bottom: var(--rule-thin);
+}
+
+.sb-note b {
+  border-bottom: 3px solid var(--color-accent);
+}
