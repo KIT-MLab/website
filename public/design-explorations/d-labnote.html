@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>案D 実験ノート — AI・機械学習を全課程で0から学べるプロジェクト</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+JP:wght@400;500;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+/* Hallmark · macrostructure: Workbench (lab-notebook) · genre: technical-editorial · theme: 方眼+墨紫 (custom)
+ * tone: 実験ノート・工学的 · nav: N9 edge-aligned · footer: colophon-mono · accent hue: ink-violet 300°
+ * enrichment: Tier-A CSS graph-paper · pre-emit critique: P4 H4 E4 S5 R4 V5 */
+:root{
+  --color-paper: oklch(97.5% 0.003 280);
+  --color-grid: oklch(92% 0.008 280);
+  --color-ink: oklch(24% 0.02 300);
+  --color-ink-2: oklch(46% 0.02 300);
+  --color-accent: oklch(42% 0.14 305);
+  --color-accent-soft: oklch(93% 0.03 305);
+  --color-line: oklch(80% 0.01 280);
+  --color-focus: oklch(42% 0.14 305);
+  --font-body: "IBM Plex Sans JP", sans-serif;
+  --font-mono: "IBM Plex Mono", monospace;
+  --space-sm: 8px; --space-md: 16px; --space-lg: 32px; --space-xl: 64px; --space-2xl: 104px;
+  --ease-out: cubic-bezier(.22,.61,.36,1);
+}
+*{box-sizing:border-box;margin:0}
+html,body{overflow-x:clip}
+body{
+  background:var(--color-paper);
+  background-image:linear-gradient(var(--color-grid) 1px, transparent 1px),linear-gradient(90deg, var(--color-grid) 1px, transparent 1px);
+  background-size:28px 28px;
+  color:var(--color-ink);font-family:var(--font-body);line-height:1.9;font-size:15.5px}
+a:focus-visible,button:focus-visible{outline:2px solid var(--color-focus);outline-offset:3px}
+.wrap{max-width:1000px;margin:0 auto;padding:0 var(--space-lg)}
+
+/* N9 edge-aligned */
+header{border-bottom:2px solid var(--color-ink);background:var(--color-paper)}
+.nav{display:flex;justify-content:space-between;align-items:baseline;padding:18px 0;gap:var(--space-md);flex-wrap:wrap}
+.brand{font-family:var(--font-mono);font-weight:600;font-size:.95rem;text-decoration:none;color:var(--color-ink);letter-spacing:.02em;white-space:nowrap}
+.brand::before{content:"◆ ";color:var(--color-accent)}
+.nav nav{display:flex;gap:var(--space-lg);flex-wrap:wrap}
+.nav a{text-decoration:none;color:var(--color-ink-2);font-size:.86rem;font-family:var(--font-mono);white-space:nowrap}
+.nav nav a:hover{color:var(--color-accent);text-decoration:underline;text-underline-offset:4px}
+
+.hero{padding:var(--space-2xl) 0 var(--space-xl);max-width:44em}
+.hero .meta{font-family:var(--font-mono);font-size:.8rem;color:var(--color-ink-2);margin-bottom:var(--space-lg)}
+.hero .meta b{color:var(--color-accent);font-weight:600}
+.hero h1{font-weight:700;font-size:clamp(1.9rem,5vw,3.2rem);line-height:1.5;letter-spacing:.01em;overflow-wrap:anywhere;min-width:0}
+.hero h1 .ul{border-bottom:4px solid var(--color-accent)}
+.hero p{margin-top:var(--space-lg);color:var(--color-ink-2);max-width:36em}
+.hero .actions{display:flex;gap:var(--space-md);margin-top:var(--space-lg);flex-wrap:wrap}
+.btn{font-family:var(--font-mono);display:inline-block;text-decoration:none;font-weight:600;font-size:.9rem;padding:12px 22px;border:1.5px solid var(--color-ink);color:var(--color-ink);background:var(--color-paper);white-space:nowrap;transition:background .15s var(--ease-out),color .15s var(--ease-out);box-shadow:3px 3px 0 var(--color-ink)}
+.btn:hover{background:var(--color-accent);border-color:var(--color-accent);color:#fff;box-shadow:3px 3px 0 var(--color-accent-soft)}
+.btn:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--color-ink)}
+.btn-fill{background:var(--color-ink);color:var(--color-paper)}
+
+/* notebook entries */
+.entries{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--space-lg);padding-bottom:var(--space-xl)}
+.entry{background:var(--color-paper);border:1.5px solid var(--color-ink);padding:var(--space-lg)}
+.entry .head{font-family:var(--font-mono);font-size:.78rem;color:var(--color-ink-2);border-bottom:1px dashed var(--color-line);padding-bottom:var(--space-sm);margin-bottom:var(--space-md);display:flex;justify-content:space-between;gap:8px}
+.entry .head b{color:var(--color-accent);font-weight:600}
+.entry h3{font-size:1.12rem;font-weight:700;margin-bottom:var(--space-sm)}
+.entry p{font-size:.92rem;color:var(--color-ink-2)}
+
+.protocol{background:var(--color-paper);border:1.5px solid var(--color-ink);margin-bottom:var(--space-2xl)}
+.protocol .phead{font-family:var(--font-mono);font-size:.82rem;padding:var(--space-sm) var(--space-lg);border-bottom:1.5px solid var(--color-ink);background:var(--color-accent-soft);color:var(--color-accent);font-weight:600}
+.protocol ol{list-style:none;counter-reset:step;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));}
+.protocol li{counter-increment:step;padding:var(--space-lg);border-left:1px dashed var(--color-line)}
+.protocol li:first-child{border-left:none}
+.protocol li::before{content:"0" counter(step);font-family:var(--font-mono);font-weight:600;color:var(--color-accent);display:block;margin-bottom:var(--space-sm);font-size:.85rem}
+.protocol b{display:block;margin-bottom:var(--space-sm)}
+.protocol small{color:var(--color-ink-2);line-height:1.7}
+
+footer{border-top:2px solid var(--color-ink);background:var(--color-paper);padding:var(--space-lg) 0;font-family:var(--font-mono);font-size:.8rem;color:var(--color-ink-2)}
+footer .wrap{display:flex;justify-content:space-between;gap:var(--space-md);flex-wrap:wrap}
+@media (max-width:768px){
+  .entries{grid-template-columns:1fr}
+  .protocol ol{grid-template-columns:1fr}
+  .protocol li{border-left:none;border-top:1px dashed var(--color-line)}
+  .protocol li:first-child{border-top:none}
+}
+@media (prefers-reduced-motion: reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap nav">
+    <a class="brand" href="#">kit-ml-project</a>
+    <nav><a href="#">about</a><a href="#">活動記録</a><a href="#">学習教材</a><a href="#">成果</a><a href="#">github</a></nav>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="hero">
+    <p class="meta"><b>京都工芸繊維大学</b> ｜ 学生と教員の共同プロジェクト ｜ 学生主体で運営</p>
+    <h1>機械学習を、<span class="ul">実験するように</span>学ぶ。</h1>
+    <p>知識ゼロから始めて、手を動かしながら仕組みを確かめる。基礎の学習会から、深層学習、コンテスト、そして各自の専門分野との研究・開発まで——過程も成果も、このノートに記録していきます。</p>
+    <div class="actions">
+      <a class="btn btn-fill" href="#">プロジェクト概要 →</a>
+      <a class="btn" href="#">教材を試す</a>
+    </div>
+  </section>
+
+  <section class="protocol">
+    <div class="phead">PROTOCOL — 活動の流れ</div>
+    <ol>
+      <li><b>基礎を学ぶ</b><small>Python / NumPy / scikit-learn を使った初学者向け学習会</small></li>
+      <li><b>使ってみる</b><small>実データで機械学習を動かし、挙動を観察する</small></li>
+      <li><b>発展させる</b><small>深層学習へ進み、コンテストや研究・開発に挑む</small></li>
+      <li><b>公開する</b><small>GitHubとWebで、教材や成果を外部に発信する</small></li>
+    </ol>
+  </section>
+
+  <section class="entries">
+    <div class="entry">
+      <div class="head"><span>OBSERVATION</span><b>#01</b></div>
+      <h3>予備知識は仮定しない</h3>
+      <p>プログラミング・数学・環境構築——学び始めるまでのハードルを、プロジェクト側で取り除く。情報系以外の学生の参加を重視しています。</p>
+    </div>
+    <div class="entry">
+      <div class="head"><span>METHOD</span><b>#02</b></div>
+      <h3>教え合いで進める</h3>
+      <p>講義を受けるだけでなく、学生同士で分からない部分を教え合う。理解を言葉にすることが、いちばんの学習になります。</p>
+    </div>
+    <div class="entry">
+      <div class="head"><span>APPARATUS</span><b>#03</b></div>
+      <h3>さわれる教材をつくる</h3>
+      <p>コードを見なくても、値やデータをマウスで動かすとモデルの挙動が変わる——そんなインタラクティブ教材をWeb上に制作していきます。</p>
+    </div>
+    <div class="entry">
+      <div class="head"><span>RESULT</span><b>#04</b></div>
+      <h3>専門分野への応用へ</h3>
+      <p>Pythonの習得は途中経過。ゴールは、機械学習を理解し、各自の興味・専門と組み合わせて何かを作れるようになることです。</p>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>AI・機械学習を全課程で0から学べるプロジェクト</span>
+    <span>Kyoto Institute of Technology</span>
+  </div>
+</footer>
+</body>
+</html>

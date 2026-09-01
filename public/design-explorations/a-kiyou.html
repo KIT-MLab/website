@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>案A 紀要 — AI・機械学習を全課程で0から学べるプロジェクト</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;600;800&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+/* Hallmark · macrostructure: Long Document (front-page) · genre: editorial · theme: Newsprint-JP
+ * tone: 紀要・大学新聞 · nav: N6 masthead · footer: colophon · accent hue: 朱 (warm red 30°)
+ * enrichment: none (typography only) · pre-emit critique: P4 H5 E4 S4 R5 V4 */
+:root{
+  --color-paper: oklch(96.5% 0.008 85);
+  --color-paper-2: oklch(93.5% 0.012 85);
+  --color-ink: oklch(22% 0.01 60);
+  --color-ink-2: oklch(40% 0.01 60);
+  --color-accent: oklch(52% 0.19 30);
+  --color-rule: oklch(30% 0.01 60);
+  --color-focus: oklch(52% 0.19 30);
+  --font-display: "Shippori Mincho", "Noto Serif JP", serif;
+  --font-body: "Noto Sans JP", sans-serif;
+  --space-xs: 4px; --space-sm: 8px; --space-md: 16px; --space-lg: 32px; --space-xl: 64px; --space-2xl: 96px;
+  --text-display: clamp(2.2rem, 6vw, 4.2rem);
+  --ease-out: cubic-bezier(.22,.61,.36,1);
+}
+*{box-sizing:border-box;margin:0}
+html,body{overflow-x:clip}
+body{background:var(--color-paper);color:var(--color-ink);font-family:var(--font-body);line-height:1.9;font-size:15.5px}
+a{color:inherit}
+a:focus-visible,button:focus-visible{outline:2px solid var(--color-focus);outline-offset:3px}
+.wrap{max-width:1060px;margin:0 auto;padding:0 var(--space-md)}
+
+/* N6 masthead */
+header{border-bottom:3px double var(--color-rule)}
+.mast-top{display:flex;justify-content:space-between;font-size:.78rem;color:var(--color-ink-2);padding:var(--space-sm) 0;border-bottom:1px solid var(--color-rule)}
+.masthead{text-align:center;padding:var(--space-lg) 0 var(--space-md)}
+.masthead .kicker{font-size:.8rem;letter-spacing:.35em;color:var(--color-ink-2)}
+.masthead h1{font-family:var(--font-display);font-weight:800;font-size:clamp(1.5rem,4vw,2.4rem);letter-spacing:.08em;overflow-wrap:anywhere;min-width:0}
+nav{display:flex;justify-content:center;gap:var(--space-lg);padding:var(--space-sm) 0;border-top:1px solid var(--color-rule);flex-wrap:wrap}
+nav a{text-decoration:none;font-size:.88rem;font-weight:500;letter-spacing:.12em;white-space:nowrap;padding:2px 0}
+nav a:hover{color:var(--color-accent)}
+
+/* front page */
+.front{display:grid;grid-template-columns:1.6fr 1fr;gap:var(--space-xl);padding:var(--space-xl) 0;align-items:start}
+.lede h2{font-family:var(--font-display);font-weight:600;font-size:var(--text-display);line-height:1.45;letter-spacing:.02em;overflow-wrap:anywhere;min-width:0}
+.lede h2 em{font-style:normal;color:var(--color-accent)}
+.lede p{margin-top:var(--space-lg);max-width:36em}
+.lede .cta{display:inline-block;margin-top:var(--space-lg);font-family:var(--font-display);font-weight:600;font-size:1.05rem;text-decoration:none;border-bottom:2px solid var(--color-accent);padding-bottom:4px;white-space:nowrap;transition:color .18s var(--ease-out)}
+.lede .cta:hover{color:var(--color-accent)}
+.sidebar{border-left:1px solid var(--color-rule);padding-left:var(--space-lg);font-size:.92rem}
+.sidebar h3{font-family:var(--font-display);font-size:1rem;letter-spacing:.15em;margin-bottom:var(--space-md);padding-bottom:var(--space-sm);border-bottom:1px solid var(--color-rule)}
+.sidebar li{list-style:none;padding:var(--space-sm) 0;border-bottom:1px dotted var(--color-rule)}
+.sidebar li span{display:block;font-size:.78rem;color:var(--color-ink-2)}
+
+/* 段組 sections */
+.section{border-top:1px solid var(--color-rule);padding:var(--space-xl) 0}
+.section h3{font-family:var(--font-display);font-weight:600;font-size:1.6rem;letter-spacing:.06em;margin-bottom:var(--space-lg)}
+.cols{columns:2;column-gap:var(--space-xl);column-rule:1px solid var(--color-rule)}
+.cols p{break-inside:avoid;margin-bottom:var(--space-md)}
+.flow{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:0;border:1px solid var(--color-rule)}
+.flow div{padding:var(--space-lg) var(--space-md);border-left:1px solid var(--color-rule)}
+.flow div:first-child{border-left:none}
+.flow b{font-family:var(--font-display);display:block;font-size:1.1rem;margin-bottom:var(--space-sm)}
+.flow small{color:var(--color-ink-2)}
+.flow .num{color:var(--color-accent);font-family:var(--font-display);font-size:.85rem}
+
+footer{border-top:3px double var(--color-rule);margin-top:var(--space-xl);padding:var(--space-lg) 0 var(--space-xl);font-size:.82rem;color:var(--color-ink-2);text-align:center;letter-spacing:.08em}
+@media (max-width:768px){
+  .front{grid-template-columns:1fr;gap:var(--space-lg)}
+  .sidebar{border-left:none;padding-left:0;border-top:1px solid var(--color-rule);padding-top:var(--space-lg)}
+  .cols{columns:1}
+  .flow{grid-template-columns:1fr;}
+  .flow div{border-left:none;border-top:1px solid var(--color-rule)}
+  .flow div:first-child{border-top:none}
+}
+@media (prefers-reduced-motion: reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <div class="mast-top"><span>京都工芸繊維大学 学生と教員の共同プロジェクト</span><span>2026年度</span></div>
+    <div class="masthead">
+      <p class="kicker">KIT MACHINE LEARNING PROJECT</p>
+      <h1>AI・機械学習を全課程で0から学べるプロジェクト</h1>
+    </div>
+    <nav>
+      <a href="#">ホーム</a><a href="#">プロジェクトについて</a><a href="#">活動</a><a href="#">学習教材</a><a href="#">成果</a><a href="#">お知らせ</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="front">
+    <div class="lede">
+      <h2>AIを知らないところから、<br><em>自分の分野へ応用できる</em>ところまで。</h2>
+      <p>プログラミングも、数学も、機械学習も、はじめから知っている必要はありません。所属分野にかかわらず機械学習を0から学び、最終的には自分の興味や専門へ応用できる環境を、学生主体でつくっています。</p>
+      <a class="cta" href="#">プロジェクトについて読む</a>
+    </div>
+    <aside class="sidebar">
+      <h3>活動より</h3>
+      <ul>
+        <li><span>現在の活動</span>Python・NumPy・scikit-learn を使った初学者向けの学習会</li>
+        <li><span>これから</span>深層学習へ段階的に進み、コンテストや研究開発へ</li>
+        <li><span>進め方</span>学生同士で教え合いながら学ぶ</li>
+      </ul>
+    </aside>
+  </div>
+
+  <section class="section">
+    <h3>活動の流れ</h3>
+    <div class="flow">
+      <div><span class="num">一</span><b>基礎を学ぶ</b><small>Pythonと機械学習の基礎から。初学者向けの学習会を実施</small></div>
+      <div><span class="num">二</span><b>使ってみる</b><small>実際のデータで機械学習を動かし、手を動かして理解する</small></div>
+      <div><span class="num">三</span><b>発展させる</b><small>コンテスト参加や、各自の専門と組み合わせた研究・開発へ</small></div>
+      <div><span class="num">四</span><b>公開する</b><small>成果をGitHubやWebで外部に公開していく</small></div>
+    </div>
+  </section>
+
+  <section class="section">
+    <h3>このプロジェクトが大切にしていること</h3>
+    <div class="cols">
+      <p>機械学習やAIはさまざまな分野で使われるようになった一方、学び始めるまでのハードルは高いままです。プログラミング、数学、開発環境の構築——つまずく場所はいくつもあります。</p>
+      <p>ここは「AIに詳しい学生が集まる場所」ではありません。AIを知らないところからでも学び始め、最終的には自分で何かを作ったり研究したりできるところまで成長できる場所です。Pythonを学ぶこと自体が目的ではなく、機械学習を理解し、各自の興味や専門分野へ応用できるようになることを目標にしています。</p>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">AI・機械学習を全課程で0から学べるプロジェクト ｜ 京都工芸繊維大学</div>
+</footer>
+</body>
+</html>

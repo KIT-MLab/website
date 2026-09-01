@@ -1,0 +1,6 @@
+[
+  { "date": "2026-09-02", "macrostructure": "Workbench (lab-notebook)", "theme": "custom", "theme_axes": "light / mono / cool-violet", "enrichment": "Tier-A CSS graph-paper", "brief": "案D 実験ノート — デザイン探索R1" },
+  { "date": "2026-09-02", "macrostructure": "Marquee Hero (soft)", "theme": "custom (Hum-JP)", "theme_axes": "light / rounded-sans / warm-orange", "enrichment": "Tier-A CSS shapes", "brief": "案C 工房 — デザイン探索R1" },
+  { "date": "2026-09-02", "macrostructure": "Bento Grid", "theme": "custom", "theme_axes": "light / grotesk-sans / chromatic-green", "enrichment": "none", "brief": "案B プロダクト — デザイン探索R1" },
+  { "date": "2026-09-02", "macrostructure": "Long Document (front-page)", "theme": "Newsprint-JP", "theme_axes": "light / roman-serif / warm-red", "enrichment": "none", "brief": "案A 紀要 — デザイン探索R1" }
+]

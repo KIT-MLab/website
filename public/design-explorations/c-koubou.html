@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>案C 工房 — AI・機械学習を全課程で0から学べるプロジェクト</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700;900&family=M+PLUS+Rounded+1c:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* Hallmark · macrostructure: Marquee Hero (soft) · genre: playful · theme: Hum-JP (custom-tuned)
+ * tone: 工房・初学者に優しい · nav: N5 floating pill · footer: Ft5 statement · accent hue: 橙 55°
+ * enrichment: Tier-A CSS shapes · pre-emit critique: P4 H4 E4 S4 R4 V5 */
+:root{
+  --color-paper: oklch(97% 0.015 85);
+  --color-paper-2: oklch(94% 0.025 80);
+  --color-ink: oklch(28% 0.03 60);
+  --color-ink-2: oklch(48% 0.03 60);
+  --color-accent: oklch(68% 0.16 55);
+  --color-accent-deep: oklch(55% 0.15 50);
+  --color-green: oklch(62% 0.1 150);
+  --color-line: oklch(86% 0.025 80);
+  --color-focus: oklch(55% 0.15 50);
+  --font-display: "Zen Maru Gothic", sans-serif;
+  --font-body: "M PLUS Rounded 1c", "Zen Maru Gothic", sans-serif;
+  --space-sm: 8px; --space-md: 16px; --space-lg: 32px; --space-xl: 64px; --space-2xl: 104px;
+  --radius: 22px;
+  --ease-out: cubic-bezier(.22,.61,.36,1);
+}
+*{box-sizing:border-box;margin:0}
+html,body{overflow-x:clip}
+body{background:var(--color-paper);color:var(--color-ink);font-family:var(--font-body);line-height:1.95;font-size:15.5px}
+a:focus-visible,button:focus-visible{outline:2px solid var(--color-focus);outline-offset:3px}
+.wrap{max-width:1020px;margin:0 auto;padding:0 var(--space-lg)}
+
+/* N5 floating pill */
+.pillnav{position:sticky;top:14px;z-index:10;display:flex;justify-content:center;padding:0 var(--space-md)}
+.pillnav .pill{display:flex;align-items:center;gap:var(--space-lg);background:#fff;border:1.5px solid var(--color-line);border-radius:999px;padding:10px 26px;box-shadow:0 4px 18px oklch(60% 0.05 60 / .12)}
+.pill .brand{font-family:var(--font-display);font-weight:900;text-decoration:none;color:var(--color-ink);white-space:nowrap}
+.pill .brand em{font-style:normal;color:var(--color-accent-deep)}
+.pill nav{display:flex;gap:var(--space-md)}
+.pill nav a{text-decoration:none;color:var(--color-ink-2);font-size:.88rem;font-weight:500;white-space:nowrap;padding:4px 8px;border-radius:999px;transition:background .15s var(--ease-out),color .15s var(--ease-out)}
+.pill nav a:hover{background:var(--color-paper-2);color:var(--color-ink)}
+
+.hero{text-align:center;padding:var(--space-2xl) 0 var(--space-xl);position:relative}
+.hero .dots{display:flex;justify-content:center;gap:10px;margin-bottom:var(--space-lg)}
+.hero .dots i{width:14px;height:14px;border-radius:50%;display:block}
+.hero .dots i:nth-child(1){background:var(--color-accent)}
+.hero .dots i:nth-child(2){background:var(--color-green)}
+.hero .dots i:nth-child(3){background:var(--color-ink);border-radius:3px;transform:rotate(12deg)}
+.hero h1{font-family:var(--font-display);font-weight:900;font-size:clamp(1.9rem,5.2vw,3.3rem);line-height:1.5;letter-spacing:.02em;overflow-wrap:anywhere;min-width:0}
+.hero h1 mark{background:linear-gradient(transparent 62%, oklch(88% 0.09 85) 62%);color:var(--color-ink)}
+.hero p{margin:var(--space-lg) auto 0;max-width:34em;color:var(--color-ink-2)}
+.hero .actions{margin-top:var(--space-lg);display:flex;justify-content:center;gap:var(--space-md);flex-wrap:wrap}
+.btn{display:inline-block;text-decoration:none;font-family:var(--font-display);font-weight:700;font-size:.98rem;padding:14px 30px;border-radius:999px;white-space:nowrap;transition:transform .18s var(--ease-out),box-shadow .18s var(--ease-out)}
+.btn:hover{transform:translateY(-2px)}
+.btn:active{transform:translateY(0)}
+.btn-main{background:var(--color-accent);color:#fff;box-shadow:0 4px 0 var(--color-accent-deep)}
+.btn-main:active{box-shadow:0 1px 0 var(--color-accent-deep)}
+.btn-sub{background:#fff;border:1.5px solid var(--color-line);color:var(--color-ink)}
+
+.cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--space-lg);padding:var(--space-xl) 0}
+.card{background:#fff;border:1.5px solid var(--color-line);border-radius:var(--radius);padding:var(--space-lg);transition:transform .18s var(--ease-out)}
+.card:hover{transform:translateY(-3px) rotate(-.3deg)}
+.card h3{font-family:var(--font-display);font-weight:700;font-size:1.2rem;margin-bottom:var(--space-sm)}
+.card h3 span{display:inline-grid;place-items:center;width:34px;height:34px;border-radius:12px;margin-right:10px;font-size:1rem;vertical-align:middle}
+.card p{font-size:.93rem;color:var(--color-ink-2)}
+.bg1{background:oklch(93% 0.06 55)} .bg2{background:oklch(93% 0.05 150)} .bg3{background:oklch(93% 0.05 85)} .bg4{background:oklch(93% 0.03 30)}
+
+.roadmap{background:#fff;border:1.5px solid var(--color-line);border-radius:var(--radius);padding:var(--space-xl) var(--space-lg);margin-bottom:var(--space-2xl)}
+.roadmap h2{font-family:var(--font-display);font-weight:900;font-size:1.5rem;text-align:center;margin-bottom:var(--space-xl)}
+.road{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:var(--space-lg)}
+.road div{text-align:center}
+.road .badge{display:inline-grid;place-items:center;width:52px;height:52px;border-radius:50%;background:var(--color-paper-2);font-family:var(--font-display);font-weight:900;font-size:1.2rem;color:var(--color-accent-deep);margin-bottom:var(--space-md);border:2px dashed var(--color-accent)}
+.road b{font-family:var(--font-display);display:block;margin-bottom:var(--space-sm)}
+.road small{color:var(--color-ink-2);line-height:1.7;display:block}
+
+footer{background:var(--color-ink);color:oklch(90% 0.02 80);border-radius:var(--radius) var(--radius) 0 0;padding:var(--space-xl) 0;text-align:center}
+footer .big{font-family:var(--font-display);font-weight:900;font-size:clamp(1.2rem,3vw,1.8rem);margin-bottom:var(--space-md)}
+footer nav{display:flex;justify-content:center;gap:var(--space-lg);flex-wrap:wrap;margin-top:var(--space-lg)}
+footer a{color:oklch(80% 0.03 80);text-decoration:none;font-size:.88rem;white-space:nowrap}
+footer a:hover{color:#fff}
+@media (max-width:768px){
+  .pill nav{display:none}
+  .cards,.road{grid-template-columns:1fr}
+}
+@media (prefers-reduced-motion: reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="pillnav">
+  <div class="pill">
+    <a class="brand" href="#">KIT <em>ML</em> こうぼう</a>
+    <nav><a href="#">について</a><a href="#">活動</a><a href="#">学ぶ</a><a href="#">成果</a></nav>
+  </div>
+</div>
+
+<main class="wrap">
+  <section class="hero">
+    <div class="dots" aria-hidden="true"><i></i><i></i><i></i></div>
+    <h1>むずかしいことは、<br><mark>いっしょに0から</mark>はじめよう。</h1>
+    <p>京都工芸繊維大学の学生主体プロジェクト。プログラミングを知らなくても大丈夫。機械学習を基礎から学んで、いつか自分の「つくりたい」につなげる場所です。</p>
+    <div class="actions">
+      <a class="btn btn-main" href="#">どんなプロジェクト？</a>
+      <a class="btn btn-sub" href="#">教材をのぞいてみる</a>
+    </div>
+  </section>
+
+  <section class="cards">
+    <div class="card"><h3><span class="bg1">🌱</span>0からでOK</h3><p>Python・数学・機械学習の予備知識は不要。情報系以外の学生も歓迎です。</p></div>
+    <div class="card"><h3><span class="bg2">🤝</span>教え合って学ぶ</h3><p>講義を聞くだけじゃなく、学生同士で分からないところを教え合いながら進めます。</p></div>
+    <div class="card"><h3><span class="bg3">🖱️</span>さわって理解する</h3><p>コードを書かなくても、マウス操作で機械学習の仕組みを体験できるWeb教材を制作していきます。</p></div>
+    <div class="card"><h3><span class="bg4">🚀</span>応用がゴール</h3><p>最終的には、コンテスト参加や自分の専門分野と組み合わせた研究・開発へ。</p></div>
+  </section>
+
+  <section class="roadmap">
+    <h2>活動のみちのり</h2>
+    <div class="road">
+      <div><span class="badge">1</span><b>基礎を学ぶ</b><small>Python・NumPy・scikit-learn の学習会から</small></div>
+      <div><span class="badge">2</span><b>使ってみる</b><small>実際のデータで機械学習を動かしてみる</small></div>
+      <div><span class="badge">3</span><b>発展させる</b><small>深層学習・コンテスト・研究開発へ</small></div>
+      <div><span class="badge">4</span><b>公開する</b><small>成果をGitHubやWebで発信する</small></div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="big">AIを知らないところから、<br>つくれるところまで。</div>
+    <div>AI・機械学習を全課程で0から学べるプロジェクト ｜ 京都工芸繊維大学</div>
+    <nav><a href="#">について</a><a href="#">活動</a><a href="#">学習教材</a><a href="#">GitHub</a></nav>
+  </div>
+</footer>
+</body>
+</html>

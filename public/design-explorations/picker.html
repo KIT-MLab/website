@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>部品ピッカー — デザイン決定ツール</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;600;800&family=Zen+Old+Mincho:wght@500;700;900&family=Noto+Serif+JP:wght@500;700;900&family=Noto+Sans+JP:wght@400;500;700;900&family=IBM+Plex+Sans+JP:wght@400;500;700&family=BIZ+UDPGothic:wght@400;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+/* ============ ピッカーUI（左パネル）============ */
+*{box-sizing:border-box;margin:0}
+html,body{overflow-x:clip;height:100%}
+body{display:flex;font-family:"Noto Sans JP",sans-serif;font-size:14px;color:#222}
+#panel{width:300px;min-width:300px;background:#1c1c1e;color:#e8e8e8;padding:18px 16px 40px;overflow-y:auto;height:100vh}
+#panel h1{font-size:.95rem;margin-bottom:2px}
+#panel p.sub{font-size:.72rem;color:#999;margin-bottom:16px}
+.group{margin-bottom:18px}
+.group h2{font-size:.72rem;letter-spacing:.12em;color:#8fd0a8;margin-bottom:8px;border-bottom:1px solid #333;padding-bottom:4px}
+.opts{display:flex;flex-wrap:wrap;gap:6px}
+.opts button{font-family:inherit;font-size:.76rem;padding:6px 10px;border-radius:6px;border:1px solid #444;background:#2a2a2c;color:#ddd;cursor:pointer}
+.opts button:hover{border-color:#8fd0a8}
+.opts button[aria-pressed="true"]{background:#8fd0a8;color:#111;border-color:#8fd0a8;font-weight:700}
+.opts .sw{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px;vertical-align:-1px;border:1px solid rgba(255,255,255,.3)}
+#summary{margin-top:20px;border-top:1px solid #333;padding-top:12px}
+#summary h2{font-size:.72rem;letter-spacing:.12em;color:#8fd0a8;margin-bottom:8px}
+#summary pre{font-family:"IBM Plex Mono",monospace;font-size:.68rem;background:#111;border:1px solid #333;border-radius:6px;padding:10px;white-space:pre-wrap;word-break:break-all;color:#bbb;user-select:all}
+#copyBtn{margin-top:8px;width:100%;padding:8px;border-radius:6px;border:none;background:#8fd0a8;color:#111;font-weight:700;cursor:pointer;font-family:inherit}
+#copyBtn:active{transform:translateY(1px)}
+
+/* ============ プレビュー（右）============ */
+#stage{flex:1;height:100vh;overflow-y:auto;background:var(--paper)}
+#pv{
+  --paper:#faf8f4; --ink:#232323; --ink2:#5a5650; --accent:#b3402a; --line:#3a3a3a;
+  --f-head:"Shippori Mincho",serif; --f-body:"Noto Sans JP",sans-serif; --f-mono:"IBM Plex Mono",monospace;
+  --radius:0px; --sp:1;
+  background:var(--paper);color:var(--ink);font-family:var(--f-body);line-height:1.9;min-height:100%;
+}
+#pv .wrap{max-width:900px;margin:0 auto;padding:0 28px}
+#pv a{color:inherit}
+
+/* 紙: 方眼 */
+#pv[data-paper="grid"]{background-image:linear-gradient(var(--gridline) 1px,transparent 1px),linear-gradient(90deg,var(--gridline) 1px,transparent 1px);background-size:28px 28px}
+
+/* ナビ3種 */
+#pv nav.n-masthead{border-bottom:3px double var(--line);text-align:center;padding:calc(22px*var(--sp)) 0 calc(10px*var(--sp))}
+#pv nav.n-masthead .bn{font-family:var(--f-head);font-weight:800;font-size:1.35rem;letter-spacing:.08em}
+#pv nav.n-masthead .links{display:flex;justify-content:center;gap:26px;margin-top:calc(12px*var(--sp));border-top:1px solid var(--line);padding-top:8px;flex-wrap:wrap}
+#pv nav.n-edge,#pv nav.n-bar{display:flex;justify-content:space-between;align-items:baseline;padding:calc(16px*var(--sp)) 28px;flex-wrap:wrap;gap:10px}
+#pv nav.n-edge{border-bottom:2px solid var(--line)}
+#pv nav.n-bar{border-bottom:1px solid var(--line)}
+#pv nav .bn{font-weight:800}
+#pv nav.n-edge .bn{font-family:var(--f-mono);font-weight:600}
+#pv nav.n-edge .bn::before{content:"◆ ";color:var(--accent)}
+#pv nav.n-bar .bn{font-family:var(--f-head)}
+#pv nav .links{display:flex;gap:22px;flex-wrap:wrap}
+#pv nav .links a{text-decoration:none;font-size:.85rem;white-space:nowrap}
+#pv nav.n-edge .links a{font-family:var(--f-mono)}
+#pv nav .links a:hover{color:var(--accent)}
+#pv nav.n-masthead.hide,#pv nav.n-edge.hide,#pv nav.n-bar.hide{display:none}
+
+/* ヒーロー */
+#pv .hero{padding:calc(64px*var(--sp)) 0 calc(40px*var(--sp))}
+#pv .hero .kicker{font-size:.78rem;letter-spacing:.3em;color:var(--ink2);margin-bottom:calc(20px*var(--sp))}
+#pv[data-head-deco="mono-label"] .hero .kicker{font-family:var(--f-mono);letter-spacing:.1em}
+#pv .hero h1{font-family:var(--f-head);font-weight:700;font-size:clamp(1.9rem,4.6vw,3.1rem);line-height:1.5;overflow-wrap:anywhere}
+#pv .hero h1 em{font-style:normal}
+#pv[data-emp="accent-text"] .hero h1 em{color:var(--accent)}
+#pv[data-emp="underline"] .hero h1 em{border-bottom:4px solid var(--accent)}
+#pv[data-emp="marker"] .hero h1 em{background:linear-gradient(transparent 62%, var(--marker) 62%)}
+#pv .hero p{margin-top:calc(24px*var(--sp));max-width:36em;color:var(--ink2)}
+
+/* ボタン3種 */
+#pv .actions{display:flex;gap:14px;margin-top:calc(28px*var(--sp));flex-wrap:wrap}
+#pv .btn{display:inline-block;text-decoration:none;font-weight:700;font-size:.95rem;white-space:nowrap;cursor:pointer}
+#pv[data-btn="typo"] .btn{font-family:var(--f-head);border-bottom:2px solid var(--accent);padding:0 0 4px}
+#pv[data-btn="typo"] .btn:hover{color:var(--accent)}
+#pv[data-btn="typo"] .btn.sub{border-bottom-color:var(--line)}
+#pv[data-btn="box"] .btn{font-family:var(--f-mono);font-weight:600;border:1.5px solid var(--ink);padding:11px 20px;box-shadow:3px 3px 0 var(--ink);border-radius:var(--radius)}
+#pv[data-btn="box"] .btn:hover{background:var(--accent);border-color:var(--accent);color:var(--paper);}
+#pv[data-btn="box"] .btn:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--ink)}
+#pv[data-btn="box"] .btn.main{background:var(--ink);color:var(--paper)}
+#pv[data-btn="fill"] .btn{background:var(--accent);color:var(--paper);padding:12px 24px;border-radius:max(var(--radius),4px)}
+#pv[data-btn="fill"] .btn.sub{background:transparent;color:var(--ink);border:1.5px solid var(--line)}
+#pv[data-btn="fill"] .btn:hover{filter:brightness(.92)}
+
+/* セクション見出し */
+#pv section{padding:calc(44px*var(--sp)) 0}
+#pv section{border-top:var(--rule)}
+#pv h2.sec{font-family:var(--f-head);font-weight:700;font-size:1.5rem;margin-bottom:calc(28px*var(--sp))}
+#pv[data-head-deco="mono-label"] h2.sec::before{content:attr(data-label);display:block;font-family:var(--f-mono);font-size:.72rem;font-weight:600;color:var(--accent);letter-spacing:.1em;margin-bottom:6px}
+#pv[data-head-deco="accent-bar"] h2.sec{padding-left:14px;border-left:5px solid var(--accent)}
+
+/* 流れ4枠 */
+#pv .flow{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border:var(--boxline)}
+#pv .flow>div{padding:calc(22px*var(--sp)) 16px;border-left:var(--boxline-inner)}
+#pv .flow>div:first-child{border-left:none}
+#pv .flow b{font-family:var(--f-head);display:block;margin-bottom:8px}
+#pv .flow .no{color:var(--accent);font-family:var(--f-head);font-size:.85rem;display:block;margin-bottom:4px}
+#pv[data-head-deco="mono-label"] .flow .no{font-family:var(--f-mono)}
+#pv .flow small{color:var(--ink2);line-height:1.7}
+#pv .flow>div{border-radius:0}
+#pv[data-box="cards"] .flow{border:none;gap:14px}
+#pv[data-box="cards"] .flow>div{border:1.5px solid var(--line);border-radius:var(--radius);background:var(--cardbg)}
+
+#pv footer{border-top:3px double var(--line);margin-top:calc(30px*var(--sp));padding:calc(26px*var(--sp)) 0;text-align:center;font-size:.8rem;color:var(--ink2);letter-spacing:.06em}
+#pv[data-rule="solid"] footer{border-top:2px solid var(--line)}
+#pv[data-rule="thin"] footer{border-top:1px solid var(--line)}
+#pv[data-rule="none"] footer{border-top:1px solid var(--line)}
+
+@media (max-width:900px){#pv .flow{grid-template-columns:1fr}#pv .flow>div{border-left:none;border-top:var(--boxline-inner)}#pv .flow>div:first-child{border-top:none}body{flex-direction:column}#panel{width:100%;min-width:0;height:auto;max-height:45vh}#stage{height:auto}}
+</style>
+</head>
+<body>
+<aside id="panel">
+  <h1>部品ピッカー</h1>
+  <p class="sub">部品ごとに切り替えると右に即反映。決まったら下の設定をコピーしてClaudeに送ってください。</p>
+  <div id="groups"></div>
+  <div id="summary">
+    <h2>現在の設定</h2>
+    <pre id="sumtext"></pre>
+    <button id="copyBtn">設定をコピー</button>
+  </div>
+</aside>
+
+<div id="stage">
+<div id="pv" data-btn="typo" data-emp="accent-text" data-head-deco="none" data-box="frame" data-rule="double" data-paper="plain">
+  <nav class="n-masthead"><div class="bn">AI・機械学習を全課程で0から学べるプロジェクト</div>
+    <div class="links"><a href="#">ホーム</a><a href="#">プロジェクトについて</a><a href="#">活動</a><a href="#">学習教材</a><a href="#">成果</a></div></nav>
+  <nav class="n-edge hide"><span class="bn">kit-ml-project</span>
+    <div class="links"><a href="#">about</a><a href="#">活動</a><a href="#">学習教材</a><a href="#">成果</a></div></nav>
+  <nav class="n-bar hide"><span class="bn">KIT MLプロジェクト</span>
+    <div class="links"><a href="#">について</a><a href="#">活動</a><a href="#">学習教材</a><a href="#">成果</a></div></nav>
+
+  <main class="wrap">
+    <section class="hero" style="border-top:none">
+      <p class="kicker">京都工芸繊維大学 学生と教員の共同プロジェクト</p>
+      <h1>AIを知らないところから、<br><em>自分の分野へ応用できる</em>ところまで。</h1>
+      <p>プログラミングも、数学も、機械学習も、はじめから知っている必要はありません。所属分野にかかわらず機械学習を0から学び、最終的には自分の興味や専門へ応用できる環境を、学生主体でつくっています。</p>
+      <div class="actions"><a class="btn main" href="#">プロジェクトを知る</a><a class="btn sub" href="#">学習教材を見る</a></div>
+    </section>
+
+    <section>
+      <h2 class="sec" data-label="ROADMAP">活動の流れ</h2>
+      <div class="flow">
+        <div><span class="no">01</span><b>基礎を学ぶ</b><small>Python・NumPy・scikit-learn の学習会から</small></div>
+        <div><span class="no">02</span><b>使ってみる</b><small>実際のデータで機械学習を動かしてみる</small></div>
+        <div><span class="no">03</span><b>発展させる</b><small>深層学習・コンテスト・研究開発へ</small></div>
+        <div><span class="no">04</span><b>公開する</b><small>成果をGitHubやWebで発信する</small></div>
+      </div>
+    </section>
+
+    <section>
+      <h2 class="sec" data-label="ABOUT">このプロジェクトが大切にしていること</h2>
+      <p style="max-width:38em;color:var(--ink2)">ここは「AIに詳しい学生が集まる場所」ではありません。AIを知らないところからでも学び始め、最終的には自分で何かを作ったり研究したりできるところまで成長できる場所です。</p>
+    </section>
+  </main>
+  <footer>AI・機械学習を全課程で0から学べるプロジェクト ｜ 京都工芸繊維大学</footer>
+</div>
+</div>
+
+<script>
+const pv = document.getElementById('pv');
+const S = {};
+const AXES = [
+ {key:'紙色', opts:[
+   {n:'生成り', f:()=>{setv('--paper','#faf8f4'); setv('--cardbg','#ffffff'); pv.dataset.paper='plain'}},
+   {n:'白', f:()=>{setv('--paper','#fdfdfc'); setv('--cardbg','#f6f5f2'); pv.dataset.paper='plain'}},
+   {n:'方眼', f:()=>{setv('--paper','#f7f7f5'); setv('--gridline','#e7e7e3'); setv('--cardbg','#fdfdfc'); pv.dataset.paper='grid'}},
+   {n:'薄鼠', f:()=>{setv('--paper','#f2f1ee'); setv('--cardbg','#faf9f7'); pv.dataset.paper='plain'}},
+ ]},
+ {key:'見出し書体', opts:[
+   {n:'しっぽり明朝', f:()=>setv('--f-head','"Shippori Mincho",serif')},
+   {n:'Zen旧明朝', f:()=>setv('--f-head','"Zen Old Mincho",serif')},
+   {n:'Noto明朝', f:()=>setv('--f-head','"Noto Serif JP",serif')},
+   {n:'太ゴシック', f:()=>setv('--f-head','"Noto Sans JP",sans-serif')},
+   {n:'Plexゴシック', f:()=>setv('--f-head','"IBM Plex Sans JP",sans-serif')},
+ ]},
+ {key:'本文書体', opts:[
+   {n:'Notoゴシック', f:()=>setv('--f-body','"Noto Sans JP",sans-serif')},
+   {n:'Plexゴシック', f:()=>setv('--f-body','"IBM Plex Sans JP",sans-serif')},
+   {n:'BIZ UD', f:()=>setv('--f-body','"BIZ UDPGothic",sans-serif')},
+ ]},
+ {key:'アクセント色', opts:[
+   {n:'朱', c:'#b3402a', f:()=>acc('#b3402a','#f3c9b6')},
+   {n:'深緑', c:'#2d6a4a', f:()=>acc('#2d6a4a','#c4e3ce')},
+   {n:'墨紫', c:'#5b4b8a', f:()=>acc('#5b4b8a','#d5cdea')},
+   {n:'金茶', c:'#9a6a1f', f:()=>acc('#9a6a1f','#eeda9e')},
+   {n:'鈍色', c:'#4a4f55', f:()=>acc('#4a4f55','#d3d6da')},
+ ]},
+ {key:'強調の見せ方', opts:[
+   {n:'色文字', f:()=>pv.dataset.emp='accent-text'},
+   {n:'下線', f:()=>pv.dataset.emp='underline'},
+   {n:'マーカー', f:()=>pv.dataset.emp='marker'},
+   {n:'なし', f:()=>pv.dataset.emp='none'},
+ ]},
+ {key:'見出し装飾', opts:[
+   {n:'なし', f:()=>pv.dataset.headDeco='none'},
+   {n:'英字ラベル', f:()=>pv.dataset.headDeco='mono-label'},
+   {n:'左バー', f:()=>pv.dataset.headDeco='accent-bar'},
+ ]},
+ {key:'罫線の言語', opts:[
+   {n:'二重罫', f:()=>rule('double')},
+   {n:'実線太', f:()=>rule('solid')},
+   {n:'実線細', f:()=>rule('thin')},
+   {n:'罫なし', f:()=>rule('none')},
+ ]},
+ {key:'枠・囲み', opts:[
+   {n:'一体の枠', f:()=>{pv.dataset.box='frame'}},
+   {n:'カード分離', f:()=>{pv.dataset.box='cards'}},
+ ]},
+ {key:'角丸', opts:[
+   {n:'0（角ばり）', f:()=>setv('--radius','0px')},
+   {n:'小(6px)', f:()=>setv('--radius','6px')},
+   {n:'中(14px)', f:()=>setv('--radius','14px')},
+ ]},
+ {key:'ボタン様式', opts:[
+   {n:'下線タイポ', f:()=>pv.dataset.btn='typo'},
+   {n:'枠＋影', f:()=>pv.dataset.btn='box'},
+   {n:'塗り', f:()=>pv.dataset.btn='fill'},
+ ]},
+ {key:'ナビ形式', opts:[
+   {n:'マストヘッド中央', f:()=>nav('n-masthead')},
+   {n:'端揃え(mono)', f:()=>nav('n-edge')},
+   {n:'左右バー', f:()=>nav('n-bar')},
+ ]},
+ {key:'余白密度', opts:[
+   {n:'ゆったり', f:()=>setv('--sp','1.25')},
+   {n:'ふつう', f:()=>setv('--sp','1')},
+   {n:'詰め', f:()=>setv('--sp','0.75')},
+ ]},
+];
+function setv(k,v){pv.style.setProperty(k,v)}
+function acc(a,marker){setv('--accent',a);setv('--marker',marker)}
+function rule(kind){
+  pv.dataset.rule=kind;
+  const map={double:'3px double var(--line)',solid:'2px solid var(--line)',thin:'1px solid var(--line)',none:'none'};
+  setv('--rule',map[kind]);
+  setv('--boxline',kind==='none'?'1px solid var(--line)':map[kind]);
+  setv('--boxline-inner', kind==='none'?'1px dashed var(--line)':'1px solid var(--line)');
+}
+function nav(cls){['n-masthead','n-edge','n-bar'].forEach(c=>pv.querySelector('nav.'+c).classList.toggle('hide',c!==cls))}
+const groupsEl=document.getElementById('groups');
+AXES.forEach((ax,ai)=>{
+  const g=document.createElement('div');g.className='group';
+  g.innerHTML='<h2>'+ax.key+'</h2>';
+  const box=document.createElement('div');box.className='opts';
+  ax.opts.forEach((o,oi)=>{
+    const b=document.createElement('button');
+    b.innerHTML=(o.c?'<span class="sw" style="background:'+o.c+'"></span>':'')+o.n;
+    b.setAttribute('aria-pressed', oi===0?'true':'false');
+    b.onclick=()=>{o.f();S[ax.key]=o.n;box.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed','false'));b.setAttribute('aria-pressed','true');render()};
+    box.appendChild(b);
+    if(oi===0){o.f();S[ax.key]=o.n}
+  });
+  g.appendChild(box);groupsEl.appendChild(g);
+});
+function render(){document.getElementById('sumtext').textContent=Object.entries(S).map(([k,v])=>k+': '+v).join('\n')}
+render();
+document.getElementById('copyBtn').onclick=async()=>{
+  const t=document.getElementById('sumtext').textContent;
+  try{await navigator.clipboard.writeText(t);document.getElementById('copyBtn').textContent='コピーしました ✓';setTimeout(()=>document.getElementById('copyBtn').textContent='設定をコピー',1500)}
+  catch(e){/* 手動選択で代替 */}
+};
+</script>
+</body>
+</html>

@@ -1,0 +1,48 @@
+/* ============================================================
+ * デザイントークン — 第1次決定（2026-09-02 部品ピッカーでユーザー選択）
+ * 出典: design/DECISIONS.md。変更はユーザーの選択を経てから行うこと。
+ * ============================================================ */
+:root {
+  /* 紙色: 薄鼠 */
+  --color-paper: #f2f1ee;
+  --color-card: #faf9f7;
+
+  /* インク */
+  --color-ink: #232323;
+  --color-ink-2: #5a5650;
+  --color-line: #3a3a3a;
+
+  /* アクセント: 朱 */
+  --color-accent: #b3402a;
+  --color-focus: #b3402a;
+
+  /* 書体: 見出し=Zen Old Mincho / 本文=BIZ UDPGothic / 等幅 */
+  --font-head: "Zen Old Mincho", "Noto Serif JP", serif;
+  --font-body: "BIZ UDPGothic", "Noto Sans JP", sans-serif;
+  --font-mono: "IBM Plex Mono", monospace;
+
+  /* 余白: 詰め（0.75倍） */
+  --sp: 0.75;
+  --space-sm: calc(8px * var(--sp));
+  --space-md: calc(16px * var(--sp));
+  --space-lg: calc(32px * var(--sp));
+  --space-xl: calc(64px * var(--sp));
+  --space-2xl: calc(104px * var(--sp));
+
+  /* 罫線: 二重罫 / 枠: カード分離 / 角丸: 小 */
+  --rule: 3px double var(--color-line);
+  --rule-thin: 1px solid var(--color-line);
+  --radius: 6px;
+
+  /* モーション */
+  --ease-out: cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+/* 決定済みの部品様式メモ（実装時の指針）
+ * - 強調: 見出し内の強調は font-style を使わず、アクセント色の太下線（border-bottom 4px）
+ * - セクション見出し: 左バー（border-left 5px var(--color-accent) + padding-left）
+ * - ボタン: 1.5px枠 + box-shadow 3px 3px 0（ベタ影）。hover でアクセント反転、
+ *   active で translate(2px,2px) + 影 1px（押下で沈む）。角丸 var(--radius)
+ * - ナビ: マストヘッド中央型。サイト名を中央に、下に二重罫、リンク列は罫下に中央配置
+ * - カード: background var(--color-card)、1.5px solid var(--color-line)、角丸 var(--radius)
+ */
