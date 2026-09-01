@@ -1,0 +1,170 @@
+---
+import '../styles/tokens.css';
+
+interface Props {
+  title: string;
+}
+const { title } = Astro.props;
+
+const NAV = [
+  { href: '/', label: 'ホーム' },
+  { href: '/about/', label: 'プロジェクトについて' },
+  { href: '/activities/', label: '活動' },
+  { href: '/learn/', label: '学習' },
+  { href: '/news/', label: '成果・お知らせ' },
+];
+
+const here = Astro.url.pathname.replace(/\/?$/, '/');
+---
+
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" href="/favicon.ico" />
+    <title>{title} | KIT 機械学習プロジェクト</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Zen+Old+Mincho:wght@400;700;900&family=BIZ+UDPGothic:wght@400;700&display=swap"
+    />
+  </head>
+  <body>
+    <header class="masthead">
+      <div class="wrap">
+        <a class="masthead__name" href="/">KIT 機械学習プロジェクト</a>
+        <p class="masthead__full">AI・機械学習を全課程で0から学べるプロジェクト</p>
+        <nav class="masthead__links" aria-label="サイト内メニュー">
+          {NAV.map((item) => (
+            <a href={item.href} aria-current={here === item.href ? 'page' : undefined}>
+              {item.label}
+            </a>
+          ))}
+        </nav>
+      </div>
+    </header>
+
+    <main class="wrap">
+      <slot />
+    </main>
+
+    <footer class="foot">
+      <div class="wrap">京都工芸繊維大学 KIT 機械学習プロジェクト</div>
+    </footer>
+  </body>
+</html>
+
+<style is:global>
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  body {
+    margin: 0;
+    background: var(--color-paper);
+    color: var(--color-ink);
+    font-family: var(--font-body);
+    line-height: 1.9;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 0 var(--space-lg);
+  }
+
+  a:focus-visible {
+    outline: 2px solid var(--color-focus);
+    outline-offset: 3px;
+  }
+
+  /* マストヘッド中央（DECISIONS.md 第1次トークン: ナビ形式） */
+  .masthead {
+    border-bottom: var(--rule);
+    padding-top: calc(22px * var(--sp));
+  }
+
+  .masthead__name {
+    display: block;
+    text-align: center;
+    text-decoration: none;
+    color: inherit;
+    font-family: var(--font-head);
+    font-weight: 700;
+    font-size: clamp(1.15rem, 3.4vw, 1.5rem);
+    letter-spacing: 0.08em;
+    line-height: 1.4;
+  }
+
+  .masthead__full {
+    margin: calc(6px * var(--sp)) 0 0;
+    text-align: center;
+    font-size: 0.72rem;
+    letter-spacing: 0.14em;
+    color: var(--color-ink-2);
+  }
+
+  .masthead__links {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: calc(26px * var(--sp));
+    margin-top: calc(14px * var(--sp));
+    border-top: var(--rule-thin);
+    padding: calc(10px * var(--sp)) 0;
+  }
+
+  .masthead__links a {
+    text-decoration: none;
+    color: inherit;
+    font-size: 0.85rem;
+    white-space: nowrap;
+    padding-bottom: 2px;
+  }
+
+  .masthead__links a:hover {
+    color: var(--color-accent);
+  }
+
+  /* 現在地の表示 = 決定済みの「アクセント色の太下線」 */
+  .masthead__links a[aria-current='page'] {
+    border-bottom: 4px solid var(--color-accent);
+    font-weight: 700;
+  }
+
+  main {
+    padding-top: var(--space-xl);
+    padding-bottom: var(--space-2xl);
+    min-height: 50vh;
+  }
+
+  /* セクション見出し = 決定済みの「左バー（アクセント5px）」 */
+  .page-title {
+    margin: 0;
+    font-family: var(--font-head);
+    font-weight: 700;
+    font-size: clamp(1.4rem, 3.6vw, 1.9rem);
+    line-height: 1.5;
+    border-left: 5px solid var(--color-accent);
+    padding-left: var(--space-md);
+  }
+
+  .wip {
+    margin-top: var(--space-lg);
+    color: var(--color-ink-2);
+    font-size: 0.88rem;
+  }
+
+  .foot {
+    border-top: var(--rule);
+    padding: var(--space-lg) 0;
+    text-align: center;
+    font-size: 0.78rem;
+    color: var(--color-ink-2);
+  }
+</style>

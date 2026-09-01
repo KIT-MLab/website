@@ -12,7 +12,8 @@
 ## 技術構成
 
 - Astro（minimal テンプレート起点）。インタラクティブ教材は将来 React 等の島として追加予定
-- デプロイ先: Cloudflare Pages（GitHub リポジトリ連携予定）
+- デプロイ先: Cloudflare（Workers 静的アセット方式）。リポジトリ https://github.com/KIT-MLab/website の main への push で自動デプロイ
+- 公開URL: https://website.kit-machine-learning.workers.dev （`.pages.dev` ではない）
 
 ## デザインワークフロー（最重要ルール）
 
