@@ -1,12 +1,8 @@
 ---
-import Base from '../../layouts/Base.astro';
+import Full from '../../layouts/Full.astro';
 import Sandbox from '../../sandbox/Sandbox';
 ---
 
-<Base title="サンドボックス">
-  <h1 class="page-title">サンドボックス</h1>
-  <p class="wip">
-    ニューラルネットワークの中で何が起きているかを、実際に触りながら見る場所です。数学の予備知識は要りません。
-  </p>
+<Full title="サンドボックス">
   <Sandbox client:load />
-</Base>
+</Full>
