@@ -386,7 +386,7 @@ export function NetworkDiagram({
             const bias = col > 0 ? net.layers[col - 1].b[i] : null;
             const v = values[col][i];
             const id = `n:${col - 1}:${i}`;
-            /* バイアスが未解禁の間は掴めない。鍵印を添えて分かるようにする */
+            /* バイアスが未解禁の間は無言でロックする。まだ無いものなので、印も値も出さない */
             const locked = col > 0 && !canBias;
             return (
               <g key={`n${col}-${i}`}>
@@ -396,9 +396,7 @@ export function NetworkDiagram({
                   cy={y(col, i)}
                   r={R}
                   fill={fill(v)}
-                  className={`sb-nd__node ${col > 0 && adjusting && !locked ? 'sb-nd__node--drag' : ''} ${
-                    locked ? 'sb-nd__node--locked' : ''
-                  }`}
+                  className={`sb-nd__node ${col > 0 && adjusting && !locked ? 'sb-nd__node--drag' : ''}`}
                   style={col > 0 ? dead(id) : undefined}
                   onPointerDown={
                     col > 0 && !locked
@@ -410,27 +408,13 @@ export function NetworkDiagram({
                       ? undefined
                       : () =>
                           onHover?.(
-                            bias === null
+                            bias === null || locked
                               ? `${nodeName(col, i)} = ${fmt(v, 3)}`
-                              : locked
-                                ? `${nodeName(col, i)} の出力 ${fmt(v, 3)} ／ バイアスは ${bias ? fmt(bias, 2) : '0'} で固定`
-                                : `${nodeName(col, i)} の出力 ${fmt(v, 3)} ／ バイアス ${fmt(bias, 3)}`,
+                              : `${nodeName(col, i)} の出力 ${fmt(v, 3)} ／ バイアス ${fmt(bias, 3)}`,
                           )
                   }
                   onMouseLeave={small ? undefined : () => onHover?.(null)}
                 />
-                {locked && !small && (
-                  <g className="sb-nd__lock" pointerEvents="none">
-                    <path
-                      d={`M ${x(col) - 3.2} ${y(col, i) + R + 8} v -2.6 a 3.2 3.2 0 0 1 6.4 0 v 2.6`}
-                      fill="none"
-                    />
-                    <rect x={x(col) - 5.4} y={y(col, i) + R + 7} width={10.8} height={7.6} rx={1.6} />
-                    <text className="sb-nd__lockT" x={x(col)} y={y(col, i) + R + 26} textAnchor="middle">
-                      バイアス {bias ? fmt(bias, 2) : '0'} で固定
-                    </text>
-                  </g>
-                )}
                 {rows <= 6 && !small && (
                   <text
                     className={`sb-nd__val ${boxes && col === cols - 1 ? 'sb-nd__val--fine' : ''}`}

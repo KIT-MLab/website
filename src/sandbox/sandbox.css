@@ -741,22 +741,6 @@
   stroke: var(--sb-line);
   stroke-width: 1.4;
 }
-/* バイアスが未解禁の丸。薄くして鍵印を添える */
-.sb-nd__node--locked {
-  opacity: 0.55;
-  stroke-dasharray: 3 3;
-}
-.sb-nd__lock path {
-  stroke: #7d766b;
-  stroke-width: 1.5;
-}
-.sb-nd__lock rect {
-  fill: #7d766b;
-}
-.sb-nd__lockT {
-  fill: var(--sb-dim);
-  font-size: 9.5px;
-}
 .sb-nd__val {
   fill: var(--sb-text);
   font-size: 10px;
