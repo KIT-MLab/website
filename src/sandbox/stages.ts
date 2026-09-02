@@ -1,7 +1,7 @@
 import type { Shape } from './engine/init';
-import { LOGIC_INPUTS } from './engine/network';
+import { forward, LOGIC_INPUTS } from './engine/network';
 import { gaussian, uniform, type RngState } from './engine/random';
-import type { Dataset, LossId } from './engine/types';
+import type { Dataset, LossId, Network } from './engine/types';
 
 /** プレイヤーが使える操作。ステージを進むと増える */
 export type OpId =
@@ -31,16 +31,74 @@ export const OP_LABEL: Record<OpId, string> = {
   batch: 'バッチ',
 };
 
+/** 見せられる窓。ステージごとに解禁済みのものだけ出す */
+export type ViewId = 'fit' | 'network' | 'calc' | 'actchart' | 'truth' | 'grad';
+
+export const VIEW_LABEL: Record<ViewId, string> = {
+  fit: '当てはまり',
+  network: 'ネットワーク',
+  calc: '計算の中身',
+  actchart: '活性化関数',
+  truth: '真理値表',
+  grad: '勾配の大きさ',
+};
+
 /** お題の種類。主役の窓の描き方が変わる */
 export type TaskKind = 'reg1' | 'reg2' | 'cls2' | 'logic';
 
 export type DataOpts = { n: number; noise: number; seed: number };
 
+/* ------------------------------------------------------------------ */
+/* チュートリアル。1手ずつ指示し、値が動いたら次へ                       */
+/* ------------------------------------------------------------------ */
+
+export type TutCtx = {
+  /** いまのネット */
+  net: Network;
+  /** この手に入った時点のネット */
+  base: Network;
+  /** 選ばれている層 */
+  selected: number;
+  /** 目標の数値をすでに満たしているか */
+  cleared: boolean;
+  /** この手に入ってから進んだ学習の歩数 */
+  steps: number;
+  /** 履歴バーを引きずったか */
+  scrubbed: boolean;
+};
+
+/**
+ * 1手ぶんの指示。
+ * targets はハイライトして触れるようにする要素の名前。
+ * `e:層:出力:入力` = 線 / `n:層:出力` = ノード / `h:層` = 層の見出し /
+ * `act` = 活性化 / `knob` = つまみ / `play` `hist` `plus` `nodes` = 道具。
+ * 末尾が `*` なら前方一致。
+ */
+export type TutStep = { say: string; targets: string[]; done: (c: TutCtx) => boolean };
+
+const wOf = (n: Network, li: number, o: number, i: number) => n.layers[li]?.w?.[o]?.[i] ?? 0;
+const bOf = (n: Network, li: number, o: number) => n.layers[li]?.b?.[o] ?? 0;
+
+/** その値がこの手のあいだに eps 以上動いたか */
+const movedW = (c: TutCtx, li: number, o: number, i: number, eps = 0.2) =>
+  Math.abs(wOf(c.net, li, o, i) - wOf(c.base, li, o, i)) >= eps;
+const movedB = (c: TutCtx, li: number, o: number, eps = 0.2) =>
+  Math.abs(bOf(c.net, li, o) - bOf(c.base, li, o)) >= eps;
+
+/** 中間層の2ノードが「どちらか1以上」と「両方1」になっているか（順番は問わない） */
+function xorHiddenReady(net: Network): boolean {
+  if (net.layers.length < 2 || net.layers[0].b.length !== 2) return false;
+  const pat = [0, 1].map((k) => LOGIC_INPUTS.map((x) => (forward(net, x).layers[0].a[k] >= 0.5 ? 1 : 0)).join(''));
+  const or = '0111';
+  const and = '0001';
+  return (pat[0] === or && pat[1] === and) || (pat[0] === and && pat[1] === or);
+}
+
 export type Stage = {
   id: string;
   no: number;
   title: string;
-  /** 常時1行で出す目標 */
+  /** 上部に大きく出す目標 */
   goal: string;
   /** 「?」で開く本文 */
   help: string;
@@ -56,8 +114,12 @@ export type Stage = {
   limits?: { maxParams?: number; maxLayers?: number };
   /** このステージに来たときに増える操作 */
   unlocks: OpId[];
+  /** このステージで見せてよい窓。先頭が主役 */
+  views: ViewId[];
   /** 初期構成 */
   start: Shape;
+  /** 1手ずつの指示。空なら目標だけ出す */
+  tutorial: TutStep[];
 };
 
 /* ------------------------------------------------------------------ */
@@ -156,6 +218,11 @@ const SQ = (v: number): [number, number][] => [
   [-v, v],
 ];
 
+const LOGIC_RANGE: [number, number][] = [
+  [-0.6, 1.6],
+  [-0.6, 1.6],
+];
+
 /* ------------------------------------------------------------------ */
 /* ステージ列。操作は累積で増える                                       */
 /* ------------------------------------------------------------------ */
@@ -164,9 +231,9 @@ export const STAGES: Stage[] = [
   {
     id: 'mean',
     no: 1,
-    title: '2つの数の平均',
-    goal: '入力2つの平均 (x₁+x₂)/2 を出す',
-    help: 'まだ層が1つもなく、入力が出力に繋がっていません。図の「＋」で層を1つ置き、右の「つまみ」か線のドラッグで重みを合わせてください。答えは重み 0.5 と 0.5、バイアス 0 です。',
+    title: '平均',
+    goal: '2つの数の平均を出す',
+    help: '入力2つを足して2で割る、つまり (x₁ + x₂) ÷ 2 です。線の太さがその入力を何倍するか（重み）、丸が最後に足す下駄（バイアス）です。重みを両方 0.5、バイアスを 0 にすると平均になります。',
     kind: 'reg2',
     inputLabels: ['x₁', 'x₂'],
     range: SQ(1),
@@ -174,53 +241,101 @@ export const STAGES: Stage[] = [
     dataDefaults: { n: 80, noise: 0, seed: 7 },
     threshold: 0.004,
     judgeLoss: 'mse',
-    unlocks: ['place', 'weights'],
-    start: { sizes: [2], acts: [] },
+    unlocks: ['weights'],
+    views: ['network'],
+    start: { sizes: [2, 1], acts: ['identity'] },
+    tutorial: [
+      {
+        say: 'x₁ から出ている線を、上にドラッグしてみてください',
+        targets: ['e:0:0:0'],
+        done: (c) => movedW(c, 0, 0, 0),
+      },
+      {
+        say: '出力の数字が変わりました。x₂ の線も動かしてみてください',
+        targets: ['e:0:0:1'],
+        done: (c) => movedW(c, 0, 0, 1),
+      },
+      {
+        say: '出力の丸を上下にドラッグすると、最後に足すバイアスが変わります',
+        targets: ['n:0:0'],
+        done: (c) => movedB(c, 0, 0),
+      },
+      {
+        say: '右の「つまみ」で 2本の線を 0.5、バイアスを 0 にすると平均になります',
+        targets: ['e:0:*', 'n:0:*', 'knob'],
+        done: (c) => c.cleared,
+      },
+    ],
   },
   {
     id: 'and',
     no: 2,
     title: 'AND',
     goal: '両方が 1 のときだけ 1 を出す',
-    help: '足し算だけでは 0/1 のはっきりした答えは作れません。活性化関数を「ステップ」にすると、加重和が 0 以上かどうかで 0 か 1 かに切り替わります。重み 1・1、バイアス −1.5 あたりを試してください。',
+    help: '足し算だけでは 0 か 1 かのはっきりした答えは作れません。活性化関数を「ステップ」にすると、加重和が 0 以上かどうかで 0 と 1 に切り替わります。重み 1・1、バイアス −1.5 あたりを試してください。',
     kind: 'logic',
     inputLabels: ['x₁', 'x₂'],
-    range: [
-      [-0.6, 1.6],
-      [-0.6, 1.6],
-    ],
+    range: LOGIC_RANGE,
     data: logic([0, 0, 0, 1]),
     dataDefaults: { n: 4, noise: 0, seed: 1 },
     threshold: 0.02,
     judgeLoss: 'mse',
     unlocks: ['activation'],
+    views: ['network', 'truth', 'fit', 'calc'],
     start: { sizes: [2, 1], acts: ['identity'] },
+    tutorial: [
+      {
+        say: '右の「活性化」から「ステップ」を選んでください',
+        targets: ['act'],
+        done: (c) => c.net.layers[0]?.act === 'step',
+      },
+      {
+        say: '0 か 1 かで出るようになりました。線と丸を動かして表を全部 ○ にしてください',
+        targets: ['e:0:*', 'n:0:*', 'knob'],
+        done: (c) => c.cleared,
+      },
+    ],
   },
   {
     id: 'xor',
     no: 3,
     title: 'XOR',
-    goal: '一方だけが 1 のとき 1 を出す',
-    help: '1本の直線ではこの4点を分けられません。図の入力と出力のあいだの「＋」で層をもう1つ置き、ノード2つで「どちらか1以上」と「両方1」を作り、その差を取ります。',
+    goal: '片方だけが 1 のとき 1 を出す',
+    help: '1本の直線ではこの4点を分けられません。だから中間の層を2つ挟んであります。h1 に「どちらか1以上（OR）」、h2 に「両方1（AND）」を作り、出力で OR − AND を取ると片方だけが1のときに 1 が出ます。',
     kind: 'logic',
     inputLabels: ['x₁', 'x₂'],
-    range: [
-      [-0.6, 1.6],
-      [-0.6, 1.6],
-    ],
+    range: LOGIC_RANGE,
     data: logic([0, 1, 1, 0]),
     dataDefaults: { n: 4, noise: 0, seed: 1 },
     threshold: 0.02,
     judgeLoss: 'mse',
-    unlocks: ['nodes'],
-    start: { sizes: [2, 1], acts: ['step'] },
+    unlocks: [],
+    views: ['network', 'truth', 'fit', 'calc'],
+    start: { sizes: [2, 2, 1], acts: ['step', 'step'] },
+    tutorial: [
+      {
+        say: '「層1」の見出しを押すと、その層のつまみが右に出ます',
+        targets: ['h:0'],
+        done: (c) => c.selected === 0,
+      },
+      {
+        say: 'h1 を「どちらか1以上」、h2 を「両方1」にしてください',
+        targets: ['e:0:*', 'n:0:*', 'knob', 'h:0'],
+        done: (c) => xorHiddenReady(c.net),
+      },
+      {
+        say: '「出力」の見出しを押し、h1 − h2 になるよう線を組んでください',
+        targets: ['e:1:*', 'n:1:*', 'knob', 'h:1'],
+        done: (c) => c.cleared,
+      },
+    ],
   },
   {
     id: 'line',
     no: 4,
-    title: '直線に当てる',
-    goal: 'ノイズの乗った直線 y = 2x − 1 に当てはめる',
-    help: 'ここからは手で置かずに機械にやらせます。▶ を押すと、損失（外れ具合）が小さくなる向きに重みが少しずつ動きます。下のバーは損失の推移で、左右にドラッグすると途中の状態に戻れます。',
+    title: '直線',
+    goal: '点の並びに直線を当てる',
+    help: 'ここからは手で置かずに機械にやらせます。▶ を押すと、外れ具合（損失）が小さくなる向きに重みが少しずつ動きます。下のバーは損失の推移で、左右にドラッグすると途中の状態に戻れます。',
     kind: 'reg1',
     inputLabels: ['x'],
     range: [[-1, 1]],
@@ -229,14 +344,29 @@ export const STAGES: Stage[] = [
     threshold: 0.014,
     judgeLoss: 'mse',
     unlocks: ['train'],
+    views: ['fit', 'network', 'calc'],
     start: { sizes: [1, 1], acts: ['identity'] },
+    tutorial: [
+      { say: '▶ を押してください', targets: ['play'], done: (c) => c.steps > 0 },
+      {
+        say: '線がひとりでに点へ寄っていきます。しばらく眺めてください',
+        targets: ['play'],
+        done: (c) => c.steps >= 120,
+      },
+      {
+        say: '下の損失の曲線を左右にドラッグすると、途中の状態に戻せます',
+        targets: ['hist'],
+        done: (c) => c.scrubbed,
+      },
+      { say: '▶ で最後まで学習させてください', targets: ['play', 'hist'], done: (c) => c.cleared },
+    ],
   },
   {
     id: 'square',
     no: 5,
     title: '放物線',
-    goal: 'y = x² に当てはめる',
-    help: '直線をいくら重ねても直線にしかなりません。曲げるには活性化関数（tanh など）を挟んだ層が要ります。学習率は1歩の大きさです。小さすぎると進まず、大きすぎると暴れます。',
+    goal: '曲線 y = x² に当てる',
+    help: '直線をいくら重ねても直線にしかなりません。曲げるには、活性化関数（tanh など）を挟んだ層が要ります。図の「＋」で層を置き、その層の活性化を tanh にしてから学習させてください。',
     kind: 'reg1',
     inputLabels: ['x'],
     range: [[-1, 1]],
@@ -244,14 +374,33 @@ export const STAGES: Stage[] = [
     dataDefaults: { n: 60, noise: 0, seed: 3 },
     threshold: 0.002,
     judgeLoss: 'mse',
-    unlocks: ['lr'],
+    unlocks: ['place', 'nodes'],
+    views: ['fit', 'network', 'calc'],
     start: { sizes: [1, 1], acts: ['identity'] },
+    tutorial: [
+      {
+        say: 'まず ▶ で学習させてください。直線にしか当たりません',
+        targets: ['play'],
+        done: (c) => c.steps >= 200,
+      },
+      {
+        say: '図の「＋」を押して、層をもう1つ置いてください',
+        targets: ['plus'],
+        done: (c) => c.net.layers.length >= 2,
+      },
+      {
+        say: '置いた層の活性化を tanh にしてください',
+        targets: ['act'],
+        done: (c) => c.net.layers.some((l) => l.act === 'tanh'),
+      },
+      { say: 'もう一度 ▶ で学習させてください', targets: ['play', 'hist'], done: (c) => c.cleared },
+    ],
   },
   {
     id: 'sin',
     no: 6,
     title: '波',
-    goal: 'y = sin x に当てはめる（パラメータ 40 個以内）',
+    goal: '波 y = sin x に当てる（パラメータ 40 個以内）',
     help: '上下する波はノードをそれなりに使います。ただし今回は部品数に上限があるので、層を厚くするより、オプティマイザを Adam にして歩幅を自動調整させるほうが早く届きます。',
     kind: 'reg1',
     inputLabels: ['x'],
@@ -261,14 +410,16 @@ export const STAGES: Stage[] = [
     threshold: 0.004,
     judgeLoss: 'mse',
     limits: { maxParams: 40 },
-    unlocks: ['optimizer'],
+    unlocks: ['optimizer', 'lr'],
+    views: ['fit', 'network', 'calc', 'actchart', 'grad'],
     start: { sizes: [1, 4, 1], acts: ['tanh', 'identity'] },
+    tutorial: [],
   },
   {
     id: 'abs',
     no: 7,
     title: '折れ線',
-    goal: 'y = |x| に当てはめる（層は2つまで）',
+    goal: '折れ線 y = |x| に当てる（層は2つまで）',
     help: '角のある形は tanh のような滑らかな関数だと苦手です。ReLU は負を 0 にするだけの折れ線なので、2つ組み合わせるとちょうど |x| になります。初期化のしかたでも収束の速さが変わります。',
     kind: 'reg1',
     inputLabels: ['x'],
@@ -279,13 +430,15 @@ export const STAGES: Stage[] = [
     judgeLoss: 'mse',
     limits: { maxLayers: 2 },
     unlocks: ['loss', 'init'],
+    views: ['fit', 'network', 'calc', 'actchart', 'grad'],
     start: { sizes: [1, 4, 1], acts: ['tanh', 'identity'] },
+    tutorial: [],
   },
   {
     id: 'mul',
     no: 8,
     title: 'かけ算',
-    goal: 'z = x · y に当てはめる',
+    goal: 'z = x · y に当てる',
     help: 'かけ算は足し算の重ね合わせでは作れないので、そこそこの大きさの中間層が要ります。データの点数やノイズを変えると、少ない点では表面がでたらめに歪むのが見えます。',
     kind: 'reg2',
     inputLabels: ['x', 'y'],
@@ -295,13 +448,15 @@ export const STAGES: Stage[] = [
     threshold: 0.001,
     judgeLoss: 'mse',
     unlocks: ['data'],
+    views: ['fit', 'network', 'calc', 'actchart', 'grad'],
     start: { sizes: [2, 4, 1], acts: ['tanh', 'identity'] },
+    tutorial: [],
   },
   {
     id: 'circle',
     no: 9,
-    title: '円の内と外',
-    goal: '円の内側と外側を分ける',
+    title: '円',
+    goal: '円の内と外を分ける',
     help: '分類では出力を「1 である確率」とみなします。出力層の活性化をシグモイドにして、損失を交差エントロピーにするのが定石です。バッチを小さくすると1歩が軽くなり、歩数を稼げます。',
     kind: 'cls2',
     inputLabels: ['x₁', 'x₂'],
@@ -311,7 +466,9 @@ export const STAGES: Stage[] = [
     threshold: 0.03,
     judgeLoss: 'bce',
     unlocks: ['batch'],
+    views: ['fit', 'network', 'calc', 'actchart', 'grad'],
     start: { sizes: [2, 4, 1], acts: ['tanh', 'sigmoid'] },
+    tutorial: [],
   },
   {
     id: 'spiral',
@@ -327,7 +484,9 @@ export const STAGES: Stage[] = [
     threshold: 0.08,
     judgeLoss: 'bce',
     unlocks: [],
+    views: ['fit', 'network', 'calc', 'actchart', 'grad'],
     start: { sizes: [2, 8, 8, 1], acts: ['tanh', 'tanh', 'sigmoid'] },
+    tutorial: [],
   },
 ];
 
@@ -339,3 +498,9 @@ export function opsUpTo(index: number): Set<OpId> {
 }
 
 export const ALL_OPS: OpId[] = Object.keys(OP_LABEL) as OpId[];
+
+/** targets の書き方（末尾 `*` は前方一致）に当てはまるか */
+export function hits(targets: string[] | null, id: string): boolean {
+  if (!targets) return true;
+  return targets.some((t) => (t.endsWith('*') ? id.startsWith(t.slice(0, -1)) : t === id));
+}

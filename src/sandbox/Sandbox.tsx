@@ -17,7 +17,7 @@ import type {
   ParamShape,
   TrainConfig,
 } from './engine/types';
-import { ALL_OPS, OP_LABEL, opsUpTo, STAGES, type OpId, type Stage } from './stages';
+import { ALL_OPS, hits, opsUpTo, STAGES, VIEW_LABEL, type OpId, type Stage, type ViewId } from './stages';
 import { ActivationChart } from './views/ActivationChart';
 import { DecisionPlane } from './views/DecisionPlane';
 import { FitCurve } from './views/FitCurve';
@@ -32,29 +32,13 @@ import './sandbox.css';
 
 /* ------------------------------------------------------------------ */
 
-type ViewId = 'fit' | 'network' | 'calc' | 'actchart' | 'truth' | 'grad';
-type ToolId = 'inspect' | 'adjust' | 'place';
-
-const VIEW_LABEL: Record<ViewId, string> = {
-  fit: '当てはまり',
-  network: 'ネットワーク',
-  calc: '計算の中身',
-  actchart: '活性化関数',
-  truth: '真理値表',
-  grad: '勾配の大きさ',
-};
-
-const TOOLS: { id: ToolId; label: string; need?: OpId; hint: string }[] = [
-  { id: 'inspect', label: '観察', hint: 'カーソルを合わせると値が出ます' },
-  { id: 'adjust', label: '調整', need: 'weights', hint: '線やノードを上下にドラッグして重みを変えます' },
-  { id: 'place', label: '設置', need: 'place', hint: '「＋」で層を置き、見出しの「×」で外します' },
-];
-
 /** 損失は 1e-30 まで落ちることがあるので、小さいときは指数表記にする */
 const sci = (v: number) => (!Number.isFinite(v) ? '—' : v !== 0 && Math.abs(v) < 0.001 ? v.toExponential(1) : fmt(v, 4));
 
 const HIST_MAX = 4000;
 const DEFAULT_HIDDEN = 4;
+/** ここまでのステージは、指示された1手以外を触れなくする */
+const LOCK_UNTIL = 3;
 
 type Entry = { step: number; net: Network; loss: number };
 
@@ -66,6 +50,9 @@ type Core = {
   cursor: number;
   grad: ParamShape | null;
 };
+
+/** チュートリアルの進み具合。base はこの手に入った時点の控え */
+type Tut = { i: number; base: Network; baseStep: number; scrubbed: boolean };
 
 const shapeOf = (net: Network, inDim: number): Shape => ({
   sizes: [inDim, ...net.layers.map((l) => l.b.length)],
@@ -104,10 +91,9 @@ export default function Sandbox() {
   const [initId, setInitId] = useState<InitId>('xavier');
   const [seed, setSeed] = useState(77);
 
-  const [tool, setTool] = useState<ToolId>('place');
   const [selected, setSelected] = useState(0);
-  const [main, setMain] = useState<ViewId>('network');
-  const [off, setOff] = useState<ViewId[]>(['actchart', 'grad']);
+  const [main, setMain] = useState<ViewId>(STAGES[0].views[0]);
+  const [off, setOff] = useState<ViewId[]>([]);
   const [sample, setSample] = useState(0);
   const [playing, setPlaying] = useState(false);
   const [speed, setSpeed] = useState(10);
@@ -124,6 +110,13 @@ export default function Sandbox() {
   if (core.current === undefined) {
     core.current = build(STAGES[0].start, 'xavier', 77, STAGES[0].data(STAGES[0].dataDefaults), 'mse');
   }
+
+  const [tut, setTut] = useState<Tut>(() => ({
+    i: 0,
+    base: core.current.net,
+    baseStep: 0,
+    scrubbed: false,
+  }));
 
   const ops = free ? new Set(ALL_OPS) : opsUpTo(stageIdx);
   const can = (o: OpId) => ops.has(o);
@@ -167,6 +160,40 @@ export default function Sandbox() {
     const t = setTimeout(() => setFlash(null), 4000);
     return () => clearTimeout(t);
   }, [flash]);
+
+  /* -------------------- チュートリアル -------------------- */
+
+  const entry = c.hist[c.cursor];
+  const tutOn = !free && tut.i < stage.tutorial.length;
+  const tutStep = tutOn ? stage.tutorial[tut.i] : null;
+  /** 指示された1手以外を触れなくするか */
+  const lock = tutOn && stageIdx <= LOCK_UNTIL;
+  const point = tutStep ? tutStep.targets : null;
+  const gate = lock && tutStep ? tutStep.targets : null;
+  const frozen = (id: string) => gate !== null && !hits(gate, id);
+  const pointed = (id: string) => point !== null && hits(point, id);
+
+  /* 指さす先が図の中にあるなら、図を主役に持ってくる（小窓では触れないため） */
+  const wantMain: ViewId | null = !tutStep
+    ? null
+    : tutStep.targets.some((t) => /^(e:|n:|h:|plus|nodes)/.test(t))
+      ? 'network'
+      : tutStep.targets.some((t) => t === 'play' || t === 'hist')
+        ? stage.views[0]
+        : null;
+
+  useEffect(() => {
+    if (!tutStep) return;
+    const ok = tutStep.done({
+      net,
+      base: tut.base,
+      selected,
+      cleared,
+      steps: entry.step - tut.baseStep,
+      scrubbed: tut.scrubbed,
+    });
+    if (ok) setTut({ i: tut.i + 1, base: net, baseStep: entry.step, scrubbed: false });
+  });
 
   /* -------------------- 学習ループ -------------------- */
 
@@ -263,6 +290,7 @@ export default function Sandbox() {
     k.cursor = i;
     k.opt = createOptimizerState(k.hist[i].net);
     setPlaying(false);
+    setTut((t) => (t.scrubbed ? t : { ...t, scrubbed: true }));
     force();
   };
 
@@ -362,14 +390,9 @@ export default function Sandbox() {
     setSample(0);
     setPlaying(false);
     setWasCleared(false);
-    /* 手で組む段階はネットワーク図が主役、学習が解禁されたら当てはまりが主役 */
-    const handmade = !opsUpTo(idx).has('train');
-    setMain(handmade ? 'network' : 'fit');
-    setOff(['actchart', 'grad']);
-    setTool(s.start.acts.length === 0 ? 'place' : handmade ? 'adjust' : 'inspect');
-    if (idx > maxStage && s.unlocks.length) {
-      setFlash(`使えるようになりました: ${s.unlocks.map((o) => OP_LABEL[o]).join(' / ')}`);
-    }
+    setMain(s.views[0]);
+    setOff([]);
+    setTut({ i: 0, base: core.current.net, baseStep: 0, scrubbed: false });
     force();
   };
 
@@ -380,7 +403,6 @@ export default function Sandbox() {
   const selLayer = Math.min(selected, Math.max(0, net.layers.length - 1));
   const isOutLayer = selLayer === net.layers.length - 1;
   const gradNorms = core.current.grad ? layerGradNorms(core.current.grad) : null;
-  const entry = c.hist[c.cursor];
 
   const logicRows: LogicRow[] = useMemo(() => {
     if (stage.kind !== 'logic' || !valid) return [];
@@ -392,13 +414,21 @@ export default function Sandbox() {
     });
   }, [net, data, valid, stage.kind]);
 
-  const availableViews: ViewId[] = ['fit', 'network', 'calc', 'actchart', 'grad'];
-  if (stage.kind === 'logic') availableViews.splice(3, 0, 'truth');
+  const availableViews: ViewId[] = free
+    ? (['fit', 'network', 'calc', 'actchart', 'grad', ...(stage.kind === 'logic' ? (['truth'] as ViewId[]) : [])] as ViewId[])
+    : stage.views;
   const shown = availableViews.filter((v) => !off.includes(v));
 
   useEffect(() => {
     if (!shown.includes(main) && shown.length) setMain(shown[0]);
   }, [shown.join(','), main]);
+
+  useEffect(() => {
+    if (wantMain && wantMain !== main && availableViews.includes(wantMain)) {
+      setOff((o) => o.filter((v) => v !== wantMain));
+      setMain(wantMain);
+    }
+  }, [wantMain, main]);
 
   const renderView = (id: ViewId, small: boolean) => {
     switch (id) {
@@ -424,12 +454,14 @@ export default function Sandbox() {
             trace={trace}
             inDim={inDim}
             inputLabels={stage.inputLabels}
-            tool={tool}
             selected={selLayer}
             small={small}
+            canAdjust={can('weights')}
             canPlace={can('place')}
             canNodes={can('nodes')}
             maxLayers={lim?.maxLayers}
+            gate={small ? null : gate}
+            point={small ? null : point}
             onSelect={setSelected}
             onWeight={(li, o, i, d) =>
               editNet((n) => {
@@ -449,29 +481,7 @@ export default function Sandbox() {
         );
       case 'calc':
         if (!trace) return <p className="sb-empty">層がありません</p>;
-        return (
-          <div className="sb-calcwrap">
-            {!small && (
-              <div className="sb-calcwrap__nav">
-                <button type="button" className="sb-mini" onClick={() => setSample((s) => Math.max(0, s - 1))}>
-                  ◀
-                </button>
-                <span>
-                  データ {sampleIdx + 1} / {data.x.length}（
-                  {data.x[sampleIdx].map((v) => fmt(v)).join(', ')} → {fmt(data.y[sampleIdx][0])}）
-                </span>
-                <button
-                  type="button"
-                  className="sb-mini"
-                  onClick={() => setSample((s) => Math.min(data.x.length - 1, s + 1))}
-                >
-                  ▶
-                </button>
-              </div>
-            )}
-            <Inspector net={net} trace={trace} inputLabels={stage.inputLabels} />
-          </div>
-        );
+        return <Inspector net={net} trace={trace} inputLabels={stage.inputLabels} big={!small} />;
       case 'actchart': {
         if (!trace) return <p className="sb-empty">層がありません</p>;
         const l = net.layers[selLayer];
@@ -507,6 +517,36 @@ export default function Sandbox() {
 
   const lrPos = Math.round(((Math.log10(cfg.lr) + 3) / 3) * 100);
 
+  /* どの箱を出すか。設定できる項目が無ければ右パネルごと描かない */
+  const showKnobs = can('weights');
+  const showLayerBox = can('nodes') || can('activation') || can('place') || showKnobs;
+  const showTrainBox = can('loss') || can('optimizer') || can('lr') || can('batch') || can('init');
+  const showDataBox = can('data') && stage.kind !== 'logic';
+  const showSide = showLayerBox || showTrainBox || showDataBox;
+  const showRail = shown.length > 1;
+
+  const cols = `${showRail ? '132px ' : ''}minmax(0, 1fr)${showSide ? ' 254px' : ''}`;
+
+  const sampleNav = data.x.length > 1 && (main === 'network' || main === 'calc') && (
+    <span className="sb-samp">
+      <button type="button" className="sb-mini" onClick={() => setSample((s) => Math.max(0, s - 1))} aria-label="前のデータ">
+        ◀
+      </button>
+      <span>
+        データ {sampleIdx + 1}/{data.x.length}（{data.x[sampleIdx].map((v) => fmt(v)).join(', ')} →{' '}
+        {fmt(data.y[sampleIdx][0])}）
+      </span>
+      <button
+        type="button"
+        className="sb-mini"
+        onClick={() => setSample((s) => Math.min(data.x.length - 1, s + 1))}
+        aria-label="次のデータ"
+      >
+        ▶
+      </button>
+    </span>
+  );
+
   return (
     <div className="sb">
       {/* ---- 1段目: ステージと窓 ---- */}
@@ -515,13 +555,12 @@ export default function Sandbox() {
           ← 学習
         </a>
         <div className="sb-stages">
-          {STAGES.map((s, i) => (
+          {STAGES.filter((_, i) => free || i <= maxStage).map((s, i) => (
             <button
               key={s.id}
               type="button"
               className="sb-stage"
               aria-pressed={i === stageIdx}
-              disabled={!free && i > maxStage}
               title={`${s.no}. ${s.title}`}
               onClick={() => goStage(i)}
             >
@@ -529,287 +568,321 @@ export default function Sandbox() {
             </button>
           ))}
         </div>
-        <button type="button" className="sb-chip sb-free" aria-pressed={free} onClick={() => setFree((f) => !f)}>
+        <div className="sb-spacer" />
+        {availableViews.length > 1 && (
+          <>
+            <span className="sb-cap">窓</span>
+            {availableViews.map((v) =>
+              chip(VIEW_LABEL[v], !off.includes(v), () =>
+                setOff((o) => (o.includes(v) ? o.filter((x) => x !== v) : [...o, v])),
+              ),
+            )}
+          </>
+        )}
+        <button type="button" className="sb-free" aria-pressed={free} onClick={() => setFree((f) => !f)}>
           自由モード
         </button>
-        <div className="sb-spacer" />
-        <span className="sb-cap">窓</span>
-        {availableViews.map((v) =>
-          chip(VIEW_LABEL[v], !off.includes(v), () =>
-            setOff((o) => (o.includes(v) ? o.filter((x) => x !== v) : [...o, v])),
-          ),
-        )}
       </header>
 
-      {/* ---- 2段目: 目標と道具 ---- */}
+      {/* ---- 2段目: 目標といまやる1手 ---- */}
       <div className="sb-goal">
-        <span className="sb-goal__no">{stage.no}</span>
-        <span className="sb-goal__title">{stage.title}</span>
-        <span className="sb-goal__text">{stage.goal}</span>
-        <button
-          type="button"
-          className="sb-q"
-          aria-label="ヒント"
-          onClick={() => setHelp({ title: `${stage.no}. ${stage.title}`, body: stage.help })}
-        >
-          ?
-        </button>
-        {overParams && (
-          <span className="sb-viol">
-            パラメータ {params} / {lim!.maxParams}
+        <div className="sb-goal__main">
+          <div className="sb-goal__line">
+            <span className="sb-goal__no">{stage.no}</span>
+            <h1 className="sb-goal__h">{stage.goal}</h1>
+            <button
+              type="button"
+              className="sb-q"
+              aria-label="ヒント"
+              onClick={() => setHelp({ title: `${stage.no}. ${stage.title}`, body: stage.help })}
+            >
+              ?
+            </button>
+          </div>
+          {tutStep ? (
+            <p className="sb-goal__now">
+              <span className="sb-goal__dot" />
+              {tutStep.say}
+            </p>
+          ) : (
+            <p className="sb-goal__now sb-goal__now--dim">{hover ?? '「?」に解き方の見当が書いてあります'}</p>
+          )}
+        </div>
+
+        <div className="sb-goal__side">
+          {overParams && (
+            <span className="sb-viol">
+              パラメータ {params} / {lim!.maxParams}
+            </span>
+          )}
+          {overLayers && (
+            <span className="sb-viol">
+              層 {net.layers.length} / {lim!.maxLayers}
+            </span>
+          )}
+          <span className="sb-goal__score" data-ok={cleared || undefined}>
+            {stage.judgeLoss === 'bce' ? '交差エントロピー' : '二乗誤差'} {valid ? sci(judge) : '—'} / 目標{' '}
+            {sci(stage.threshold)}
+            {accuracy !== null && ` / 正答 ${Math.round(accuracy * 100)}%`}
           </span>
-        )}
-        {overLayers && (
-          <span className="sb-viol">
-            層 {net.layers.length} / {lim!.maxLayers}
-          </span>
-        )}
-        <span className="sb-goal__score" data-ok={cleared || undefined}>
-          {stage.judgeLoss === 'bce' ? '交差エントロピー' : '二乗誤差'} {valid ? sci(judge) : '—'} ／ 目標{' '}
-          {sci(stage.threshold)}
-          {accuracy !== null && ` ／ 正答 ${Math.round(accuracy * 100)}%`}
-        </span>
-        {cleared && stageIdx < STAGES.length - 1 && (
-          <button type="button" className="sb-next" onClick={() => goStage(stageIdx + 1)}>
-            次のステージへ →
-          </button>
-        )}
-        <div className="sb-spacer" />
-        <span className="sb-cap">道具</span>
-        {TOOLS.map((t) =>
-          chip(t.label, tool === t.id, () => setTool(t.id), !!t.need && !can(t.need), t.hint),
-        )}
+          {cleared && stageIdx < STAGES.length - 1 && (
+            <button type="button" className="sb-next" onClick={() => goStage(stageIdx + 1)}>
+              次のステージへ →
+            </button>
+          )}
+        </div>
       </div>
 
-      {/* ---- 3段目: 学習の操作と履歴 ---- */}
-      <div className="sb-transport" data-locked={!can('train') || undefined}>
-        <button type="button" className="sb-play" onClick={togglePlay} disabled={!can('train')}>
-          {playing ? '⏸' : '▶'}
-        </button>
-        <button type="button" className="sb-btn" onClick={oneStep} disabled={!can('train') || playing}>
-          1歩
-        </button>
-        <button type="button" className="sb-btn" onClick={() => resetWeights()} disabled={!can('train')}>
-          初期化
-        </button>
-        <span className="sb-speed">
-          {[1, 10, 100].map((s) => chip(`×${s}`, speed === s, () => setSpeed(s), !can('train')))}
-        </span>
-        <LossBar
-          hist={c.hist}
-          cursor={c.cursor}
-          threshold={stage.threshold}
-          onScrub={scrub}
-          disabled={!can('train')}
-        />
-        <span className="sb-readout">
-          <b>{entry.step.toLocaleString()}</b> 歩 ・ 損失 <b>{sci(entry.loss)}</b>
-        </span>
-      </div>
+      {/* ---- 3段目: 学習の操作と履歴（解禁後だけ） ---- */}
+      {can('train') && (
+        <div className="sb-transport">
+          <button
+            type="button"
+            className={`sb-play ${pointed('play') ? 'sb-point' : ''}`}
+            onClick={togglePlay}
+            disabled={frozen('play')}
+          >
+            {playing ? '⏸' : '▶'}
+          </button>
+          <button type="button" className="sb-btn" onClick={oneStep} disabled={playing || frozen('play')}>
+            1歩
+          </button>
+          <button type="button" className="sb-btn" onClick={() => resetWeights()} disabled={frozen('reset')}>
+            初期化
+          </button>
+          <span className="sb-speed">{[1, 10, 100].map((s) => chip(`×${s}`, speed === s, () => setSpeed(s)))}</span>
+          <div className={`sb-histwrap ${pointed('hist') ? 'sb-point' : ''}`}>
+            <LossBar hist={c.hist} cursor={c.cursor} threshold={stage.threshold} onScrub={scrub} disabled={frozen('hist')} />
+          </div>
+          <span className="sb-readout">
+            <b>{entry.step.toLocaleString()}</b> 歩 ・ 損失 <b>{sci(entry.loss)}</b>
+          </span>
+        </div>
+      )}
 
       {/* ---- 本体 ---- */}
-      <div className="sb-body">
-        <aside className="sb-rail" aria-label="小窓">
-          {shown
-            .filter((v) => v !== main)
-            .map((v) => (
-              <button key={v} type="button" className="sb-thumb" onClick={() => setMain(v)} title={`${VIEW_LABEL[v]}を大きく見る`}>
-                <span className="sb-thumb__t">{VIEW_LABEL[v]}</span>
-                <span className="sb-thumb__box">{renderView(v, true)}</span>
-              </button>
-            ))}
-        </aside>
+      <div className="sb-body" style={{ gridTemplateColumns: cols }}>
+        {showRail && (
+          <aside className="sb-rail" aria-label="小窓">
+            {shown
+              .filter((v) => v !== main)
+              .map((v) => (
+                <button
+                  key={v}
+                  type="button"
+                  className="sb-thumb"
+                  onClick={() => setMain(v)}
+                  title={`${VIEW_LABEL[v]}を大きく見る`}
+                >
+                  <span className="sb-thumb__t">{VIEW_LABEL[v]}</span>
+                  <span className="sb-thumb__box">{renderView(v, true)}</span>
+                </button>
+              ))}
+          </aside>
+        )}
 
         <main className="sb-main">
           <div className="sb-main__head">
-            <h1>{VIEW_LABEL[main]}</h1>
-            <span className="sb-main__hint">{hover ?? TOOLS.find((t) => t.id === tool)!.hint}</span>
+            <h2>{VIEW_LABEL[main]}</h2>
+            {sampleNav}
           </div>
           <div className="sb-main__stage">{renderView(main, false)}</div>
         </main>
 
-        <aside className="sb-side">
-          <Section title={`層 ${selLayer + 1}${isOutLayer ? '（出力）' : ''}`}>
-            <Row label="ノード数" locked={!can('nodes') || isOutLayer}>
-              <button type="button" className="sb-mini" onClick={() => setNodes(selLayer, -1)} disabled={!can('nodes') || isOutLayer}>
-                −
-              </button>
-              <b className="sb-num">{valid ? net.layers[selLayer].b.length : 0}</b>
-              <button type="button" className="sb-mini" onClick={() => setNodes(selLayer, 1)} disabled={!can('nodes') || isOutLayer}>
-                ＋
-              </button>
-            </Row>
-            <Row label="活性化" locked={!can('activation')} wrap>
-              {ACTIVATION_ORDER.map((id) =>
-                chip(
-                  ACTIVATIONS[id].label.replace('（そのまま）', ''),
-                  valid && net.layers[selLayer].act === id,
-                  () =>
-                    editNet((n) => {
-                      n.layers[selLayer].act = id;
-                    }),
-                  !can('activation') || !valid,
-                  ACTIVATIONS[id].note,
-                ),
-              )}
-            </Row>
-            <Row label="" locked={!can('place')}>
-              <button
-                type="button"
-                className="sb-btn"
-                onClick={() => removeLayer(selLayer)}
-                disabled={!can('place') || net.layers.length <= 1}
-              >
-                この層を外す
-              </button>
-              <span className="sb-note">パラメータ {params}</span>
-            </Row>
-          </Section>
-
-          <Section title="学習">
-            <Row label="損失関数" locked={!can('loss')} wrap>
-              {LOSS_ORDER.map((id) =>
-                chip(LOSSES[id].label, cfg.loss === id, () => setCfg((v) => ({ ...v, loss: id })), !can('loss'), LOSSES[id].note),
-              )}
-            </Row>
-            <Row label="オプティマイザ" locked={!can('optimizer')} wrap>
-              {OPTIMIZER_ORDER.map((id) =>
-                chip(
-                  OPTIMIZERS[id].label,
-                  cfg.optimizer === id,
-                  () => {
-                    setCfg((v) => ({ ...v, optimizer: id }));
-                    core.current.opt = createOptimizerState(net);
-                  },
-                  !can('optimizer'),
-                  OPTIMIZERS[id].note,
-                ),
-              )}
-            </Row>
-            <Row label={`学習率 ${cfg.lr < 0.01 ? cfg.lr.toFixed(4) : cfg.lr.toFixed(3)}`} locked={!can('lr')}>
-              <input
-                type="range"
-                min={0}
-                max={100}
-                value={lrPos}
-                disabled={!can('lr')}
-                onChange={(e) => {
-                  const p = Number(e.target.value) / 100;
-                  const v = 10 ** (-3 + p * 3);
-                  setCfg((c2) => ({ ...c2, lr: Number(v.toPrecision(2)) }));
-                }}
-              />
-            </Row>
-            <Row label="バッチ" locked={!can('batch')} wrap>
-              {[null, 4, 8, 16].map((b) =>
-                chip(b === null ? '全部' : String(b), cfg.batch === b, () => setCfg((v) => ({ ...v, batch: b })), !can('batch')),
-              )}
-            </Row>
-            <Row label="初期化" locked={!can('init')} wrap>
-              {INIT_ORDER.map((id) =>
-                chip(INITS[id].label.replace('ばらつかせる', 'ばらつき'), initId === id, () => {
-                  setInitId(id);
-                  core.current = build(shapeOf(net, inDim), id, seed, data, cfg.loss);
-                  setPlaying(false);
-                  setWasCleared(false);
-                  force();
-                }, !can('init'), INITS[id].note),
-              )}
-              <button
-                type="button"
-                className="sb-btn"
-                disabled={!can('init')}
-                onClick={() => resetWeights(Math.floor(Math.random() * 1e9))}
-              >
-                引き直す
-              </button>
-            </Row>
-          </Section>
-
-          <Section title="データ">
-            <Row label={`点の数 ${dataOpts.n}`} locked={!can('data') || stage.kind === 'logic'}>
-              <input
-                type="range"
-                min={10}
-                max={300}
-                step={10}
-                value={dataOpts.n}
-                disabled={!can('data') || stage.kind === 'logic'}
-                onChange={(e) => setDataOpts((o) => ({ ...o, n: Number(e.target.value) }))}
-              />
-            </Row>
-            <Row label={`ノイズ ${dataOpts.noise.toFixed(2)}`} locked={!can('data') || stage.kind === 'logic'}>
-              <input
-                type="range"
-                min={0}
-                max={0.5}
-                step={0.01}
-                value={dataOpts.noise}
-                disabled={!can('data') || stage.kind === 'logic'}
-                onChange={(e) => setDataOpts((o) => ({ ...o, noise: Number(e.target.value) }))}
-              />
-            </Row>
-            <Row label="" locked={!can('data') || stage.kind === 'logic'}>
-              <button
-                type="button"
-                className="sb-btn"
-                disabled={!can('data') || stage.kind === 'logic'}
-                onClick={() => setDataOpts((o) => ({ ...o, seed: Math.floor(Math.random() * 1e9) }))}
-              >
-                点を取り直す
-              </button>
-            </Row>
-          </Section>
-
-          <Section title="つまみ" grow>
-            {!can('weights') ? (
-              <p className="sb-note">まだ使えません</p>
-            ) : !valid ? (
-              <p className="sb-note">層がありません</p>
-            ) : net.layers[selLayer].b.length * (net.layers[selLayer].w[0].length + 1) > 20 ? (
-              <p className="sb-note">この層はつまみが多すぎます。図の線を上下にドラッグしてください</p>
-            ) : (
-              net.layers[selLayer].w.map((row, o) => (
-                <div className="sb-knobs" key={o}>
-                  <p className="sb-knobs__t">{isOutLayer && row.length ? (net.layers[selLayer].b.length > 1 ? `出力${o + 1}` : '出力') : `h${o + 1}`}</p>
-                  {row.map((w, i) => (
-                    <Knob
-                      key={i}
-                      label={selLayer === 0 ? stage.inputLabels[i] : `h${i + 1}`}
-                      value={w}
-                      onChange={(v) =>
-                        editNet((n) => {
-                          n.layers[selLayer].w[o][i] = v;
-                        })
-                      }
-                    />
-                  ))}
-                  <Knob
-                    label="バイアス"
-                    value={net.layers[selLayer].b[o]}
-                    onChange={(v) =>
-                      editNet((n) => {
-                        n.layers[selLayer].b[o] = v;
-                      })
-                    }
-                  />
-                </div>
-              ))
+        {showSide && (
+          <aside className="sb-side">
+            {showLayerBox && (
+              <Section title={`層 ${selLayer + 1}${isOutLayer ? '（出力）' : ''}`}>
+                {can('nodes') && !isOutLayer && (
+                  <Row label="ノード数">
+                    <button type="button" className="sb-mini" onClick={() => setNodes(selLayer, -1)} disabled={frozen('nodes')}>
+                      −
+                    </button>
+                    <b className="sb-num">{valid ? net.layers[selLayer].b.length : 0}</b>
+                    <button type="button" className="sb-mini" onClick={() => setNodes(selLayer, 1)} disabled={frozen('nodes')}>
+                      ＋
+                    </button>
+                  </Row>
+                )}
+                {can('activation') && (
+                  <Row label="活性化" wrap point={pointed('act')}>
+                    {ACTIVATION_ORDER.map((id) =>
+                      chip(
+                        ACTIVATIONS[id].label.replace('（そのまま）', ''),
+                        valid && net.layers[selLayer].act === id,
+                        () =>
+                          editNet((n) => {
+                            n.layers[selLayer].act = id;
+                          }),
+                        !valid || frozen('act'),
+                        ACTIVATIONS[id].note,
+                      ),
+                    )}
+                  </Row>
+                )}
+                {can('place') && (
+                  <Row label="">
+                    <button
+                      type="button"
+                      className="sb-btn"
+                      onClick={() => removeLayer(selLayer)}
+                      disabled={net.layers.length <= 1 || frozen('plus')}
+                    >
+                      この層を外す
+                    </button>
+                    <span className="sb-note">パラメータ {params}</span>
+                  </Row>
+                )}
+                {showKnobs && (
+                  <div className="sb-knobwrap" data-off={frozen('knob') || undefined}>
+                    {!valid ? (
+                      <p className="sb-note">層がありません</p>
+                    ) : net.layers[selLayer].b.length * (net.layers[selLayer].w[0].length + 1) > 20 ? (
+                      <p className="sb-note">つまみが多すぎます。図の線を上下にドラッグしてください</p>
+                    ) : (
+                      net.layers[selLayer].w.map((row, o) => (
+                        <div className="sb-knobs" key={o}>
+                          <p className="sb-knobs__t">
+                            {isOutLayer ? (net.layers[selLayer].b.length > 1 ? `出力${o + 1}` : '出力') : `h${o + 1}`}
+                          </p>
+                          {row.map((w, i) => (
+                            <Knob
+                              key={i}
+                              label={selLayer === 0 ? stage.inputLabels[i] : `h${i + 1}`}
+                              value={w}
+                              disabled={frozen('knob')}
+                              onChange={(v) =>
+                                editNet((n) => {
+                                  n.layers[selLayer].w[o][i] = v;
+                                })
+                              }
+                            />
+                          ))}
+                          <Knob
+                            label="バイアス"
+                            value={net.layers[selLayer].b[o]}
+                            disabled={frozen('knob')}
+                            onChange={(v) =>
+                              editNet((n) => {
+                                n.layers[selLayer].b[o] = v;
+                              })
+                            }
+                          />
+                        </div>
+                      ))
+                    )}
+                  </div>
+                )}
+              </Section>
             )}
-          </Section>
 
-          {!free && (
-            <Section title="この先で増える操作">
-              <div className="sb-oplist">
-                {ALL_OPS.map((o) => (
-                  <span key={o} className="sb-op" data-on={can(o) || undefined}>
-                    {OP_LABEL[o]}
-                  </span>
-                ))}
-              </div>
-            </Section>
-          )}
-        </aside>
+            {showTrainBox && (
+              <Section title="学習">
+                {can('loss') && (
+                  <Row label="損失関数" wrap>
+                    {LOSS_ORDER.map((id) =>
+                      chip(LOSSES[id].label, cfg.loss === id, () => setCfg((v) => ({ ...v, loss: id })), false, LOSSES[id].note),
+                    )}
+                  </Row>
+                )}
+                {can('optimizer') && (
+                  <Row label="オプティマイザ" wrap>
+                    {OPTIMIZER_ORDER.map((id) =>
+                      chip(
+                        OPTIMIZERS[id].label,
+                        cfg.optimizer === id,
+                        () => {
+                          setCfg((v) => ({ ...v, optimizer: id }));
+                          core.current.opt = createOptimizerState(net);
+                        },
+                        false,
+                        OPTIMIZERS[id].note,
+                      ),
+                    )}
+                  </Row>
+                )}
+                {can('lr') && (
+                  <Row label={`学習率 ${cfg.lr < 0.01 ? cfg.lr.toFixed(4) : cfg.lr.toFixed(3)}`}>
+                    <input
+                      type="range"
+                      min={0}
+                      max={100}
+                      value={lrPos}
+                      onChange={(e) => {
+                        const p = Number(e.target.value) / 100;
+                        const v = 10 ** (-3 + p * 3);
+                        setCfg((c2) => ({ ...c2, lr: Number(v.toPrecision(2)) }));
+                      }}
+                    />
+                  </Row>
+                )}
+                {can('batch') && (
+                  <Row label="バッチ" wrap>
+                    {[null, 4, 8, 16].map((b) =>
+                      chip(b === null ? '全部' : String(b), cfg.batch === b, () => setCfg((v) => ({ ...v, batch: b }))),
+                    )}
+                  </Row>
+                )}
+                {can('init') && (
+                  <Row label="初期化" wrap>
+                    {INIT_ORDER.map((id) =>
+                      chip(
+                        INITS[id].label.replace('ばらつかせる', 'ばらつき'),
+                        initId === id,
+                        () => {
+                          setInitId(id);
+                          core.current = build(shapeOf(net, inDim), id, seed, data, cfg.loss);
+                          setPlaying(false);
+                          setWasCleared(false);
+                          force();
+                        },
+                        false,
+                        INITS[id].note,
+                      ),
+                    )}
+                    <button type="button" className="sb-btn" onClick={() => resetWeights(Math.floor(Math.random() * 1e9))}>
+                      引き直す
+                    </button>
+                  </Row>
+                )}
+              </Section>
+            )}
+
+            {showDataBox && (
+              <Section title="データ">
+                <Row label={`点の数 ${dataOpts.n}`}>
+                  <input
+                    type="range"
+                    min={10}
+                    max={300}
+                    step={10}
+                    value={dataOpts.n}
+                    onChange={(e) => setDataOpts((o) => ({ ...o, n: Number(e.target.value) }))}
+                  />
+                </Row>
+                <Row label={`ノイズ ${dataOpts.noise.toFixed(2)}`}>
+                  <input
+                    type="range"
+                    min={0}
+                    max={0.5}
+                    step={0.01}
+                    value={dataOpts.noise}
+                    onChange={(e) => setDataOpts((o) => ({ ...o, noise: Number(e.target.value) }))}
+                  />
+                </Row>
+                <Row label="">
+                  <button
+                    type="button"
+                    className="sb-btn"
+                    onClick={() => setDataOpts((o) => ({ ...o, seed: Math.floor(Math.random() * 1e9) }))}
+                  >
+                    点を取り直す
+                  </button>
+                </Row>
+              </Section>
+            )}
+          </aside>
+        )}
       </div>
 
       {flash && (
@@ -835,10 +908,10 @@ export default function Sandbox() {
 
 /* ------------------------------------------------------------------ */
 
-function Section({ title, grow, children }: { title: string; grow?: boolean; children: React.ReactNode }) {
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section className={`sb-box ${grow ? 'sb-box--grow' : ''}`}>
-      <h2>{title}</h2>
+    <section className="sb-box">
+      <h3>{title}</h3>
       {children}
     </section>
   );
@@ -846,28 +919,46 @@ function Section({ title, grow, children }: { title: string; grow?: boolean; chi
 
 function Row({
   label,
-  locked,
   wrap,
+  point,
   children,
 }: {
   label: string;
-  locked?: boolean;
   wrap?: boolean;
+  point?: boolean;
   children: React.ReactNode;
 }) {
   return (
-    <div className={`sb-row ${wrap ? 'sb-row--wrap' : ''}`} data-locked={locked || undefined}>
+    <div className={`sb-row ${wrap ? 'sb-row--wrap' : ''} ${point ? 'sb-point' : ''}`}>
       {label && <span className="sb-row__l">{label}</span>}
       <span className="sb-row__c">{children}</span>
     </div>
   );
 }
 
-function Knob({ label, value, onChange }: { label: string; value: number; onChange: (v: number) => void }) {
+function Knob({
+  label,
+  value,
+  disabled,
+  onChange,
+}: {
+  label: string;
+  value: number;
+  disabled?: boolean;
+  onChange: (v: number) => void;
+}) {
   return (
     <label className="sb-knob">
       <span className="sb-knob__l">{label}</span>
-      <input type="range" min={-3} max={3} step={0.02} value={value} onChange={(e) => onChange(Number(e.target.value))} />
+      <input
+        type="range"
+        min={-3}
+        max={3}
+        step={0.02}
+        value={value}
+        disabled={disabled}
+        onChange={(e) => onChange(Number(e.target.value))}
+      />
       <span className="sb-knob__v">{fmt(value)}</span>
     </label>
   );

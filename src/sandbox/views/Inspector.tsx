@@ -2,12 +2,12 @@ import { ACTIVATIONS } from '../engine/activations';
 import type { ForwardTrace, Network } from '../engine/types';
 import { fmt, signed } from './format';
 
-type Props = { net: Network; trace: ForwardTrace; inputLabels: string[] };
+type Props = { net: Network; trace: ForwardTrace; inputLabels: string[]; big?: boolean };
 
 /** 加重和を式のまま展開して見せる。ここが「中が見える」の中心 */
-export function Inspector({ net, trace, inputLabels }: Props) {
+export function Inspector({ net, trace, inputLabels, big }: Props) {
   return (
-    <div className="sb-inspector">
+    <div className={big ? 'sb-inspector sb-inspector--big' : 'sb-inspector'}>
       {net.layers.map((layer, li) => {
         const inputs = li === 0 ? trace.input : trace.layers[li - 1].a;
         const act = ACTIVATIONS[layer.act];

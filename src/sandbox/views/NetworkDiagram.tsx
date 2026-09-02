@@ -1,5 +1,6 @@
 import { useRef } from 'react';
 import type { ActivationId, ForwardTrace, Network } from '../engine/types';
+import { hits } from '../stages';
 import { fmt } from './format';
 
 /** 見出しカードに収まる短い名前 */
@@ -25,12 +26,16 @@ type Props = {
   trace: ForwardTrace | null;
   inDim: number;
   inputLabels: string[];
-  tool: 'inspect' | 'adjust' | 'place';
   selected: number;
   small?: boolean;
+  canAdjust?: boolean;
   canPlace?: boolean;
   canNodes?: boolean;
   maxLayers?: number;
+  /** チュートリアル中に触れてよい要素。null なら全部触れる */
+  gate?: string[] | null;
+  /** いま指さしている要素。光らせるだけで、触れるかどうかは gate が決める */
+  point?: string[] | null;
   onSelect?: (li: number) => void;
   onWeight?: (li: number, o: number, i: number, delta: number) => void;
   onBias?: (li: number, o: number, delta: number) => void;
@@ -51,12 +56,14 @@ export function NetworkDiagram({
   trace,
   inDim,
   inputLabels,
-  tool,
   selected,
   small,
+  canAdjust,
   canPlace,
   canNodes,
   maxLayers,
+  gate,
+  point,
   onSelect,
   onWeight,
   onBias,
@@ -67,24 +74,35 @@ export function NetworkDiagram({
 }: Props) {
   const drag = useRef<Drag | null>(null);
 
+  const g = gate ?? null;
+  /** その要素をいま触ってよいか */
+  const live = (id: string) => hits(g, id);
+  /** いま指さしているか（チュートリアル中だけ光る） */
+  const p = point ?? null;
+  const lit = (id: string) => !small && p !== null && hits(p, id);
+  const dead = (id: string) => (live(id) ? undefined : ({ pointerEvents: 'none' } as const));
+
   const counts = [inDim, ...net.layers.map((l) => l.b.length)];
   const cols = counts.length;
   const values: number[][] = trace
     ? [trace.input, ...trace.layers.map((l) => l.a)]
     : counts.map((n) => Array.from({ length: n }, () => 0));
 
-  const placing = tool === 'place' && !!canPlace && !small;
-  const adjusting = tool === 'adjust' && !small;
+  const placing = !!canPlace && !small;
+  const adjusting = !!canAdjust && !small;
   const roomForLayer = maxLayers === undefined || net.layers.length < maxLayers;
 
   const rows = Math.max(3, ...counts);
   const bandH = rows * ROW_GAP;
   const height = NODE_TOP + bandH + 20;
   const tail = placing ? COL_GAP * 0.75 : 24;
-  const width = 84 + (cols - 1) * COL_GAP + tail;
+  /* 見出しカードが右端で切れないよう、最後の列のぶんを見込む */
+  const width = Math.max(84 + (cols - 1) * COL_GAP + tail, 62 + (cols - 1) * COL_GAP + 66);
+  /* 列が少ないうちは大きく描く。詰まってきたら等倍寄りに戻す */
+  const zoom = cols <= 2 ? 2.2 : cols === 3 ? 1.8 : 1.5;
 
   const x = (col: number) => 62 + col * COL_GAP;
-  const gapX = (g: number) => x(g) + COL_GAP / 2;
+  const gapX = (gp: number) => x(gp) + COL_GAP / 2;
   const y = (col: number, i: number) => NODE_TOP + bandH / 2 + (i - (counts[col] - 1) / 2) * ROW_GAP;
 
   const nodeName = (col: number, i: number) =>
@@ -126,8 +144,12 @@ export function NetworkDiagram({
     const w = 116;
     const cx = x(col);
     const sel = !isInput && selected === li;
+    const id = `h:${li}`;
     return (
       <g key={`h${col}`}>
+        {!isInput && lit(id) && (
+          <rect className="sb-nd__pt" x={cx - w / 2 - 5} y={HEAD_Y - 5} width={w + 10} height={HEAD_H + 10} rx={7} />
+        )}
         <rect
           className="sb-nd__head"
           data-sel={sel || undefined}
@@ -136,6 +158,7 @@ export function NetworkDiagram({
           width={w}
           height={HEAD_H}
           rx={4}
+          style={isInput ? undefined : dead(id)}
           onClick={isInput || small ? undefined : () => onSelect?.(li)}
         />
         <text className="sb-nd__headT" x={cx - w / 2 + 9} y={HEAD_Y + 15}>
@@ -145,7 +168,13 @@ export function NetworkDiagram({
           {sub}
         </text>
         {placing && !isInput && net.layers.length > 1 && (
-          <g className="sb-nd__mini" onClick={() => onRemove?.(li)} role="button" aria-label={`${title}を外す`}>
+          <g
+            className="sb-nd__mini"
+            style={dead('plus')}
+            onClick={() => onRemove?.(li)}
+            role="button"
+            aria-label={`${title}を外す`}
+          >
             <rect x={cx + w / 2 - 20} y={HEAD_Y + 4} width={16} height={16} rx={3} />
             <text x={cx + w / 2 - 12} y={HEAD_Y + 16} textAnchor="middle">
               ×
@@ -153,7 +182,7 @@ export function NetworkDiagram({
           </g>
         )}
         {!small && canNodes && !isInput && !isOut && (
-          <g className="sb-nd__nodes">
+          <g className="sb-nd__nodes" style={dead('nodes')}>
             <g className="sb-nd__mini" onClick={() => onNodes?.(li, -1)} role="button" aria-label="ノードを減らす">
               <rect x={cx - 34} y={HEAD_Y + HEAD_H + 6} width={18} height={18} rx={3} />
               <text x={cx - 25} y={HEAD_Y + HEAD_H + 19} textAnchor="middle">
@@ -175,8 +204,8 @@ export function NetworkDiagram({
   return (
     <svg
       className={`sb-nd ${adjusting ? 'sb-nd--adjust' : ''}`}
-      width={width * 1.5}
-      height={height * 1.5}
+      width={width * zoom}
+      height={height * zoom}
       viewBox={`0 0 ${width} ${height}`}
       preserveAspectRatio="xMidYMid meet"
       onPointerMove={move}
@@ -188,6 +217,7 @@ export function NetworkDiagram({
       {net.layers.map((layer, li) =>
         layer.w.map((row, o) =>
           row.map((w, i) => {
+            const id = `e:${li}:${o}:${i}`;
             const x1 = x(li);
             const y1 = y(li, i);
             const x2 = x(li + 1);
@@ -197,6 +227,9 @@ export function NetworkDiagram({
             const my = y1 + (y2 - y1) * t;
             return (
               <g key={`e${li}-${o}-${i}`}>
+                {lit(id) && (
+                  <line className="sb-nd__pt" x1={x1 + R} y1={y1} x2={x2 - R} y2={y2} strokeWidth={13} strokeLinecap="round" />
+                )}
                 <line
                   x1={x1 + R}
                   y1={y1}
@@ -215,6 +248,7 @@ export function NetworkDiagram({
                     x2={x2 - R}
                     y2={y2}
                     strokeWidth={14}
+                    style={dead(id)}
                     onPointerDown={(e) => begin(e, { kind: 'w', li, o, i })}
                     onMouseEnter={() => onHover?.(`${nodeName(li, i)} → ${nodeName(li + 1, o)} の重み ${fmt(w, 3)}`)}
                     onMouseLeave={() => onHover?.(null)}
@@ -238,14 +272,17 @@ export function NetworkDiagram({
         Array.from({ length: n }, (_, i) => {
           const bias = col > 0 ? net.layers[col - 1].b[i] : null;
           const v = values[col][i];
+          const id = `n:${col - 1}:${i}`;
           return (
             <g key={`n${col}-${i}`}>
+              {col > 0 && lit(id) && <circle className="sb-nd__pt" cx={x(col)} cy={y(col, i)} r={R + 7} strokeWidth={4} />}
               <circle
                 cx={x(col)}
                 cy={y(col, i)}
                 r={R}
                 fill={fill(v)}
                 className={`sb-nd__node ${col > 0 && adjusting ? 'sb-nd__node--drag' : ''}`}
+                style={col > 0 ? dead(id) : undefined}
                 onPointerDown={col > 0 ? (e) => begin(e, { kind: 'b', li: col - 1, o: i, i: 0 }) : undefined}
                 onMouseEnter={
                   small
@@ -264,6 +301,11 @@ export function NetworkDiagram({
                   {fmt(v, 1)}
                 </text>
               )}
+              {col === 0 && !small && (
+                <text className="sb-nd__inl" x={x(col) - R - 8} y={y(col, i) + 4} textAnchor="end">
+                  {inputLabels[i] ?? `x${i + 1}`}
+                </text>
+              )}
             </g>
           );
         }),
@@ -273,16 +315,17 @@ export function NetworkDiagram({
 
       {placing &&
         roomForLayer &&
-        Array.from({ length: net.layers.length + 1 }, (_, g) => (
+        Array.from({ length: net.layers.length + 1 }, (_, gp) => (
           <g
-            key={`g${g}`}
-            className="sb-nd__ins"
-            onClick={() => onInsert?.(g)}
+            key={`g${gp}`}
+            className={`sb-nd__ins ${lit('plus') ? 'sb-nd__ins--lit' : ''}`}
+            style={dead('plus')}
+            onClick={() => onInsert?.(gp)}
             role="button"
-            aria-label={`ここに層を置く（${g + 1}番目）`}
+            aria-label={`ここに層を置く（${gp + 1}番目）`}
           >
-            <circle cx={gapX(g)} cy={NODE_TOP + bandH / 2} r={15} />
-            <text x={gapX(g)} y={NODE_TOP + bandH / 2 + 6} textAnchor="middle">
+            <circle cx={gapX(gp)} cy={NODE_TOP + bandH / 2} r={15} />
+            <text x={gapX(gp)} y={NODE_TOP + bandH / 2 + 6} textAnchor="middle">
               ＋
             </text>
           </g>
