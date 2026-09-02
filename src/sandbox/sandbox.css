@@ -316,14 +316,36 @@
   padding: 0 5px;
 }
 
+/* 次のステージ。画面の右下に常時置く。層ブロックの箱と同じくらいの大きさ */
 .sb-next {
+  position: absolute;
+  right: 14px;
+  bottom: 14px;
+  z-index: 40;
+  width: 150px;
+  height: 46px;
+  border-radius: 5px;
+  font-size: 14.5px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  background: var(--sb-panel2);
+  color: #6b665e;
+  border: 1px solid var(--sb-line);
+  cursor: not-allowed;
+  /* 右パネルの上に浮くので、影で手前だと分かるようにする */
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.55);
+}
+.sb-next[data-on] {
   background: var(--sb-ok);
   color: #171715;
-  border: none;
-  border-radius: 3px;
-  padding: 3px 10px;
-  font-weight: 700;
+  border-color: var(--sb-ok);
   cursor: pointer;
+  box-shadow:
+    0 0 0 4px rgba(143, 191, 106, 0.16),
+    0 4px 16px rgba(0, 0, 0, 0.5);
+}
+.sb-next[data-on]:hover {
+  filter: brightness(1.08);
 }
 
 /* ---------- 3段目: 学習の操作 ---------- */
@@ -509,7 +531,8 @@
 .sb-side {
   background: var(--sb-panel);
   border-left: 1px solid var(--sb-line);
-  padding: 7px;
+  /* 下は「次のステージ」のボタンが重なるので空けておく */
+  padding: 7px 7px 68px;
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -717,6 +740,22 @@
 .sb-nd__node {
   stroke: var(--sb-line);
   stroke-width: 1.4;
+}
+/* バイアスが未解禁の丸。薄くして鍵印を添える */
+.sb-nd__node--locked {
+  opacity: 0.55;
+  stroke-dasharray: 3 3;
+}
+.sb-nd__lock path {
+  stroke: #7d766b;
+  stroke-width: 1.5;
+}
+.sb-nd__lock rect {
+  fill: #7d766b;
+}
+.sb-nd__lockT {
+  fill: var(--sb-dim);
+  font-size: 9.5px;
 }
 .sb-nd__val {
   fill: var(--sb-text);

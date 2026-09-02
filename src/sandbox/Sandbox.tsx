@@ -17,7 +17,17 @@ import type {
   ParamShape,
   TrainConfig,
 } from './engine/types';
-import { ALL_OPS, hits, opsUpTo, STAGES, VIEW_LABEL, type OpId, type Stage, type ViewId } from './stages';
+import {
+  ALL_OPS,
+  hits,
+  judgeDelay,
+  opsUpTo,
+  STAGES,
+  VIEW_LABEL,
+  type OpId,
+  type Stage,
+  type ViewId,
+} from './stages';
 import { ActivationChart } from './views/ActivationChart';
 import { DecisionPlane } from './views/DecisionPlane';
 import { FitCurve } from './views/FitCurve';
@@ -26,7 +36,7 @@ import { fmt } from './views/format';
 import { GradBars } from './views/GradBars';
 import { Inspector } from './views/Inspector';
 import { LossBar } from './views/LossBar';
-import { NetworkDiagram, W_MAX, W_MIN, W_STEP, type Cue } from './views/NetworkDiagram';
+import { NetworkDiagram, W_RANGE_DEFAULT, W_STEP, type Cue } from './views/NetworkDiagram';
 import { TruthTable, type LogicRow } from './views/TruthTable';
 import './sandbox.css';
 
@@ -37,8 +47,10 @@ const sci = (v: number) => (!Number.isFinite(v) ? '—' : v !== 0 && Math.abs(v)
 
 const HIST_MAX = 4000;
 const DEFAULT_HIDDEN = 4;
-/** ここまでのステージは、指示された1手以外を触れなくする */
-const LOCK_UNTIL = 3;
+/** ここまでのステージは、指示された1手以外を触れなくする（1 平均 〜 5 直線） */
+const LOCK_UNTIL = 4;
+/** 合格の緑を見せている時間（ms）。CSS の sb-cue-pop と合わせる */
+const PASS_MS = 280;
 
 type Entry = { step: number; net: Network; loss: number };
 
@@ -55,20 +67,21 @@ type Core = {
 type Tut = { i: number; base: Network; baseStep: number; scrubbed: boolean };
 
 /**
- * 1点ずつ出す進行（ステージ1）。
- * check = 点が来た瞬間の判定、fail = 揺れている最中、pass = 合格の演出中、wait = 直すのを待つ。
+ * 1点ずつ出す進行（ステージ1・2）。
+ * idle = 予約なしで待っている、armed = 判定を予約した、pass = 合格の演出中、fail = 揺れている最中。
+ * 判定はドラッグ中には走らない。予約するきっかけは「新しい問題が出た」「指を離した」の2つだけ。
  */
 type Tick = {
   pos: number;
   /** 落とさずに通した連続数。データの数に届いたらクリア */
   streak: number;
   fails: number;
-  phase: 'wait' | 'check' | 'pass' | 'fail';
+  phase: 'idle' | 'armed' | 'pass' | 'fail';
   nonce: number;
   done: boolean;
 };
 
-const newTick = (): Tick => ({ pos: 0, streak: 0, fails: 0, phase: 'wait', nonce: 0, done: false });
+const newTick = (): Tick => ({ pos: 0, streak: 0, fails: 0, phase: 'idle', nonce: 0, done: false });
 
 const shapeOf = (net: Network, inDim: number): Shape => ({
   sizes: [inDim, ...net.layers.map((l) => l.b.length)],
@@ -144,10 +157,12 @@ export default function Sandbox() {
     net.layers[0].w[0].length === inDim &&
     net.layers[net.layers.length - 1].b.length === outDim;
 
-  /* -------------------- 1点ずつ出す進行（ステージ1） -------------------- */
+  /* -------------------- 1点ずつ出す進行（ステージ1・2） -------------------- */
 
   const tick = useRef<Tick>(newTick());
   const timer = useRef<number | null>(null);
+  /** 線や丸を掴んでいる間は true。この間は判定しない */
+  const dragging = useRef(false);
   const stopTimer = () => {
     if (timer.current !== null) {
       clearTimeout(timer.current);
@@ -165,60 +180,111 @@ export default function Sandbox() {
   /** 何度も落としている人にだけ、1行のヒントを出す */
   const hintOn = tickOn && !!stage.ticker && !tk.done && tk.fails >= stage.ticker.hintAfter;
 
-  const advance = () => {
+  /* タイマーから呼ぶので、そのときの最新の値を ref で見る */
+  const now = useRef({ net, data, stage, valid, tickOn });
+  now.current = { net, data, stage, valid, tickOn };
+
+  /** delay 後の判定を予約する。ドラッグ中は呼ばない */
+  const arm = () => {
+    stopTimer();
+    const { stage: s } = now.current;
+    const conf = s.ticker;
     const t = tick.current;
-    const n = data.x.length;
-    t.streak += 1;
-    if (t.streak >= n) {
-      t.done = true;
-      t.phase = 'wait';
+    if (!conf || t.done) return;
+    t.phase = 'armed';
+    timer.current = window.setTimeout(() => {
+      timer.current = null;
+      judgePoint();
+    }, judgeDelay(conf, t.streak));
+  };
+
+  /** 次の問題を出す。出した時点でまた判定を予約する */
+  const nextPoint = () => {
+    const t = tick.current;
+    t.pos = (t.pos + 1) % now.current.data.x.length;
+    t.phase = 'idle';
+    t.nonce += 1;
+    if (!dragging.current) arm();
+    force();
+  };
+
+  /** いまの重みで、いまの点が合っているかを見る */
+  const judgePoint = () => {
+    const { net: n, data: d, stage: s, valid: v } = now.current;
+    const conf = s.ticker;
+    const t = tick.current;
+    if (!conf || t.done) return;
+    stopTimer();
+    if (!v) {
+      t.phase = 'idle';
+      force();
+      return;
+    }
+    const out = forward(n, d.x[t.pos]).output[0];
+    t.nonce += 1;
+    if (Math.abs(out - d.y[t.pos][0]) <= conf.tol) {
+      t.streak += 1;
+      t.phase = 'pass';
+      /* 一周したらクリア */
+      if (t.streak >= d.x.length) t.done = true;
+      else timer.current = window.setTimeout(() => {
+        timer.current = null;
+        nextPoint();
+      }, PASS_MS);
     } else {
-      t.pos = (t.pos + 1) % n;
-      t.phase = 'check';
-      t.nonce += 1;
+      t.streak = 0;
+      t.fails += 1;
+      t.phase = 'fail';
+      /* 揺らしたらそこで止まって待つ。次の予約は指を離したときに入る */
+      timer.current = window.setTimeout(() => {
+        timer.current = null;
+        tick.current.phase = 'idle';
+        force();
+      }, conf.shake);
     }
     force();
   };
 
-  /* ドラッグ中も毎フレーム走らせたいので、依存配列を付けない */
-  useEffect(() => {
-    const conf = stage.ticker;
-    if (!tickOn || !conf || !valid) return;
+  /** 掴んだら予約を取り消し、離したら予約し直す */
+  const handleDrag = (active: boolean) => {
+    dragging.current = active;
     const t = tick.current;
-    if (t.done || t.phase === 'pass' || t.phase === 'fail') return;
-    const out = forward(net, data.x[t.pos]).output[0];
-    const ok = Math.abs(out - data.y[t.pos][0]) <= conf.tol;
-    if (!ok) {
-      /* 次の点に切り替わった瞬間だけ、外れていることを見せる */
-      if (t.phase !== 'check') return;
-      t.phase = 'fail';
-      t.fails += 1;
-      t.streak = 0;
-      t.nonce += 1;
-      stopTimer();
-      timer.current = window.setTimeout(() => {
-        timer.current = null;
-        tick.current.phase = 'wait';
+    if (!now.current.tickOn || t.done) return;
+    if (active) {
+      if (t.phase === 'armed') {
+        stopTimer();
+        t.phase = 'idle';
         force();
-      }, conf.shake);
+      }
+    } else if (t.phase === 'idle' || t.phase === 'fail') {
+      /* 揺れている最中に直して離したときは、揺れを打ち切って予約に入る */
+      arm();
       force();
+    }
+  };
+
+  /* 出題が始まった最初の1問ぶんの予約 */
+  const armed = useRef(false);
+  useEffect(() => {
+    if (!tickOn) {
+      armed.current = false;
       return;
     }
-    t.phase = 'pass';
-    t.nonce += 1;
-    stopTimer();
-    timer.current = window.setTimeout(() => {
-      timer.current = null;
-      advance();
-    }, Math.max(conf.min, Math.round(conf.base * conf.decay ** t.streak)));
+    if (armed.current) return;
+    armed.current = true;
+    tick.current.phase = 'idle';
+    tick.current.nonce += 1;
+    if (!dragging.current) arm();
     force();
-  });
+  }, [tickOn]);
 
   /* -------------------- 判定 -------------------- */
 
   const judge = valid ? datasetLoss(net, data, stage.judgeLoss) : NaN;
   const params = valid ? paramCount(net) : 0;
   const lim = stage.limits;
+  /** 縦目盛りとつまみの上下限。序盤は狭くする */
+  const wRange = stage.wRange ?? W_RANGE_DEFAULT;
   const overParams = !!lim?.maxParams && params > lim.maxParams;
   const overLayers = !!lim?.maxLayers && net.layers.length > lim.maxLayers;
   const cleared = usingTicker ? tk.done : valid && judge <= stage.threshold && !overParams && !overLayers;
@@ -466,6 +532,8 @@ export default function Sandbox() {
     const cf = defaultCfg(s);
     stopTimer();
     tick.current = newTick();
+    dragging.current = false;
+    armed.current = false;
     core.current = build(s.start, 'xavier', 77, d, cf.loss);
     setStageIdx(idx);
     setMaxStage((m) => Math.max(m, idx));
@@ -554,9 +622,11 @@ export default function Sandbox() {
             selected={selLayer}
             small={small}
             canAdjust={can('weights')}
+            canBias={can('bias')}
             canPlace={can('place')}
             canNodes={can('nodes')}
             maxLayers={lim?.maxLayers}
+            wRange={wRange}
             gate={small ? null : gate}
             point={small ? null : point}
             cue={small ? null : cue}
@@ -575,6 +645,7 @@ export default function Sandbox() {
             onRemove={removeLayer}
             onNodes={setNodes}
             onHover={setHover}
+            onDrag={small ? undefined : handleDrag}
           />
         );
       case 'calc':
@@ -748,11 +819,6 @@ export default function Sandbox() {
               層 {net.layers.length} / {lim!.maxLayers}
             </span>
           )}
-          {cleared && stageIdx < STAGES.length - 1 && (
-            <button type="button" className="sb-next" onClick={() => goStage(stageIdx + 1)}>
-              次のステージへ →
-            </button>
-          )}
         </div>
       </div>
 
@@ -815,7 +881,9 @@ export default function Sandbox() {
         {showSide && (
           <aside className="sb-side">
             {showLayerBox && (
-              <Section title={`層 ${selLayer + 1}${isOutLayer ? '（出力）' : ''}`}>
+              <Section
+                title={isOutLayer ? '出力層' : net.layers.length <= 2 ? '中間層' : `中間層${selLayer + 1}`}
+              >
                 {can('nodes') && !isOutLayer && (
                   <Row label="ノード数">
                     <button type="button" className="sb-mini" onClick={() => setNodes(selLayer, -1)} disabled={frozen('nodes')}>
@@ -873,6 +941,7 @@ export default function Sandbox() {
                               key={i}
                               label={selLayer === 0 ? stage.inputLabels[i] : `h${i + 1}`}
                               value={w}
+                              range={wRange}
                               disabled={frozen('knob')}
                               onChange={(v) =>
                                 editNet((n) => {
@@ -884,7 +953,8 @@ export default function Sandbox() {
                           <Knob
                             label="バイアス"
                             value={net.layers[selLayer].b[o]}
-                            disabled={frozen('knob')}
+                            range={wRange}
+                            disabled={frozen('knob') || !can('bias')}
                             onChange={(v) =>
                               editNet((n) => {
                                 n.layers[selLayer].b[o] = v;
@@ -1008,6 +1078,17 @@ export default function Sandbox() {
         )}
       </div>
 
+      {/* ---- 次のステージ。右下に常時置き、クリアするまでは灰色 ---- */}
+      <button
+        type="button"
+        className="sb-next"
+        data-on={(cleared && stageIdx < STAGES.length - 1) || undefined}
+        disabled={!cleared || stageIdx >= STAGES.length - 1}
+        onClick={() => goStage(stageIdx + 1)}
+      >
+        次のステージ
+      </button>
+
       {flash && (
         <div className="sb-flash" role="status" data-clear={flash === 'クリア' || undefined}>
           {flash}
@@ -1062,11 +1143,13 @@ function Row({
 function Knob({
   label,
   value,
+  range,
   disabled,
   onChange,
 }: {
   label: string;
   value: number;
+  range: number;
   disabled?: boolean;
   onChange: (v: number) => void;
 }) {
@@ -1075,8 +1158,8 @@ function Knob({
       <span className="sb-knob__l">{label}</span>
       <input
         type="range"
-        min={W_MIN}
-        max={W_MAX}
+        min={-range}
+        max={range}
         step={W_STEP}
         value={value}
         disabled={disabled}

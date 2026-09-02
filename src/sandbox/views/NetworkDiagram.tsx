@@ -13,19 +13,14 @@ export const ACT_SHORT: Record<ActivationId, string> = {
   relu: 'ReLU',
 };
 
-/* 重みとバイアスの上下限。押している間に出る縦目盛りの範囲がそのまま上下限になる */
-export const W_MIN = -3;
-export const W_MAX = 3;
+/* 重みとバイアスの上下限。押している間に出る縦目盛りの範囲がそのまま上下限になる。
+   範囲はステージごとに変わる（序盤は ±1.5、AND 以降は ±3） */
+export const W_RANGE_DEFAULT = 3;
 export const W_STEP = 0.05;
-/** 目盛りの高さ（画面px）。上下いっぱいで W_MIN〜W_MAX */
+/** 目盛りの高さ（画面px）。上下いっぱいで −range〜+range */
 const GAUGE_H = 220;
-
-const clampW = (v: number) => Math.min(W_MAX, Math.max(W_MIN, v));
-const snapW = (v: number) => Number((Math.round(clampW(v) / W_STEP) * W_STEP).toFixed(2));
-/** 値 → 目盛りの中での上からの位置（px） */
-const gaugeY = (v: number) => ((W_MAX - v) / (W_MAX - W_MIN)) * GAUGE_H;
-
-const TICKS = Array.from({ length: 25 }, (_, i) => Number((W_MIN + i * 0.25).toFixed(2)));
+/** 目盛りの刻み */
+const TICK_STEP = 0.25;
 
 const COL_GAP = 152;
 const ROW_GAP = 48;
@@ -57,9 +52,13 @@ type Props = {
   selected: number;
   small?: boolean;
   canAdjust?: boolean;
+  /** false ならバイアスは動かせない（丸を押しても目盛りが出ない） */
+  canBias?: boolean;
   canPlace?: boolean;
   canNodes?: boolean;
   maxLayers?: number;
+  /** 縦目盛りの範囲（±この値） */
+  wRange?: number;
   /** チュートリアル中に触れてよい要素。null なら全部触れる */
   gate?: string[] | null;
   /** いま指さしている要素。光らせるだけで、触れるかどうかは gate が決める */
@@ -67,13 +66,15 @@ type Props = {
   /** あれば入力の左と出力の右に箱を出す */
   cue?: Cue | null;
   onSelect?: (li: number) => void;
-  /** 重みを絶対値で置く（上下限は W_MIN〜W_MAX） */
+  /** 重みを絶対値で置く（上下限は ±wRange） */
   onWeight?: (li: number, o: number, i: number, value: number) => void;
   onBias?: (li: number, o: number, value: number) => void;
   onInsert?: (gap: number) => void;
   onRemove?: (li: number) => void;
   onNodes?: (li: number, delta: number) => void;
   onHover?: (text: string | null) => void;
+  /** 掴んでいる間だけ true。判定を止めるのに使う */
+  onDrag?: (active: boolean) => void;
 };
 
 /** 値の大きさを塗りの濃さに。正なら橙、負なら青緑 */
@@ -90,9 +91,11 @@ export function NetworkDiagram({
   selected,
   small,
   canAdjust,
+  canBias = true,
   canPlace,
   canNodes,
   maxLayers,
+  wRange,
   gate,
   point,
   cue,
@@ -103,13 +106,25 @@ export function NetworkDiagram({
   onRemove,
   onNodes,
   onHover,
+  onDrag,
 }: Props) {
   const drag = useRef<Drag | null>(null);
   const [gauge, setGauge] = useState<Gauge | null>(null);
 
   /* window のハンドラは張りっぱなしなので、呼ぶ先は毎回いまのものを見る */
-  const cb = useRef({ onWeight, onBias });
-  cb.current = { onWeight, onBias };
+  const cb = useRef({ onWeight, onBias, onDrag });
+  cb.current = { onWeight, onBias, onDrag };
+
+  /* 目盛りの範囲。そのまま値の上下限になる */
+  const wMax = wRange ?? W_RANGE_DEFAULT;
+  const wMin = -wMax;
+  const clampW = (v: number) => Math.min(wMax, Math.max(wMin, v));
+  const snapW = (v: number) => Number((Math.round(clampW(v) / W_STEP) * W_STEP).toFixed(2));
+  /** 値 → 目盛りの中での上からの位置（px） */
+  const gaugeY = (v: number) => ((wMax - v) / (wMax - wMin)) * GAUGE_H;
+  const ticks = Array.from({ length: Math.round((wMax - wMin) / TICK_STEP) + 1 }, (_, i) =>
+    Number((wMin + i * TICK_STEP).toFixed(2)),
+  );
 
   const g = gate ?? null;
   /** その要素をいま触ってよいか */
@@ -169,6 +184,7 @@ export function NetworkDiagram({
       label,
       flip,
     });
+    onDrag?.(true);
   };
 
   useEffect(() => {
@@ -176,7 +192,7 @@ export function NetworkDiagram({
     const move = (e: PointerEvent) => {
       const d = drag.current;
       if (!d) return;
-      const raw = d.from + ((d.y - e.clientY) * (W_MAX - W_MIN)) / GAUGE_H;
+      const raw = d.from + ((d.y - e.clientY) * (wMax - wMin)) / GAUGE_H;
       const v = snapW(raw);
       setGauge((cur) => (cur && cur.value === v ? cur : cur && { ...cur, value: v }));
       if (d.kind === 'w') cb.current.onWeight?.(d.li, d.o, d.i, v);
@@ -185,6 +201,7 @@ export function NetworkDiagram({
     const end = () => {
       drag.current = null;
       setGauge(null);
+      cb.current.onDrag?.(false);
     };
     window.addEventListener('pointermove', move);
     window.addEventListener('pointerup', end);
@@ -203,7 +220,8 @@ export function NetworkDiagram({
     const li = col - 1;
     const isInput = col === 0;
     const isOut = col === cols - 1 && !isInput;
-    const title = isInput ? '入力' : isOut ? '出力' : `層${col}`;
+    /* 中間層が1つだけなら番号を付けない */
+    const title = isInput ? '入力層' : isOut ? '出力層' : cols - 2 <= 1 ? '中間層' : `中間層${col}`;
     const sub = isInput
       ? Array.from({ length: inDim }, (_, i) => inputLabels[i] ?? `x${i + 1}`).join(' ')
       : `${counts[col]}個・${ACT_SHORT[net.layers[li].act]}`;
@@ -285,10 +303,10 @@ export function NetworkDiagram({
     return (
       <g className="sb-cue" data-state={cue.state} key={`cue-${cue.nonce}`}>
         <text className="sb-cue__cap" x={inX} y={capY} textAnchor="middle">
-          入る数
+          入力
         </text>
         <text className="sb-cue__cap" x={outX} y={capY} textAnchor="middle">
-          出したい数
+          出力
         </text>
         {cue.inputs.slice(0, inDim).map((v, i) => box(inX, y(0, i), fmt(v, 1), `ci${i}`))}
         {box(outX, y(cols - 1, 0), fmt(cue.target, 2), 'ct')}
@@ -368,6 +386,8 @@ export function NetworkDiagram({
             const bias = col > 0 ? net.layers[col - 1].b[i] : null;
             const v = values[col][i];
             const id = `n:${col - 1}:${i}`;
+            /* バイアスが未解禁の間は掴めない。鍵印を添えて分かるようにする */
+            const locked = col > 0 && !canBias;
             return (
               <g key={`n${col}-${i}`}>
                 {col > 0 && lit(id) && <circle className="sb-nd__pt" cx={x(col)} cy={y(col, i)} r={R + 7} strokeWidth={4} />}
@@ -376,10 +396,12 @@ export function NetworkDiagram({
                   cy={y(col, i)}
                   r={R}
                   fill={fill(v)}
-                  className={`sb-nd__node ${col > 0 && adjusting ? 'sb-nd__node--drag' : ''}`}
+                  className={`sb-nd__node ${col > 0 && adjusting && !locked ? 'sb-nd__node--drag' : ''} ${
+                    locked ? 'sb-nd__node--locked' : ''
+                  }`}
                   style={col > 0 ? dead(id) : undefined}
                   onPointerDown={
-                    col > 0
+                    col > 0 && !locked
                       ? (e) => begin(e, { kind: 'b', li: col - 1, o: i, i: 0 }, bias ?? 0, `${nodeName(col, i)} のバイアス`)
                       : undefined
                   }
@@ -390,11 +412,25 @@ export function NetworkDiagram({
                           onHover?.(
                             bias === null
                               ? `${nodeName(col, i)} = ${fmt(v, 3)}`
-                              : `${nodeName(col, i)} の出力 ${fmt(v, 3)} ／ バイアス ${fmt(bias, 3)}`,
+                              : locked
+                                ? `${nodeName(col, i)} の出力 ${fmt(v, 3)} ／ バイアスは ${bias ? fmt(bias, 2) : '0'} で固定`
+                                : `${nodeName(col, i)} の出力 ${fmt(v, 3)} ／ バイアス ${fmt(bias, 3)}`,
                           )
                   }
                   onMouseLeave={small ? undefined : () => onHover?.(null)}
                 />
+                {locked && !small && (
+                  <g className="sb-nd__lock" pointerEvents="none">
+                    <path
+                      d={`M ${x(col) - 3.2} ${y(col, i) + R + 8} v -2.6 a 3.2 3.2 0 0 1 6.4 0 v 2.6`}
+                      fill="none"
+                    />
+                    <rect x={x(col) - 5.4} y={y(col, i) + R + 7} width={10.8} height={7.6} rx={1.6} />
+                    <text className="sb-nd__lockT" x={x(col)} y={y(col, i) + R + 26} textAnchor="middle">
+                      バイアス {bias ? fmt(bias, 2) : '0'} で固定
+                    </text>
+                  </g>
+                )}
                 {rows <= 6 && !small && (
                   <text
                     className={`sb-nd__val ${boxes && col === cols - 1 ? 'sb-nd__val--fine' : ''}`}
@@ -453,7 +489,7 @@ export function NetworkDiagram({
               {gauge.label}
             </span>
             <div className="sb-gauge__track">
-              {TICKS.map((v) => (
+              {ticks.map((v) => (
                 <i
                   key={v}
                   className="sb-gauge__tick"
@@ -465,10 +501,10 @@ export function NetworkDiagram({
               <i className="sb-gauge__knob" style={{ top: gaugeY(gauge.value) }} />
             </div>
             <span className="sb-gauge__end" style={{ top: -1 }}>
-              +{W_MAX}
+              +{wMax}
             </span>
             <span className="sb-gauge__end" style={{ top: GAUGE_H - 12 }}>
-              −{-W_MIN}
+              −{wMax}
             </span>
             <span className="sb-gauge__zero" style={{ top: gaugeY(0) - 7 }}>
               0

@@ -9,6 +9,7 @@ export type OpId =
   | 'nodes'
   | 'activation'
   | 'weights'
+  | 'bias'
   | 'knob'
   | 'train'
   | 'lr'
@@ -23,6 +24,7 @@ export const OP_LABEL: Record<OpId, string> = {
   nodes: 'ノード数',
   activation: '活性化関数',
   weights: '重みを手で置く',
+  bias: 'バイアスを手で置く',
   knob: '右のつまみ',
   train: '学習させる',
   lr: '学習率',
@@ -79,17 +81,18 @@ export type TutCtx = {
 export type TutStep = { say: string; targets: string[]; done: (c: TutCtx) => boolean };
 
 /**
- * 1点ずつ合わせさせる出題（ステージ1だけ）。
+ * 1点ずつ合わせさせる出題（ステージ1・2）。
  * 手で確率的勾配降下をやることになるので、あとの「▶ を押す」の伏線になる。
+ * 判定はドラッグ中には走らない。指を離すか、新しい問題が出たときに予約する。
  */
 export type Ticker = {
   /** これ以下のずれなら合格 */
   tol: number;
-  /** 最初の切り替え間隔（ms） */
+  /** 予約から判定までの間（ms）。連続0回のときの値 */
   base: number;
-  /** 連続で通すたびに間隔にかける倍率 */
-  decay: number;
-  /** 間隔の下限（ms） */
+  /** 連続で1回通すたびに縮める幅（ms） */
+  stepDown: number;
+  /** 間の下限（ms） */
   min: number;
   /** 揺れる時間（ms） */
   shake: number;
@@ -98,11 +101,20 @@ export type Ticker = {
   hint: string;
 };
 
+/** 予約から判定までの間。連続で通すほど短くなる */
+export const judgeDelay = (t: Ticker, streak: number) => Math.max(t.min, t.base - t.stepDown * streak);
+
 const wOf = (n: Network, li: number, o: number, i: number) => n.layers[li]?.w?.[o]?.[i] ?? 0;
 
 /** その値がこの手のあいだに eps 以上動いたか */
 const movedW = (c: TutCtx, li: number, o: number, i: number, eps = 0.2) =>
   Math.abs(wOf(c.net, li, o, i) - wOf(c.base, li, o, i)) >= eps;
+
+const bOf = (n: Network, li: number, o: number) => n.layers[li]?.b?.[o] ?? 0;
+
+/** バイアスがこの手のあいだに eps 以上動いたか */
+const movedB = (c: TutCtx, li: number, o: number, eps = 0.15) =>
+  Math.abs(bOf(c.net, li, o) - bOf(c.base, li, o)) >= eps;
 
 /** 中間層の2ノードが「どちらか1以上」と「両方1」になっているか（順番は問わない） */
 function xorHiddenReady(net: Network): boolean {
@@ -135,6 +147,8 @@ export type Stage = {
   unlocks: OpId[];
   /** このステージで見せてよい窓。先頭が主役 */
   views: ViewId[];
+  /** 押している間に出る縦目盛りの範囲（±この値）。省略すると 3 */
+  wRange?: number;
   /** 初期構成 */
   start: Shape;
   /** 1手ずつの指示。空なら目標だけ出す */
@@ -235,7 +249,7 @@ function logic(targets: number[]) {
 }
 
 /**
- * ステージ1で1点ずつ出す12点。正の値・小数第1位で、
+ * ステージ1・2で1点ずつ出す12点。正の値・小数第1位で、
  * 大きい値と小さい値を混ぜてある（重みが少しずれていると大きい値の点で落ちる）。
  */
 const MEAN_POINTS: [number, number][] = [
@@ -258,6 +272,12 @@ const meanData = (): Dataset => ({
   y: MEAN_POINTS.map(([a, b]) => [(a + b) / 2]),
 });
 
+/** 平均より 0.5 だけ大きい数。重みだけでは一周できないので、バイアスの出番になる */
+const offsetData = (): Dataset => ({
+  x: MEAN_POINTS.map((p) => [...p]),
+  y: MEAN_POINTS.map(([a, b]) => [(a + b) / 2 + 0.5]),
+});
+
 const SQ = (v: number): [number, number][] => [
   [-v, v],
   [-v, v],
@@ -278,7 +298,7 @@ export const STAGES: Stage[] = [
     no: 1,
     title: '平均',
     goal: '2つの数の平均を出す',
-    help: '左の箱が入ってくる数、右の箱がそのとき出したい数（2つの平均）です。線を押さえて上下に動かすとその入力を何倍するか（重み）が変わり、丸を動かすと最後に足す下駄（バイアス）が変わります。1点ごとに合わせていくと、どの点でも合う置き方が1つだけあることに気づくはずです。2本の線を同じ太さにして、丸を 0 に戻すあたりから探してください。',
+    help: '左の箱が入ってくる数、右の箱がそのとき出したい数（2つの平均）です。線を押さえて上下に動かすと、その入力を何倍するか（重み）が変わります。このステージでは丸に足す数（バイアス）を 0 に固定してあるので、動かせるのは線2本だけです。1点ごとに合わせていくと、どの点でも合う置き方が1つだけあることに気づくはずです。2本の線を同じ太さにするあたりから探してください。',
     kind: 'reg2',
     inputLabels: ['x₁', 'x₂'],
     range: [
@@ -291,6 +311,7 @@ export const STAGES: Stage[] = [
     judgeLoss: 'mse',
     unlocks: ['weights'],
     views: ['network'],
+    wRange: 1.5,
     start: { sizes: [2, 1], acts: ['identity'] },
     tutorial: [
       {
@@ -301,17 +322,54 @@ export const STAGES: Stage[] = [
     ],
     ticker: {
       tol: 0.05,
-      base: 900,
-      decay: 0.8,
-      min: 180,
+      base: 700,
+      stepDown: 50,
+      min: 250,
       shake: 400,
       hintAfter: 8,
       hint: '2本の線を同じくらいにすると、どの点でも合うかもしれません',
     },
   },
   {
-    id: 'and',
+    id: 'offset',
     no: 2,
+    title: 'バイアス',
+    goal: '平均より 0.5 大きい数を出す',
+    help: '出したい数が、前より 0.5 だけ大きくなりました。線（重み）は入ってくる数を何倍するかを決めるだけなので、線をどう置いても、小さい入力の点と大きい入力の点を同時には当てられません。丸には最後に足す数（バイアス）があります。出力の丸を押したまま上下に動かすと、それが変わります。',
+    kind: 'reg2',
+    inputLabels: ['x₁', 'x₂'],
+    range: [
+      [0, 2],
+      [0, 2],
+    ],
+    data: offsetData,
+    dataDefaults: { n: 12, noise: 0, seed: 7 },
+    threshold: 0.004,
+    judgeLoss: 'mse',
+    unlocks: ['bias'],
+    views: ['network'],
+    wRange: 1.5,
+    start: { sizes: [2, 1], acts: ['identity'] },
+    tutorial: [
+      {
+        say: '出力の丸を押したまま、上下に動かしてみてください',
+        targets: ['n:0:0'],
+        done: (c) => movedB(c, 0, 0),
+      },
+    ],
+    ticker: {
+      tol: 0.05,
+      base: 700,
+      stepDown: 50,
+      min: 250,
+      shake: 400,
+      hintAfter: 8,
+      hint: '線だけでは全部の点には合いません。丸のほうも動かしてみてください',
+    },
+  },
+  {
+    id: 'and',
+    no: 3,
     title: 'AND',
     goal: '両方が 1 のときだけ 1 を出す',
     help: '足し算だけでは 0 か 1 かのはっきりした答えは作れません。活性化関数を「ステップ」にすると、加重和が 0 以上かどうかで 0 と 1 に切り替わります。重み 1・1、バイアス −1.5 あたりを試してください。',
@@ -340,7 +398,7 @@ export const STAGES: Stage[] = [
   },
   {
     id: 'xor',
-    no: 3,
+    no: 4,
     title: 'XOR',
     goal: '片方だけが 1 のとき 1 を出す',
     help: '1本の直線ではこの4点を分けられません。だから中間の層を2つ挟んであります。h1 に「どちらか1以上（OR）」、h2 に「両方1（AND）」を作り、出力で OR − AND を取ると片方だけが1のときに 1 が出ます。',
@@ -356,7 +414,7 @@ export const STAGES: Stage[] = [
     start: { sizes: [2, 2, 1], acts: ['step', 'step'] },
     tutorial: [
       {
-        say: '「層1」の見出しを押すと、その層が選ばれます',
+        say: '「中間層」の見出しを押すと、その層が選ばれます',
         targets: ['h:0'],
         done: (c) => c.selected === 0,
       },
@@ -366,7 +424,7 @@ export const STAGES: Stage[] = [
         done: (c) => xorHiddenReady(c.net),
       },
       {
-        say: '「出力」の見出しを押し、h1 − h2 になるよう線を組んでください',
+        say: '「出力層」の見出しを押し、h1 − h2 になるよう線を組んでください',
         targets: ['e:1:*', 'n:1:*', 'knob', 'h:1'],
         done: (c) => c.cleared,
       },
@@ -374,7 +432,7 @@ export const STAGES: Stage[] = [
   },
   {
     id: 'line',
-    no: 4,
+    no: 5,
     title: '直線',
     goal: '点の並びに直線を当てる',
     help: 'ここからは手で置かずに機械にやらせます。▶ を押すと、外れ具合（損失）が小さくなる向きに重みが少しずつ動きます。下のバーは損失の推移で、左右にドラッグすると途中の状態に戻れます。',
@@ -405,7 +463,7 @@ export const STAGES: Stage[] = [
   },
   {
     id: 'square',
-    no: 5,
+    no: 6,
     title: '放物線',
     goal: '曲線 y = x² に当てる',
     help: '直線をいくら重ねても直線にしかなりません。曲げるには、活性化関数（tanh など）を挟んだ層が要ります。図の「＋」で層を置き、その層の活性化を tanh にしてから学習させてください。',
@@ -440,7 +498,7 @@ export const STAGES: Stage[] = [
   },
   {
     id: 'sin',
-    no: 6,
+    no: 7,
     title: '波',
     goal: '波 y = sin x に当てる（パラメータ 40 個以内）',
     help: '上下する波はノードをそれなりに使います。ただし今回は部品数に上限があるので、層を厚くするより、オプティマイザを Adam にして歩幅を自動調整させるほうが早く届きます。',
@@ -459,7 +517,7 @@ export const STAGES: Stage[] = [
   },
   {
     id: 'abs',
-    no: 7,
+    no: 8,
     title: '折れ線',
     goal: '折れ線 y = |x| に当てる（層は2つまで）',
     help: '角のある形は tanh のような滑らかな関数だと苦手です。ReLU は負を 0 にするだけの折れ線なので、2つ組み合わせるとちょうど |x| になります。初期化のしかたでも収束の速さが変わります。',
@@ -478,7 +536,7 @@ export const STAGES: Stage[] = [
   },
   {
     id: 'mul',
-    no: 8,
+    no: 9,
     title: 'かけ算',
     goal: 'z = x · y に当てる',
     help: 'かけ算は足し算の重ね合わせでは作れないので、そこそこの大きさの中間層が要ります。データの点数やノイズを変えると、少ない点では表面がでたらめに歪むのが見えます。',
@@ -496,7 +554,7 @@ export const STAGES: Stage[] = [
   },
   {
     id: 'circle',
-    no: 9,
+    no: 10,
     title: '円',
     goal: '円の内と外を分ける',
     help: '分類では出力を「1 である確率」とみなします。出力層の活性化をシグモイドにして、損失を交差エントロピーにするのが定石です。バッチを小さくすると1歩が軽くなり、歩数を稼げます。',
@@ -514,7 +572,7 @@ export const STAGES: Stage[] = [
   },
   {
     id: 'spiral',
-    no: 10,
+    no: 11,
     title: '渦巻き',
     goal: '2本の渦を分ける',
     help: '最後のお題です。層の数・ノード数・活性化・オプティマイザ・学習率・バッチ、全部使えます。深くすると表現力は上がりますが学習は不安定になります。組み方に正解は1つではありません。',
