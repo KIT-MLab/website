@@ -876,6 +876,17 @@ export default function Sandbox() {
             {sampleNav}
           </div>
           <div className="sb-main__stage">{renderView(main, false)}</div>
+
+          {/* 次のステージ。主役の領域内の右下に置き、右パネルには重ねない */}
+          <button
+            type="button"
+            className="sb-next"
+            data-on={(cleared && stageIdx < STAGES.length - 1) || undefined}
+            disabled={!cleared || stageIdx >= STAGES.length - 1}
+            onClick={() => goStage(stageIdx + 1)}
+          >
+            次のステージ
+          </button>
         </main>
 
         {showSide && (
@@ -1077,17 +1088,6 @@ export default function Sandbox() {
           </aside>
         )}
       </div>
-
-      {/* ---- 次のステージ。右下に常時置き、クリアするまでは灰色 ---- */}
-      <button
-        type="button"
-        className="sb-next"
-        data-on={(cleared && stageIdx < STAGES.length - 1) || undefined}
-        disabled={!cleared || stageIdx >= STAGES.length - 1}
-        onClick={() => goStage(stageIdx + 1)}
-      >
-        次のステージ
-      </button>
 
       {flash && (
         <div className="sb-flash" role="status" data-clear={flash === 'クリア' || undefined}>
