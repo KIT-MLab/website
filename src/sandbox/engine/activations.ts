@@ -5,6 +5,8 @@ export type Activation = {
   label: string;
   formula: string;
   f: (z: number) => number;
+  /** 微分 da/dz。a を渡すのは sigmoid/tanh が a だけで書けるため */
+  df: (z: number, a: number) => number;
   /** 出力の表示レンジ。グラフの縦軸に使う */
   range: [number, number];
   note: string;
@@ -18,6 +20,7 @@ export const ACTIVATIONS: Record<ActivationId, Activation> = {
     label: 'なし（そのまま）',
     formula: 'a = z',
     f: (z) => z,
+    df: () => 1,
     range: [-2, 2],
     note: '加重和をそのまま出す。これだけを何段重ねても、結局1本の直線しか作れない。',
   },
@@ -26,14 +29,16 @@ export const ACTIVATIONS: Record<ActivationId, Activation> = {
     label: 'ステップ',
     formula: 'a = (z ≥ 0) ? 1 : 0',
     f: (z) => (z >= 0 ? 1 : 0),
+    df: () => 0,
     range: [-0.2, 1.2],
-    note: '0か1かをはっきり出す。論理回路を作るならこれ。ただし段差しかないので、後で出てくる「傾きを見て学習する」ができない。',
+    note: '0か1かをはっきり出す。論理回路を作るならこれ。ただし段差しかない（傾きが常に0）ので、勾配で学習できない。',
   },
   sigmoid: {
     id: 'sigmoid',
     label: 'シグモイド',
     formula: 'a = 1 / (1 + e⁻ᶻ)',
     f: sigmoid,
+    df: (_z, a) => a * (1 - a),
     range: [-0.2, 1.2],
     note: 'ステップの角を取って滑らかにしたもの。0〜1に収まり、どこでも傾きがあるので学習できる。',
   },
@@ -42,6 +47,7 @@ export const ACTIVATIONS: Record<ActivationId, Activation> = {
     label: 'tanh',
     formula: 'a = tanh(z)',
     f: Math.tanh,
+    df: (_z, a) => 1 - a * a,
     range: [-1.2, 1.2],
     note: 'シグモイドを −1〜1 に広げた形。中心が0なので扱いやすい。',
   },
@@ -50,6 +56,7 @@ export const ACTIVATIONS: Record<ActivationId, Activation> = {
     label: 'ReLU',
     formula: 'a = max(0, z)',
     f: (z) => Math.max(0, z),
+    df: (z) => (z > 0 ? 1 : 0),
     range: [-0.5, 2],
     note: '負なら0、正ならそのまま。単純だが深い層でよく効くので、いまの主流。',
   },
