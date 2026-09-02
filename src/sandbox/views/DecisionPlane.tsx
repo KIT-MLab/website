@@ -53,10 +53,10 @@ export function DecisionPlane({ net, rows, small }: Props) {
         const x2 = HI - ((HI - LO) * (j + 0.5)) / n;
         const a = Math.min(Math.max(forward(net, [x1, x2]).output[0], 0), 1);
         const p = (j * n + i) * 4;
-        img.data[p] = 179;
-        img.data[p + 1] = 64;
-        img.data[p + 2] = 42;
-        img.data[p + 3] = Math.round(a * 48);
+        img.data[p] = 224;
+        img.data[p + 1] = 138;
+        img.data[p + 2] = 60;
+        img.data[p + 3] = Math.round(a * 90);
       }
     }
     ctx.putImageData(img, 0, 0);
@@ -69,8 +69,8 @@ export function DecisionPlane({ net, rows, small }: Props) {
     <div className="sb-plane">
       <canvas ref={ref} width={n} height={n} aria-hidden="true" />
       <svg viewBox={`0 0 ${SIZE} ${SIZE}`} role="img" aria-label="入力平面と決定境界">
-        <line x1={0} y1={sy(0)} x2={SIZE} y2={sy(0)} stroke="var(--color-ink-2)" strokeWidth={1} opacity={0.4} />
-        <line x1={sx(0)} y1={0} x2={sx(0)} y2={SIZE} stroke="var(--color-ink-2)" strokeWidth={1} opacity={0.4} />
+        <line x1={0} y1={sy(0)} x2={SIZE} y2={sy(0)} stroke="var(--sb-line)" strokeWidth={1} opacity={0.4} />
+        <line x1={sx(0)} y1={0} x2={sx(0)} y2={SIZE} stroke="var(--sb-line)" strokeWidth={1} opacity={0.4} />
 
         {line && (
           <line
@@ -78,7 +78,7 @@ export function DecisionPlane({ net, rows, small }: Props) {
             y1={sy(line[0][1])}
             x2={sx(line[1][0])}
             y2={sy(line[1][1])}
-            stroke="var(--color-accent)"
+            stroke="var(--sb-pos)"
             strokeWidth={2.5}
           />
         )}
@@ -89,8 +89,8 @@ export function DecisionPlane({ net, rows, small }: Props) {
               cx={sx(r.x[0])}
               cy={sy(r.x[1])}
               r={small ? 7 : 10}
-              fill={r.target === 1 ? 'var(--color-ink)' : 'var(--color-card)'}
-              stroke="var(--color-ink)"
+              fill={r.target === 1 ? 'var(--sb-pos)' : 'var(--sb-panel)'}
+              stroke="var(--sb-text)"
               strokeWidth={2}
             />
             {!r.ok && !small && (
