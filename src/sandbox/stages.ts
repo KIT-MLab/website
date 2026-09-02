@@ -9,6 +9,7 @@ export type OpId =
   | 'nodes'
   | 'activation'
   | 'weights'
+  | 'knob'
   | 'train'
   | 'lr'
   | 'optimizer'
@@ -22,6 +23,7 @@ export const OP_LABEL: Record<OpId, string> = {
   nodes: 'ノード数',
   activation: '活性化関数',
   weights: '重みを手で置く',
+  knob: '右のつまみ',
   train: '学習させる',
   lr: '学習率',
   optimizer: 'オプティマイザ',
@@ -76,14 +78,31 @@ export type TutCtx = {
  */
 export type TutStep = { say: string; targets: string[]; done: (c: TutCtx) => boolean };
 
+/**
+ * 1点ずつ合わせさせる出題（ステージ1だけ）。
+ * 手で確率的勾配降下をやることになるので、あとの「▶ を押す」の伏線になる。
+ */
+export type Ticker = {
+  /** これ以下のずれなら合格 */
+  tol: number;
+  /** 最初の切り替え間隔（ms） */
+  base: number;
+  /** 連続で通すたびに間隔にかける倍率 */
+  decay: number;
+  /** 間隔の下限（ms） */
+  min: number;
+  /** 揺れる時間（ms） */
+  shake: number;
+  /** この回数だけ落とすとヒントを1行出す */
+  hintAfter: number;
+  hint: string;
+};
+
 const wOf = (n: Network, li: number, o: number, i: number) => n.layers[li]?.w?.[o]?.[i] ?? 0;
-const bOf = (n: Network, li: number, o: number) => n.layers[li]?.b?.[o] ?? 0;
 
 /** その値がこの手のあいだに eps 以上動いたか */
 const movedW = (c: TutCtx, li: number, o: number, i: number, eps = 0.2) =>
   Math.abs(wOf(c.net, li, o, i) - wOf(c.base, li, o, i)) >= eps;
-const movedB = (c: TutCtx, li: number, o: number, eps = 0.2) =>
-  Math.abs(bOf(c.net, li, o) - bOf(c.base, li, o)) >= eps;
 
 /** 中間層の2ノードが「どちらか1以上」と「両方1」になっているか（順番は問わない） */
 function xorHiddenReady(net: Network): boolean {
@@ -120,6 +139,8 @@ export type Stage = {
   start: Shape;
   /** 1手ずつの指示。空なら目標だけ出す */
   tutorial: TutStep[];
+  /** あれば「1点ずつ合わせる」進行にする。クリアはデータを一周 */
+  ticker?: Ticker;
 };
 
 /* ------------------------------------------------------------------ */
@@ -213,6 +234,30 @@ function logic(targets: number[]) {
   return (): Dataset => ({ x: LOGIC_INPUTS.map((p) => [...p]), y: targets.map((v) => [v]) });
 }
 
+/**
+ * ステージ1で1点ずつ出す12点。正の値・小数第1位で、
+ * 大きい値と小さい値を混ぜてある（重みが少しずれていると大きい値の点で落ちる）。
+ */
+const MEAN_POINTS: [number, number][] = [
+  [0.4, 0.6],
+  [1.2, 0.8],
+  [0.3, 1.5],
+  [1.7, 0.5],
+  [0.9, 0.9],
+  [1.8, 1.6],
+  [0.2, 1.0],
+  [1.4, 0.3],
+  [0.7, 1.7],
+  [1.5, 1.1],
+  [0.6, 0.2],
+  [1.1, 1.4],
+];
+
+const meanData = (): Dataset => ({
+  x: MEAN_POINTS.map((p) => [...p]),
+  y: MEAN_POINTS.map(([a, b]) => [(a + b) / 2]),
+});
+
 const SQ = (v: number): [number, number][] => [
   [-v, v],
   [-v, v],
@@ -233,12 +278,15 @@ export const STAGES: Stage[] = [
     no: 1,
     title: '平均',
     goal: '2つの数の平均を出す',
-    help: '入力2つを足して2で割る、つまり (x₁ + x₂) ÷ 2 です。線の太さがその入力を何倍するか（重み）、丸が最後に足す下駄（バイアス）です。重みを両方 0.5、バイアスを 0 にすると平均になります。',
+    help: '左の箱が入ってくる数、右の箱がそのとき出したい数（2つの平均）です。線を押さえて上下に動かすとその入力を何倍するか（重み）が変わり、丸を動かすと最後に足す下駄（バイアス）が変わります。1点ごとに合わせていくと、どの点でも合う置き方が1つだけあることに気づくはずです。2本の線を同じ太さにして、丸を 0 に戻すあたりから探してください。',
     kind: 'reg2',
     inputLabels: ['x₁', 'x₂'],
-    range: SQ(1),
-    data: reg2((a, b) => (a + b) / 2, SQ(1)),
-    dataDefaults: { n: 80, noise: 0, seed: 7 },
+    range: [
+      [0, 2],
+      [0, 2],
+    ],
+    data: meanData,
+    dataDefaults: { n: 12, noise: 0, seed: 7 },
     threshold: 0.004,
     judgeLoss: 'mse',
     unlocks: ['weights'],
@@ -246,26 +294,20 @@ export const STAGES: Stage[] = [
     start: { sizes: [2, 1], acts: ['identity'] },
     tutorial: [
       {
-        say: 'x₁ から出ている線を、上にドラッグしてみてください',
+        say: 'x₁ から出ている線を押したまま、上下に動かしてみてください',
         targets: ['e:0:0:0'],
         done: (c) => movedW(c, 0, 0, 0),
       },
-      {
-        say: '出力の数字が変わりました。x₂ の線も動かしてみてください',
-        targets: ['e:0:0:1'],
-        done: (c) => movedW(c, 0, 0, 1),
-      },
-      {
-        say: '出力の丸を上下にドラッグすると、最後に足すバイアスが変わります',
-        targets: ['n:0:0'],
-        done: (c) => movedB(c, 0, 0),
-      },
-      {
-        say: '右の「つまみ」で 2本の線を 0.5、バイアスを 0 にすると平均になります',
-        targets: ['e:0:*', 'n:0:*', 'knob'],
-        done: (c) => c.cleared,
-      },
     ],
+    ticker: {
+      tol: 0.05,
+      base: 900,
+      decay: 0.8,
+      min: 180,
+      shake: 400,
+      hintAfter: 8,
+      hint: '2本の線を同じくらいにすると、どの点でも合うかもしれません',
+    },
   },
   {
     id: 'and',
@@ -314,7 +356,7 @@ export const STAGES: Stage[] = [
     start: { sizes: [2, 2, 1], acts: ['step', 'step'] },
     tutorial: [
       {
-        say: '「層1」の見出しを押すと、その層のつまみが右に出ます',
+        say: '「層1」の見出しを押すと、その層が選ばれます',
         targets: ['h:0'],
         done: (c) => c.selected === 0,
       },
@@ -410,7 +452,7 @@ export const STAGES: Stage[] = [
     threshold: 0.004,
     judgeLoss: 'mse',
     limits: { maxParams: 40 },
-    unlocks: ['optimizer', 'lr'],
+    unlocks: ['optimizer', 'lr', 'knob'],
     views: ['fit', 'network', 'calc', 'actchart', 'grad'],
     start: { sizes: [1, 4, 1], acts: ['tanh', 'identity'] },
     tutorial: [],

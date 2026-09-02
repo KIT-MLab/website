@@ -26,7 +26,7 @@ import { fmt } from './views/format';
 import { GradBars } from './views/GradBars';
 import { Inspector } from './views/Inspector';
 import { LossBar } from './views/LossBar';
-import { NetworkDiagram } from './views/NetworkDiagram';
+import { NetworkDiagram, W_MAX, W_MIN, W_STEP, type Cue } from './views/NetworkDiagram';
 import { TruthTable, type LogicRow } from './views/TruthTable';
 import './sandbox.css';
 
@@ -53,6 +53,22 @@ type Core = {
 
 /** チュートリアルの進み具合。base はこの手に入った時点の控え */
 type Tut = { i: number; base: Network; baseStep: number; scrubbed: boolean };
+
+/**
+ * 1点ずつ出す進行（ステージ1）。
+ * check = 点が来た瞬間の判定、fail = 揺れている最中、pass = 合格の演出中、wait = 直すのを待つ。
+ */
+type Tick = {
+  pos: number;
+  /** 落とさずに通した連続数。データの数に届いたらクリア */
+  streak: number;
+  fails: number;
+  phase: 'wait' | 'check' | 'pass' | 'fail';
+  nonce: number;
+  done: boolean;
+};
+
+const newTick = (): Tick => ({ pos: 0, streak: 0, fails: 0, phase: 'wait', nonce: 0, done: false });
 
 const shapeOf = (net: Network, inDim: number): Shape => ({
   sizes: [inDim, ...net.layers.map((l) => l.b.length)],
@@ -128,6 +144,76 @@ export default function Sandbox() {
     net.layers[0].w[0].length === inDim &&
     net.layers[net.layers.length - 1].b.length === outDim;
 
+  /* -------------------- 1点ずつ出す進行（ステージ1） -------------------- */
+
+  const tick = useRef<Tick>(newTick());
+  const timer = useRef<number | null>(null);
+  const stopTimer = () => {
+    if (timer.current !== null) {
+      clearTimeout(timer.current);
+      timer.current = null;
+    }
+  };
+  useEffect(() => stopTimer, []);
+
+  const tutOn = !free && tut.i < stage.tutorial.length;
+  const usingTicker = !!stage.ticker && !free;
+  /** 最初の1手が済んだら出題を始める */
+  const tickOn = usingTicker && !tutOn;
+  const tk = tick.current;
+  const tickPos = usingTicker ? Math.min(tk.pos, data.x.length - 1) : -1;
+  /** 何度も落としている人にだけ、1行のヒントを出す */
+  const hintOn = tickOn && !!stage.ticker && !tk.done && tk.fails >= stage.ticker.hintAfter;
+
+  const advance = () => {
+    const t = tick.current;
+    const n = data.x.length;
+    t.streak += 1;
+    if (t.streak >= n) {
+      t.done = true;
+      t.phase = 'wait';
+    } else {
+      t.pos = (t.pos + 1) % n;
+      t.phase = 'check';
+      t.nonce += 1;
+    }
+    force();
+  };
+
+  /* ドラッグ中も毎フレーム走らせたいので、依存配列を付けない */
+  useEffect(() => {
+    const conf = stage.ticker;
+    if (!tickOn || !conf || !valid) return;
+    const t = tick.current;
+    if (t.done || t.phase === 'pass' || t.phase === 'fail') return;
+    const out = forward(net, data.x[t.pos]).output[0];
+    const ok = Math.abs(out - data.y[t.pos][0]) <= conf.tol;
+    if (!ok) {
+      /* 次の点に切り替わった瞬間だけ、外れていることを見せる */
+      if (t.phase !== 'check') return;
+      t.phase = 'fail';
+      t.fails += 1;
+      t.streak = 0;
+      t.nonce += 1;
+      stopTimer();
+      timer.current = window.setTimeout(() => {
+        timer.current = null;
+        tick.current.phase = 'wait';
+        force();
+      }, conf.shake);
+      force();
+      return;
+    }
+    t.phase = 'pass';
+    t.nonce += 1;
+    stopTimer();
+    timer.current = window.setTimeout(() => {
+      timer.current = null;
+      advance();
+    }, Math.max(conf.min, Math.round(conf.base * conf.decay ** t.streak)));
+    force();
+  });
+
   /* -------------------- 判定 -------------------- */
 
   const judge = valid ? datasetLoss(net, data, stage.judgeLoss) : NaN;
@@ -135,7 +221,7 @@ export default function Sandbox() {
   const lim = stage.limits;
   const overParams = !!lim?.maxParams && params > lim.maxParams;
   const overLayers = !!lim?.maxLayers && net.layers.length > lim.maxLayers;
-  const cleared = valid && judge <= stage.threshold && !overParams && !overLayers;
+  const cleared = usingTicker ? tk.done : valid && judge <= stage.threshold && !overParams && !overLayers;
 
   const accuracy = useMemo(() => {
     if (!valid || (stage.kind !== 'cls2' && stage.kind !== 'logic')) return null;
@@ -164,7 +250,6 @@ export default function Sandbox() {
   /* -------------------- チュートリアル -------------------- */
 
   const entry = c.hist[c.cursor];
-  const tutOn = !free && tut.i < stage.tutorial.length;
   const tutStep = tutOn ? stage.tutorial[tut.i] : null;
   /** 指示された1手以外を触れなくするか */
   const lock = tutOn && stageIdx <= LOCK_UNTIL;
@@ -379,6 +464,8 @@ export default function Sandbox() {
     const s = STAGES[idx];
     const d = s.data(s.dataDefaults);
     const cf = defaultCfg(s);
+    stopTimer();
+    tick.current = newTick();
     core.current = build(s.start, 'xavier', 77, d, cf.loss);
     setStageIdx(idx);
     setMaxStage((m) => Math.max(m, idx));
@@ -398,8 +485,18 @@ export default function Sandbox() {
 
   /* -------------------- 表示用の値 -------------------- */
 
-  const sampleIdx = Math.min(sample, data.x.length - 1);
+  const sampleIdx = usingTicker ? tickPos : Math.min(sample, data.x.length - 1);
   const trace: ForwardTrace | null = valid ? forward(net, data.x[sampleIdx]) : null;
+  /** ステージ1で上部に出す損失。いまの1点だけの二乗誤差 */
+  const pointLoss = trace ? (trace.output[0] - data.y[sampleIdx][0]) ** 2 : NaN;
+  const cue: Cue | null = usingTicker
+    ? {
+        inputs: data.x[sampleIdx],
+        target: data.y[sampleIdx][0],
+        state: tk.phase === 'pass' ? 'pass' : tk.phase === 'fail' ? 'fail' : 'wait',
+        nonce: tk.nonce,
+      }
+    : null;
   const selLayer = Math.min(selected, Math.max(0, net.layers.length - 1));
   const isOutLayer = selLayer === net.layers.length - 1;
   const gradNorms = core.current.grad ? layerGradNorms(core.current.grad) : null;
@@ -462,15 +559,16 @@ export default function Sandbox() {
             maxLayers={lim?.maxLayers}
             gate={small ? null : gate}
             point={small ? null : point}
+            cue={small ? null : cue}
             onSelect={setSelected}
-            onWeight={(li, o, i, d) =>
+            onWeight={(li, o, i, v) =>
               editNet((n) => {
-                n.layers[li].w[o][i] = Math.round((n.layers[li].w[o][i] + d) * 1000) / 1000;
+                n.layers[li].w[o][i] = v;
               })
             }
-            onBias={(li, o, d) =>
+            onBias={(li, o, v) =>
               editNet((n) => {
-                n.layers[li].b[o] = Math.round((n.layers[li].b[o] + d) * 1000) / 1000;
+                n.layers[li].b[o] = v;
               })
             }
             onInsert={insertLayer}
@@ -518,7 +616,7 @@ export default function Sandbox() {
   const lrPos = Math.round(((Math.log10(cfg.lr) + 3) / 3) * 100);
 
   /* どの箱を出すか。設定できる項目が無ければ右パネルごと描かない */
-  const showKnobs = can('weights');
+  const showKnobs = can('knob');
   const showLayerBox = can('nodes') || can('activation') || can('place') || showKnobs;
   const showTrainBox = can('loss') || can('optimizer') || can('lr') || can('batch') || can('init');
   const showDataBox = can('data') && stage.kind !== 'logic';
@@ -527,7 +625,7 @@ export default function Sandbox() {
 
   const cols = `${showRail ? '132px ' : ''}minmax(0, 1fr)${showSide ? ' 254px' : ''}`;
 
-  const sampleNav = data.x.length > 1 && (main === 'network' || main === 'calc') && (
+  const sampleNav = !usingTicker && data.x.length > 1 && (main === 'network' || main === 'calc') && (
     <span className="sb-samp">
       <button type="button" className="sb-mini" onClick={() => setSample((s) => Math.max(0, s - 1))} aria-label="前のデータ">
         ◀
@@ -584,9 +682,10 @@ export default function Sandbox() {
         </button>
       </header>
 
-      {/* ---- 2段目: 目標といまやる1手 ---- */}
+      {/* ---- 2段目: 目標といまやる1手と損失。画面上部の中央にまとめる ---- */}
       <div className="sb-goal">
-        <div className="sb-goal__main">
+        <div className="sb-goal__pad" />
+        <div className="sb-goal__center">
           <div className="sb-goal__line">
             <span className="sb-goal__no">{stage.no}</span>
             <h1 className="sb-goal__h">{stage.goal}</h1>
@@ -604,12 +703,41 @@ export default function Sandbox() {
               <span className="sb-goal__dot" />
               {tutStep.say}
             </p>
+          ) : hintOn ? (
+            <p className="sb-goal__now">
+              <span className="sb-goal__dot" />
+              {stage.ticker!.hint}
+            </p>
           ) : (
-            <p className="sb-goal__now sb-goal__now--dim">{hover ?? '「?」に解き方の見当が書いてあります'}</p>
+            <p className="sb-goal__now sb-goal__now--dim">
+              {hover ?? (usingTicker ? '' : '「?」に解き方の見当が書いてあります')}
+            </p>
+          )}
+          {usingTicker ? (
+            <p className="sb-meter">
+              <span className="sb-meter__l">この点の誤差</span>
+              <b className="sb-meter__v" data-ok={tk.phase === 'pass' || undefined}>
+                {valid ? fmt(pointLoss, 4) : '—'}
+              </b>
+              <span className="sb-meter__sub">
+                通した数 {tk.streak} / {data.x.length}
+              </span>
+            </p>
+          ) : (
+            <p className="sb-meter">
+              <span className="sb-meter__l">{stage.judgeLoss === 'bce' ? '交差エントロピー' : '二乗誤差'}</span>
+              <b className="sb-meter__v" data-ok={cleared || undefined}>
+                {valid ? sci(judge) : '—'}
+              </b>
+              <span className="sb-meter__sub">
+                目標 {sci(stage.threshold)}
+                {accuracy !== null && ` ・ 正答 ${Math.round(accuracy * 100)}%`}
+              </span>
+            </p>
           )}
         </div>
 
-        <div className="sb-goal__side">
+        <div className="sb-goal__pad sb-goal__pad--r">
           {overParams && (
             <span className="sb-viol">
               パラメータ {params} / {lim!.maxParams}
@@ -620,11 +748,6 @@ export default function Sandbox() {
               層 {net.layers.length} / {lim!.maxLayers}
             </span>
           )}
-          <span className="sb-goal__score" data-ok={cleared || undefined}>
-            {stage.judgeLoss === 'bce' ? '交差エントロピー' : '二乗誤差'} {valid ? sci(judge) : '—'} / 目標{' '}
-            {sci(stage.threshold)}
-            {accuracy !== null && ` / 正答 ${Math.round(accuracy * 100)}%`}
-          </span>
           {cleared && stageIdx < STAGES.length - 1 && (
             <button type="button" className="sb-next" onClick={() => goStage(stageIdx + 1)}>
               次のステージへ →
@@ -952,9 +1075,9 @@ function Knob({
       <span className="sb-knob__l">{label}</span>
       <input
         type="range"
-        min={-3}
-        max={3}
-        step={0.02}
+        min={W_MIN}
+        max={W_MAX}
+        step={W_STEP}
         value={value}
         disabled={disabled}
         onChange={(e) => onChange(Number(e.target.value))}
