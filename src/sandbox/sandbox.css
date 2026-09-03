@@ -1333,10 +1333,11 @@
 .sb-truth--small td {
   padding: 1px 4px;
 }
+/* 列の意味は読ませたいので、本文より小さくしても読める大きさで止める */
 .sb-truth th {
   color: var(--sb-dim);
   font-weight: 400;
-  font-size: 0.5em;
+  font-size: 0.7em;
 }
 .sb-truth tbody tr {
   cursor: pointer;

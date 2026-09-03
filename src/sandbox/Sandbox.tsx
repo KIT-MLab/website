@@ -980,21 +980,14 @@ export default function Sandbox() {
       {/* ---- 本体 ---- */}
       {isLogic ? (
         <div className="sb-logic">
-          <section className="sb-logic__panel sb-logic__truth">
-            <h2>真理値表</h2>
-            {renderView('truth', false)}
-          </section>
+          {/* 見出しは置かない。表も図も面も、中身を見れば何かは分かる。
+             読まれない大きさの文字を置くくらいなら無いほうがよい */}
+          <section className="sb-logic__panel sb-logic__truth">{renderView('truth', false)}</section>
           <div className="sb-logic__net">
-            <div className="sb-main__head">
-              <h2>ネットワーク</h2>
-            </div>
             <div className="sb-main__stage">{renderView('network', false)}</div>
           </div>
           {/* 入力平面は正方形なので、本体の高さをまるごと使える専用の列に置く */}
-          <section className="sb-logic__panel sb-logic__plane">
-            <h2>入力平面</h2>
-            {renderView('fit', false)}
-          </section>
+          <section className="sb-logic__panel sb-logic__plane">{renderView('fit', false)}</section>
           {/* 次のステージ。本体いっぱいの右下に置く */}
           <button
             type="button"
