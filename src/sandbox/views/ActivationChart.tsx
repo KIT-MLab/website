@@ -29,12 +29,17 @@ export function ActivationChart({ activation, z, a, small }: Props) {
         <polyline points={samples} fill="none" stroke="var(--color-ink)" strokeWidth={2} />
         <line x1={sx(zc)} y1={PAD} x2={sx(zc)} y2={H - PAD} stroke="var(--color-accent)" strokeWidth={1} strokeDasharray="3 3" />
         <circle cx={sx(zc)} cy={sy(Math.min(Math.max(a, ymin), ymax))} r={5} fill="var(--color-accent)" />
-        <text className="sb-axis" x={W - PAD} y={sy(0) + 15} textAnchor="end">
-          z
-        </text>
-        <text className="sb-axis" x={sx(0) - 6} y={PAD + 4} textAnchor="end">
-          a
-        </text>
+        {/* 小窓では読める大きさにできないので出さない。キャプションが何のグラフかを言う */}
+        {!small && (
+          <>
+            <text className="sb-axis" x={W - PAD} y={sy(0) + 15} textAnchor="end">
+              z
+            </text>
+            <text className="sb-axis" x={sx(0) - 6} y={PAD + 4} textAnchor="end">
+              a
+            </text>
+          </>
+        )}
       </svg>
       {!small && (
         <p className="sb-actchart__now">

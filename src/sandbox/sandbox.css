@@ -54,15 +54,16 @@
   flex: 1;
 }
 
+/* パラメータ数などの表示。上限つきのお題では現在値を追う必要があるので読める大きさにする */
 .sb-note {
   color: var(--sb-dim);
-  font-size: 11.5px;
+  font-size: 13px;
   margin: 0;
 }
 
 .sb-empty {
   color: var(--sb-dim);
-  font-size: 12px;
+  font-size: 13px;
   margin: auto;
 }
 
@@ -162,7 +163,7 @@
   cursor: not-allowed;
 }
 .sb-tool__l {
-  font-size: 11px;
+  font-size: 13px;
   line-height: 1.2;
   text-align: center;
 }
@@ -382,7 +383,7 @@
 .sb-viol {
   color: var(--sb-bad);
   font-family: var(--sb-mono);
-  font-size: 11.5px;
+  font-size: 13px;
   border: 1px solid var(--sb-bad);
   border-radius: 3px;
   padding: 0 5px;
@@ -479,10 +480,10 @@
 
 .sb-readout {
   font-family: var(--sb-mono);
-  font-size: 11.5px;
+  font-size: 13px;
   color: var(--sb-dim);
   white-space: nowrap;
-  min-width: 168px;
+  min-width: 190px;
   text-align: right;
 }
 .sb-readout b {
@@ -592,7 +593,7 @@
   border-color: var(--sb-hot);
 }
 .sb-thumb__t {
-  font-size: 10.5px;
+  font-size: 13px;
   color: var(--sb-dim);
   text-align: left;
 }
@@ -627,9 +628,9 @@
 }
 .sb-main__head h2 {
   margin: 0;
-  font-size: 10.5px;
+  font-size: 13px;
   font-weight: 700;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.08em;
   color: var(--sb-dim);
 }
 .sb-main__stage {
@@ -707,7 +708,7 @@
 }
 .sb-row__l {
   color: var(--sb-dim);
-  font-size: 11px;
+  font-size: 13px;
   flex: 0 0 auto;
   min-width: 62px;
 }
@@ -742,18 +743,18 @@
 }
 .sb-knobs__t {
   margin: 0 0 2px;
-  font-size: 10.5px;
+  font-size: 13px;
   color: var(--sb-dim);
 }
 .sb-knob {
   display: grid;
-  grid-template-columns: 44px 1fr 38px;
+  grid-template-columns: 54px 1fr 46px;
   align-items: center;
   gap: 4px;
   padding: 1px 0;
 }
 .sb-knob__l {
-  font-size: 10.5px;
+  font-size: 13px;
   color: var(--sb-dim);
   overflow: hidden;
 }
@@ -763,7 +764,7 @@
 }
 .sb-knob__v {
   font-family: var(--sb-mono);
-  font-size: 11px;
+  font-size: 13px;
   text-align: right;
 }
 
@@ -810,7 +811,7 @@
 }
 .sb-fit__ax {
   fill: var(--sb-dim);
-  font-size: 11px;
+  font-size: 14px;
   font-family: var(--sb-mono);
 }
 
@@ -843,10 +844,16 @@
   stroke-dasharray: 7 6;
   opacity: 0.22;
 }
-.sb-plane__pt,
-.sb-axis {
+/* 点の座標ラベルは補助。読まれなくてもよいので小さいまま */
+.sb-plane__pt {
   fill: var(--sb-dim);
   font-size: 11px;
+  font-family: var(--sb-mono);
+}
+/* 軸が x₁・x₂ だと分かってほしいので、軸ラベル・目盛りは読める大きさにする */
+.sb-axis {
+  fill: var(--sb-dim);
+  font-size: 14px;
   font-family: var(--sb-mono);
 }
 .sb-axis--small {
@@ -891,13 +898,13 @@
 }
 .sb-nd__val {
   fill: var(--sb-text);
-  font-size: 10px;
+  font-size: 13px;
   font-family: var(--sb-mono);
   pointer-events: none;
 }
-/* 小数第2位まで出すときは丸からはみ出さない大きさに */
+/* 小数第2位のときも同じ大きさで読める優先。丸から少しはみ出しても隣とはぶつからない */
 .sb-nd__val--fine {
-  font-size: 8.5px;
+  font-size: 13px;
 }
 .sb-nd__wbg {
   fill: var(--sb-bg);
@@ -906,7 +913,8 @@
 }
 .sb-nd__w {
   fill: var(--sb-text);
-  font-size: 10px;
+  font-size: 15px;
+  font-weight: 700;
   font-family: var(--sb-mono);
   pointer-events: none;
 }
@@ -923,13 +931,13 @@
 }
 .sb-nd__headT {
   fill: var(--sb-text);
-  font-size: 11px;
+  font-size: 14px;
   font-weight: 700;
   pointer-events: none;
 }
 .sb-nd__headS {
   fill: var(--sb-dim);
-  font-size: 10.5px;
+  font-size: 14px;
   font-family: var(--sb-mono);
   pointer-events: none;
 }
@@ -940,7 +948,7 @@
 }
 .sb-nd__mini text {
   fill: var(--sb-text);
-  font-size: 12px;
+  font-size: 14px;
   pointer-events: none;
 }
 .sb-nd__mini:hover rect {
@@ -955,7 +963,7 @@
 }
 .sb-nd__ins text {
   fill: var(--sb-hot);
-  font-size: 13px;
+  font-size: 15px;
   pointer-events: none;
 }
 .sb-nd__ins:hover circle {
@@ -963,11 +971,11 @@
 }
 .sb-nd__empty {
   fill: var(--sb-dim);
-  font-size: 11px;
+  font-size: 13px;
 }
 .sb-nd__inl {
   fill: var(--sb-dim);
-  font-size: 11px;
+  font-size: 14px;
   font-family: var(--sb-mono);
   pointer-events: none;
 }
@@ -1003,7 +1011,7 @@
 }
 .sb-cue__cap {
   fill: var(--sb-dim);
-  font-size: 11px;
+  font-size: 13px;
   pointer-events: none;
 }
 .sb-cue[data-state='pass'] rect {
@@ -1198,6 +1206,7 @@
   flex-direction: column;
   align-items: center;
   gap: 4px;
+  width: 100%;
   height: 100%;
   min-height: 0;
 }
@@ -1209,7 +1218,7 @@
 .sb-actchart__now {
   margin: 0;
   font-family: var(--sb-mono);
-  font-size: 11.5px;
+  font-size: 13px;
   color: var(--sb-dim);
 }
 
@@ -1376,9 +1385,9 @@
   gap: 6px;
 }
 .sb-grad__l {
-  font-size: 11px;
+  font-size: 13px;
   color: var(--sb-dim);
-  min-width: 32px;
+  min-width: 36px;
 }
 .sb-grad__track {
   flex: 1;
@@ -1395,14 +1404,10 @@
 }
 .sb-grad__v {
   font-family: var(--sb-mono);
-  font-size: 10.5px;
+  font-size: 13px;
   color: var(--sb-dim);
   min-width: 52px;
   text-align: right;
-}
-.sb-grad--small .sb-grad__l {
-  font-size: 9px;
-  min-width: 24px;
 }
 
 /* ---------- フラッシュとモーダル ---------- */
@@ -1486,7 +1491,7 @@
   border: 1px solid #403d38;
   border-radius: 4px;
   padding: 4px 8px;
-  font-size: 11.5px;
+  font-size: 13px;
   color: #e8e4dc;
   white-space: nowrap;
 }
@@ -1502,7 +1507,7 @@
   background: #201f1d;
   border: 1px solid #403d38;
   color: #e8e4dc;
-  font-size: 11.5px;
+  font-size: 13px;
   padding: 4px 12px;
   border-radius: 4px;
 }
@@ -1510,14 +1515,14 @@
   position: fixed;
   right: 14px;
   bottom: 14px;
-  width: 280px;
+  width: 320px;
   pointer-events: auto;
   background: #201f1d;
   border: 1px solid #403d38;
   border-radius: 8px;
   padding: 12px 14px 14px;
   color: #e8e4dc;
-  font-size: 12px;
+  font-size: 13px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
 }
 .sb-debug__name {
@@ -1536,7 +1541,7 @@
   flex-direction: column;
   gap: 2px;
   margin-bottom: 7px;
-  font-size: 11px;
+  font-size: 13px;
   color: #cfc9bd;
 }
 .sb-debug__row input[type='range'] {
@@ -1548,7 +1553,7 @@
   padding-top: 6px;
   border-top: 1px dashed #403d38;
   font-family: ui-monospace, "SFMono-Regular", "Consolas", "Courier New", monospace;
-  font-size: 11px;
+  font-size: 13px;
   color: #8fbf6a;
 }
 .sb-debug__changes p {
@@ -1567,7 +1572,7 @@
   border: 1px solid #403d38;
   border-radius: 4px;
   color: #e8e4dc;
-  font-size: 11px;
+  font-size: 13px;
   padding: 6px 4px;
   cursor: pointer;
 }
@@ -1586,7 +1591,7 @@
   background: #201f1d;
   border: 1px solid #403d38;
   color: #9c968b;
-  font-size: 10.5px;
+  font-size: 13px;
   padding: 4px 8px;
   border-radius: 4px;
   cursor: pointer;
@@ -1596,7 +1601,9 @@
 
 @media (max-height: 660px) {
   .sb {
-    font-size: 12px;
+    /* .sb button は font-size: inherit なので、ここがボタン文字の実際の大きさになる。
+       ×1・SGD・次のステージ 等、読む必要のある操作なので 13px を割らないようにする */
+    font-size: 13px;
   }
   .sb-goal {
     padding: 8px 14px 8px;

@@ -9,10 +9,10 @@ export function GradBars({ norms, small }: Props) {
   }
   const max = Math.max(...norms, 1e-9);
   return (
-    <div className={`sb-grad ${small ? 'sb-grad--small' : ''}`}>
+    <div className="sb-grad">
       {norms.map((v, i) => (
         <div className="sb-grad__row" key={i}>
-          <span className="sb-grad__l">{i === norms.length - 1 ? '出力' : `層${i + 1}`}</span>
+          {!small && <span className="sb-grad__l">{i === norms.length - 1 ? '出力' : `層${i + 1}`}</span>}
           <span className="sb-grad__track">
             <span className="sb-grad__fill" style={{ width: `${Math.max(1, (v / max) * 100)}%` }} />
           </span>

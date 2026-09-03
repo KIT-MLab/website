@@ -28,11 +28,83 @@ const COL_GAP = 152;
 const ROW_GAP = 48;
 const R = 15;
 const HEAD_Y = 12;
-const HEAD_H = 38;
-const NODE_TOP = 96;
+const HEAD_H = 46;
+const NODE_TOP = 106;
 /** 出題の箱 */
 const BOX_W = 56;
 const BOX_H = 26;
+
+/** 重みラベルの背景の大きさ（当たり判定と押し離しの両方に使う） */
+const LABEL_W = 50;
+const LABEL_H = 22;
+
+/**
+ * 層ごとの重みラベルの置き場所を決める。
+ * まず、ノードの間隔がまだ広い側（入力・出力のうち数が少ない方）に寄せて仮置きする
+ * （収束・発散する側に置くと隣の線と近づいてぶつかるため）。
+ * それでも近すぎる組が残ったら、ぶつからなくなるまで少しずつ押し離す。
+ */
+function computeLabelPositions(
+  net: Network,
+  x: (col: number) => number,
+  y: (col: number, i: number) => number,
+): Map<string, { mx: number; my: number }> {
+  const pos = new Map<string, { mx: number; my: number }>();
+  net.layers.forEach((layer, li) => {
+    const fanOut = layer.w.length;
+    const fanIn = layer.w[0]?.length ?? 0;
+    const x1 = x(li);
+    const x2 = x(li + 1);
+    const pts: { id: string; mx: number; my: number }[] = [];
+    layer.w.forEach((row, o) => {
+      row.forEach((_w, i) => {
+        const y1 = y(li, i);
+        const y2 = y(li + 1, o);
+        const dx = x2 - x1;
+        const dy = y2 - y1;
+        const len = Math.max(1, Math.hypot(dx, dy));
+        let t: number;
+        let perp: number;
+        if (fanIn <= fanOut) {
+          t = 0.24 + (i / Math.max(1, fanIn - 1)) * 0.2;
+          perp = fanOut > 1 ? ((o - (fanOut - 1) / 2) * 13) / len : 0;
+        } else {
+          t = 0.78 - (o / Math.max(1, fanOut - 1)) * 0.2;
+          perp = fanIn > 1 ? ((i - (fanIn - 1) / 2) * 13) / len : 0;
+        }
+        pts.push({ id: `e:${li}:${o}:${i}`, mx: x1 + dx * t - dy * perp, my: y1 + dy * t + dx * perp });
+      });
+    });
+    /* 箱どうしが重なっている間、めり込みが小さい軸に沿って半分ずつ押し離す */
+    for (let pass = 0; pass < 12; pass++) {
+      let moved = false;
+      for (let a = 0; a < pts.length; a++) {
+        for (let b = a + 1; b < pts.length; b++) {
+          let ddx = pts[b].mx - pts[a].mx;
+          let ddy = pts[b].my - pts[a].my;
+          if (ddx === 0 && ddy === 0) ddx = 0.01;
+          const overlapX = LABEL_W - Math.abs(ddx);
+          const overlapY = LABEL_H - Math.abs(ddy);
+          if (overlapX > 0 && overlapY > 0) {
+            moved = true;
+            if (overlapX < overlapY) {
+              const push = (overlapX / 2 + 0.5) * Math.sign(ddx || 1);
+              pts[a].mx -= push;
+              pts[b].mx += push;
+            } else {
+              const push = (overlapY / 2 + 0.5) * Math.sign(ddy || 1);
+              pts[a].my -= push;
+              pts[b].my += push;
+            }
+          }
+        }
+      }
+      if (!moved) break;
+    }
+    pts.forEach((p) => pos.set(p.id, { mx: p.mx, my: p.my }));
+  });
+  return pos;
+}
 
 type Drag = { kind: 'w' | 'b'; li: number; o: number; i: number; y: number; from: number };
 type Gauge = { left: number; top: number; value: number; label: string; flip: boolean };
@@ -162,7 +234,7 @@ export function NetworkDiagram({
   const left = 62 + (boxes ? 56 : 0);
   const x = (col: number) => left + col * COL_GAP;
   /* 右端に要る余白: 見出しカードの半分 / 「＋」の列 / 目標の箱 / 活性化の印 */
-  const width = x(cols - 1) + Math.max(66, placing ? 136 : actActive ? 58 : 46, boxes ? 91 : 0);
+  const width = x(cols - 1) + Math.max(74, placing ? 136 : actActive ? 58 : 46, boxes ? 91 : 0);
   /* 列が少ないうちは大きく描く。詰まってきたら等倍寄りに戻す */
   const zoom = cols <= 2 ? 2.2 : cols === 3 ? 1.8 : 1.5;
 
@@ -174,6 +246,9 @@ export function NetworkDiagram({
 
   const edgeCount = net.layers.reduce((s, l) => s + l.w.length * l.w[0].length, 0);
   const showWeightLabels = !small && edgeCount <= 16;
+  /* 重みラベルの置き場所。層ごとに、まずノード間隔がまだ広い側（入力・出力のうち数が少ない方）に
+     寄せて仮置きし、それでも近すぎる組はぶつからなくなるまで少しずつ押し離す */
+  const labelPos = showWeightLabels ? computeLabelPositions(net, x, y) : null;
 
   /* -------------------- 押している間だけ出る縦目盛り -------------------- */
 
@@ -238,7 +313,7 @@ export function NetworkDiagram({
     const sub = isInput
       ? Array.from({ length: inDim }, (_, i) => inputLabels[i] ?? `x${i + 1}`).join(' ')
       : `${counts[col]}個・${actLabel}`;
-    const w = 116;
+    const w = 132;
     const cx = x(col);
     const sel = !isInput && selected === li;
     const id = `h:${li}`;
@@ -258,12 +333,17 @@ export function NetworkDiagram({
           style={isInput ? undefined : dead(id)}
           onClick={isInput || small ? undefined : () => onSelect?.(li)}
         />
-        <text className="sb-nd__headT" x={cx - w / 2 + 9} y={HEAD_Y + 15}>
-          {title}
-        </text>
-        <text className="sb-nd__headS" x={cx - w / 2 + 9} y={HEAD_Y + 30}>
-          {sub}
-        </text>
+        {/* 小窓（サムネイル）では読める大きさにできないので出さない。何の窓かはキャプションが言う */}
+        {!small && (
+          <>
+            <text className="sb-nd__headT" x={cx - w / 2 + 10} y={HEAD_Y + 19}>
+              {title}
+            </text>
+            <text className="sb-nd__headS" x={cx - w / 2 + 10} y={HEAD_Y + 36}>
+              {sub}
+            </text>
+          </>
+        )}
         {placing && !isInput && net.layers.length > 1 && (
           <g
             className="sb-nd__mini"
@@ -272,8 +352,8 @@ export function NetworkDiagram({
             role="button"
             aria-label={`${title}を外す`}
           >
-            <rect x={cx + w / 2 - 20} y={HEAD_Y + 4} width={16} height={16} rx={3} />
-            <text x={cx + w / 2 - 12} y={HEAD_Y + 16} textAnchor="middle">
+            <rect x={cx + w / 2 - 24} y={HEAD_Y + 5} width={19} height={19} rx={3} />
+            <text x={cx + w / 2 - 14.5} y={HEAD_Y + 19} textAnchor="middle">
               ×
             </text>
           </g>
@@ -281,14 +361,14 @@ export function NetworkDiagram({
         {!small && canNodes && !isInput && !isOut && (
           <g className="sb-nd__nodes" style={dead('nodes')}>
             <g className="sb-nd__mini" onClick={() => onNodes?.(li, -1)} role="button" aria-label="ノードを減らす">
-              <rect x={cx - 34} y={HEAD_Y + HEAD_H + 6} width={18} height={18} rx={3} />
-              <text x={cx - 25} y={HEAD_Y + HEAD_H + 19} textAnchor="middle">
+              <rect x={cx - 39} y={HEAD_Y + HEAD_H + 6} width={20} height={20} rx={3} />
+              <text x={cx - 29} y={HEAD_Y + HEAD_H + 21} textAnchor="middle">
                 −
               </text>
             </g>
             <g className="sb-nd__mini" onClick={() => onNodes?.(li, 1)} role="button" aria-label="ノードを増やす">
-              <rect x={cx + 16} y={HEAD_Y + HEAD_H + 6} width={18} height={18} rx={3} />
-              <text x={cx + 25} y={HEAD_Y + HEAD_H + 19} textAnchor="middle">
+              <rect x={cx + 19} y={HEAD_Y + HEAD_H + 6} width={20} height={20} rx={3} />
+              <text x={cx + 29} y={HEAD_Y + HEAD_H + 21} textAnchor="middle">
                 ＋
               </text>
             </g>
@@ -346,9 +426,9 @@ export function NetworkDiagram({
               const y1 = y(li, i);
               const x2 = x(li + 1);
               const y2 = y(li + 1, o);
-              const t = 0.28 + (i / Math.max(1, row.length - 1)) * 0.34;
-              const mx = x1 + (x2 - x1) * t;
-              const my = y1 + (y2 - y1) * t;
+              const lp = labelPos?.get(id);
+              const mx = lp?.mx ?? 0;
+              const my = lp?.my ?? 0;
               return (
                 <g key={`e${li}-${o}-${i}`}>
                   {lit(id) && (
@@ -382,8 +462,15 @@ export function NetworkDiagram({
                   )}
                   {showWeightLabels && (
                     <>
-                      <rect x={mx - 19} y={my - 9} width={38} height={17} rx={3} className="sb-nd__wbg" />
-                      <text className="sb-nd__w" x={mx} y={my + 4} textAnchor="middle">
+                      <rect
+                        x={mx - LABEL_W / 2}
+                        y={my - LABEL_H / 2}
+                        width={LABEL_W}
+                        height={LABEL_H}
+                        rx={3}
+                        className="sb-nd__wbg"
+                      />
+                      <text className="sb-nd__w" x={mx} y={my + 5} textAnchor="middle">
                         {fmt(w)}
                       </text>
                     </>
