@@ -1,11 +1,11 @@
 /** 活性化関数の識別子 */
 export type ActivationId = 'identity' | 'step' | 'sigmoid' | 'tanh' | 'relu';
 
-/** 全結合層。w[出力番号][入力番号] */
+/** 全結合層。w[出力番号][入力番号]。acts はノードごとの活性化で、b と同じ長さ */
 export type Layer = {
   w: number[][];
   b: number[];
-  act: ActivationId;
+  acts: ActivationId[];
 };
 
 export type Network = { layers: Layer[] };

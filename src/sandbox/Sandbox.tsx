@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useReducer, useRef, useState } from 'react';
-import { ACTIVATIONS, ACTIVATION_ORDER } from './engine/activations';
+import { ACTIVATIONS } from './engine/activations';
 import { layerGradNorms } from './engine/backward';
 import { INIT_ORDER, INITS, initNetwork, paramCount, type InitId, type Shape } from './engine/init';
 import { LOSS_ORDER, LOSSES } from './engine/losses';
@@ -24,6 +24,7 @@ import {
   opsUpTo,
   STAGES,
   VIEW_LABEL,
+  type DataOpts,
   type OpId,
   type Stage,
   type ViewId,
@@ -34,7 +35,6 @@ import { FitCurve } from './views/FitCurve';
 import { FitPlane } from './views/FitPlane';
 import { fmt } from './views/format';
 import { GradBars } from './views/GradBars';
-import { Inspector } from './views/Inspector';
 import { LossBar } from './views/LossBar';
 import { NetworkDiagram, W_RANGE_DEFAULT, W_STEP, type Cue } from './views/NetworkDiagram';
 import { TruthTable, type LogicRow } from './views/TruthTable';
@@ -83,9 +83,27 @@ type Tick = {
 
 const newTick = (): Tick => ({ pos: 0, streak: 0, fails: 0, phase: 'idle', nonce: 0, done: false });
 
+/**
+ * ステージごとに保存しておく状態。行き来してもそのステージの続きに戻れるようにする。
+ * 「最初から」を押したときは、いま見ているステージぶんだけこれを作り直す。
+ */
+type StageState = {
+  core: Core;
+  tick: Tick;
+  dataOpts: DataOpts;
+  cfg: TrainConfig;
+  initId: InitId;
+  seed: number;
+  selected: number;
+  wasCleared: boolean;
+  tut: Tut;
+  sample: number;
+};
+
+/* 形を変えるときに引き渡す代表の活性化。層の先頭ノードのものを引き継ぐ */
 const shapeOf = (net: Network, inDim: number): Shape => ({
   sizes: [inDim, ...net.layers.map((l) => l.b.length)],
-  acts: net.layers.map((l) => l.act),
+  acts: net.layers.map((l) => l.acts[0] ?? 'identity'),
 });
 
 function build(shape: Shape, initId: InitId, seed: number, data: Dataset, lossId: LossId): Core {
@@ -139,6 +157,9 @@ export default function Sandbox() {
   if (core.current === undefined) {
     core.current = build(STAGES[0].start, 'xavier', 77, STAGES[0].data(STAGES[0].dataDefaults), 'mse');
   }
+
+  /** ステージごとの保存先。訪れたステージだけ入る。いまのステージは live な ref/state のほうが正 */
+  const stageStates = useRef<Map<number, StageState>>(new Map());
 
   const [tut, setTut] = useState<Tut>(() => ({
     i: 0,
@@ -195,7 +216,7 @@ export default function Sandbox() {
     timer.current = window.setTimeout(() => {
       timer.current = null;
       judgePoint();
-    }, judgeDelay(conf, t.streak));
+    }, judgeDelay(t.streak));
   };
 
   /** 次の問題を出す。出した時点でまた判定を予約する */
@@ -276,7 +297,8 @@ export default function Sandbox() {
     tick.current.nonce += 1;
     if (!dragging.current) arm();
     force();
-  }, [tickOn]);
+    /* stageIdx も見る: ティッカーのステージ同士を行き来しても tickOn の値自体は変わらないため */
+  }, [tickOn, stageIdx]);
 
   /* -------------------- 判定 -------------------- */
 
@@ -327,7 +349,7 @@ export default function Sandbox() {
   /* 指さす先が図の中にあるなら、図を主役に持ってくる（小窓では触れないため） */
   const wantMain: ViewId | null = !tutStep
     ? null
-    : tutStep.targets.some((t) => /^(e:|n:|h:|plus|nodes)/.test(t))
+    : tutStep.targets.some((t) => /^(e:|n:|h:|a:|plus|nodes)/.test(t))
       ? 'network'
       : tutStep.targets.some((t) => t === 'play' || t === 'hist')
         ? stage.views[0]
@@ -388,7 +410,7 @@ export default function Sandbox() {
     }
   };
 
-  const hasStep = net.layers.some((l) => l.act === 'step');
+  const hasStep = net.layers.some((l) => l.acts.includes('step'));
 
   const guardTrain = () => {
     if (!valid) {
@@ -510,10 +532,13 @@ export default function Sandbox() {
       while (layer.b.length > k) {
         layer.b.pop();
         layer.w.pop();
+        layer.acts.pop();
       }
       while (layer.b.length < k) {
         layer.b.push(0);
         layer.w.push(Array.from({ length: fanIn }, draw));
+        /* 増やしたノードは、その層の最後のノードと同じ活性化から始める */
+        layer.acts.push(layer.acts[layer.acts.length - 1] ?? 'identity');
       }
       const next = n.layers[li + 1];
       if (next) {
@@ -526,7 +551,14 @@ export default function Sandbox() {
     core.current.rng = rng;
   };
 
-  const goStage = (idx: number) => {
+  /** ノード脇の印から、その1ノードだけ活性化を変える */
+  const setActivation = (li: number, o: number, id: ActivationId) =>
+    editNet((n) => {
+      n.layers[li].acts[o] = id;
+    });
+
+  /** 触れていないステージを、初めて訪れたときの姿にする */
+  const applyFreshStage = (idx: number) => {
     const s = STAGES[idx];
     const d = s.data(s.dataDefaults);
     const cf = defaultCfg(s);
@@ -535,8 +567,6 @@ export default function Sandbox() {
     dragging.current = false;
     armed.current = false;
     core.current = build(s.start, 'xavier', 77, d, cf.loss);
-    setStageIdx(idx);
-    setMaxStage((m) => Math.max(m, idx));
     setDataOpts(s.dataDefaults);
     setCfg(cf);
     setInitId('xavier');
@@ -548,6 +578,59 @@ export default function Sandbox() {
     setMain(s.views[0]);
     setOff([]);
     setTut({ i: 0, base: core.current.net, baseStep: 0, scrubbed: false });
+  };
+
+  /** 前に触っていたステージを、そのときの続きに戻す */
+  const restoreStage = (idx: number, saved: StageState) => {
+    const s = STAGES[idx];
+    stopTimer();
+    tick.current = saved.tick;
+    dragging.current = false;
+    armed.current = false;
+    core.current = saved.core;
+    setDataOpts(saved.dataOpts);
+    setCfg(saved.cfg);
+    setInitId(saved.initId);
+    setSeed(saved.seed);
+    setSelected(saved.selected);
+    setSample(saved.sample);
+    setPlaying(false);
+    setWasCleared(saved.wasCleared);
+    setMain(s.views[0]);
+    setOff([]);
+    setTut(saved.tut);
+  };
+
+  /** いま出ている画面の値をそのステージの保存先に控える */
+  const snapshotCurrent = (): StageState => ({
+    core: core.current,
+    tick: tick.current,
+    dataOpts,
+    cfg,
+    initId,
+    seed,
+    selected,
+    wasCleared,
+    tut,
+    sample,
+  });
+
+  const goStage = (idx: number) => {
+    /* いま見ているステージのタブを押しても何もしない（進み具合を戻してしまわないため） */
+    if (idx === stageIdx) return;
+    stageStates.current.set(stageIdx, snapshotCurrent());
+    const saved = stageStates.current.get(idx);
+    if (saved) restoreStage(idx, saved);
+    else applyFreshStage(idx);
+    setStageIdx(idx);
+    setMaxStage((m) => Math.max(m, idx));
+    force();
+  };
+
+  /** いま見ているステージだけを初めから作り直す */
+  const restart = () => {
+    applyFreshStage(stageIdx);
+    stageStates.current.delete(stageIdx);
     force();
   };
 
@@ -555,8 +638,6 @@ export default function Sandbox() {
 
   const sampleIdx = usingTicker ? tickPos : Math.min(sample, data.x.length - 1);
   const trace: ForwardTrace | null = valid ? forward(net, data.x[sampleIdx]) : null;
-  /** ステージ1で上部に出す損失。いまの1点だけの二乗誤差 */
-  const pointLoss = trace ? (trace.output[0] - data.y[sampleIdx][0]) ** 2 : NaN;
   const cue: Cue | null = usingTicker
     ? {
         inputs: data.x[sampleIdx],
@@ -580,9 +661,11 @@ export default function Sandbox() {
   }, [net, data, valid, stage.kind]);
 
   const availableViews: ViewId[] = free
-    ? (['fit', 'network', 'calc', 'actchart', 'grad', ...(stage.kind === 'logic' ? (['truth'] as ViewId[]) : [])] as ViewId[])
+    ? (['fit', 'network', 'actchart', 'grad', ...(stage.kind === 'logic' ? (['truth'] as ViewId[]) : [])] as ViewId[])
     : stage.views;
   const shown = availableViews.filter((v) => !off.includes(v));
+  /** 「当てはまり」は論理回路のステージでは入力平面になるので、表示名もそちらに変える */
+  const viewLabel = (v: ViewId) => (v === 'fit' && stage.kind === 'logic' ? '入力平面' : VIEW_LABEL[v]);
 
   useEffect(() => {
     if (!shown.includes(main) && shown.length) setMain(shown[0]);
@@ -601,7 +684,17 @@ export default function Sandbox() {
         if (stage.kind === 'reg1')
           return <FitCurve net={net} data={data} range={stage.range[0]} valid={valid} small={small} />;
         if (stage.kind === 'logic')
-          return valid ? <DecisionPlane net={net} rows={logicRows} small={small} /> : <p className="sb-empty">層がありません</p>;
+          return valid ? (
+            <DecisionPlane
+              net={net}
+              rows={logicRows}
+              small={small}
+              selected={sampleIdx}
+              onSelect={small ? undefined : setSample}
+            />
+          ) : (
+            <p className="sb-empty">層がありません</p>
+          );
         return (
           <FitPlane
             net={net}
@@ -625,6 +718,7 @@ export default function Sandbox() {
             canBias={can('bias')}
             canPlace={can('place')}
             canNodes={can('nodes')}
+            canActivation={can('activation')}
             maxLayers={lim?.maxLayers}
             wRange={wRange}
             gate={small ? null : gate}
@@ -644,19 +738,17 @@ export default function Sandbox() {
             onInsert={insertLayer}
             onRemove={removeLayer}
             onNodes={setNodes}
+            onSetActivation={setActivation}
             onHover={setHover}
             onDrag={small ? undefined : handleDrag}
           />
         );
-      case 'calc':
-        if (!trace) return <p className="sb-empty">層がありません</p>;
-        return <Inspector net={net} trace={trace} inputLabels={stage.inputLabels} big={!small} />;
       case 'actchart': {
         if (!trace) return <p className="sb-empty">層がありません</p>;
         const l = net.layers[selLayer];
         return (
           <ActivationChart
-            activation={ACTIVATIONS[l.act]}
+            activation={ACTIVATIONS[l.acts[0]]}
             z={trace.layers[selLayer].z[0]}
             a={trace.layers[selLayer].a[0]}
             small={small}
@@ -688,15 +780,17 @@ export default function Sandbox() {
 
   /* どの箱を出すか。設定できる項目が無ければ右パネルごと描かない */
   const showKnobs = can('knob');
-  const showLayerBox = can('nodes') || can('activation') || can('place') || showKnobs;
+  const showLayerBox = can('nodes') || can('place') || showKnobs;
   const showTrainBox = can('loss') || can('optimizer') || can('lr') || can('batch') || can('init');
   const showDataBox = can('data') && stage.kind !== 'logic';
   const showSide = showLayerBox || showTrainBox || showDataBox;
   const showRail = shown.length > 1;
+  /* 真理値表・入力平面を含むステージは、小窓が読める大きさになるよう少し広げる */
+  const railW = stage.kind === 'logic' ? 190 : 132;
 
-  const cols = `${showRail ? '132px ' : ''}minmax(0, 1fr)${showSide ? ' 254px' : ''}`;
+  const cols = `${showRail ? `${railW}px ` : ''}minmax(0, 1fr)${showSide ? ' 254px' : ''}`;
 
-  const sampleNav = !usingTicker && data.x.length > 1 && (main === 'network' || main === 'calc') && (
+  const sampleNav = !usingTicker && data.x.length > 1 && main === 'network' && (
     <span className="sb-samp">
       <button type="button" className="sb-mini" onClick={() => setSample((s) => Math.max(0, s - 1))} aria-label="前のデータ">
         ◀
@@ -742,12 +836,15 @@ export default function Sandbox() {
           <>
             <span className="sb-cap">窓</span>
             {availableViews.map((v) =>
-              chip(VIEW_LABEL[v], !off.includes(v), () =>
+              chip(viewLabel(v), !off.includes(v), () =>
                 setOff((o) => (o.includes(v) ? o.filter((x) => x !== v) : [...o, v])),
               ),
             )}
           </>
         )}
+        <button type="button" className="sb-restart" onClick={restart}>
+          最初から
+        </button>
         <button type="button" className="sb-free" aria-pressed={free} onClick={() => setFree((f) => !f)}>
           自由モード
         </button>
@@ -785,14 +882,20 @@ export default function Sandbox() {
             </p>
           )}
           {usingTicker ? (
+            /* ステージ1・2は損失を出さない。通した数を主役級に大きく出す */
             <p className="sb-meter">
-              <span className="sb-meter__l">この点の誤差</span>
-              <b className="sb-meter__v" data-ok={tk.phase === 'pass' || undefined}>
-                {valid ? fmt(pointLoss, 4) : '—'}
+              <b className="sb-meter__v sb-meter__v--big" data-ok={tk.streak >= data.x.length || undefined}>
+                {tk.streak} / {data.x.length}
               </b>
-              <span className="sb-meter__sub">
-                通した数 {tk.streak} / {data.x.length}
-              </span>
+              <span className="sb-meter__l">通した数</span>
+            </p>
+          ) : stage.kind === 'logic' ? (
+            /* AND・XOR も損失は出さない。真理値表の○×に対応する正解の数を主役級に */
+            <p className="sb-meter">
+              <b className="sb-meter__v sb-meter__v--big" data-ok={cleared || undefined}>
+                {logicRows.filter((r) => r.ok).length} / {logicRows.length}
+              </b>
+              <span className="sb-meter__l">正解</span>
             </p>
           ) : (
             <p className="sb-meter">
@@ -861,9 +964,9 @@ export default function Sandbox() {
                   type="button"
                   className="sb-thumb"
                   onClick={() => setMain(v)}
-                  title={`${VIEW_LABEL[v]}を大きく見る`}
+                  title={`${viewLabel(v)}を大きく見る`}
                 >
-                  <span className="sb-thumb__t">{VIEW_LABEL[v]}</span>
+                  <span className="sb-thumb__t">{viewLabel(v)}</span>
                   <span className="sb-thumb__box">{renderView(v, true)}</span>
                 </button>
               ))}
@@ -872,7 +975,7 @@ export default function Sandbox() {
 
         <main className="sb-main">
           <div className="sb-main__head">
-            <h2>{VIEW_LABEL[main]}</h2>
+            <h2>{viewLabel(main)}</h2>
             {sampleNav}
           </div>
           <div className="sb-main__stage">{renderView(main, false)}</div>
@@ -904,22 +1007,6 @@ export default function Sandbox() {
                     <button type="button" className="sb-mini" onClick={() => setNodes(selLayer, 1)} disabled={frozen('nodes')}>
                       ＋
                     </button>
-                  </Row>
-                )}
-                {can('activation') && (
-                  <Row label="活性化" wrap point={pointed('act')}>
-                    {ACTIVATION_ORDER.map((id) =>
-                      chip(
-                        ACTIVATIONS[id].label.replace('（そのまま）', ''),
-                        valid && net.layers[selLayer].act === id,
-                        () =>
-                          editNet((n) => {
-                            n.layers[selLayer].act = id;
-                          }),
-                        !valid || frozen('act'),
-                        ACTIVATIONS[id].note,
-                      ),
-                    )}
                   </Row>
                 )}
                 {can('place') && (

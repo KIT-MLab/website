@@ -35,7 +35,9 @@ export const INITS: Record<InitId, Init> = {
 
 export const INIT_ORDER: InitId[] = ['zero', 'small', 'xavier', 'he', 'large'];
 
-/** 層の並びの指定。sizes[0] が入力数、以降が各層のノード数 */
+/** 層の並びの指定。sizes[0] が入力数、以降が各層のノード数。
+    acts は層ごとに1つ（新しく作る層のノードは全部これで揃える）。
+    ノードごとに変えるのは作った後、Layer.acts を個別に書き換える */
 export type Shape = { sizes: number[]; acts: ActivationId[] };
 
 /** 指定の形と初期化でネットを作る。種が同じなら同じネットになる */
@@ -67,7 +69,7 @@ export function initNetwork(shape: Shape, init: InitId, seed: RngState): { net: 
     const fanIn = shape.sizes[li];
     const fanOut = shape.sizes[li + 1];
     return {
-      act,
+      acts: Array.from({ length: fanOut }, () => act),
       w: Array.from({ length: fanOut }, () => Array.from({ length: fanIn }, () => draw(fanIn, fanOut))),
       b: Array.from({ length: fanOut }, () => 0),
     };

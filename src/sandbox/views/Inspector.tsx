@@ -10,8 +10,8 @@ export function Inspector({ net, trace, inputLabels, big }: Props) {
     <div className={big ? 'sb-inspector sb-inspector--big' : 'sb-inspector'}>
       {net.layers.map((layer, li) => {
         const inputs = li === 0 ? trace.input : trace.layers[li - 1].a;
-        const act = ACTIVATIONS[layer.act];
         return layer.w.map((row, o) => {
+          const act = ACTIVATIONS[layer.acts[o]];
           const z = trace.layers[li].z[o];
           const a = trace.layers[li].a[o];
           return (

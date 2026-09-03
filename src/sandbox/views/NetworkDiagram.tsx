@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { ACTIVATIONS, ACTIVATION_ORDER } from '../engine/activations';
 import type { ActivationId, ForwardTrace, Network } from '../engine/types';
 import { hits } from '../stages';
+import { ActivationIcon } from './ActivationIcon';
 import { fmt } from './format';
 
 /** 見出しカードに収まる短い名前 */
@@ -34,6 +36,8 @@ const BOX_H = 26;
 
 type Drag = { kind: 'w' | 'b'; li: number; o: number; i: number; y: number; from: number };
 type Gauge = { left: number; top: number; value: number; label: string; flip: boolean };
+/** ノード脇の印を押すと開く、活性化の選択肢 */
+type ActMenu = { li: number; o: number; left: number; top: number };
 
 /** 1点ずつ出す出題。入力と目標を箱で見せ、合否で色と動きを変える */
 export type Cue = {
@@ -56,6 +60,8 @@ type Props = {
   canBias?: boolean;
   canPlace?: boolean;
   canNodes?: boolean;
+  /** false ならノード脇の活性化の印を出さない */
+  canActivation?: boolean;
   maxLayers?: number;
   /** 縦目盛りの範囲（±この値） */
   wRange?: number;
@@ -72,6 +78,7 @@ type Props = {
   onInsert?: (gap: number) => void;
   onRemove?: (li: number) => void;
   onNodes?: (li: number, delta: number) => void;
+  onSetActivation?: (li: number, o: number, id: ActivationId) => void;
   onHover?: (text: string | null) => void;
   /** 掴んでいる間だけ true。判定を止めるのに使う */
   onDrag?: (active: boolean) => void;
@@ -94,6 +101,7 @@ export function NetworkDiagram({
   canBias = true,
   canPlace,
   canNodes,
+  canActivation,
   maxLayers,
   wRange,
   gate,
@@ -105,15 +113,17 @@ export function NetworkDiagram({
   onInsert,
   onRemove,
   onNodes,
+  onSetActivation,
   onHover,
   onDrag,
 }: Props) {
   const drag = useRef<Drag | null>(null);
   const [gauge, setGauge] = useState<Gauge | null>(null);
+  const [menu, setMenu] = useState<ActMenu | null>(null);
 
   /* window のハンドラは張りっぱなしなので、呼ぶ先は毎回いまのものを見る */
-  const cb = useRef({ onWeight, onBias, onDrag });
-  cb.current = { onWeight, onBias, onDrag };
+  const cb = useRef({ onWeight, onBias, onDrag, onSetActivation });
+  cb.current = { onWeight, onBias, onDrag, onSetActivation };
 
   /* 目盛りの範囲。そのまま値の上下限になる */
   const wMax = wRange ?? W_RANGE_DEFAULT;
@@ -142,6 +152,7 @@ export function NetworkDiagram({
 
   const placing = !!canPlace && !small;
   const adjusting = !!canAdjust && !small;
+  const actActive = !!canActivation && !small;
   const roomForLayer = maxLayers === undefined || net.layers.length < maxLayers;
   const boxes = !small && !!cue;
 
@@ -150,8 +161,8 @@ export function NetworkDiagram({
   const height = NODE_TOP + bandH + 20;
   const left = 62 + (boxes ? 56 : 0);
   const x = (col: number) => left + col * COL_GAP;
-  /* 右端に要る余白: 見出しカードの半分 / 「＋」の列 / 目標の箱 */
-  const width = x(cols - 1) + Math.max(66, placing ? 136 : 46, boxes ? 91 : 0);
+  /* 右端に要る余白: 見出しカードの半分 / 「＋」の列 / 目標の箱 / 活性化の印 */
+  const width = x(cols - 1) + Math.max(66, placing ? 136 : actActive ? 58 : 46, boxes ? 91 : 0);
   /* 列が少ないうちは大きく描く。詰まってきたら等倍寄りに戻す */
   const zoom = cols <= 2 ? 2.2 : cols === 3 ? 1.8 : 1.5;
 
@@ -214,6 +225,23 @@ export function NetworkDiagram({
     /* 目盛りが出ている間だけ張る。位置と値は ref と関数更新で追う */
   }, [gauge !== null]);
 
+  /* -------------------- ノード脇の活性化の印 -------------------- */
+
+  const openMenu = (e: React.PointerEvent, li: number, o: number) => {
+    if (!actActive) return;
+    e.preventDefault();
+    e.stopPropagation();
+    const cx = e.clientX;
+    const cy = e.clientY;
+    const flip = cx + 190 > window.innerWidth;
+    setMenu({
+      li,
+      o,
+      left: flip ? cx - 180 : cx + 10,
+      top: Math.min(Math.max(cy - 40, 10), window.innerHeight - 300),
+    });
+  };
+
   /* -------------------- 層の見出し -------------------- */
 
   const header = (col: number) => {
@@ -222,9 +250,11 @@ export function NetworkDiagram({
     const isOut = col === cols - 1 && !isInput;
     /* 中間層が1つだけなら番号を付けない */
     const title = isInput ? '入力層' : isOut ? '出力層' : cols - 2 <= 1 ? '中間層' : `中間層${col}`;
+    const layerActs = isInput ? null : net.layers[li].acts;
+    const actLabel = layerActs && layerActs.every((a) => a === layerActs[0]) ? ACT_SHORT[layerActs[0]] : '活性化 混在';
     const sub = isInput
       ? Array.from({ length: inDim }, (_, i) => inputLabels[i] ?? `x${i + 1}`).join(' ')
-      : `${counts[col]}個・${ACT_SHORT[net.layers[li].act]}`;
+      : `${counts[col]}個・${actLabel}`;
     const w = 116;
     const cx = x(col);
     const sel = !isInput && selected === li;
@@ -431,6 +461,27 @@ export function NetworkDiagram({
                     {inputLabels[i] ?? `x${i + 1}`}
                   </text>
                 )}
+                {col > 0 && actActive && (
+                  <g
+                    className="sb-actbadge"
+                    style={dead(`a:${col - 1}:${i}`)}
+                    transform={`translate(${x(col) + R + 4},${y(col, i) - 8})`}
+                    onPointerDown={(e) => openMenu(e, col - 1, i)}
+                    onMouseEnter={() => {
+                      const av = ACTIVATIONS[net.layers[col - 1].acts[i]];
+                      onHover?.(`${nodeName(col, i)} の活性化: ${av.label}（${av.formula}）`);
+                    }}
+                    onMouseLeave={() => onHover?.(null)}
+                    role="button"
+                    aria-label={`${nodeName(col, i)} の活性化を選ぶ`}
+                  >
+                    {lit(`a:${col - 1}:${i}`) && (
+                      <rect className="sb-nd__pt" x={-5} y={-5} width={34} height={26} rx={6} />
+                    )}
+                    <rect className="sb-actbadge__bg" width={24} height={16} rx={3} />
+                    <ActivationIcon id={net.layers[col - 1].acts[i]} w={24} h={16} />
+                  </g>
+                )}
               </g>
             );
           }),
@@ -497,6 +548,41 @@ export function NetworkDiagram({
               {gauge.value.toFixed(2)}
             </span>
           </div>,
+          document.body,
+        )}
+
+      {menu &&
+        typeof document !== 'undefined' &&
+        createPortal(
+          <>
+            <div className="sb-actmenu__backdrop" onPointerDown={() => setMenu(null)} />
+            <div className="sb-actmenu" style={{ left: menu.left, top: menu.top }}>
+              <p className="sb-actmenu__t">{nodeName(menu.li + 1, menu.o)} の活性化</p>
+              <div className="sb-actmenu__grid">
+                {ACTIVATION_ORDER.map((id) => {
+                  const av = ACTIVATIONS[id];
+                  const cur = net.layers[menu.li]?.acts[menu.o] === id;
+                  return (
+                    <button
+                      key={id}
+                      type="button"
+                      className="sb-actmenu__opt"
+                      data-sel={cur || undefined}
+                      onClick={() => {
+                        cb.current.onSetActivation?.(menu.li, menu.o, id);
+                        setMenu(null);
+                      }}
+                      onMouseEnter={() => onHover?.(`${av.label}: ${av.formula} ／ ${av.note}`)}
+                      onMouseLeave={() => onHover?.(null)}
+                    >
+                      <ActivationIcon id={id} w={56} h={34} />
+                      <span>{av.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </>,
           document.body,
         )}
     </>

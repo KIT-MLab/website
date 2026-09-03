@@ -15,9 +15,8 @@ export function backward(net: Network, trace: ForwardTrace, dOutput: number[]): 
     const layer = net.layers[li];
     const { z, a } = trace.layers[li];
     const prev = li === 0 ? trace.input : trace.layers[li - 1].a;
-    const df = ACTIVATIONS[layer.act].df;
 
-    const dz = z.map((zv, o) => da[o] * df(zv, a[o]));
+    const dz = z.map((zv, o) => da[o] * ACTIVATIONS[layer.acts[o]].df(zv, a[o]));
     const dw = dz.map((d) => prev.map((p) => d * p));
     const db = dz;
     layers[li] = { da, dz, dw, db };

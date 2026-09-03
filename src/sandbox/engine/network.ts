@@ -10,11 +10,10 @@ export function forward(net: Network, input: number[]): ForwardTrace {
   let a = input;
 
   for (const layer of net.layers) {
-    const f = ACTIVATIONS[layer.act].f;
     const z = layer.b.map((bias, o) =>
       layer.w[o].reduce((sum, weight, i) => sum + weight * a[i], bias),
     );
-    const next = z.map(f);
+    const next = z.map((zv, o) => ACTIVATIONS[layer.acts[o]].f(zv));
     layers.push({ z, a: next });
     a = next;
   }
@@ -31,5 +30,5 @@ export const LOGIC_INPUTS: [number, number][] = [
 ];
 
 export function cloneNetwork(net: Network): Network {
-  return { layers: net.layers.map((l) => ({ w: l.w.map((row) => [...row]), b: [...l.b], act: l.act })) };
+  return { layers: net.layers.map((l) => ({ w: l.w.map((row) => [...row]), b: [...l.b], acts: [...l.acts] })) };
 }

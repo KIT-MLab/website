@@ -35,9 +35,16 @@ function boundary(w1: number, w2: number, b: number): [Pt, Pt] | null {
   return hits.length >= 2 ? [hits[0], hits[1]] : null;
 }
 
-type Props = { net: Network; rows: LogicRow[]; small?: boolean };
+type Props = {
+  net: Network;
+  rows: LogicRow[];
+  small?: boolean;
+  /** 真理値表の選択行と揃える。ここに合う点が光る */
+  selected?: number;
+  onSelect?: (i: number) => void;
+};
 
-export function DecisionPlane({ net, rows, small }: Props) {
+export function DecisionPlane({ net, rows, small, selected, onSelect }: Props) {
   const ref = useRef<HTMLCanvasElement>(null);
   const n = small ? 64 : 168;
 
@@ -68,9 +75,12 @@ export function DecisionPlane({ net, rows, small }: Props) {
   return (
     <div className="sb-plane">
       <canvas ref={ref} width={n} height={n} aria-hidden="true" />
-      <svg viewBox={`0 0 ${SIZE} ${SIZE}`} role="img" aria-label="入力平面と決定境界">
-        <line x1={0} y1={sy(0)} x2={SIZE} y2={sy(0)} stroke="var(--sb-line)" strokeWidth={1} opacity={0.4} />
-        <line x1={sx(0)} y1={0} x2={sx(0)} y2={SIZE} stroke="var(--sb-line)" strokeWidth={1} opacity={0.4} />
+      <svg viewBox={`0 0 ${SIZE} ${SIZE}`} role="img" aria-label="入力平面。横が x₁、縦が x₂">
+        {/* 0 の軸は実線、1 の目盛りは破線。x₁・x₂ とも 0 と 1 しか値を取らないのでこれで十分 */}
+        <line x1={0} y1={sy(0)} x2={SIZE} y2={sy(0)} stroke="var(--sb-line)" strokeWidth={1} opacity={0.5} />
+        <line x1={sx(0)} y1={0} x2={sx(0)} y2={SIZE} stroke="var(--sb-line)" strokeWidth={1} opacity={0.5} />
+        <line x1={0} y1={sy(1)} x2={SIZE} y2={sy(1)} stroke="var(--sb-line)" strokeWidth={1} strokeDasharray="3 3" opacity={0.4} />
+        <line x1={sx(1)} y1={0} x2={sx(1)} y2={SIZE} stroke="var(--sb-line)" strokeWidth={1} strokeDasharray="3 3" opacity={0.4} />
 
         {line && (
           <line
@@ -83,36 +93,51 @@ export function DecisionPlane({ net, rows, small }: Props) {
           />
         )}
 
-        {rows.map((r, i) => (
-          <g key={i}>
-            <circle
-              cx={sx(r.x[0])}
-              cy={sy(r.x[1])}
-              r={small ? 7 : 10}
-              fill={r.target === 1 ? 'var(--sb-pos)' : 'var(--sb-panel)'}
-              stroke="var(--sb-text)"
-              strokeWidth={2}
-            />
-            {!r.ok && !small && (
-              <text className="sb-plane__ng" x={sx(r.x[0]) + 14} y={sy(r.x[1]) - 8}>
-                ×
-              </text>
-            )}
-            {!small && (
-              <text className="sb-plane__pt" x={sx(r.x[0])} y={sy(r.x[1]) + 25} textAnchor="middle">
-                ({r.x[0]},{r.x[1]})
-              </text>
-            )}
-          </g>
-        ))}
+        {rows.map((r, i) => {
+          const sel = i === selected;
+          return (
+            <g
+              key={i}
+              className={onSelect ? 'sb-plane__pt-g' : undefined}
+              onClick={onSelect ? () => onSelect(i) : undefined}
+            >
+              {sel && <circle cx={sx(r.x[0])} cy={sy(r.x[1])} r={small ? 11 : 16} className="sb-plane__halo" />}
+              <circle
+                cx={sx(r.x[0])}
+                cy={sy(r.x[1])}
+                r={small ? 7 : 10}
+                fill={r.target === 1 ? 'var(--sb-pos)' : 'var(--sb-panel)'}
+                stroke={sel ? 'var(--sb-hot)' : 'var(--sb-text)'}
+                strokeWidth={sel ? 3 : 2}
+              />
+              {!r.ok && !small && (
+                <text className="sb-plane__ng" x={sx(r.x[0]) + 14} y={sy(r.x[1]) - 8}>
+                  ×
+                </text>
+              )}
+              {!small && (
+                <text className="sb-plane__pt" x={sx(r.x[0])} y={sy(r.x[1]) + 25} textAnchor="middle">
+                  ({r.x[0]},{r.x[1]})
+                </text>
+              )}
+            </g>
+          );
+        })}
 
+        {/* 軸のラベルと 0・1 の目盛り。小窓でも「x₁・x₂ の面」だと分かるよう常に出す */}
+        <text className={`sb-axis ${small ? 'sb-axis--small' : ''}`} x={SIZE - 6} y={sy(0) + 15} textAnchor="end">
+          x₁
+        </text>
+        <text className={`sb-axis ${small ? 'sb-axis--small' : ''}`} x={sx(0) - 8} y={14} textAnchor="end">
+          x₂
+        </text>
         {!small && (
           <>
-            <text className="sb-axis" x={SIZE - 6} y={sy(0) + 15} textAnchor="end">
-              x₁
+            <text className="sb-axis" x={sx(1)} y={SIZE - 4} textAnchor="middle">
+              1
             </text>
-            <text className="sb-axis" x={sx(0) - 8} y={14} textAnchor="end">
-              x₂
+            <text className="sb-axis" x={4} y={sy(1) + 4} textAnchor="start">
+              1
             </text>
           </>
         )}

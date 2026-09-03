@@ -36,12 +36,11 @@ export const OP_LABEL: Record<OpId, string> = {
 };
 
 /** 見せられる窓。ステージごとに解禁済みのものだけ出す */
-export type ViewId = 'fit' | 'network' | 'calc' | 'actchart' | 'truth' | 'grad';
+export type ViewId = 'fit' | 'network' | 'actchart' | 'truth' | 'grad';
 
 export const VIEW_LABEL: Record<ViewId, string> = {
   fit: '当てはまり',
   network: 'ネットワーク',
-  calc: '計算の中身',
   actchart: '活性化関数',
   truth: '真理値表',
   grad: '勾配の大きさ',
@@ -75,7 +74,7 @@ export type TutCtx = {
  * 1手ぶんの指示。
  * targets はハイライトして触れるようにする要素の名前。
  * `e:層:出力:入力` = 線 / `n:層:出力` = ノード / `h:層` = 層の見出し /
- * `act` = 活性化 / `knob` = つまみ / `play` `hist` `plus` `nodes` = 道具。
+ * `a:層:出力` = ノード脇の活性化の印 / `knob` = つまみ / `play` `hist` `plus` `nodes` = 道具。
  * 末尾が `*` なら前方一致。
  */
 export type TutStep = { say: string; targets: string[]; done: (c: TutCtx) => boolean };
@@ -88,12 +87,6 @@ export type TutStep = { say: string; targets: string[]; done: (c: TutCtx) => boo
 export type Ticker = {
   /** これ以下のずれなら合格 */
   tol: number;
-  /** 予約から判定までの間（ms）。連続0回のときの値 */
-  base: number;
-  /** 連続で1回通すたびに縮める幅（ms） */
-  stepDown: number;
-  /** 間の下限（ms） */
-  min: number;
   /** 揺れる時間（ms） */
   shake: number;
   /** この回数だけ落とすとヒントを1行出す */
@@ -101,8 +94,11 @@ export type Ticker = {
   hint: string;
 };
 
-/** 予約から判定までの間。連続で通すほど短くなる */
-export const judgeDelay = (t: Ticker, streak: number) => Math.max(t.min, t.base - t.stepDown * streak);
+/**
+ * 予約から判定までの間。700 → 700 → 600 → 500 → 400 → 300 → 200 → 100 → 以降100ms固定。
+ * streak は連続で通した数（これから出す問題の前に何回連続で通ったか）。
+ */
+export const judgeDelay = (streak: number) => (streak <= 1 ? 700 : Math.max(100, 700 - 100 * (streak - 1)));
 
 const wOf = (n: Network, li: number, o: number, i: number) => n.layers[li]?.w?.[o]?.[i] ?? 0;
 
@@ -322,9 +318,6 @@ export const STAGES: Stage[] = [
     ],
     ticker: {
       tol: 0.05,
-      base: 700,
-      stepDown: 50,
-      min: 250,
       shake: 400,
       hintAfter: 8,
       hint: '2本の線を同じくらいにすると、どの点でも合うかもしれません',
@@ -359,9 +352,6 @@ export const STAGES: Stage[] = [
     ],
     ticker: {
       tol: 0.05,
-      base: 700,
-      stepDown: 50,
-      min: 250,
       shake: 400,
       hintAfter: 8,
       hint: '線だけでは全部の点には合いません。丸のほうも動かしてみてください',
@@ -381,13 +371,13 @@ export const STAGES: Stage[] = [
     threshold: 0.02,
     judgeLoss: 'mse',
     unlocks: ['activation'],
-    views: ['network', 'truth', 'fit', 'calc'],
+    views: ['network', 'truth', 'fit'],
     start: { sizes: [2, 1], acts: ['identity'] },
     tutorial: [
       {
-        say: '右の「活性化」から「ステップ」を選んでください',
-        targets: ['act'],
-        done: (c) => c.net.layers[0]?.act === 'step',
+        say: '出力の丸の脇にある印を押して、「ステップ」を選んでください',
+        targets: ['a:0:*'],
+        done: (c) => c.net.layers[0]?.acts.every((a) => a === 'step') ?? false,
       },
       {
         say: '0 か 1 かで出るようになりました。線と丸を動かして表を全部 ○ にしてください',
@@ -410,7 +400,7 @@ export const STAGES: Stage[] = [
     threshold: 0.02,
     judgeLoss: 'mse',
     unlocks: [],
-    views: ['network', 'truth', 'fit', 'calc'],
+    views: ['network', 'truth', 'fit'],
     start: { sizes: [2, 2, 1], acts: ['step', 'step'] },
     tutorial: [
       {
@@ -444,7 +434,7 @@ export const STAGES: Stage[] = [
     threshold: 0.014,
     judgeLoss: 'mse',
     unlocks: ['train'],
-    views: ['fit', 'network', 'calc'],
+    views: ['fit', 'network'],
     start: { sizes: [1, 1], acts: ['identity'] },
     tutorial: [
       { say: '▶ を押してください', targets: ['play'], done: (c) => c.steps > 0 },
@@ -475,7 +465,7 @@ export const STAGES: Stage[] = [
     threshold: 0.002,
     judgeLoss: 'mse',
     unlocks: ['place', 'nodes'],
-    views: ['fit', 'network', 'calc'],
+    views: ['fit', 'network'],
     start: { sizes: [1, 1], acts: ['identity'] },
     tutorial: [
       {
@@ -489,9 +479,9 @@ export const STAGES: Stage[] = [
         done: (c) => c.net.layers.length >= 2,
       },
       {
-        say: '置いた層の活性化を選んでください（そのまま「活性化なし」だと直線のままです）',
-        targets: ['act'],
-        done: (c) => c.net.layers.some((l) => l.act !== 'identity'),
+        say: '置いた層のノードの脇にある印を押して、活性化を選んでください（そのまま「活性化なし」だと直線のままです）',
+        targets: ['a:*'],
+        done: (c) => c.net.layers.some((l) => l.acts.some((a) => a !== 'identity')),
       },
       { say: 'もう一度 ▶ で学習させてください', targets: ['play', 'hist'], done: (c) => c.cleared },
     ],
@@ -511,7 +501,7 @@ export const STAGES: Stage[] = [
     judgeLoss: 'mse',
     limits: { maxParams: 40 },
     unlocks: ['optimizer', 'lr', 'knob'],
-    views: ['fit', 'network', 'calc', 'actchart', 'grad'],
+    views: ['fit', 'network', 'actchart', 'grad'],
     start: { sizes: [1, 4, 1], acts: ['tanh', 'identity'] },
     tutorial: [],
   },
@@ -530,7 +520,7 @@ export const STAGES: Stage[] = [
     judgeLoss: 'mse',
     limits: { maxLayers: 2 },
     unlocks: ['loss', 'init'],
-    views: ['fit', 'network', 'calc', 'actchart', 'grad'],
+    views: ['fit', 'network', 'actchart', 'grad'],
     start: { sizes: [1, 4, 1], acts: ['tanh', 'identity'] },
     tutorial: [],
   },
@@ -548,7 +538,7 @@ export const STAGES: Stage[] = [
     threshold: 0.001,
     judgeLoss: 'mse',
     unlocks: ['data'],
-    views: ['fit', 'network', 'calc', 'actchart', 'grad'],
+    views: ['fit', 'network', 'actchart', 'grad'],
     start: { sizes: [2, 4, 1], acts: ['tanh', 'identity'] },
     tutorial: [],
   },
@@ -566,7 +556,7 @@ export const STAGES: Stage[] = [
     threshold: 0.03,
     judgeLoss: 'bce',
     unlocks: ['batch'],
-    views: ['fit', 'network', 'calc', 'actchart', 'grad'],
+    views: ['fit', 'network', 'actchart', 'grad'],
     start: { sizes: [2, 4, 1], acts: ['tanh', 'sigmoid'] },
     tutorial: [],
   },
@@ -584,7 +574,7 @@ export const STAGES: Stage[] = [
     threshold: 0.08,
     judgeLoss: 'bce',
     unlocks: [],
-    views: ['fit', 'network', 'calc', 'actchart', 'grad'],
+    views: ['fit', 'network', 'actchart', 'grad'],
     start: { sizes: [2, 8, 8, 1], acts: ['tanh', 'tanh', 'sigmoid'] },
     tutorial: [],
   },

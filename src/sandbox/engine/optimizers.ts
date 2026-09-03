@@ -83,7 +83,7 @@ export function applyStep(
   };
 
   const layers = net.layers.map((layer, li) => ({
-    act: layer.act,
+    acts: [...layer.acts],
     w: layer.w.map((row, o) => row.map((wv, i) => wv + update(grad[li].w[o][i], li, 'w', o, i))),
     b: layer.b.map((bv, o) => bv + update(grad[li].b[o], li, 'b', o, 0)),
   }));
