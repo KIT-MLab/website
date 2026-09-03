@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { ACTIVATIONS, ACTIVATION_ORDER } from '../engine/activations';
+import { ACTIVATIONS } from '../engine/activations';
 import type { ActivationId, ForwardTrace, Network } from '../engine/types';
 import { hits } from '../stages';
 import { ActivationIcon } from './ActivationIcon';
@@ -36,8 +36,6 @@ const BOX_H = 26;
 
 type Drag = { kind: 'w' | 'b'; li: number; o: number; i: number; y: number; from: number };
 type Gauge = { left: number; top: number; value: number; label: string; flip: boolean };
-/** ノード脇の印を押すと開く、活性化の選択肢 */
-type ActMenu = { li: number; o: number; left: number; top: number };
 
 /** 1点ずつ出す出題。入力と目標を箱で見せ、合否で色と動きを変える */
 export type Cue = {
@@ -71,6 +69,8 @@ type Props = {
   point?: string[] | null;
   /** あれば入力の左と出力の右に箱を出す */
   cue?: Cue | null;
+  /** 塗る筆。あれば、出力側ノードを押すとこの活性化になる（ドラッグより優先） */
+  paint?: ActivationId | null;
   onSelect?: (li: number) => void;
   /** 重みを絶対値で置く（上下限は ±wRange） */
   onWeight?: (li: number, o: number, i: number, value: number) => void;
@@ -78,7 +78,7 @@ type Props = {
   onInsert?: (gap: number) => void;
   onRemove?: (li: number) => void;
   onNodes?: (li: number, delta: number) => void;
-  onSetActivation?: (li: number, o: number, id: ActivationId) => void;
+  onPaint?: (li: number, o: number) => void;
   onHover?: (text: string | null) => void;
   /** 掴んでいる間だけ true。判定を止めるのに使う */
   onDrag?: (active: boolean) => void;
@@ -107,23 +107,23 @@ export function NetworkDiagram({
   gate,
   point,
   cue,
+  paint,
   onSelect,
   onWeight,
   onBias,
   onInsert,
   onRemove,
   onNodes,
-  onSetActivation,
+  onPaint,
   onHover,
   onDrag,
 }: Props) {
   const drag = useRef<Drag | null>(null);
   const [gauge, setGauge] = useState<Gauge | null>(null);
-  const [menu, setMenu] = useState<ActMenu | null>(null);
 
   /* window のハンドラは張りっぱなしなので、呼ぶ先は毎回いまのものを見る */
-  const cb = useRef({ onWeight, onBias, onDrag, onSetActivation });
-  cb.current = { onWeight, onBias, onDrag, onSetActivation };
+  const cb = useRef({ onWeight, onBias, onDrag });
+  cb.current = { onWeight, onBias, onDrag };
 
   /* 目盛りの範囲。そのまま値の上下限になる */
   const wMax = wRange ?? W_RANGE_DEFAULT;
@@ -224,23 +224,6 @@ export function NetworkDiagram({
     };
     /* 目盛りが出ている間だけ張る。位置と値は ref と関数更新で追う */
   }, [gauge !== null]);
-
-  /* -------------------- ノード脇の活性化の印 -------------------- */
-
-  const openMenu = (e: React.PointerEvent, li: number, o: number) => {
-    if (!actActive) return;
-    e.preventDefault();
-    e.stopPropagation();
-    const cx = e.clientX;
-    const cy = e.clientY;
-    const flip = cx + 190 > window.innerWidth;
-    setMenu({
-      li,
-      o,
-      left: flip ? cx - 180 : cx + 10,
-      top: Math.min(Math.max(cy - 40, 10), window.innerHeight - 300),
-    });
-  };
 
   /* -------------------- 層の見出し -------------------- */
 
@@ -426,11 +409,19 @@ export function NetworkDiagram({
                   cy={y(col, i)}
                   r={R}
                   fill={fill(v)}
-                  className={`sb-nd__node ${col > 0 && adjusting && !locked ? 'sb-nd__node--drag' : ''}`}
+                  className={`sb-nd__node ${col > 0 && adjusting && !locked ? 'sb-nd__node--drag' : ''} ${col > 0 && paint && actActive ? 'sb-nd__node--paint' : ''}`}
                   style={col > 0 ? dead(id) : undefined}
                   onPointerDown={
-                    col > 0 && !locked
-                      ? (e) => begin(e, { kind: 'b', li: col - 1, o: i, i: 0 }, bias ?? 0, `${nodeName(col, i)} のバイアス`)
+                    col > 0
+                      ? paint && actActive
+                        ? (e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            onPaint?.(col - 1, i);
+                          }
+                        : !locked
+                          ? (e) => begin(e, { kind: 'b', li: col - 1, o: i, i: 0 }, bias ?? 0, `${nodeName(col, i)} のバイアス`)
+                          : undefined
                       : undefined
                   }
                   onMouseEnter={
@@ -464,20 +455,14 @@ export function NetworkDiagram({
                 {col > 0 && actActive && (
                   <g
                     className="sb-actbadge"
-                    style={dead(`a:${col - 1}:${i}`)}
                     transform={`translate(${x(col) + R + 4},${y(col, i) - 8})`}
-                    onPointerDown={(e) => openMenu(e, col - 1, i)}
                     onMouseEnter={() => {
                       const av = ACTIVATIONS[net.layers[col - 1].acts[i]];
                       onHover?.(`${nodeName(col, i)} の活性化: ${av.label}（${av.formula}）`);
                     }}
                     onMouseLeave={() => onHover?.(null)}
-                    role="button"
-                    aria-label={`${nodeName(col, i)} の活性化を選ぶ`}
+                    aria-hidden="true"
                   >
-                    {lit(`a:${col - 1}:${i}`) && (
-                      <rect className="sb-nd__pt" x={-5} y={-5} width={34} height={26} rx={6} />
-                    )}
                     <rect className="sb-actbadge__bg" width={24} height={16} rx={3} />
                     <ActivationIcon id={net.layers[col - 1].acts[i]} w={24} h={16} />
                   </g>
@@ -548,41 +533,6 @@ export function NetworkDiagram({
               {gauge.value.toFixed(2)}
             </span>
           </div>,
-          document.body,
-        )}
-
-      {menu &&
-        typeof document !== 'undefined' &&
-        createPortal(
-          <>
-            <div className="sb-actmenu__backdrop" onPointerDown={() => setMenu(null)} />
-            <div className="sb-actmenu" style={{ left: menu.left, top: menu.top }}>
-              <p className="sb-actmenu__t">{nodeName(menu.li + 1, menu.o)} の活性化</p>
-              <div className="sb-actmenu__grid">
-                {ACTIVATION_ORDER.map((id) => {
-                  const av = ACTIVATIONS[id];
-                  const cur = net.layers[menu.li]?.acts[menu.o] === id;
-                  return (
-                    <button
-                      key={id}
-                      type="button"
-                      className="sb-actmenu__opt"
-                      data-sel={cur || undefined}
-                      onClick={() => {
-                        cb.current.onSetActivation?.(menu.li, menu.o, id);
-                        setMenu(null);
-                      }}
-                      onMouseEnter={() => onHover?.(`${av.label}: ${av.formula} ／ ${av.note}`)}
-                      onMouseLeave={() => onHover?.(null)}
-                    >
-                      <ActivationIcon id={id} w={56} h={34} />
-                      <span>{av.label}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          </>,
           document.body,
         )}
     </>

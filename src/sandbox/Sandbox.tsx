@@ -18,6 +18,7 @@ import type {
   TrainConfig,
 } from './engine/types';
 import {
+  activationChoicesFor,
   ALL_OPS,
   hits,
   judgeDelay,
@@ -30,6 +31,9 @@ import {
   type ViewId,
 } from './stages';
 import { ActivationChart } from './views/ActivationChart';
+import { ActivationIcon } from './views/ActivationIcon';
+import { ActivationPicker } from './views/ActivationPicker';
+import { DebugInspector } from './views/DebugInspector';
 import { DecisionPlane } from './views/DecisionPlane';
 import { FitCurve } from './views/FitCurve';
 import { FitPlane } from './views/FitPlane';
@@ -140,7 +144,6 @@ export default function Sandbox() {
 
   const [selected, setSelected] = useState(0);
   const [main, setMain] = useState<ViewId>(STAGES[0].views[0]);
-  const [off, setOff] = useState<ViewId[]>([]);
   const [sample, setSample] = useState(0);
   const [playing, setPlaying] = useState(false);
   const [speed, setSpeed] = useState(10);
@@ -148,6 +151,27 @@ export default function Sandbox() {
   const [flash, setFlash] = useState<string | null>(null);
   const [help, setHelp] = useState<{ title: string; body: string } | null>(null);
   const [wasCleared, setWasCleared] = useState(false);
+
+  /* -------------------- 活性化を「塗る」道具 -------------------- */
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [paintId, setPaintId] = useState<ActivationId | null>(null);
+  /** デバッグ用の寸法計測ツール。Ctrl+Shift+D でのみ出る。通常のユーザーには見えない */
+  const [debugOn, setDebugOn] = useState(false);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        if (pickerOpen) setPickerOpen(false);
+        else if (paintId) setPaintId(null);
+      }
+      if (e.ctrlKey && e.shiftKey && (e.key === 'D' || e.key === 'd')) {
+        e.preventDefault();
+        setDebugOn((v) => !v);
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [pickerOpen, paintId]);
 
   const inDim = stage.inputLabels.length;
   const data = useMemo(() => stage.data(dataOpts), [stage, dataOpts]);
@@ -551,11 +575,20 @@ export default function Sandbox() {
     core.current.rng = rng;
   };
 
-  /** ノード脇の印から、その1ノードだけ活性化を変える */
+  /** 塗る筆で、その1ノードだけ活性化を変える */
   const setActivation = (li: number, o: number, id: ActivationId) =>
     editNet((n) => {
       n.layers[li].acts[o] = id;
     });
+
+  /** ツールバーの「活性化関数」。塗っている最中に押すと塗るのをやめる。それ以外は選択画面を開閉する */
+  const toggleActTool = () => {
+    if (paintId) {
+      setPaintId(null);
+      return;
+    }
+    setPickerOpen((o) => !o);
+  };
 
   /** 触れていないステージを、初めて訪れたときの姿にする */
   const applyFreshStage = (idx: number) => {
@@ -576,7 +609,8 @@ export default function Sandbox() {
     setPlaying(false);
     setWasCleared(false);
     setMain(s.views[0]);
-    setOff([]);
+    setPaintId(null);
+    setPickerOpen(false);
     setTut({ i: 0, base: core.current.net, baseStep: 0, scrubbed: false });
   };
 
@@ -597,7 +631,8 @@ export default function Sandbox() {
     setPlaying(false);
     setWasCleared(saved.wasCleared);
     setMain(s.views[0]);
-    setOff([]);
+    setPaintId(null);
+    setPickerOpen(false);
     setTut(saved.tut);
   };
 
@@ -663,7 +698,7 @@ export default function Sandbox() {
   const availableViews: ViewId[] = free
     ? (['fit', 'network', 'actchart', 'grad', ...(stage.kind === 'logic' ? (['truth'] as ViewId[]) : [])] as ViewId[])
     : stage.views;
-  const shown = availableViews.filter((v) => !off.includes(v));
+  const shown = availableViews;
   /** 「当てはまり」は論理回路のステージでは入力平面になるので、表示名もそちらに変える */
   const viewLabel = (v: ViewId) => (v === 'fit' && stage.kind === 'logic' ? '入力平面' : VIEW_LABEL[v]);
 
@@ -673,7 +708,6 @@ export default function Sandbox() {
 
   useEffect(() => {
     if (wantMain && wantMain !== main && availableViews.includes(wantMain)) {
-      setOff((o) => o.filter((v) => v !== wantMain));
       setMain(wantMain);
     }
   }, [wantMain, main]);
@@ -691,6 +725,7 @@ export default function Sandbox() {
               small={small}
               selected={sampleIdx}
               onSelect={small ? undefined : setSample}
+              hint={stage.logicHint}
             />
           ) : (
             <p className="sb-empty">層がありません</p>
@@ -724,6 +759,7 @@ export default function Sandbox() {
             gate={small ? null : gate}
             point={small ? null : point}
             cue={small ? null : cue}
+            paint={small ? null : paintId}
             onSelect={setSelected}
             onWeight={(li, o, i, v) =>
               editNet((n) => {
@@ -738,7 +774,7 @@ export default function Sandbox() {
             onInsert={insertLayer}
             onRemove={removeLayer}
             onNodes={setNodes}
-            onSetActivation={setActivation}
+            onPaint={(li, o) => paintId && setActivation(li, o, paintId)}
             onHover={setHover}
             onDrag={small ? undefined : handleDrag}
           />
@@ -789,69 +825,58 @@ export default function Sandbox() {
   const railW = stage.kind === 'logic' ? 190 : 132;
 
   const cols = `${showRail ? `${railW}px ` : ''}minmax(0, 1fr)${showSide ? ' 254px' : ''}`;
-
-  const sampleNav = !usingTicker && data.x.length > 1 && main === 'network' && (
-    <span className="sb-samp">
-      <button type="button" className="sb-mini" onClick={() => setSample((s) => Math.max(0, s - 1))} aria-label="前のデータ">
-        ◀
-      </button>
-      <span>
-        データ {sampleIdx + 1}/{data.x.length}（{data.x[sampleIdx].map((v) => fmt(v)).join(', ')} →{' '}
-        {fmt(data.y[sampleIdx][0])}）
-      </span>
-      <button
-        type="button"
-        className="sb-mini"
-        onClick={() => setSample((s) => Math.min(data.x.length - 1, s + 1))}
-        aria-label="次のデータ"
-      >
-        ▶
-      </button>
-    </span>
-  );
+  const isLogic = stage.kind === 'logic';
 
   return (
     <div className="sb">
-      {/* ---- 1段目: ステージと窓 ---- */}
-      <header className="sb-top">
-        <a className="sb-back" href="/learn/">
-          ← 学習
-        </a>
-        <div className="sb-stages">
-          {STAGES.filter((_, i) => free || i <= maxStage).map((s, i) => (
-            <button
-              key={s.id}
-              type="button"
-              className="sb-stage"
-              aria-pressed={i === stageIdx}
-              title={`${s.no}. ${s.title}`}
-              onClick={() => goStage(i)}
-            >
-              {s.no}
-            </button>
-          ))}
-        </div>
-        <div className="sb-spacer" />
-        {availableViews.length > 1 && (
-          <>
-            <span className="sb-cap">窓</span>
-            {availableViews.map((v) =>
-              chip(viewLabel(v), !off.includes(v), () =>
-                setOff((o) => (o.includes(v) ? o.filter((x) => x !== v) : [...o, v])),
-              ),
-            )}
-          </>
-        )}
-        <button type="button" className="sb-restart" onClick={restart}>
-          最初から
-        </button>
-        <button type="button" className="sb-free" aria-pressed={free} onClick={() => setFree((f) => !f)}>
-          自由モード
-        </button>
-      </header>
+      {/* ---- 左端の縦ツールバー。道具が解禁されたときだけ出る ---- */}
+      {can('activation') && (
+        <nav className="sb-toolbar" aria-label="道具">
+          <button
+            type="button"
+            className={`sb-tool ${pointed('tool:act') ? 'sb-point' : ''}`}
+            aria-pressed={paintId !== null || pickerOpen}
+            disabled={frozen('tool:act')}
+            title="活性化関数"
+            onClick={toggleActTool}
+          >
+            <ActivationIcon id="step" w={26} h={17} />
+            <span className="sb-tool__l">活性化関数</span>
+          </button>
+        </nav>
+      )}
 
-      {/* ---- 2段目: 目標といまやる1手と損失。画面上部の中央にまとめる ---- */}
-      <div className="sb-goal">
+      <div className="sb-shell">
+        {/* ---- 1段目: ステージ ---- */}
+        <header className="sb-top">
+          <a className="sb-back" href="/learn/">
+            ← 学習
+          </a>
+          <div className="sb-stages">
+            {STAGES.filter((_, i) => free || i <= maxStage).map((s, i) => (
+              <button
+                key={s.id}
+                type="button"
+                className="sb-stage"
+                aria-pressed={i === stageIdx}
+                title={`${s.no}. ${s.title}`}
+                onClick={() => goStage(i)}
+              >
+                {s.no}
+              </button>
+            ))}
+          </div>
+          <div className="sb-spacer" />
+          <button type="button" className="sb-restart" onClick={restart}>
+            最初から
+          </button>
+          <button type="button" className="sb-free" aria-pressed={free} onClick={() => setFree((f) => !f)}>
+            自由モード
+          </button>
+        </header>
+
+        {/* ---- 2段目: 目標といまやる1手と損失。画面上部の中央にまとめる ---- */}
+        <div className="sb-goal">
         <div className="sb-goal__pad" />
         <div className="sb-goal__center">
           <div className="sb-goal__line">
@@ -953,6 +978,35 @@ export default function Sandbox() {
       )}
 
       {/* ---- 本体 ---- */}
+      {isLogic ? (
+        <div className="sb-logic">
+          <section className="sb-logic__panel sb-logic__truth">
+            <h2>真理値表</h2>
+            {renderView('truth', false)}
+          </section>
+          <div className="sb-logic__net">
+            <div className="sb-main__head">
+              <h2>ネットワーク</h2>
+            </div>
+            <div className="sb-main__stage">{renderView('network', false)}</div>
+          </div>
+          {/* 入力平面は正方形なので、本体の高さをまるごと使える専用の列に置く */}
+          <section className="sb-logic__panel sb-logic__plane">
+            <h2>入力平面</h2>
+            {renderView('fit', false)}
+          </section>
+          {/* 次のステージ。本体いっぱいの右下に置く */}
+          <button
+            type="button"
+            className="sb-next"
+            data-on={(cleared && stageIdx < STAGES.length - 1) || undefined}
+            disabled={!cleared || stageIdx >= STAGES.length - 1}
+            onClick={() => goStage(stageIdx + 1)}
+          >
+            次のステージ
+          </button>
+        </div>
+      ) : (
       <div className="sb-body" style={{ gridTemplateColumns: cols }}>
         {showRail && (
           <aside className="sb-rail" aria-label="小窓">
@@ -976,7 +1030,6 @@ export default function Sandbox() {
         <main className="sb-main">
           <div className="sb-main__head">
             <h2>{viewLabel(main)}</h2>
-            {sampleNav}
           </div>
           <div className="sb-main__stage">{renderView(main, false)}</div>
 
@@ -1175,6 +1228,7 @@ export default function Sandbox() {
           </aside>
         )}
       </div>
+      )}
 
       {flash && (
         <div className="sb-flash" role="status" data-clear={flash === 'クリア' || undefined}>
@@ -1193,6 +1247,18 @@ export default function Sandbox() {
           </div>
         </div>
       )}
+      </div>
+
+      <ActivationPicker
+        open={pickerOpen}
+        choices={activationChoicesFor(stage)}
+        onPick={(id) => {
+          setPaintId(id);
+          setPickerOpen(false);
+        }}
+        onClose={() => setPickerOpen(false)}
+      />
+      <DebugInspector active={debugOn} onClose={() => setDebugOn(false)} />
     </div>
   );
 }

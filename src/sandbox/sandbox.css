@@ -21,7 +21,7 @@
   position: fixed;
   inset: 0;
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   height: 100dvh;
   overflow: hidden;
   background: var(--sb-bg);
@@ -34,6 +34,16 @@
   user-select: none;
 }
 
+/* 中身一式。ツールバーの右に置く縦積みの本体 */
+.sb-shell {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
 .sb button {
   font-family: inherit;
   font-size: inherit;
@@ -42,12 +52,6 @@
 
 .sb-spacer {
   flex: 1;
-}
-
-.sb-cap {
-  color: var(--sb-dim);
-  font-size: 11px;
-  padding-right: 2px;
 }
 
 .sb-note {
@@ -114,6 +118,53 @@
 .sb :focus-visible {
   outline: 2px solid var(--sb-hot);
   outline-offset: 1px;
+}
+
+/* ---------- 左端の縦ツールバー ---------- */
+
+.sb-toolbar {
+  flex: 0 0 auto;
+  width: 68px;
+  height: 100%;
+  background: var(--sb-panel);
+  border-right: 1px solid var(--sb-line);
+  padding: 10px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.sb-tool {
+  width: 56px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  padding: 8px 2px;
+  color: var(--sb-text);
+  cursor: pointer;
+}
+.sb-tool:hover:not(:disabled) {
+  background: var(--sb-panel2);
+  border-color: var(--sb-line);
+}
+.sb-tool[aria-pressed='true'] {
+  background: var(--sb-hot);
+  border-color: var(--sb-hot);
+  color: #201f1d;
+}
+.sb-tool:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+.sb-tool__l {
+  font-size: 11px;
+  line-height: 1.2;
+  text-align: center;
 }
 
 /* ---------- 1段目 ---------- */
@@ -190,7 +241,7 @@
   grid-template-columns: 1fr auto 1fr;
   align-items: center;
   gap: 12px;
-  padding: 7px 14px 9px;
+  padding: 9px 18px 11px;
   background: var(--sb-bg);
   border-bottom: 1px solid var(--sb-line);
 }
@@ -224,15 +275,15 @@
   background: var(--sb-hot);
   color: #201f1d;
   font-weight: 700;
-  border-radius: 3px;
-  padding: 1px 9px;
-  font-size: 15px;
+  border-radius: 4px;
+  padding: 2px 13px;
+  font-size: 20px;
   flex: 0 0 auto;
 }
 
 .sb-goal__h {
   margin: 0;
-  font-size: 25px;
+  font-size: 36px;
   font-weight: 700;
   letter-spacing: 0.01em;
   line-height: 1.2;
@@ -243,24 +294,24 @@
 
 /* いまやるべき1手。目標のすぐ下に常時出す */
 .sb-goal__now {
-  margin: 3px 0 0;
-  min-height: 20px;
-  font-size: 16px;
+  margin: 4px 0 0;
+  min-height: 22px;
+  font-size: 17px;
   color: var(--sb-hot);
   display: flex;
   align-items: center;
-  gap: 7px;
+  gap: 8px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 .sb-goal__now--dim {
   color: var(--sb-dim);
-  font-size: 12.5px;
+  font-size: 15px;
 }
 .sb-goal__dot {
-  width: 8px;
-  height: 8px;
+  width: 10px;
+  height: 10px;
   border-radius: 50%;
   background: var(--sb-hot);
   flex: 0 0 auto;
@@ -278,22 +329,22 @@
 
 /* 損失。上部中央の主役なので数字だけ大きく出す */
 .sb-meter {
-  margin: 2px 0 0;
+  margin: 3px 0 0;
   display: flex;
   align-items: baseline;
-  gap: 10px;
+  gap: 12px;
 }
 .sb-meter__l {
-  font-size: 12px;
+  font-size: 15px;
   color: var(--sb-dim);
 }
 .sb-meter__v {
   font-family: var(--sb-mono);
-  font-size: 30px;
+  font-size: 38px;
   font-weight: 700;
   line-height: 1.05;
   letter-spacing: 0.01em;
-  min-width: 108px;
+  min-width: 130px;
   text-align: left;
 }
 .sb-meter__v[data-ok] {
@@ -301,12 +352,12 @@
 }
 /* ステージ1〜4は損失を出さず、この数だけを主役級に大きく出す */
 .sb-meter__v--big {
-  font-size: 40px;
+  font-size: 46px;
   min-width: 0;
 }
 .sb-meter__sub {
   font-family: var(--sb-mono);
-  font-size: 12px;
+  font-size: 15px;
   color: var(--sb-dim);
 }
 
@@ -314,8 +365,9 @@
   background: none;
   border: 1px solid var(--sb-line);
   border-radius: 50%;
-  width: 22px;
-  height: 22px;
+  width: 28px;
+  height: 28px;
+  font-size: 15px;
   line-height: 1;
   padding: 0;
   color: var(--sb-dim);
@@ -447,6 +499,72 @@
   overflow: hidden;
 }
 
+/* ---------- 論理回路のステージ（AND・XOR）専用のレイアウト ----------
+ * ネットワーク図（編集する場）と、真理値表・入力平面（見る場）を常時どちらも読める大きさで出す。
+ * 汎用の小窓・右パネルとは別枠。序盤の数ステージだけの専用ツールという位置づけ */
+/* 真理値表を上に横いっぱい、下段を左＝ネットワーク／右＝入力平面に分ける。
+ * 入力平面の高さを削るものが真理値表と同じ列に無くなるので、単体表示に近い大きさまで確保できる */
+.sb-logic {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(320px, 1fr) minmax(380px, 45%);
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 6px;
+  padding: 5px 8px 4px;
+  overflow: hidden;
+}
+
+.sb-logic__truth {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+.sb-logic__net {
+  grid-column: 1;
+  grid-row: 2;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 正方形の入力平面だけは、本体の高さをまるごと使う専用の列にする */
+.sb-logic__plane {
+  grid-column: 2;
+  grid-row: 1 / -1;
+  align-items: center;
+}
+
+.sb-logic__panel {
+  background: var(--sb-panel);
+  border: 1px solid var(--sb-line);
+  border-radius: 5px;
+  padding: 5px 10px 6px;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.sb-logic__panel h2 {
+  margin: 0 0 3px;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: var(--sb-dim);
+  flex: 0 0 auto;
+}
+
+.sb-logic__truth table {
+  margin: 0 auto;
+}
+
+.sb-logic__plane .sb-plane {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+}
+
 .sb-rail {
   display: flex;
   flex-direction: column;
@@ -514,21 +632,6 @@
   letter-spacing: 0.14em;
   color: var(--sb-dim);
 }
-.sb-samp {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  font-family: var(--sb-mono);
-  font-size: 10.5px;
-  color: var(--sb-dim);
-}
-.sb-samp .sb-mini {
-  padding: 0 4px;
-  min-width: 18px;
-  line-height: 15px;
-  font-size: 9px;
-}
-
 .sb-main__stage {
   flex: 1;
   min-height: 0;
@@ -733,6 +836,13 @@
   font-size: 15px;
   font-weight: 700;
 }
+/* どんな線が引ければよいかを、答えを言わずに薄く忍ばせる */
+.sb-plane__hint {
+  stroke: var(--sb-text);
+  stroke-width: 2.5;
+  stroke-dasharray: 7 6;
+  opacity: 0.22;
+}
 .sb-plane__pt,
 .sb-axis {
   fill: var(--sb-dim);
@@ -762,6 +872,14 @@
 }
 .sb-nd--adjust .sb-nd__node--drag {
   cursor: ns-resize;
+}
+/* 塗る筆を持っている間、出力側ノードは塗れることが分かるカーソルにする */
+.sb-nd__node--paint {
+  cursor: crosshair;
+}
+.sb-nd__node--paint:hover {
+  stroke: var(--sb-hot);
+  stroke-width: 3;
 }
 .sb-nd__hit {
   stroke: transparent;
@@ -854,78 +972,16 @@
   pointer-events: none;
 }
 
-/* ---------- ノード脇の活性化の印 ---------- */
-
-/* いまの活性化の形をそのまま出す。押すと選択肢が開く */
+/* ---------- ノード脇の活性化の印 ----------
+ * いまの活性化の形を表示するだけ。押しても開かない（選ぶのは左のツールバー） */
 .sb-actbadge {
-  cursor: pointer;
-  color: var(--sb-text);
-}
-.sb-actbadge:hover {
-  color: var(--sb-hot);
+  color: var(--sb-dim);
+  pointer-events: none;
 }
 .sb-actbadge__bg {
   fill: var(--sb-panel2);
   stroke: var(--sb-line);
   stroke-width: 1;
-}
-.sb-actbadge:hover .sb-actbadge__bg {
-  stroke: var(--sb-hot);
-}
-
-/* 選択肢のポップアップ。body 直下に出すので色は .sb の変数を借りずに書く */
-.sb-actmenu__backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 58;
-}
-.sb-actmenu {
-  position: fixed;
-  z-index: 59;
-  width: 168px;
-  background: #201f1d;
-  border: 1px solid #403d38;
-  border-radius: 6px;
-  padding: 8px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
-  color: #e8e4dc;
-  font-family: system-ui, "Segoe UI", "Yu Gothic UI", "Hiragino Sans", Meiryo, sans-serif;
-}
-.sb-actmenu__t {
-  margin: 0 0 6px;
-  font-size: 10.5px;
-  color: #9c968b;
-}
-.sb-actmenu__grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 5px;
-}
-.sb-actmenu__opt {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 3px;
-  background: #2a2926;
-  border: 1px solid #403d38;
-  border-radius: 4px;
-  padding: 5px 3px 4px;
-  cursor: pointer;
-  color: #e8e4dc;
-  font-size: 10.5px;
-}
-.sb-actmenu__opt:hover {
-  border-color: #f0c14b;
-  background: #34322e;
-}
-.sb-actmenu__opt[data-sel] {
-  background: #f0c14b;
-  border-color: #f0c14b;
-  color: #201f1d;
-  font-weight: 700;
-}
-.sb-actmenu__opt svg {
-  color: inherit;
 }
 
 /* 1点ずつの出題。入る数と出したい数の箱 */
@@ -1157,11 +1213,112 @@
   color: var(--sb-dim);
 }
 
-/* 真理値表 */
+/* ---------- 活性化関数の選択画面（全画面） ---------- */
+
+/* body 直下に portal で出すので、色は .sb の変数を借りずに直接書く */
+.sb-actpick {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  background: #171715;
+  display: flex;
+  flex-direction: column;
+  padding: 14px;
+  color: #e8e4dc;
+  font-family: system-ui, "Segoe UI", "Yu Gothic UI", "Hiragino Sans", Meiryo, sans-serif;
+}
+.sb-actpick__head {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  padding: 2px 4px 12px;
+}
+.sb-actpick__head h2 {
+  margin: 0;
+  font-size: 20px;
+}
+.sb-actpick__head p {
+  margin: 0;
+  flex: 1;
+  color: #9c968b;
+  font-size: 13px;
+}
+.sb-actpick__head .sb-btn {
+  background: #2a2926;
+  border: 1px solid #403d38;
+  color: #e8e4dc;
+}
+.sb-actpick__grid {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  gap: 12px;
+}
+.sb-actpick__cell {
+  min-height: 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  background: #201f1d;
+  border: 1px solid #403d38;
+  border-radius: 8px;
+  padding: 10px 14px 12px;
+  cursor: pointer;
+  color: #e8e4dc;
+  text-align: left;
+}
+.sb-actpick__cell:hover {
+  border-color: #f0c14b;
+  background: #2a2926;
+}
+.sb-actpick__graph {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+}
+.sb-actpick__gridline {
+  stroke: #403d38;
+  stroke-width: 1;
+  opacity: 0.6;
+}
+.sb-actpick__axis {
+  stroke: #9c968b;
+  stroke-width: 1.5;
+}
+.sb-actpick__tick {
+  fill: #9c968b;
+  font-size: 15px;
+  font-family: ui-monospace, "SFMono-Regular", "Consolas", "Courier New", monospace;
+}
+.sb-actpick__axlabel {
+  fill: #9c968b;
+  font-size: 15px;
+  font-style: italic;
+}
+.sb-actpick__curve {
+  stroke: #f0c14b;
+  stroke-width: 3;
+}
+.sb-actpick__name {
+  flex: 0 0 auto;
+  margin-top: 8px;
+  font-size: 22px;
+  font-weight: 700;
+}
+.sb-actpick__formula {
+  flex: 0 0 auto;
+  font-family: ui-monospace, "SFMono-Regular", "Consolas", "Courier New", monospace;
+  font-size: 16px;
+  color: #9c968b;
+}
+
+/* 真理値表。合っている行は緑、間違っている行は赤で行ごと覆う。単体表示でも読める大きさ */
 .sb-truth {
   border-collapse: collapse;
   font-family: var(--sb-mono);
-  font-size: 13px;
+  font-size: 24px;
 }
 .sb-truth--small {
   font-size: 11.5px;
@@ -1169,7 +1326,7 @@
 .sb-truth th,
 .sb-truth td {
   border: 1px solid var(--sb-line);
-  padding: 2px 8px;
+  padding: 3px 22px;
   text-align: center;
 }
 .sb-truth--small th,
@@ -1179,19 +1336,29 @@
 .sb-truth th {
   color: var(--sb-dim);
   font-weight: 400;
-  font-size: 0.85em;
+  font-size: 0.5em;
 }
 .sb-truth tbody tr {
   cursor: pointer;
 }
-.sb-truth__sel {
-  background: var(--sb-panel3);
+/* 判定前（まだ層が無い等）は素の地色 */
+.sb-truth tbody tr[data-ok='true'] td {
+  background: var(--sb-ok);
+  color: #12210c;
+  font-weight: 700;
+  border-color: var(--sb-ok);
 }
-.sb-truth__ng .sb-truth__mark {
-  color: var(--sb-bad);
+.sb-truth tbody tr[data-ok='false'] td {
+  background: var(--sb-bad);
+  color: #2a0a08;
+  font-weight: 700;
+  border-color: var(--sb-bad);
+}
+.sb-truth__sel td {
+  box-shadow: inset 0 0 0 3px var(--sb-hot);
 }
 .sb-truth__z {
-  color: var(--sb-dim);
+  opacity: 0.75;
 }
 
 /* 勾配 */
@@ -1290,6 +1457,140 @@
   line-height: 1.8;
 }
 
+/* ---------- デバッグ道具（Ctrl+Shift+D）。通常のユーザーには出ない ---------- */
+
+.sb-debug {
+  position: fixed;
+  inset: 0;
+  z-index: 95;
+  pointer-events: none;
+  font-family: system-ui, "Segoe UI", "Yu Gothic UI", "Hiragino Sans", Meiryo, sans-serif;
+}
+.sb-debug__box {
+  position: fixed;
+  border: 2px solid var(--sb-hot, #f0c14b);
+  background: rgba(240, 193, 75, 0.12);
+  box-sizing: border-box;
+}
+.sb-debug__box--sel {
+  border-color: #4aa3ff;
+  background: rgba(74, 163, 255, 0.14);
+}
+.sb-debug__tip {
+  position: fixed;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  background: #201f1d;
+  border: 1px solid #403d38;
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 11.5px;
+  color: #e8e4dc;
+  white-space: nowrap;
+}
+.sb-debug__tip b {
+  font-family: ui-monospace, "SFMono-Regular", "Consolas", "Courier New", monospace;
+  color: #f0c14b;
+}
+.sb-debug__hint {
+  position: fixed;
+  left: 50%;
+  top: 8px;
+  transform: translateX(-50%);
+  background: #201f1d;
+  border: 1px solid #403d38;
+  color: #e8e4dc;
+  font-size: 11.5px;
+  padding: 4px 12px;
+  border-radius: 4px;
+}
+.sb-debug__panel {
+  position: fixed;
+  right: 14px;
+  bottom: 14px;
+  width: 280px;
+  pointer-events: auto;
+  background: #201f1d;
+  border: 1px solid #403d38;
+  border-radius: 8px;
+  padding: 12px 14px 14px;
+  color: #e8e4dc;
+  font-size: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+}
+.sb-debug__name {
+  margin: 0;
+  font-family: ui-monospace, "SFMono-Regular", "Consolas", "Courier New", monospace;
+  font-size: 13px;
+  color: #4aa3ff;
+  font-weight: 700;
+}
+.sb-debug__dims {
+  margin: 2px 0 8px;
+  color: #9c968b;
+}
+.sb-debug__row {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 7px;
+  font-size: 11px;
+  color: #cfc9bd;
+}
+.sb-debug__row input[type='range'] {
+  width: 100%;
+  accent-color: #f0c14b;
+}
+.sb-debug__changes {
+  margin: 6px 0;
+  padding-top: 6px;
+  border-top: 1px dashed #403d38;
+  font-family: ui-monospace, "SFMono-Regular", "Consolas", "Courier New", monospace;
+  font-size: 11px;
+  color: #8fbf6a;
+}
+.sb-debug__changes p {
+  margin: 0 0 2px;
+}
+.sb-debug__none {
+  color: #6b665e !important;
+}
+.sb-debug__actions {
+  display: flex;
+  gap: 6px;
+}
+.sb-debug__btn {
+  flex: 1;
+  background: #2a2926;
+  border: 1px solid #403d38;
+  border-radius: 4px;
+  color: #e8e4dc;
+  font-size: 11px;
+  padding: 6px 4px;
+  cursor: pointer;
+}
+.sb-debug__btn:hover:not(:disabled) {
+  border-color: #f0c14b;
+}
+.sb-debug__btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.sb-debug__close {
+  position: fixed;
+  left: 8px;
+  bottom: 8px;
+  pointer-events: auto;
+  background: #201f1d;
+  border: 1px solid #403d38;
+  color: #9c968b;
+  font-size: 10.5px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
 /* ---------- 背の低い画面（1024×600 など） ---------- */
 
 @media (max-height: 660px) {
@@ -1297,20 +1598,23 @@
     font-size: 12px;
   }
   .sb-goal {
-    padding: 4px 12px 6px;
+    padding: 8px 14px 8px;
+  }
+  .sb-goal__no {
+    font-size: 16px;
   }
   .sb-goal__h {
-    font-size: 21px;
+    font-size: 27px;
   }
   .sb-goal__now {
-    font-size: 14px;
-    min-height: 18px;
+    font-size: 16px;
+    min-height: 20px;
   }
   .sb-meter__v {
-    font-size: 28px;
+    font-size: 30px;
   }
   .sb-meter__v--big {
-    font-size: 34px;
+    font-size: 40px;
   }
   .sb-lossbar {
     height: 24px;
@@ -1318,5 +1622,15 @@
   .sb-inspector--big {
     font-size: 14px;
     line-height: 1.7;
+  }
+  .sb-truth {
+    font-size: 19px;
+  }
+  .sb-truth th,
+  .sb-truth td {
+    padding: 4px 12px;
+  }
+  .sb-toolbar {
+    width: 56px;
   }
 }

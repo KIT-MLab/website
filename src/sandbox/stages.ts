@@ -1,7 +1,8 @@
+import { ACTIVATION_ORDER } from './engine/activations';
 import type { Shape } from './engine/init';
 import { forward, LOGIC_INPUTS } from './engine/network';
 import { gaussian, uniform, type RngState } from './engine/random';
-import type { Dataset, LossId, Network } from './engine/types';
+import type { ActivationId, Dataset, LossId, Network } from './engine/types';
 
 /** プレイヤーが使える操作。ステージを進むと増える */
 export type OpId =
@@ -151,6 +152,10 @@ export type Stage = {
   tutorial: TutStep[];
   /** あれば「1点ずつ合わせる」進行にする。クリアはデータを一周 */
   ticker?: Ticker;
+  /** 活性化の選択画面に出す選択肢。省略すると全部（そのステージで初めて出す道具だけに絞るときに使う） */
+  activationChoices?: ActivationId[];
+  /** 入力平面の背景にうっすら見せる、正解となる分離線（w1・w2・b）。単層で線形分離できるお題だけに持たせる */
+  logicHint?: [number, number, number];
 };
 
 /* ------------------------------------------------------------------ */
@@ -373,14 +378,16 @@ export const STAGES: Stage[] = [
     unlocks: ['activation'],
     views: ['network', 'truth', 'fit'],
     start: { sizes: [2, 1], acts: ['identity'] },
+    activationChoices: ['identity', 'step'],
+    logicHint: [1, 1, -1.5],
     tutorial: [
       {
-        say: '出力の丸の脇にある印を押して、「ステップ」を選んでください',
-        targets: ['a:0:*'],
+        say: '左のツールバーの「活性化関数」から「ステップ」を選び、出力の丸に塗ってください',
+        targets: ['tool:act', 'n:0:*'],
         done: (c) => c.net.layers[0]?.acts.every((a) => a === 'step') ?? false,
       },
       {
-        say: '0 か 1 かで出るようになりました。線と丸を動かして表を全部 ○ にしてください',
+        say: '0 か 1 かで出るようになりました。線と丸を動かして、真理値表を全部緑にしてください',
         targets: ['e:0:*', 'n:0:*', 'knob'],
         done: (c) => c.cleared,
       },
@@ -402,6 +409,7 @@ export const STAGES: Stage[] = [
     unlocks: [],
     views: ['network', 'truth', 'fit'],
     start: { sizes: [2, 2, 1], acts: ['step', 'step'] },
+    activationChoices: ['identity', 'step'],
     tutorial: [
       {
         say: '「中間層」の見出しを押すと、その層が選ばれます',
@@ -479,8 +487,8 @@ export const STAGES: Stage[] = [
         done: (c) => c.net.layers.length >= 2,
       },
       {
-        say: '置いた層のノードの脇にある印を押して、活性化を選んでください（そのまま「活性化なし」だと直線のままです）',
-        targets: ['a:*'],
+        say: '左のツールバーの「活性化関数」から選び、置いた層のノードに塗ってください（「活性化なし」のままだと直線のままです）',
+        targets: ['tool:act', 'n:*'],
         done: (c) => c.net.layers.some((l) => l.acts.some((a) => a !== 'identity')),
       },
       { say: 'もう一度 ▶ で学習させてください', targets: ['play', 'hist'], done: (c) => c.cleared },
@@ -588,6 +596,9 @@ export function opsUpTo(index: number): Set<OpId> {
 }
 
 export const ALL_OPS: OpId[] = Object.keys(OP_LABEL) as OpId[];
+
+/** 活性化の選択画面に出す選択肢。ステージが絞っていなければ全部 */
+export const activationChoicesFor = (s: Stage): ActivationId[] => s.activationChoices ?? ACTIVATION_ORDER;
 
 /** targets の書き方（末尾 `*` は前方一致）に当てはまるか */
 export function hits(targets: string[] | null, id: string): boolean {

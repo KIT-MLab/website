@@ -26,23 +26,22 @@ export function TruthTable({ rows, selected, onSelect, small }: Props) {
           <th>x₂</th>
           <th>z</th>
           <th>出力</th>
-          {graded && <th>正解</th>}
-          {graded && <th />}
+          {graded && <th>目標</th>}
         </tr>
       </thead>
       <tbody>
         {rows.map((r, i) => (
           <tr
             key={i}
-            className={`${r.ok === false ? 'sb-truth__ng' : ''} ${i === selected ? 'sb-truth__sel' : ''}`}
+            data-ok={r.ok === null ? undefined : r.ok}
+            className={i === selected ? 'sb-truth__sel' : ''}
             onClick={() => onSelect?.(i)}
           >
             <td>{r.x[0]}</td>
             <td>{r.x[1]}</td>
             <td className="sb-truth__z">{fmt(r.z)}</td>
-            <td>{fmt(r.a)}</td>
+            <td className="sb-truth__out">{fmt(r.a)}</td>
             {graded && <td>{r.target}</td>}
-            {graded && <td className="sb-truth__mark">{r.ok ? '○' : '×'}</td>}
           </tr>
         ))}
       </tbody>

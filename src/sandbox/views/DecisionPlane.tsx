@@ -42,9 +42,11 @@ type Props = {
   /** 真理値表の選択行と揃える。ここに合う点が光る */
   selected?: number;
   onSelect?: (i: number) => void;
+  /** どんな線が引ければよいかを薄く背景に忍ばせる、正解の分離線（w1, w2, b） */
+  hint?: [number, number, number] | null;
 };
 
-export function DecisionPlane({ net, rows, small, selected, onSelect }: Props) {
+export function DecisionPlane({ net, rows, small, selected, onSelect, hint }: Props) {
   const ref = useRef<HTMLCanvasElement>(null);
   const n = small ? 64 : 168;
 
@@ -71,6 +73,7 @@ export function DecisionPlane({ net, rows, small, selected, onSelect }: Props) {
 
   const single = net.layers.length === 1;
   const line = single ? boundary(net.layers[0].w[0][0], net.layers[0].w[0][1], net.layers[0].b[0]) : null;
+  const hintLine = hint ? boundary(hint[0], hint[1], hint[2]) : null;
 
   return (
     <div className="sb-plane">
@@ -81,6 +84,17 @@ export function DecisionPlane({ net, rows, small, selected, onSelect }: Props) {
         <line x1={sx(0)} y1={0} x2={sx(0)} y2={SIZE} stroke="var(--sb-line)" strokeWidth={1} opacity={0.5} />
         <line x1={0} y1={sy(1)} x2={SIZE} y2={sy(1)} stroke="var(--sb-line)" strokeWidth={1} strokeDasharray="3 3" opacity={0.4} />
         <line x1={sx(1)} y1={0} x2={sx(1)} y2={SIZE} stroke="var(--sb-line)" strokeWidth={1} strokeDasharray="3 3" opacity={0.4} />
+
+        {/* どんな線が引ければよいかを、答えは言わずに薄く忍ばせる */}
+        {hintLine && (
+          <line
+            x1={sx(hintLine[0][0])}
+            y1={sy(hintLine[0][1])}
+            x2={sx(hintLine[1][0])}
+            y2={sy(hintLine[1][1])}
+            className="sb-plane__hint"
+          />
+        )}
 
         {line && (
           <line
