@@ -24,7 +24,10 @@ export function TruthTable({ rows, selected, onSelect, small }: Props) {
         <tr>
           <th>x₁</th>
           <th>x₂</th>
-          <th>z</th>
+          <th>
+            <span className="sb-truth__zh">加重和</span>
+            <span className="sb-truth__zh sb-truth__zh--main">z</span>
+          </th>
           <th>出力</th>
           {graded && <th>目標</th>}
         </tr>

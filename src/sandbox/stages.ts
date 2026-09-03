@@ -69,6 +69,8 @@ export type TutCtx = {
   steps: number;
   /** 履歴バーを引きずったか */
   scrubbed: boolean;
+  /** いまの塗る筆（活性化の選択を締め付けるステップの判定に使う） */
+  paintId: ActivationId | null;
 };
 
 /**
@@ -382,8 +384,13 @@ export const STAGES: Stage[] = [
     logicHint: [1, 1, -1.5],
     tutorial: [
       {
-        say: '左のツールバーの「活性化関数」から「ステップ」を選び、出力の丸に塗ってください',
-        targets: ['tool:act', 'n:0:*'],
+        say: '左のツールバーの「活性化関数」を押し、「ステップ」を選んでください',
+        targets: ['tool:act'],
+        done: (c) => c.paintId === 'step',
+      },
+      {
+        say: '出力の丸をクリックして、ステップを塗ってください',
+        targets: ['n:0:*'],
         done: (c) => c.net.layers[0]?.acts.every((a) => a === 'step') ?? false,
       },
       {

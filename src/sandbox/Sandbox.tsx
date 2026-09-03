@@ -155,6 +155,8 @@ export default function Sandbox() {
   /* -------------------- 活性化を「塗る」道具 -------------------- */
   const [pickerOpen, setPickerOpen] = useState(false);
   const [paintId, setPaintId] = useState<ActivationId | null>(null);
+  /** 選択画面を開いたときに「押し込んで」見せる、いちばん最近選んだ活性化。ラジオボタンの見た目を借りた表示で、締め付けとは無関係 */
+  const [lastAct, setLastAct] = useState<ActivationId>('identity');
   /** デバッグ用の寸法計測ツール。Ctrl+Shift+D でのみ出る。通常のユーザーには見えない */
   const [debugOn, setDebugOn] = useState(false);
 
@@ -370,6 +372,16 @@ export default function Sandbox() {
   const frozen = (id: string) => gate !== null && !hits(gate, id);
   const pointed = (id: string) => point !== null && hits(point, id);
 
+  /**
+   * ステージ3の最初の1手だけの締め付け。「活性化を選ぶ」→「ノードに塗る」の間、
+   * それ以外のパネルを半透明の膜で覆う。チュートリアル中だけ・自由モードでは適用しない（tutOn が false になるため）。
+   * tut.i === 0: ツールバーだけを見せる。tut.i === 1: ネットワーク図だけを見せる。
+   */
+  const actLock = stage.id === 'and' && tutOn && tut.i <= 1;
+  const veilPanel = (panel: 'toolbar' | 'truth' | 'net' | 'plane') =>
+    actLock && (tut.i === 0 ? panel !== 'toolbar' : panel !== 'net');
+  const Veil = () => <div className="sb-veil" aria-hidden="true" />;
+
   /* 指さす先が図の中にあるなら、図を主役に持ってくる（小窓では触れないため） */
   const wantMain: ViewId | null = !tutStep
     ? null
@@ -388,6 +400,7 @@ export default function Sandbox() {
       cleared,
       steps: entry.step - tut.baseStep,
       scrubbed: tut.scrubbed,
+      paintId,
     });
     if (ok) setTut({ i: tut.i + 1, base: net, baseStep: entry.step, scrubbed: false });
   });
@@ -827,11 +840,74 @@ export default function Sandbox() {
   const cols = `${showRail ? `${railW}px ` : ''}minmax(0, 1fr)${showSide ? ' 254px' : ''}`;
   const isLogic = stage.kind === 'logic';
 
+  /* 目標・いまやる1手・損失（またはそれに代わる指標）。非論理回路ステージと論理回路ステージの
+     両方から使い回すので、外側の入れ物（中央寄せ or 左寄せ）だけをそれぞれの側で変える */
+  const goalContent = (
+    <>
+      <div className="sb-goal__line">
+        <span className="sb-goal__no">{stage.no}</span>
+        <h1 className="sb-goal__h">{stage.goal}</h1>
+        <button
+          type="button"
+          className="sb-q"
+          aria-label="ヒント"
+          onClick={() => setHelp({ title: `${stage.no}. ${stage.title}`, body: stage.help })}
+        >
+          ?
+        </button>
+      </div>
+      {tutStep ? (
+        <p className="sb-goal__now">
+          <span className="sb-goal__dot" />
+          {tutStep.say}
+        </p>
+      ) : hintOn ? (
+        <p className="sb-goal__now">
+          <span className="sb-goal__dot" />
+          {stage.ticker!.hint}
+        </p>
+      ) : (
+        <p className="sb-goal__now sb-goal__now--dim">
+          {hover ?? (usingTicker ? '' : '「?」に解き方の見当が書いてあります')}
+        </p>
+      )}
+      {usingTicker ? (
+        /* ステージ1・2は損失を出さない。通した数を主役級に大きく出す */
+        <p className="sb-meter">
+          <b className="sb-meter__v sb-meter__v--big" data-ok={tk.streak >= data.x.length || undefined}>
+            {tk.streak} / {data.x.length}
+          </b>
+          <span className="sb-meter__l">通した数</span>
+        </p>
+      ) : stage.kind === 'logic' ? (
+        /* AND・XOR も損失は出さない。真理値表の○×に対応する正解の数を主役級に */
+        <p className="sb-meter">
+          <b className="sb-meter__v sb-meter__v--big" data-ok={cleared || undefined}>
+            {logicRows.filter((r) => r.ok).length} / {logicRows.length}
+          </b>
+          <span className="sb-meter__l">正解</span>
+        </p>
+      ) : (
+        <p className="sb-meter">
+          <span className="sb-meter__l">{stage.judgeLoss === 'bce' ? '交差エントロピー' : '二乗誤差'}</span>
+          <b className="sb-meter__v" data-ok={cleared || undefined}>
+            {valid ? sci(judge) : '—'}
+          </b>
+          <span className="sb-meter__sub">
+            目標 {sci(stage.threshold)}
+            {accuracy !== null && ` ・ 正答 ${Math.round(accuracy * 100)}%`}
+          </span>
+        </p>
+      )}
+    </>
+  );
+
   return (
     <div className="sb">
       {/* ---- 左端の縦ツールバー。道具が解禁されたときだけ出る ---- */}
       {can('activation') && (
         <nav className="sb-toolbar" aria-label="道具">
+          {veilPanel('toolbar') && <Veil />}
           <button
             type="button"
             className={`sb-tool ${pointed('tool:act') ? 'sb-point' : ''}`}
@@ -875,131 +951,87 @@ export default function Sandbox() {
           </button>
         </header>
 
-        {/* ---- 2段目: 目標といまやる1手と損失。画面上部の中央にまとめる ---- */}
-        <div className="sb-goal">
-        <div className="sb-goal__pad" />
-        <div className="sb-goal__center">
-          <div className="sb-goal__line">
-            <span className="sb-goal__no">{stage.no}</span>
-            <h1 className="sb-goal__h">{stage.goal}</h1>
+        {/* ---- 本体 ---- */}
+        {isLogic ? (
+          <div className="sb-logic">
+            {/* 目標帯は左に切り詰め、空いた右上に真理値表を移す（入力平面の上）。
+               浮いた面積はネットワーク図に回る */}
+            <div className="sb-goal sb-goal--logic">
+              <div className="sb-goal__center">{goalContent}</div>
+            </div>
+            <section className="sb-logic__panel sb-logic__truth">
+              {veilPanel('truth') && <Veil />}
+              {renderView('truth', false)}
+            </section>
+            <div className="sb-logic__net">
+              <div className="sb-main__stage">{renderView('network', false)}</div>
+              {veilPanel('net') && <Veil />}
+            </div>
+            {/* 入力平面は正方形なので、本体の高さをまるごと使える専用の列に置く */}
+            <section className="sb-logic__panel sb-logic__plane">
+              {veilPanel('plane') && <Veil />}
+              {renderView('fit', false)}
+            </section>
+            {/* 次のステージ。本体いっぱいの右下に置く */}
             <button
               type="button"
-              className="sb-q"
-              aria-label="ヒント"
-              onClick={() => setHelp({ title: `${stage.no}. ${stage.title}`, body: stage.help })}
+              className="sb-next"
+              data-on={(cleared && stageIdx < STAGES.length - 1) || undefined}
+              disabled={!cleared || stageIdx >= STAGES.length - 1}
+              onClick={() => goStage(stageIdx + 1)}
             >
-              ?
+              次のステージ
             </button>
           </div>
-          {tutStep ? (
-            <p className="sb-goal__now">
-              <span className="sb-goal__dot" />
-              {tutStep.say}
-            </p>
-          ) : hintOn ? (
-            <p className="sb-goal__now">
-              <span className="sb-goal__dot" />
-              {stage.ticker!.hint}
-            </p>
-          ) : (
-            <p className="sb-goal__now sb-goal__now--dim">
-              {hover ?? (usingTicker ? '' : '「?」に解き方の見当が書いてあります')}
-            </p>
-          )}
-          {usingTicker ? (
-            /* ステージ1・2は損失を出さない。通した数を主役級に大きく出す */
-            <p className="sb-meter">
-              <b className="sb-meter__v sb-meter__v--big" data-ok={tk.streak >= data.x.length || undefined}>
-                {tk.streak} / {data.x.length}
-              </b>
-              <span className="sb-meter__l">通した数</span>
-            </p>
-          ) : stage.kind === 'logic' ? (
-            /* AND・XOR も損失は出さない。真理値表の○×に対応する正解の数を主役級に */
-            <p className="sb-meter">
-              <b className="sb-meter__v sb-meter__v--big" data-ok={cleared || undefined}>
-                {logicRows.filter((r) => r.ok).length} / {logicRows.length}
-              </b>
-              <span className="sb-meter__l">正解</span>
-            </p>
-          ) : (
-            <p className="sb-meter">
-              <span className="sb-meter__l">{stage.judgeLoss === 'bce' ? '交差エントロピー' : '二乗誤差'}</span>
-              <b className="sb-meter__v" data-ok={cleared || undefined}>
-                {valid ? sci(judge) : '—'}
-              </b>
-              <span className="sb-meter__sub">
-                目標 {sci(stage.threshold)}
-                {accuracy !== null && ` ・ 正答 ${Math.round(accuracy * 100)}%`}
-              </span>
-            </p>
-          )}
-        </div>
+        ) : (
+          <>
+            {/* ---- 2段目: 目標といまやる1手と損失。画面上部の中央にまとめる ---- */}
+            <div className="sb-goal">
+              <div className="sb-goal__pad" />
+              <div className="sb-goal__center">{goalContent}</div>
+              <div className="sb-goal__pad sb-goal__pad--r">
+                {overParams && (
+                  <span className="sb-viol">
+                    パラメータ {params} / {lim!.maxParams}
+                  </span>
+                )}
+                {overLayers && (
+                  <span className="sb-viol">
+                    層 {net.layers.length} / {lim!.maxLayers}
+                  </span>
+                )}
+              </div>
+            </div>
 
-        <div className="sb-goal__pad sb-goal__pad--r">
-          {overParams && (
-            <span className="sb-viol">
-              パラメータ {params} / {lim!.maxParams}
-            </span>
-          )}
-          {overLayers && (
-            <span className="sb-viol">
-              層 {net.layers.length} / {lim!.maxLayers}
-            </span>
-          )}
-        </div>
-      </div>
+            {/* ---- 3段目: 学習の操作と履歴（解禁後だけ） ---- */}
+            {can('train') && (
+              <div className="sb-transport">
+                <button
+                  type="button"
+                  className={`sb-play ${pointed('play') ? 'sb-point' : ''}`}
+                  onClick={togglePlay}
+                  disabled={frozen('play')}
+                >
+                  {playing ? '⏸' : '▶'}
+                </button>
+                <button type="button" className="sb-btn" onClick={oneStep} disabled={playing || frozen('play')}>
+                  1歩
+                </button>
+                <button type="button" className="sb-btn" onClick={() => resetWeights()} disabled={frozen('reset')}>
+                  初期化
+                </button>
+                <span className="sb-speed">
+                  {[1, 10, 100].map((s) => chip(`×${s}`, speed === s, () => setSpeed(s)))}
+                </span>
+                <div className={`sb-histwrap ${pointed('hist') ? 'sb-point' : ''}`}>
+                  <LossBar hist={c.hist} cursor={c.cursor} threshold={stage.threshold} onScrub={scrub} disabled={frozen('hist')} />
+                </div>
+                <span className="sb-readout">
+                  <b>{entry.step.toLocaleString()}</b> 歩 ・ 損失 <b>{sci(entry.loss)}</b>
+                </span>
+              </div>
+            )}
 
-      {/* ---- 3段目: 学習の操作と履歴（解禁後だけ） ---- */}
-      {can('train') && (
-        <div className="sb-transport">
-          <button
-            type="button"
-            className={`sb-play ${pointed('play') ? 'sb-point' : ''}`}
-            onClick={togglePlay}
-            disabled={frozen('play')}
-          >
-            {playing ? '⏸' : '▶'}
-          </button>
-          <button type="button" className="sb-btn" onClick={oneStep} disabled={playing || frozen('play')}>
-            1歩
-          </button>
-          <button type="button" className="sb-btn" onClick={() => resetWeights()} disabled={frozen('reset')}>
-            初期化
-          </button>
-          <span className="sb-speed">{[1, 10, 100].map((s) => chip(`×${s}`, speed === s, () => setSpeed(s)))}</span>
-          <div className={`sb-histwrap ${pointed('hist') ? 'sb-point' : ''}`}>
-            <LossBar hist={c.hist} cursor={c.cursor} threshold={stage.threshold} onScrub={scrub} disabled={frozen('hist')} />
-          </div>
-          <span className="sb-readout">
-            <b>{entry.step.toLocaleString()}</b> 歩 ・ 損失 <b>{sci(entry.loss)}</b>
-          </span>
-        </div>
-      )}
-
-      {/* ---- 本体 ---- */}
-      {isLogic ? (
-        <div className="sb-logic">
-          {/* 見出しは置かない。表も図も面も、中身を見れば何かは分かる。
-             読まれない大きさの文字を置くくらいなら無いほうがよい */}
-          <section className="sb-logic__panel sb-logic__truth">{renderView('truth', false)}</section>
-          <div className="sb-logic__net">
-            <div className="sb-main__stage">{renderView('network', false)}</div>
-          </div>
-          {/* 入力平面は正方形なので、本体の高さをまるごと使える専用の列に置く */}
-          <section className="sb-logic__panel sb-logic__plane">{renderView('fit', false)}</section>
-          {/* 次のステージ。本体いっぱいの右下に置く */}
-          <button
-            type="button"
-            className="sb-next"
-            data-on={(cleared && stageIdx < STAGES.length - 1) || undefined}
-            disabled={!cleared || stageIdx >= STAGES.length - 1}
-            onClick={() => goStage(stageIdx + 1)}
-          >
-            次のステージ
-          </button>
-        </div>
-      ) : (
       <div className="sb-body" style={{ gridTemplateColumns: cols }}>
         {showRail && (
           <aside className="sb-rail" aria-label="小窓">
@@ -1221,7 +1253,8 @@ export default function Sandbox() {
           </aside>
         )}
       </div>
-      )}
+          </>
+        )}
 
       {flash && (
         <div className="sb-flash" role="status" data-clear={flash === 'クリア' || undefined}>
@@ -1245,7 +1278,11 @@ export default function Sandbox() {
       <ActivationPicker
         open={pickerOpen}
         choices={activationChoicesFor(stage)}
+        current={lastAct}
         onPick={(id) => {
+          /* ステージ3の締め付け中は「なし」を選んでも状態が変わらない。ステップ以外の道を塞ぐ */
+          if (actLock && tut.i === 0 && id === 'identity') return;
+          setLastAct(id);
           setPaintId(id);
           setPickerOpen(false);
         }}

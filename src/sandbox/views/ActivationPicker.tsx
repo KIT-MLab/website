@@ -8,8 +8,9 @@ const ZMAX = 4;
 const GW = 420;
 const GH = 260;
 const PAD_L = 46;
-const PAD_R = 14;
-const PAD_T = 14;
+/* 右と上を広めに取り、軸ラベル（a・z）が端の目盛りの数字と重ならないようにする */
+const PAD_R = 34;
+const PAD_T = 30;
 const PAD_B = 34;
 
 const XTICKS = [-4, -2, 0, 2, 4];
@@ -17,6 +18,8 @@ const XTICKS = [-4, -2, 0, 2, 4];
 type Props = {
   open: boolean;
   choices: ActivationId[];
+  /** いま選ばれている活性化。押し込んで見せる（ラジオボタンの見た目） */
+  current: ActivationId;
   onPick: (id: ActivationId) => void;
   onClose: () => void;
 };
@@ -57,10 +60,11 @@ function Graph({ id }: { id: ActivationId }) {
           {v}
         </text>
       ))}
-      <text className="sb-actpick__axlabel" x={GW - PAD_R} y={GH - PAD_B + 20} textAnchor="end">
+      {/* 軸ラベルは目盛りの数字と重ならない位置に離して置く（z は右端の外側、a は目盛りの上） */}
+      <text className="sb-actpick__axlabel" x={GW - 6} y={GH - PAD_B + 20} textAnchor="end">
         z
       </text>
-      <text className="sb-actpick__axlabel" x={PAD_L - 8} y={PAD_T + 4} textAnchor="end">
+      <text className="sb-actpick__axlabel" x={PAD_L - 8} y={PAD_T - 16} textAnchor="end">
         a
       </text>
 
@@ -73,7 +77,7 @@ function Graph({ id }: { id: ActivationId }) {
  * 活性化関数の選択画面。全画面を覆い、大きな枠でそれぞれの形を正確なグラフで見せる。
  * 選ぶとこの画面は閉じ、選んだ活性化が「塗る」筆になる（Sandbox.tsx 側で状態を持つ）。
  */
-export function ActivationPicker({ open, choices, onPick, onClose }: Props) {
+export function ActivationPicker({ open, choices, current, onPick, onClose }: Props) {
   if (!open || typeof document === 'undefined') return null;
 
   const n = choices.length;
@@ -92,7 +96,13 @@ export function ActivationPicker({ open, choices, onPick, onClose }: Props) {
         {choices.map((id) => {
           const a = ACTIVATIONS[id];
           return (
-            <button key={id} type="button" className="sb-actpick__cell" onClick={() => onPick(id)}>
+            <button
+              key={id}
+              type="button"
+              className="sb-actpick__cell"
+              data-current={id === current || undefined}
+              onClick={() => onPick(id)}
+            >
               <Graph id={id} />
               <span className="sb-actpick__name">{a.label}</span>
               <span className="sb-actpick__formula">{a.formula}</span>

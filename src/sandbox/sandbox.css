@@ -124,6 +124,7 @@
 /* ---------- 左端の縦ツールバー ---------- */
 
 .sb-toolbar {
+  position: relative;
   flex: 0 0 auto;
   width: 68px;
   height: 100%;
@@ -263,6 +264,26 @@
   flex-direction: column;
   align-items: center;
   text-align: center;
+}
+
+/* 論理回路のステージ（AND・XOR）用。中央揃えをやめて左に切り詰め、
+   空いた右側を真理値表に譲る（.sb-logic のグリッドセルとして使う） */
+.sb-goal--logic {
+  display: block;
+  padding: 6px 0 0;
+  background: none;
+  border-bottom: none;
+  min-width: 0;
+  min-height: 0;
+}
+.sb-goal--logic .sb-goal__center {
+  align-items: flex-start;
+  text-align: left;
+}
+.sb-goal--logic .sb-goal__line,
+.sb-goal--logic .sb-goal__now,
+.sb-goal--logic .sb-meter {
+  justify-content: flex-start;
 }
 
 .sb-goal__line {
@@ -502,43 +523,50 @@
 
 /* ---------- 論理回路のステージ（AND・XOR）専用のレイアウト ----------
  * ネットワーク図（編集する場）と、真理値表・入力平面（見る場）を常時どちらも読める大きさで出す。
- * 汎用の小窓・右パネルとは別枠。序盤の数ステージだけの専用ツールという位置づけ */
-/* 真理値表を上に横いっぱい、下段を左＝ネットワーク／右＝入力平面に分ける。
- * 入力平面の高さを削るものが真理値表と同じ列に無くなるので、単体表示に近い大きさまで確保できる */
+ * 汎用の小窓・右パネルとは別枠。序盤の数ステージだけの専用ツールという位置づけ。
+ * 目標帯は左に切り詰めた形でこのグリッドの左上セルに収め、空いた右上を真理値表に譲る。
+ * 右の列は「真理値表（上）＋入力平面（下）」、左の列は「目標（上）＋ネットワーク（下）」になる。
+ * 目標の行は内容ぶんの高さしか取らないので、その分がまるごとネットワーク図に回る */
 .sb-logic {
   position: relative;
   flex: 1;
   min-height: 0;
   display: grid;
-  grid-template-columns: minmax(320px, 1fr) minmax(380px, 45%);
+  grid-template-columns: minmax(0, 1fr) minmax(360px, 460px);
   grid-template-rows: auto minmax(0, 1fr);
+  grid-template-areas:
+    'goal  truth'
+    'net   plane';
   gap: 6px;
-  padding: 5px 8px 4px;
+  padding: 6px 8px 4px;
   overflow: hidden;
 }
 
+.sb-goal--logic {
+  grid-area: goal;
+}
+
 .sb-logic__truth {
-  grid-column: 1;
-  grid-row: 1;
+  grid-area: truth;
 }
 
 .sb-logic__net {
-  grid-column: 1;
-  grid-row: 2;
+  grid-area: net;
+  position: relative;
   min-width: 0;
   min-height: 0;
   display: flex;
   flex-direction: column;
 }
 
-/* 正方形の入力平面だけは、本体の高さをまるごと使う専用の列にする */
+/* 正方形の入力平面は下段にそのまま収まる */
 .sb-logic__plane {
-  grid-column: 2;
-  grid-row: 1 / -1;
+  grid-area: plane;
   align-items: center;
 }
 
 .sb-logic__panel {
+  position: relative;
   background: var(--sb-panel);
   border: 1px solid var(--sb-line);
   border-radius: 5px;
@@ -546,14 +574,6 @@
   display: flex;
   flex-direction: column;
   min-height: 0;
-}
-.sb-logic__panel h2 {
-  margin: 0 0 3px;
-  font-size: 10.5px;
-  font-weight: 700;
-  letter-spacing: 0.14em;
-  color: var(--sb-dim);
-  flex: 0 0 auto;
 }
 
 .sb-logic__truth table {
@@ -678,7 +698,7 @@
   overflow-y: auto;
   scrollbar-width: thin;
 }
-.sb-box h2 {
+.sb-box h3 {
   margin: 0 0 4px;
   font-size: 10.5px;
   font-weight: 700;
@@ -803,6 +823,18 @@
   }
 }
 
+/* ステージ3の最初の1手だけの締め付け。触ってよいパネル以外を半透明の膜で覆い、操作できなくする。
+   覆う先（.sb-toolbar / .sb-logic__panel / .sb-logic__net）にはあらかじめ position:relative を敷いてある */
+.sb-veil {
+  position: absolute;
+  inset: 0;
+  z-index: 12;
+  background: rgba(23, 23, 21, 0.74);
+  pointer-events: auto;
+  cursor: default;
+  border-radius: inherit;
+}
+
 /* ---------- 窓の中身 ---------- */
 
 .sb-fit {
@@ -855,9 +887,6 @@
   fill: var(--sb-dim);
   font-size: 14px;
   font-family: var(--sb-mono);
-}
-.sb-axis--small {
-  font-size: 9px;
 }
 .sb-plane__pt-g {
   cursor: pointer;
@@ -1282,6 +1311,18 @@
   border-color: #f0c14b;
   background: #2a2926;
 }
+/* いま選ばれているもの。ラジオボタンの見た目を借りて、少し小さく・縁を暗くして押し込んで見せる。
+   締め付けとは無関係で、選択画面が開くたびに常にそのとき選ばれているものがこう見える */
+.sb-actpick__cell[data-current] {
+  transform: scale(0.97);
+  border-color: #2a2926;
+  background: #1a1917;
+  box-shadow: inset 0 3px 10px rgba(0, 0, 0, 0.5);
+}
+.sb-actpick__cell[data-current]:hover {
+  border-color: #514c44;
+  background: #1a1917;
+}
 .sb-actpick__graph {
   flex: 1;
   min-height: 0;
@@ -1329,24 +1370,26 @@
   font-family: var(--sb-mono);
   font-size: 24px;
 }
-.sb-truth--small {
-  font-size: 11.5px;
-}
 .sb-truth th,
 .sb-truth td {
   border: 1px solid var(--sb-line);
   padding: 3px 22px;
   text-align: center;
 }
-.sb-truth--small th,
-.sb-truth--small td {
-  padding: 1px 4px;
-}
 /* 列の意味は読ませたいので、本文より小さくしても読める大きさで止める */
 .sb-truth th {
   color: var(--sb-dim);
   font-weight: 400;
   font-size: 0.7em;
+}
+/* z列の見出し。「z」だけでは重み w と読み違えるので「加重和」を添える（2行にして幅を詰めない） */
+.sb-truth__zh {
+  display: block;
+  line-height: 1.3;
+}
+.sb-truth__zh--main {
+  font-size: 1.15em;
+  color: var(--sb-text);
 }
 .sb-truth tbody tr {
   cursor: pointer;
