@@ -32,6 +32,7 @@ export default function Course() {
     try { saved = parseProgress(localStorage.getItem(STORAGE_KEY)); }
     catch { setStorageWarning('学習記録を読み込めませんでした。この回の記録は画面内で保持します。'); }
     const requested = location.hash.slice(1), id = LESSONS.some((l) => l.id === requested) ? requested : saved.current;
+    history.replaceState(null, '', `#${id}`);
     setProgress({ ...saved, current: id }); setStage(LESSONS.findIndex((l) => l.id === id)); setLoaded(true);
     const navigate = () => { const idx = LESSONS.findIndex((l) => l.id === location.hash.slice(1)); if (idx >= 0) { setStage(idx); setProgress((p) => ({ ...p, current: LESSONS[idx].id })); setPanel(null); setReset(0); } };
     window.addEventListener('popstate', navigate); window.addEventListener('hashchange', navigate);

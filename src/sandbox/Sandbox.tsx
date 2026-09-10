@@ -791,7 +791,12 @@ export default function Sandbox({ initialStage = 0, embedded = false, onSolved, 
             onInsert={insertLayer}
             onRemove={removeLayer}
             onNodes={setNodes}
-            onPaint={(li, o) => paintId && setActivation(li, o, paintId)}
+            onPaint={(li, o) => {
+              if (paintId) {
+                setActivation(li, o, paintId);
+                setPaintId(null);
+              }
+            }}
             onHover={setHover}
             onDrag={small ? undefined : handleDrag}
           />
@@ -948,9 +953,9 @@ export default function Sandbox({ initialStage = 0, embedded = false, onSolved, 
             ))}
           </div>}
           {embedded && <details className="sb-accessible"><summary>スライダーで調整</summary><div>
-            {net.layers[0].w[0].map((w, i) => <label key={i}>重み {i + 1}：{fmt(w)}<input aria-label={`重み ${i + 1}`} type="range" min={-wRange} max={wRange} step={W_STEP} value={w} disabled={frozen(`e:0:0:${i}`)} onChange={(e) => { editNet((n) => { n.layers[0].w[0][i] = Number(e.target.value); }); handleDrag(false); }} /></label>)}
-            {can('bias') && <label>バイアス：{fmt(net.layers[0].b[0])}<input aria-label="バイアス" type="range" min={-wRange} max={wRange} step={W_STEP} value={net.layers[0].b[0]} disabled={frozen('n:0:0')} onChange={(e) => { editNet((n) => { n.layers[0].b[0] = Number(e.target.value); }); handleDrag(false); }} /></label>}
-            {paintId && <button type="button" className="sb-btn" disabled={frozen('n:0:0')} onClick={() => setActivation(0, 0, paintId)}>選んだ活性化関数を出力に適用</button>}
+            {net.layers[0].w[0].map((w, i) => <label key={i}>重み {i + 1}：{fmt(w)}<input aria-label={`重み ${i + 1}`} type="range" onPointerDown={() => handleDrag(true)} onPointerUp={() => handleDrag(false)} onPointerCancel={() => handleDrag(false)} onBlur={() => handleDrag(false)} min={-wRange} max={wRange} step={W_STEP} value={w} disabled={frozen(`e:0:0:${i}`)} onChange={(e) => { editNet((n) => { n.layers[0].w[0][i] = Number(e.target.value); }); if (!dragging.current) handleDrag(false); }} /></label>)}
+            {can('bias') && <label>バイアス：{fmt(net.layers[0].b[0])}<input aria-label="バイアス" type="range" onPointerDown={() => handleDrag(true)} onPointerUp={() => handleDrag(false)} onPointerCancel={() => handleDrag(false)} onBlur={() => handleDrag(false)} min={-wRange} max={wRange} step={W_STEP} value={net.layers[0].b[0]} disabled={frozen('n:0:0')} onChange={(e) => { editNet((n) => { n.layers[0].b[0] = Number(e.target.value); }); if (!dragging.current) handleDrag(false); }} /></label>}
+            {paintId && <button type="button" className="sb-btn" disabled={frozen('n:0:0')} onClick={() => { setActivation(0, 0, paintId); setPaintId(null); }}>選んだ活性化関数を出力に適用</button>}
           </div></details>}
           <div className="sb-spacer" />
           <button type="button" className="sb-restart" onClick={restart}>
