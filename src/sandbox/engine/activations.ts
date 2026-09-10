@@ -35,7 +35,7 @@ export const ACTIVATIONS: Record<ActivationId, Activation> = {
     df: () => 0,
     range: [-0.2, 1.2],
     ticksY: [0, 1],
-    note: '0か1かをはっきり出す。論理回路を作るならこれ。ただし段差しかない（傾きが常に0）ので、勾配で学習できない。',
+    note: '0か1かをはっきり出す。0以外では傾きが0で、0では微分できないため、通常の勾配による学習には向かない。',
   },
   sigmoid: {
     id: 'sigmoid',

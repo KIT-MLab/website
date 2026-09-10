@@ -129,21 +129,21 @@ function defaultCfg(stage: Stage): TrainConfig {
 
 /* ------------------------------------------------------------------ */
 
-export default function Sandbox() {
+export default function Sandbox({ initialStage = 0, embedded = false, onSolved, courseNav }: { initialStage?: number; embedded?: boolean; onSolved?: () => void; courseNav?: React.ReactNode }) {
   const [, force] = useReducer((n: number) => n + 1, 0);
 
-  const [stageIdx, setStageIdx] = useState(0);
-  const [maxStage, setMaxStage] = useState(0);
+  const [stageIdx, setStageIdx] = useState(initialStage);
+  const [maxStage, setMaxStage] = useState(initialStage);
   const [free, setFree] = useState(false);
   const stage = STAGES[stageIdx];
 
   const [dataOpts, setDataOpts] = useState(stage.dataDefaults);
-  const [cfg, setCfg] = useState<TrainConfig>(() => defaultCfg(STAGES[0]));
+  const [cfg, setCfg] = useState<TrainConfig>(() => defaultCfg(STAGES[initialStage]));
   const [initId, setInitId] = useState<InitId>('xavier');
   const [seed, setSeed] = useState(77);
 
   const [selected, setSelected] = useState(0);
-  const [main, setMain] = useState<ViewId>(STAGES[0].views[0]);
+  const [main, setMain] = useState<ViewId>(STAGES[initialStage].views[0]);
   const [sample, setSample] = useState(0);
   const [playing, setPlaying] = useState(false);
   const [speed, setSpeed] = useState(10);
@@ -181,7 +181,7 @@ export default function Sandbox() {
 
   const core = useRef<Core>(undefined as unknown as Core);
   if (core.current === undefined) {
-    core.current = build(STAGES[0].start, 'xavier', 77, STAGES[0].data(STAGES[0].dataDefaults), 'mse');
+    core.current = build(stage.start, 'xavier', 77, stage.data(stage.dataDefaults), 'mse');
   }
 
   /** ステージごとの保存先。訪れたステージだけ入る。いまのステージは live な ref/state のほうが正 */
@@ -354,6 +354,10 @@ export default function Sandbox() {
       setFlash('クリア');
     }
   }, [cleared, wasCleared]);
+
+  useEffect(() => {
+    if (cleared && !free) onSolved?.();
+  }, [cleared, free, onSolved]);
 
   useEffect(() => {
     if (!flash) return;
@@ -903,7 +907,7 @@ export default function Sandbox() {
   );
 
   return (
-    <div className="sb">
+    <div className={`sb ${embedded ? 'sb--embedded' : ''}`}>
       {/* ---- 左端の縦ツールバー。道具が解禁されたときだけ出る ---- */}
       {can('activation') && (
         <nav className="sb-toolbar" aria-label="道具">
@@ -925,10 +929,11 @@ export default function Sandbox() {
       <div className="sb-shell">
         {/* ---- 1段目: ステージ ---- */}
         <header className="sb-top">
-          <a className="sb-back" href="/learn/">
+          {courseNav}
+          {!embedded && <a className="sb-back" href="/learn/">
             ← 学習
-          </a>
-          <div className="sb-stages">
+          </a>}
+          {!embedded && <div className="sb-stages">
             {STAGES.filter((_, i) => free || i <= maxStage).map((s, i) => (
               <button
                 key={s.id}
@@ -941,14 +946,19 @@ export default function Sandbox() {
                 {s.no}
               </button>
             ))}
-          </div>
+          </div>}
+          {embedded && <details className="sb-accessible"><summary>スライダーで調整</summary><div>
+            {net.layers[0].w[0].map((w, i) => <label key={i}>重み {i + 1}：{fmt(w)}<input aria-label={`重み ${i + 1}`} type="range" min={-wRange} max={wRange} step={W_STEP} value={w} disabled={frozen(`e:0:0:${i}`)} onChange={(e) => { editNet((n) => { n.layers[0].w[0][i] = Number(e.target.value); }); handleDrag(false); }} /></label>)}
+            {can('bias') && <label>バイアス：{fmt(net.layers[0].b[0])}<input aria-label="バイアス" type="range" min={-wRange} max={wRange} step={W_STEP} value={net.layers[0].b[0]} disabled={frozen('n:0:0')} onChange={(e) => { editNet((n) => { n.layers[0].b[0] = Number(e.target.value); }); handleDrag(false); }} /></label>}
+            {paintId && <button type="button" className="sb-btn" disabled={frozen('n:0:0')} onClick={() => setActivation(0, 0, paintId)}>選んだ活性化関数を出力に適用</button>}
+          </div></details>}
           <div className="sb-spacer" />
           <button type="button" className="sb-restart" onClick={restart}>
             最初から
           </button>
-          <button type="button" className="sb-free" aria-pressed={free} onClick={() => setFree((f) => !f)}>
+          {!embedded && <button type="button" className="sb-free" aria-pressed={free} onClick={() => setFree((f) => !f)}>
             自由モード
-          </button>
+          </button>}
         </header>
 
         {/* ---- 本体 ---- */}

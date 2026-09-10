@@ -1,8 +1,11 @@
 ---
 import Full from '../../layouts/Full.astro';
-import Sandbox from '../../sandbox/Sandbox';
+import Course from '../../course/Course';
 ---
 
-<Full title="サンドボックス">
-  <Sandbox client:load />
+<Full title="深層学習">
+  <Course client:load />
+  <noscript><p class="no-script">この教材はJavaScriptを使います。ブラウザーでJavaScriptを有効にして開いてください。<a href="/learn/">学習内容を見る</a></p></noscript>
 </Full>
+
+<style is:global>html, body { height: auto; overflow: auto; } .no-script { padding: 24px; }</style>
