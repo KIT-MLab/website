@@ -100,7 +100,10 @@ export default function ExerciseBox({ id, kind, starter, stdin }: Props) {
   async function showSolution() {
     setSolutionNote(null);
     try {
-      const res = await fetch(`/api/solution/${encodeURIComponent(id)}`);
+      // passed=1 は「この課題を通した」という申告。いまはサーバがこれを信用している。
+      // D1 とログインを入れたら、サーバが submissions を見て判定するので、この引数は消す
+      // （src/pages/api/solution/[id].ts の冒頭のコメント）。
+      const res = await fetch(`/api/solution/${encodeURIComponent(id)}?passed=1`);
       const body = (await res.json()) as { code?: string; message?: string };
       if (res.ok && body.code) setSolution(body.code);
       else setSolutionNote(body.message ?? '模範解答を取り出せませんでした。');
