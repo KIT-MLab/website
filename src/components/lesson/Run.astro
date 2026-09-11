@@ -2,6 +2,10 @@
 /**
  * <Run> — その場で実行できるコード例（20-platform.md 第2.3節）。
  * 本文には実行結果を併記し（10-lesson 第2.2節）、▶ で実際に動かせる。
+ *
+ * client:load にしている理由: コード欄（CodeMirror）は島が動いてはじめて中身が入る。
+ * client:visible にすると、画面に入るまでコード例が空のままになる。コード例は
+ * 操作ではなく読む中身なので、待たせない。
  */
 import RunBox from '../../lesson/ui/RunBox';
 import { nextId } from '../../lesson/ui/ids';
@@ -20,5 +24,5 @@ const key = nextId('run');
 ---
 
 <div class="kit-runwrap">
-  <RunBox client:visible code={code} expected={out} stdin={stdin} editorId={key} />
+  <RunBox client:load code={code} expected={out} stdin={stdin} editorId={key} />
 </div>

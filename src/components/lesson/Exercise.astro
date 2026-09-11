@@ -29,5 +29,5 @@ const STAGE: Record<string, string> = { trace: 'なぞる', modify: '変える',
 <section class="kit-ex" id={id}>
   <p class="kit-ex__stage">{STAGE[kind] ?? kind}</p>
   <div class="kit-ex__prompt"><slot /></div>
-  <ExerciseBox client:visible id={id} kind={kind} starter={starter} stdin={stdin} />
+  <ExerciseBox client:load id={id} kind={kind} starter={starter} stdin={stdin} />
 </section>
