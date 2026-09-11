@@ -3,11 +3,10 @@
   "name": "website",
   "compatibility_date": "2026-09-01",
   "compatibility_flags": ["nodejs_compat"],
-  "main": "./dist/_worker.js/index.js",
-  "assets": {
-    "directory": "./dist",
-    "binding": "ASSETS"
-  },
+  // main と assets は書かない。Astro の Cloudflare アダプタが dist/server/wrangler.json を
+  // 生成してそちらが使われる。ここに書くとビルド時の設定解決とぶつかる。
+  // このファイルは「開発中に使う紐付け」を宣言するためだけに置く。
+  //
   // 本番の D1。開発は wrangler のローカルモードが作る手元の SQLite を使うので、
   // 本番の記録に開発中の操作が混ざることはない。
   "d1_databases": [

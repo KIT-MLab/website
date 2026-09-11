@@ -23,7 +23,9 @@ interface Props {
 
 const { id, kind, starter, stdin } = Astro.props;
 
-const STAGE: Record<string, string> = { trace: 'なぞる', modify: '変える', build: '組む' };
+/* 画面に出す名前。内部の呼び名（なぞる・変える・組む）は学習者には見せない。
+   10-lesson-and-writing.md 第3章 */
+const STAGE: Record<string, string> = { trace: '例題', modify: '練習問題', build: '演習問題' };
 ---
 
 <section class="kit-ex" id={id}>
