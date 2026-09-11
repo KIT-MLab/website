@@ -1,0 +1,60 @@
+---
+/**
+ * 用語集（10-lesson-and-writing.md 第5章）。
+ * 元は design/spec/glossary.md。本文からも節の右レールからも、ここに入る。
+ */
+import Base from '../../layouts/Base.astro';
+import glossaryMarkdown from '../../../design/spec/glossary.md?raw';
+import { parseGlossary } from '../../../scripts/glossary.mjs';
+import { chapterTitle } from '../../lesson/chapters';
+import '../../styles/lesson.css';
+
+const terms = parseGlossary(glossaryMarkdown);
+
+/** 定義の中の `…` だけを組む。それ以外の記号はそのまま文字として出す。 */
+function withCode(text: string): string {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/`([^`]*)`/g, '<code>$1</code>');
+}
+---
+
+<Base title="用語集">
+  <h1 class="page-title">用語集</h1>
+  <p class="wip">教材の本文で使う言葉の一覧です。節の中で初めて出たときは、その場でも説明します。</p>
+
+  <table class="glossary-table">
+    <thead>
+      <tr>
+        <th>語</th>
+        <th>意味</th>
+        <th>初めて出る章</th>
+      </tr>
+    </thead>
+    <tbody>
+      {
+        terms.map((t) => (
+          <tr id={`term-${encodeURIComponent(t.word)}`}>
+            <th>
+              {t.word}
+              {t.english ? <span class="glossary-en"> （{t.english}）</span> : null}
+            </th>
+            <td set:html={withCode(t.definition)} />
+            <td>{chapterTitle(t.chapter)}</td>
+          </tr>
+        ))
+      }
+    </tbody>
+  </table>
+</Base>
+
+<style>
+  .glossary-en {
+    font-family: var(--font-body);
+    font-weight: 400;
+    font-size: 14px;
+    color: var(--color-ink-2);
+  }
+</style>

@@ -1,0 +1,21 @@
+---
+/**
+ * <Level0> — レベル0の操作の補足（10-lesson-and-writing.md 第7章）。
+ *
+ * 書いてよいのは操作だけ（どのキーを押すか、どこをクリックするか、画面のどこに何が出るか）。
+ * 概念の説明を入れてはいけない。scripts/check-lessons.mjs 検査13 が近似で見張る。
+ *
+ * レベル0では開いた状態、レベル1では閉じた状態、レベル2では非表示という出し分けは、
+ * レベル選択（00-overview.md 第1.3節）と一緒に作る。いまは常に開いた状態で出す。
+ */
+interface Props {
+  title: string;
+}
+
+const { title } = Astro.props;
+---
+
+<details class="kit-level0" open>
+  <summary class="kit-level0__title">操作の補足: {title}</summary>
+  <div class="kit-level0__body"><slot /></div>
+</details>

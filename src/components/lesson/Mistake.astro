@@ -1,0 +1,31 @@
+---
+/**
+ * <Mistake> — よくある間違い（10-lesson-and-writing.md 第6.1節）。
+ * 壊れたコード・出るエラーメッセージ・原因と直し方の3つを持つ。
+ * エラーメッセージは訳さずそのまま載せる（第5章）。
+ *
+ * ここの error は採点の応答にも使う。学習者の提出でエラーが出たとき、
+ * この文字列と前方一致すればこの説明を出す（20-platform.md 第4.3節）。
+ */
+import RunBox from '../../lesson/ui/RunBox';
+import { nextId } from '../../lesson/ui/ids';
+
+interface Props {
+  /** 採点から参照するための id */
+  id: string;
+  /** 初学者が実際に書く形の壊れたコード */
+  code: string;
+  /** 実際に出るエラーメッセージ */
+  error: string;
+  stdin?: string;
+}
+
+const { id, code, error, stdin } = Astro.props;
+const key = nextId('mistake');
+---
+
+<aside class="kit-mistake" id={id}>
+  <p class="kit-mistake__label">よくある間違い</p>
+  <RunBox client:visible code={code} expected={error} stdin={stdin} broken editorId={key} />
+  <div class="kit-mistake__fix"><slot /></div>
+</aside>

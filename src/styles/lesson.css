@@ -1,0 +1,611 @@
+/* ============================================================
+ * レッスンの画面（10-lesson-and-writing.md 第9章）
+ *
+ * ・本文は1カラム、最大720px。右レール240px
+ * ・本文16px以上、コード14px以上（第9.4節 原則7）
+ * ・色と書体は src/styles/tokens.css の決定に従う。サンドボックスの暗い配色は使わない
+ * ============================================================ */
+
+/* --- 上部 --------------------------------------------------- */
+.lesson-top {
+  border-bottom: var(--rule);
+  padding-bottom: var(--space-md);
+  margin-bottom: var(--space-lg);
+}
+
+.lesson-top__chapter {
+  margin: 0;
+  font-size: 14px;
+  letter-spacing: 0.1em;
+  color: var(--color-ink-2);
+}
+
+.lesson-title {
+  margin: calc(6px * var(--sp)) 0 0;
+  font-family: var(--font-head);
+  font-weight: 700;
+  font-size: 28px;
+  line-height: 1.5;
+  border-left: 5px solid var(--color-accent);
+  padding-left: var(--space-md);
+}
+
+.lesson-top__meta {
+  margin: calc(8px * var(--sp)) 0 0;
+  font-size: 14px;
+  color: var(--color-ink-2);
+}
+
+/* --- 二段組 ------------------------------------------------- */
+.lesson-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 720px) 240px;
+  gap: var(--space-xl);
+  align-items: start;
+}
+
+.lesson-body {
+  max-width: 720px;
+  font-size: 17px;
+  line-height: 1.95;
+}
+
+.lesson-body > p {
+  margin: 0 0 1.1em;
+}
+
+.lesson-body h2 {
+  font-family: var(--font-head);
+  font-size: 22px;
+  line-height: 1.5;
+  margin: 2.2em 0 0.8em;
+  border-left: 5px solid var(--color-accent);
+  padding-left: var(--space-md);
+}
+
+.lesson-body h3 {
+  font-family: var(--font-head);
+  font-size: 18px;
+  margin: 1.8em 0 0.6em;
+  border-bottom: var(--rule-thin);
+  padding-bottom: 4px;
+}
+
+.lesson-body code {
+  font-family: var(--font-mono);
+  font-size: 15px;
+  background: var(--color-card);
+  border: 1px solid rgba(58, 58, 58, 0.28);
+  border-radius: 3px;
+  padding: 0 4px;
+}
+
+.lesson-body ul,
+.lesson-body ol {
+  padding-left: 1.6em;
+}
+
+.lesson-body li {
+  margin-bottom: 0.3em;
+}
+
+/* --- 右レール ----------------------------------------------- */
+.lesson-rail {
+  position: sticky;
+  top: var(--space-md);
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.rail__label {
+  margin: 0 0 calc(6px * var(--sp));
+  font-family: var(--font-head);
+  font-weight: 700;
+  font-size: 14px;
+  letter-spacing: 0.08em;
+  border-bottom: var(--rule-thin);
+  padding-bottom: 4px;
+}
+
+.rail__block + .rail__block {
+  margin-top: var(--space-lg);
+}
+
+.rail__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.rail__list li {
+  margin-bottom: calc(8px * var(--sp));
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+}
+
+.rail__state {
+  flex: 0 0 auto;
+  width: 2.4em;
+  font-size: 12px;
+  color: var(--color-ink-2);
+  border: 1px solid rgba(58, 58, 58, 0.3);
+  border-radius: 3px;
+  text-align: center;
+  background: var(--color-card);
+}
+
+.rail__list li.is-now .rail__state {
+  color: var(--color-card);
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+}
+
+.rail__list li.is-done .rail__state {
+  color: var(--color-accent);
+  border-color: var(--color-accent);
+}
+
+.rail__list a {
+  color: inherit;
+  text-decoration: none;
+  text-underline-offset: 3px;
+}
+
+.rail__list a:hover {
+  text-decoration: underline;
+}
+
+.rail__list li.is-now a {
+  font-weight: 700;
+}
+
+.rail__link {
+  color: inherit;
+  text-underline-offset: 3px;
+}
+
+.rail__ask {
+  font: inherit;
+  font-family: var(--font-body);
+  width: 100%;
+  padding: 6px 10px;
+  border: 1.5px dashed rgba(58, 58, 58, 0.4);
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--color-ink-2);
+}
+
+.rail__note {
+  margin: 6px 0 0;
+  font-size: 12px;
+  color: var(--color-ink-2);
+}
+
+/* --- 節の移動 ----------------------------------------------- */
+.lesson-nav {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-md);
+  margin-top: var(--space-xl);
+  border-top: var(--rule);
+  padding-top: var(--space-lg);
+}
+
+.lesson-nav a {
+  display: inline-block;
+  max-width: 46%;
+  padding: 8px 18px;
+  border: 1.5px solid var(--color-line);
+  box-shadow: 3px 3px 0 var(--color-line);
+  border-radius: var(--radius);
+  background: var(--color-card);
+  color: var(--color-ink);
+  text-decoration: none;
+  font-size: 15px;
+}
+
+.lesson-nav a:hover {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  color: #fff;
+}
+
+.lesson-nav a:active {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0 var(--color-line);
+}
+
+.lesson-nav__spacer {
+  flex: 0 0 auto;
+}
+
+/* --- ボタン ------------------------------------------------- */
+.kit-btn {
+  font-family: var(--font-body);
+  font-size: 15px;
+  padding: 5px 16px;
+  border: 1.5px solid var(--color-line);
+  box-shadow: 3px 3px 0 var(--color-line);
+  border-radius: var(--radius);
+  background: var(--color-card);
+  color: var(--color-ink);
+  cursor: pointer;
+}
+
+.kit-btn:hover:not(:disabled) {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  color: #fff;
+}
+
+.kit-btn:active:not(:disabled) {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0 var(--color-line);
+}
+
+.kit-btn:disabled {
+  opacity: 0.55;
+  cursor: default;
+  box-shadow: none;
+}
+
+.kit-btn--strong {
+  font-weight: 700;
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  color: #fff;
+}
+
+.kit-btn--strong:hover:not(:disabled) {
+  background: var(--color-ink);
+  border-color: var(--color-ink);
+}
+
+.kit-btn--quiet {
+  box-shadow: none;
+  border-style: dashed;
+  font-size: 14px;
+}
+
+/* --- コード例と実行結果 -------------------------------------- */
+.kit-runwrap {
+  margin: 1.4em 0;
+}
+
+.kit-run__bar,
+.kit-ex__bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+
+.kit-editor .cm-editor {
+  max-height: 22em;
+}
+
+.kit-out {
+  margin-top: 10px;
+}
+
+.kit-out__label {
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  color: var(--color-ink-2);
+  margin-bottom: 3px;
+}
+
+.kit-out__text {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 14.5px;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  word-break: break-word;
+  background: var(--color-card);
+  border: 1.5px solid var(--color-line);
+  border-left-width: 5px;
+  border-radius: var(--radius);
+  padding: 8px 12px;
+  overflow-x: auto;
+}
+
+.kit-run--broken .kit-out__text {
+  border-left-color: var(--color-accent);
+}
+
+/* --- 入力欄（20-platform.md 第3.2節） ------------------------ */
+.kit-stdin {
+  margin-top: 10px;
+}
+
+.kit-stdin__label {
+  display: block;
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  color: var(--color-ink-2);
+  margin-bottom: 3px;
+}
+
+.kit-stdin__area {
+  width: 100%;
+  font-family: var(--font-mono);
+  font-size: 14.5px;
+  line-height: 1.7;
+  padding: 6px 10px;
+  border: 1.5px solid var(--color-line);
+  border-radius: var(--radius);
+  background: var(--color-card);
+  color: var(--color-ink);
+  resize: vertical;
+}
+
+.kit-stdin__area:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 1px;
+}
+
+.kit-stdin__note {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: var(--color-ink-2);
+}
+
+/* --- 読み込みの進捗 ------------------------------------------ */
+.kit-loadbar {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--color-ink-2);
+}
+
+.kit-loadbar__track {
+  display: inline-block;
+  width: 120px;
+  height: 6px;
+  background: rgba(58, 58, 58, 0.15);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.kit-loadbar__fill {
+  display: block;
+  height: 100%;
+  background: var(--color-accent);
+  transition: width 120ms var(--ease-out);
+}
+
+/* --- よくある間違い ------------------------------------------ */
+.kit-mistake {
+  margin: 1.6em 0;
+  padding: var(--space-md);
+  background: var(--color-card);
+  border: 1.5px solid var(--color-line);
+  border-top: 5px solid var(--color-accent);
+  border-radius: var(--radius);
+}
+
+.kit-mistake__label {
+  margin: 0 0 10px;
+  font-family: var(--font-head);
+  font-weight: 700;
+  font-size: 15px;
+  letter-spacing: 0.08em;
+}
+
+.kit-mistake__fix {
+  margin-top: 10px;
+  font-size: 16px;
+}
+
+.kit-mistake__fix p {
+  margin: 0 0 0.6em;
+}
+
+/* --- 課題 --------------------------------------------------- */
+.kit-ex {
+  margin: 1.8em 0;
+  padding: var(--space-md);
+  border: 1.5px solid var(--color-line);
+  border-radius: var(--radius);
+  background: var(--color-card);
+}
+
+.kit-ex__stage {
+  display: inline-block;
+  margin: 0 0 8px;
+  padding: 1px 10px;
+  font-size: 13px;
+  letter-spacing: 0.1em;
+  border: 1.5px solid var(--color-line);
+  border-radius: var(--radius);
+  background: var(--color-paper);
+}
+
+.kit-ex__prompt {
+  font-size: 16px;
+}
+
+.kit-ex__prompt p {
+  margin: 0 0 0.7em;
+}
+
+.kit-ex__work {
+  margin-top: 12px;
+}
+
+.kit-ex__badge {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-accent);
+  border: 1.5px solid var(--color-accent);
+  border-radius: var(--radius);
+  padding: 1px 10px;
+}
+
+.kit-ex__missing {
+  font-size: 14px;
+  color: var(--color-accent);
+}
+
+/* --- 採点の応答 --------------------------------------------- */
+.kit-verdict {
+  margin-top: 12px;
+  padding: 10px 14px;
+  border: 1.5px solid var(--color-line);
+  border-left-width: 5px;
+  border-radius: var(--radius);
+  background: var(--color-paper);
+  font-size: 16px;
+}
+
+.kit-verdict strong {
+  display: block;
+  font-size: 16px;
+  margin-bottom: 4px;
+}
+
+.kit-verdict p {
+  margin: 0 0 0.5em;
+}
+
+.kit-verdict--pass {
+  border-left-color: var(--color-accent);
+}
+
+.kit-verdict--fail {
+  border-left-color: var(--color-ink-2);
+}
+
+.kit-verdict__where {
+  font-size: 14px;
+  color: var(--color-ink-2);
+}
+
+.kit-verdict .kit-out__text {
+  margin: 6px 0;
+}
+
+.kit-diff {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 15px;
+  margin-top: 6px;
+}
+
+.kit-diff th {
+  text-align: left;
+  vertical-align: top;
+  white-space: nowrap;
+  padding: 4px 12px 4px 0;
+  font-weight: 400;
+  color: var(--color-ink-2);
+  width: 8em;
+}
+
+.kit-diff td {
+  padding: 4px 0;
+}
+
+.kit-diff pre {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 14.5px;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.kit-hints {
+  margin-top: 12px;
+  padding: 8px 14px;
+  border: 1.5px dashed rgba(58, 58, 58, 0.45);
+  border-radius: var(--radius);
+  font-size: 15px;
+}
+
+.kit-hints__label {
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  color: var(--color-ink-2);
+}
+
+.kit-hints ol {
+  margin: 4px 0 0;
+  padding-left: 1.4em;
+}
+
+.kit-solution {
+  margin-top: 12px;
+}
+
+.kit-solution__note {
+  margin: 6px 0 0;
+  font-size: 14px;
+  color: var(--color-ink-2);
+}
+
+/* --- レベル0の補足 ------------------------------------------- */
+.kit-level0 {
+  margin: 1.4em 0;
+  border: 1.5px solid rgba(58, 58, 58, 0.4);
+  border-radius: var(--radius);
+  background: var(--color-card);
+  font-size: 16px;
+}
+
+.kit-level0__title {
+  cursor: pointer;
+  padding: 8px 14px;
+  font-size: 14px;
+  letter-spacing: 0.06em;
+  color: var(--color-ink-2);
+}
+
+.kit-level0__body {
+  padding: 0 14px 10px;
+}
+
+.kit-level0__body p {
+  margin: 0 0 0.6em;
+}
+
+/* --- 用語集 -------------------------------------------------- */
+.glossary-table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 16px;
+  margin-top: var(--space-lg);
+}
+
+.glossary-table th,
+.glossary-table td {
+  text-align: left;
+  vertical-align: top;
+  padding: 8px 12px 8px 0;
+  border-bottom: var(--rule-thin);
+}
+
+.glossary-table th {
+  white-space: nowrap;
+  font-family: var(--font-head);
+}
+
+.glossary-table code {
+  font-family: var(--font-mono);
+  font-size: 15px;
+}
+
+@media (max-width: 1040px) {
+  .lesson-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .lesson-rail {
+    position: static;
+    border-top: var(--rule);
+    padding-top: var(--space-lg);
+  }
+}

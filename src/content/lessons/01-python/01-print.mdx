@@ -1,0 +1,109 @@
+---
+id: python-01-print
+chapter: 01-python
+title: printで値を表示する
+minutes: 12
+terms: [print, 文字列, 引数]
+---
+
+{/* 困る例 */}
+
+10と20を足す式を書いても、画面には何も出ません。計算の結果を画面に出す手立てがないと、合っているかを目で確かめられません。数が合わないときに、どこで違ったのかも分かりません。
+
+{/* やってみる */}
+
+次のコードの ▶ を押してください。
+
+<Run
+  code={`print("Hello")
+print(10 + 20)`}
+  out={`Hello
+30`}
+/>
+
+{/* 説明 */}
+
+1行目の `print` は、渡した値を画面に表示する関数です。かっこの中に書いた値を引数（ひきすう）と呼びます。1行目の引数は `"Hello"` です。
+
+`"` で囲んだものを文字列（string）と呼びます。囲みの `"` は画面に出ません。出るのは中の文字だけです。
+
+2行目の引数は `10 + 20` です。かっこの中が先に計算され、結果の `30` が表示されます。`print` は1回呼ぶごとに1行を表示します。
+
+`print` を書かずに `10 + 20` とだけ書いた場合、計算は行われますが画面には何も出ません。表示するかどうかは、書いた人が `print` で指示します。
+
+<Level0 title="半角のダブルクォートの入れ方">
+`Shift` を押しながら数字の `2` のキーを押すと `"` が入ります。日本語入力がオンのときは `”` になります。`半角/全角` キーで日本語入力を切り替えてください。
+</Level0>
+
+{/* よくある間違い */}
+
+<Mistake id="zenkaku-quote" code={`print(“Python”)`} error={`SyntaxError: invalid character '“' (U+201C)`}>
+全角のダブルクォートを使っています。`"` は半角で入力してください。日本語入力がオンになっていると全角になります。
+</Mistake>
+
+<Mistake id="print-typo" code={`prit("Python")`} error={`NameError: name 'prit' is not defined`}>
+`print` の綴りが違います。`prit` という名前は Python にありません。`n` が抜けていないか見てください。
+</Mistake>
+
+{/* 課題 */}
+
+<Exercise
+  id="python-01-print-t1"
+  kind="trace"
+  tests={[{ kind: 'stdout' }]}
+  hints={[]}
+  mistakes={['zenkaku-quote', 'print-typo']}
+>
+次のコードを入力して実行し、採点してください。
+
+```python
+print("Python")
+```
+</Exercise>
+
+<Exercise
+  id="python-01-print-m1"
+  kind="modify"
+  starter={`print("赤")`}
+  tests={[{ kind: 'stdout' }]}
+  hints={['`print` をもう1行足します。']}
+  mistakes={['zenkaku-quote']}
+>
+上のコードを書き足して、1行目に `赤`、2行目に `青` と表示されるようにしてください。
+</Exercise>
+
+<Exercise
+  id="python-01-print-m2"
+  kind="modify"
+  starter={`print("赤")
+print("青")`}
+  tests={[{ kind: 'stdout' }]}
+  hints={['`print` の引数を `,` で区切ると、間に空白が1つ入って1行に並びます。']}
+  mistakes={['zenkaku-quote']}
+>
+上のコードを1行の `print` に書き換えて、`赤 青` と1行で表示されるようにしてください。引数は2つ渡します。
+</Exercise>
+
+<Exercise
+  id="python-01-print-b1"
+  kind="build"
+  stdin={`りんご`}
+  tests={[
+    { kind: 'stdout', stdin: `りんご\n` },
+    { kind: 'stdout', stdin: `0\n` },
+    { kind: 'stdout', stdin: `-5\n` },
+  ]}
+  hints={[
+    '入力欄の1行を読むには `input()` と書きます。',
+    '文字列どうしは `+` でつなげます。`"あ" + "い"` は `あい` になります。',
+  ]}
+  mistakes={['zenkaku-quote']}
+>
+入力欄の1行を読み取り、その前後に `【` と `】` を付けて表示するプログラムを書いてください。入力欄の1行を読むには `input()` と書きます。`input()` の説明は次の節で行います。
+
+判定に使う入力: `りんご` `0` `-5`
+</Exercise>
+
+{/* つながり */}
+
+`print` で値を出せるようになりました。次の節では、こちらから値を渡す `input()` を扱います。

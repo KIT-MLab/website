@@ -1,10 +1,40 @@
 ---
+import { getCollection } from 'astro:content';
 import Base from '../../layouts/Base.astro';
 import { CHAPTERS, LESSONS } from '../../course/curriculum';
+import { chapterTitle, lessonHref } from '../../lesson/chapters';
+
+const lessons = (await getCollection('lessons')).sort((a, b) => a.id.localeCompare(b.id));
+const chapters = [...new Set(lessons.map((l) => l.data.chapter))];
 ---
 
 <Base title="学習">
   <h1 class="page-title">学習</h1>
+
+  <section class="learning-intro">
+    <h2>Python からはじめる教材</h2>
+    <p>プログラミングの経験がない人向けの教材です。コードはこのサイトの中で動かせます。課題はその場で採点します。</p>
+    {
+      chapters.map((chapter) => (
+        <div class="lesson-chapter">
+          <h3>{chapterTitle(chapter)}</h3>
+          <ol>
+            {lessons
+              .filter((l) => l.data.chapter === chapter)
+              .map((l) => (
+                <li>
+                  <a href={lessonHref(l.id)}>{l.data.title}</a>
+                  <span class="lesson-minutes">目安 {l.data.minutes} 分</span>
+                </li>
+              ))}
+          </ol>
+        </div>
+      ))
+    }
+    <p class="learning-note">
+      作っている途中です。<a href="/learn/glossary/">用語集</a>も見られます。
+    </p>
+  </section>
   <section class="learning-intro">
     <h2>深層学習</h2>
     <p>機械学習を初めて学ぶ人のための教材です。重みを手で動かす実験から始め、ニューラルネットワークの学習・評価と、画像や文章への応用まで学びます。</p>
@@ -24,6 +54,12 @@ import { CHAPTERS, LESSONS } from '../../course/curriculum';
   .learn-open { display: inline-block; padding: 8px 22px; border: 1.5px solid var(--color-line); box-shadow: 3px 3px 0 var(--color-line); border-radius: var(--radius); text-decoration: none; background: var(--color-card); color: var(--color-ink); font-weight: 700; }
   .learn-open:hover { background: var(--color-accent); color: white; }
   .learning-note { font-size: 14px; color: var(--color-ink-2); }
+  .lesson-chapter { margin: 16px 0; }
+  .lesson-chapter h3 { font-size: 17px; border-bottom: var(--rule-thin); padding-bottom: 6px; margin-bottom: 8px; }
+  .lesson-chapter ol { padding-left: 28px; margin: 0; }
+  .lesson-chapter li { padding-bottom: 4px; }
+  .lesson-chapter a { color: var(--color-ink); text-underline-offset: 4px; }
+  .lesson-minutes { margin-left: 12px; font-size: 13px; color: var(--color-ink-2); }
   .learning-outline { display: grid; grid-template-columns: 1fr 1fr; gap: 16px 32px; margin-bottom: 40px; }
   .learning-outline h3 { font-size: 17px; border-bottom: var(--rule-thin); padding-bottom: 8px; }
   .learning-outline ol { padding-left: 28px; }

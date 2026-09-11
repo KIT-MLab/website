@@ -1,0 +1,109 @@
+---
+id: python-01-input
+chapter: 01-python
+title: inputで値を受け取る
+minutes: 14
+terms: [input, int, 整数]
+---
+
+{/* 困る例 */}
+
+コードに `10` と書いてしまうと、別の数で試すたびにコードを書き直すことになります。使う人に数を決めてもらえません。読み取った値をそのまま1と足しても、Python は止まってしまいます。
+
+{/* やってみる */}
+
+入力欄に `5` と書いてある状態で ▶ を押してください。
+
+<Run code={`print(int(input()) + 1)`} stdin={`5`} out={`6`} />
+
+{/* 説明 */}
+
+`input()` は、入力欄の1行を読み取る関数です。読み取った値は文字列になります。入力欄に `5` と書いても、返るのは文字の `5` です。
+
+`int()` は、文字列を整数に変える関数です。整数（integer）は小数点を持たない数で、`3` や `-7` と書きます。`int("5")` は数の `5` になり、`+ 1` で `6` になります。
+
+`int(input())` は内側から順に実行されます。まず `input()` が1行読み、その結果を `int()` が整数に変えます。
+
+入力欄の行が尽きた状態で `input()` を呼ぶと、実行が止まります。読む行の数だけ、入力欄に行を書いてください。
+
+<Level0 title="入力欄の場所">
+入力欄はコード欄のすぐ下にあります。1行書いたら改行し、次の行を書いてください。書き終えてから ▶ を押します。
+</Level0>
+
+{/* よくある間違い */}
+
+<Mistake id="str-plus-int" code={`print(input() + 1)`} stdin={`5`} error={`TypeError: can only concatenate str (not "int") to str`}>
+読み取った値は文字列なので、数の `1` とは足せません。`int(input())` のように、先に整数へ変えてください。
+</Mistake>
+
+<Mistake id="int-of-decimal" code={`print(int("3.5"))`} error={`ValueError: invalid literal for int() with base 10: '3.5'`}>
+`int()` は小数点を含む文字列を受け取れません。小数のまま扱うときは `float()` を使います。`float()` は第1章の後の節で扱います。
+</Mistake>
+
+{/* 課題 */}
+
+<Exercise
+  id="python-01-input-t1"
+  kind="trace"
+  stdin={`4`}
+  tests={[{ kind: 'stdout', stdin: `4\n` }]}
+  hints={[]}
+  mistakes={['str-plus-int']}
+>
+次のコードを入力し、入力欄に `4` と書いて採点してください。
+
+```python
+print(int(input()) * 2)
+```
+</Exercise>
+
+<Exercise
+  id="python-01-input-m1"
+  kind="modify"
+  starter={`print(int(input()) * 2)`}
+  stdin={`4`}
+  tests={[{ kind: 'stdout', stdin: `4\n` }]}
+  hints={['`*` の右の数を変えます。']}
+  mistakes={['str-plus-int']}
+>
+上のコードを書き換えて、読み取った数の3倍を表示するようにしてください。入力欄が `4` のとき `12` と出れば合っています。
+</Exercise>
+
+<Exercise
+  id="python-01-input-m2"
+  kind="modify"
+  starter={`print(int(input()))`}
+  stdin={`3
+8`}
+  tests={[{ kind: 'stdout', stdin: `3\n8\n` }]}
+  hints={['`input()` を2回書くと、1行目・2行目の順に読めます。']}
+  mistakes={['str-plus-int']}
+>
+上のコードを書き換えて、入力欄の2行を読み取り、その2つの数の和を表示するようにしてください。入力欄が `3` と `8` のとき `11` と出れば合っています。
+</Exercise>
+
+<Exercise
+  id="python-01-input-b1"
+  kind="build"
+  stdin={`10
+3`}
+  tests={[
+    { kind: 'stdout', stdin: `10\n3\n` },
+    { kind: 'stdout', stdin: `0\n0\n` },
+    { kind: 'stdout', stdin: `-5\n-5\n` },
+    { kind: 'stdout', stdin: `3\n10\n` },
+  ]}
+  hints={[
+    '`input()` を2回呼ぶと、1行目・2行目の順に読めます。',
+    '読み取った値は文字列なので、引く前に `int()` で整数へ変えます。',
+  ]}
+  mistakes={['str-plus-int']}
+>
+入力欄の2行を読み取り、1行目の数から2行目の数を引いた結果を表示するプログラムを書いてください。
+
+判定に使う入力: `10` と `3` / `0` と `0` / `-5` と `-5` / `3` と `10`
+</Exercise>
+
+{/* つながり */}
+
+入力欄から数を受け取れるようになりました。第1章の残りの節では、受け取った数を使う道具を足していきます。
