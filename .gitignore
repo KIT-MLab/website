@@ -2,6 +2,8 @@
 dist/
 # generated types
 .astro/
+# scripts/build-tests.mjs が模範解答から作る課題の期待値
+src/generated/
 
 # dependencies
 node_modules/
@@ -23,3 +25,6 @@ pnpm-debug.log*
 # jetbrains setting folder
 .idea/
 .scratch/
+
+# wrangler のローカル状態
+.wrangler/
