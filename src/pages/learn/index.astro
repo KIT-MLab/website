@@ -1,7 +1,6 @@
 ---
 import { getCollection } from 'astro:content';
 import Base from '../../layouts/Base.astro';
-import { CHAPTERS, LESSONS } from '../../course/curriculum';
 import { chapterTitle, lessonHref } from '../../lesson/chapters';
 
 const lessons = (await getCollection('lessons')).sort((a, b) => a.id.localeCompare(b.id));
@@ -10,17 +9,18 @@ const chapters = [...new Set(lessons.map((l) => l.data.chapter))];
 
 <Base title="学習">
   <h1 class="page-title">学習</h1>
-
-  <section class="learning-intro">
-    <h2>Python からはじめる教材</h2>
-    <p>プログラミングの経験がない人向けの教材です。コードはこのサイトの中で動かせます。課題はその場で採点します。</p>
+  <section>
+    <p class="lead">
+      機械学習を初めて学ぶ人のための教材です。Python を書くところから始め、
+      ニューラルネットワークの学習と評価まで進みます。コードはこのページの中で動かせます。
+    </p>
     {
-      chapters.map((chapter) => (
+      chapters.map((ch) => (
         <div class="lesson-chapter">
-          <h3>{chapterTitle(chapter)}</h3>
+          <h3>{chapterTitle(ch)}</h3>
           <ol>
             {lessons
-              .filter((l) => l.data.chapter === chapter)
+              .filter((l) => l.data.chapter === ch)
               .map((l) => (
                 <li>
                   <a href={lessonHref(l.id)}>{l.data.title}</a>
@@ -32,38 +32,18 @@ const chapters = [...new Set(lessons.map((l) => l.data.chapter))];
       ))
     }
     <p class="learning-note">
-      作っている途中です。<a href="/learn/glossary/">用語集</a>も見られます。
+      作っている途中です。<a href="/learn/glossary/">用語集</a>と<a href="/learn/sandbox/">実験ページ</a>も見られます。
     </p>
   </section>
-  <section class="learning-intro">
-    <h2>深層学習</h2>
-    <p>機械学習を初めて学ぶ人のための教材です。重みを手で動かす実験から始め、ニューラルネットワークの学習・評価と、画像や文章への応用まで学びます。</p>
-    <p>全16ステージ。各ステージに操作課題と2問の確認問題があり、最後に自分の言葉で説明する課題に取り組みます。高校までの基本的な計算を前提に、必要な用語はその都度説明します。</p>
-    <a class="learn-open" href="/learn/sandbox/">教材を開く</a>
-    <p class="learning-note">1ステージ約5〜8分。進み具合と回答は、このブラウザーに保存されます。</p>
-  </section>
-  <h2>学習内容</h2>
-  <div class="learning-outline">
-    {CHAPTERS.map((chapter, ci) => <section><h3>{chapter}</h3><ol>{LESSONS.map((lesson, i) => lesson.chapter !== ci ? null : <li value={i + 1}><a href={`/learn/sandbox/#${lesson.id}`}>{lesson.title}</a></li>)}</ol></section>)}
-  </div>
 </Base>
 
 <style>
-  .learning-intro { margin: 24px 0 40px; }
-  .learning-intro h2 { font-size: 24px; margin: 0 0 12px; }
-  .learn-open { display: inline-block; padding: 8px 22px; border: 1.5px solid var(--color-line); box-shadow: 3px 3px 0 var(--color-line); border-radius: var(--radius); text-decoration: none; background: var(--color-card); color: var(--color-ink); font-weight: 700; }
-  .learn-open:hover { background: var(--color-accent); color: white; }
-  .learning-note { font-size: 14px; color: var(--color-ink-2); }
+  .lead { margin: 20px 0 28px; }
+  .learning-note { font-size: 14px; color: var(--color-ink-2); margin-top: 28px; }
   .lesson-chapter { margin: 16px 0; }
   .lesson-chapter h3 { font-size: 17px; border-bottom: var(--rule-thin); padding-bottom: 6px; margin-bottom: 8px; }
   .lesson-chapter ol { padding-left: 28px; margin: 0; }
   .lesson-chapter li { padding-bottom: 4px; }
   .lesson-chapter a { color: var(--color-ink); text-underline-offset: 4px; }
   .lesson-minutes { margin-left: 12px; font-size: 13px; color: var(--color-ink-2); }
-  .learning-outline { display: grid; grid-template-columns: 1fr 1fr; gap: 16px 32px; margin-bottom: 40px; }
-  .learning-outline h3 { font-size: 17px; border-bottom: var(--rule-thin); padding-bottom: 8px; }
-  .learning-outline ol { padding-left: 28px; }
-  .learning-outline li { padding-bottom: 4px; }
-  .learning-outline a { color: var(--color-ink); text-underline-offset: 4px; }
-  @media (max-width: 620px) { .learning-outline { grid-template-columns: 1fr; } }
 </style>

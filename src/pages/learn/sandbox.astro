@@ -1,11 +1,13 @@
 ---
+/**
+ * 実験ページ（旧サンドボックス）。
+ * 教材の実験は各節に埋め込む形に作り直す（design/spec/00-overview.md 第5章）。
+ * それができるまで、手で重みを動かす画面をここに残しておく。
+ */
 import Full from '../../layouts/Full.astro';
-import Course from '../../course/Course';
+import Sandbox from '../../sandbox/Sandbox';
 ---
 
-<Full title="深層学習">
-  <Course client:load />
-  <noscript><p class="no-script">この教材はJavaScriptを使います。ブラウザーでJavaScriptを有効にして開いてください。<a href="/learn/">学習内容を見る</a></p></noscript>
+<Full title="実験ページ">
+  <Sandbox client:load />
 </Full>
-
-<style is:global>html, body { height: auto; overflow: auto; } .no-script { padding: 24px; }</style>
