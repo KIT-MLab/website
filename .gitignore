@@ -28,3 +28,5 @@ pnpm-debug.log*
 
 # wrangler のローカル状態
 .wrangler/
+# Cloudflare
+.wrangler/

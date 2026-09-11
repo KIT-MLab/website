@@ -1,0 +1,21 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "website",
+  "compatibility_date": "2026-09-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "main": "./dist/_worker.js/index.js",
+  "assets": {
+    "directory": "./dist",
+    "binding": "ASSETS"
+  },
+  // 本番の D1。開発は wrangler のローカルモードが作る手元の SQLite を使うので、
+  // 本番の記録に開発中の操作が混ざることはない。
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "mlab-course",
+      "database_id": "cdb73113-1f96-418e-96ed-0ff89f195c54",
+      "migrations_dir": "migrations"
+    }
+  ]
+}
