@@ -15,9 +15,12 @@
 | データベース | Cloudflare D1 |
 | Python 実行 | Pyodide。Web Worker の中で動かす |
 | 対話部分 | React island（既存の `@astrojs/react`） |
-| 本文の置き場 | Astro content collections。1節＝1つの `.mdx` |
+| 本文の置き場 | Astro content collections。1節＝1つの `.mdx`（`@astrojs/mdx` を追加する） |
+| コード入力欄 | CodeMirror 6（`codemirror`、`@codemirror/lang-python`） |
 
 依存の追加はこの表にあるものだけ。それ以外を足したくなったら仕様書に追記して合意してから入れる。
+
+コード入力欄に CodeMirror を使う理由は**行番号**である。Python のエラーは `line 3` のように行番号で場所を示す。行番号のない入力欄では、エラーメッセージを読む練習ができない。
 
 ---
 
