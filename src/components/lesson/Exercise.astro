@@ -26,6 +26,11 @@ interface Props {
   starter?: string;
   /** 入力欄の初期値 */
   stdin?: string;
+  /**
+   * コピーと貼り付けを使って解く課題か（20-platform.md 第11.7節）。kind="type" だけに付く。
+   * 判定は ExerciseBox が lesson-data.json の側から読むので、ここでは受け取るだけ。
+   */
+  requirePaste?: boolean;
   tests?: Test[];
   hints?: string[];
   mistakes?: string[];

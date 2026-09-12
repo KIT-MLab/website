@@ -21,6 +21,13 @@ export const SECTION_OPTIONAL = new Set(['つながり']);
  */
 export const START_CHAPTER = '00-start';
 
+/**
+ * 第0章の要素の順序（20-platform.md 第11.7節）。
+ * 「よくある間違い」を置かない。<Mistake> は壊れたコードと実際のエラーメッセージを
+ * 見せる要素で、パソコンの操作を習いに来た人に見せる理由がないため。
+ */
+export const START_SECTION_ORDER = ['困る例', 'やってみる', '説明', '課題', 'つながり'];
+
 /** 課題の型。type と choose は第0章だけで使える（第11.4節） */
 export const EXERCISE_KINDS = ['trace', 'modify', 'build'];
 export const START_EXERCISE_KINDS = [...EXERCISE_KINDS, 'type', 'choose'];

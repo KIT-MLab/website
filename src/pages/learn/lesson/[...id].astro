@@ -44,6 +44,11 @@ const dataJson = JSON.stringify(lessonData).replace(/</g, '\\u003c');
 
 const prev = at > 0 ? siblings[at - 1] : null;
 const next = at < siblings.length - 1 ? siblings[at + 1] : null;
+
+/* 第0章は課題を1問ずつ出す（20-platform.md 第11.7節）。
+   目印を1つ置くだけで、本文の書き方は変えない。第1章以降は属性が付かないので
+   CSS も JS も当たらず、縦に並んだままになる。 */
+const oneAtATime = entry.data.chapter === '00-start' ? '' : undefined;
 ---
 
 <Base title={entry.data.title}>
@@ -57,7 +62,7 @@ const next = at < siblings.length - 1 ? siblings[at + 1] : null;
     </div>
 
     <div class="lesson-grid">
-      <article class="lesson-body">
+      <article class="lesson-body" data-exq={oneAtATime}>
         <Content components={{ Run, Mistake, Exercise, Level0 }} />
 
         <nav class="lesson-nav" aria-label="節の移動">
@@ -98,10 +103,14 @@ const next = at < siblings.length - 1 ? siblings[at + 1] : null;
   <script>
     import { getLessonData } from '../../../lesson/data';
     import { getProgressStore } from '../../../lesson/store/progress';
+    import { setupExerciseQueue } from '../../../lesson/exercise-queue';
 
     const data = getLessonData();
     const store = getProgressStore();
     if (data) void store.openLesson(data.lessonId);
+
+    // 第0章だけ、課題を1問ずつ出す（第11.7節）。ほかの章では何もせずに戻る
+    setupExerciseQueue();
 
     const items = Array.from(document.querySelectorAll<HTMLLIElement>('.rail__list li[data-lesson-id]'));
 

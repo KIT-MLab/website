@@ -23,6 +23,7 @@ import {
   START_CHAPTER,
   START_EXERCISE_KINDS,
   START_LIMITS,
+  START_SECTION_ORDER,
   boundaryKinds,
   countChars,
   splitSentences,
@@ -99,14 +100,17 @@ for (const file of files) {
   }
 
   // --- 検査1 要素の順序 ---
+  // 第0章だけ「よくある間違い」を抜いた並びで見る（第11.7節）。ほかの章は SECTION_ORDER のまま
+  const order = isStart ? START_SECTION_ORDER : SECTION_ORDER;
   const names = lesson.markers.map((m) => m.name);
-  const known = names.filter((n) => SECTION_ORDER.includes(n));
+  const known = names.filter((n) => order.includes(n));
   for (const n of names) {
-    if (!SECTION_ORDER.includes(n)) {
-      add(1, lesson.markers.find((m) => m.name === n).line, `知らない要素のマーカーです: ${n}`);
-    }
+    if (order.includes(n)) continue;
+    const line = lesson.markers.find((m) => m.name === n).line;
+    if (isStart && SECTION_ORDER.includes(n)) add(1, line, `第0章に「${n}」は置きません`);
+    else add(1, line, `知らない要素のマーカーです: ${n}`);
   }
-  for (const required of SECTION_ORDER) {
+  for (const required of order) {
     if (SECTION_OPTIONAL.has(required)) continue;
     if (!known.includes(required)) add(1, 1, `要素「${required}」のマーカーがありません`);
   }
@@ -114,7 +118,7 @@ for (const file of files) {
   for (const n of new Set(dup)) add(1, 1, `要素「${n}」のマーカーが2回以上あります`);
   let last = -1;
   for (const n of known) {
-    const at = SECTION_ORDER.indexOf(n);
+    const at = order.indexOf(n);
     if (at < last) add(1, lesson.markers.find((m) => m.name === n).line, `要素の順序が違います: 「${n}」が後ろに来ています`);
     last = Math.max(last, at);
   }
@@ -133,7 +137,11 @@ for (const file of files) {
   }
 
   // --- 検査3 <Mistake> が1〜3個 ---
-  if (lesson.mistakes.length < LIMITS.mistakeMin || lesson.mistakes.length > LIMITS.mistakeMax) {
+  // 第0章には置かない（第11.7節）。実際のエラーメッセージを見せる要素なので、
+  // パソコンの操作を習いに来た人に出す相手がいない
+  if (isStart) {
+    for (const m of lesson.mistakes) add(3, m.line, '第0章に <Mistake> は置きません');
+  } else if (lesson.mistakes.length < LIMITS.mistakeMin || lesson.mistakes.length > LIMITS.mistakeMax) {
     add(3, 1, `<Mistake> は${LIMITS.mistakeMin}〜${LIMITS.mistakeMax}個です。いまは${lesson.mistakes.length}個`);
   }
   for (const m of lesson.mistakes) {
@@ -172,6 +180,11 @@ for (const file of files) {
     const tests = Array.isArray(e.tests) ? e.tests : [];
     if (tests.length === 0) add(4, e.line, '<Exercise> に tests がありません');
     if (e.hints.length > 3) add(4, e.line, 'hints は0〜3個です');
+
+    // 貼り付けを使ったかどうかを見るのは「打つ練習」だけ（第11.7節）
+    if (e.requirePaste && e.kind !== 'type') {
+      add(4, e.line, `requirePaste は kind="type" にだけ付きます: ${e.kind}`);
+    }
 
     // 課題の型と判定の型が合っていること（第11.4節）
     if (e.kind === 'type') {

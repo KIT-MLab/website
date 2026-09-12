@@ -794,6 +794,47 @@
   text-indent: 0;
 }
 
+/* --- 第0章: 課題を1問ずつ出す（20-platform.md 第11.7節） ----------
+ * 続けて並んだ課題は、1問通るごとに次へ入れ替わる。
+ * data-exq が付くのは第0章の節だけ。第1章以降はこの3行が1つも当たらない。
+ *
+ * JS が動く前でも2問目以降が見えないように、隣り合う課題を先に伏せておく。
+ * 進度を読み終えたら data-exq="on" になり、以後は hidden で出し入れする。
+ * ------------------------------------------------------------ */
+.lesson-body[data-exq] .kit-ex + .kit-ex {
+  display: none;
+}
+
+.lesson-body[data-exq="on"] .kit-ex + .kit-ex {
+  display: block;
+}
+
+.lesson-body[data-exq="on"] .kit-ex[hidden] {
+  display: none;
+}
+
+/* 何問目かの表示。札は増やさない（第10.6節）ので、コードのキャプションと同じ小さな文字 */
+.kit-exq__count {
+  margin: 0 0 10px;
+  font-family: "Zen Old Mincho", serif;
+  font-size: 13px;
+  letter-spacing: 0.14em;
+  color: var(--l-ink-2);
+  text-indent: 0;
+}
+
+/* 束を全部通したとき。課題の枠と同じだけ間を空け、罫で終わりを示す */
+.lesson-body > .kit-exq__done {
+  margin: 2.9em 0;
+  padding: 14px 0 0;
+  border-top: 1px solid var(--l-rule);
+  font-family: "Zen Old Mincho", serif;
+  font-size: 16.5px;
+  letter-spacing: 0.06em;
+  color: var(--l-ink-2);
+  text-indent: 0;
+}
+
 .kit-ex__work {
   margin-top: 12px;
 }

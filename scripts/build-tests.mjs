@@ -214,6 +214,8 @@ for (const file of files) {
       hints: e.hints,
       mistakes: e.mistakes,
       forbid: e.forbid,
+      /* 付いている課題にだけ載せる。ほかの節の生成物は1文字も変わらない（第11.7節） */
+      ...(e.requirePaste ? { requirePaste: true } : {}),
     };
   }
 

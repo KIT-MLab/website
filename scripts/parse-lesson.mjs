@@ -281,6 +281,8 @@ export function parseLesson(source, file) {
         kind: evalAttribute(c.attrs.kind) ?? '',
         starter: evalAttribute(c.attrs.starter),
         stdin: evalAttribute(c.attrs.stdin),
+        /* 貼り付けを使ったかどうかを見る（20-platform.md 第11.7節）。kind="type" だけ */
+        requirePaste: evalAttribute(c.attrs.requirePaste) === true,
         tests: evalAttribute(c.attrs.tests) ?? [],
         hints: evalAttribute(c.attrs.hints) ?? [],
         mistakes: evalAttribute(c.attrs.mistakes) ?? [],

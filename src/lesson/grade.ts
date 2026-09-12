@@ -36,7 +36,9 @@ export type Feedback =
   /** 全角ではないが見本と違う。expect は答えそのものなので出さない */
   | { kind: 'text-miss'; actual: string; at: number | null }
   /** 選んだ番号が違う */
-  | { kind: 'choice-miss' };
+  | { kind: 'choice-miss' }
+  /** コピーと貼り付けを使う課題なのに、入力欄で貼り付けが起きていない（第11.7節） */
+  | { kind: 'no-paste' };
 
 export type GradeResult = {
   passed: boolean;
@@ -182,9 +184,21 @@ function firstDiff(actual: string, expect: string): number | null {
 /**
  * 打った文字列・選んだ番号を、その場で見る（第11.4節）。
  * Pyodide は通らない。同期で答えが出る。
+ *
+ * pasted は入力欄で貼り付けが起きたかどうか（第11.7節）。起きたかだけを見る。
+ * 貼り付けの中身は見ない。
  */
-export function gradeDirect(answer: string | number | null, exercise: ExerciseData): GradeResult {
+export function gradeDirect(
+  answer: string | number | null,
+  exercise: ExerciseData,
+  pasted = false,
+): GradeResult {
   const mode: 'type' | 'choose' = exercise.kind === 'choose' ? 'choose' : 'type';
+  /* 手で打っても同じ文字になる課題なので、打った中身より先に見る。
+     空のままでも同じ応答でよい（次にやることは同じ「貼り付ける」なので） */
+  if (exercise.requirePaste && !pasted) {
+    return { passed: false, feedback: { kind: 'no-paste' }, failedTest: null, errorType: null };
+  }
   for (let i = 0; i < exercise.tests.length; i++) {
     const test = exercise.tests[i];
 

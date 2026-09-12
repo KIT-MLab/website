@@ -47,6 +47,8 @@ export default function ExerciseBox({ id, kind, starter, stdin, choices }: Props
   /* 打つ練習の1行と、選ぶ練習の番号（1から数える。第11.4節） */
   const [typed, setTyped] = useState('');
   const [picked, setPicked] = useState<number | null>(null);
+  /* 入力欄で貼り付けが起きたか（第11.7節）。中身は見ない。起きたかどうかだけ */
+  const [pasted, setPasted] = useState(false);
 
   useEffect(() => {
     let alive = true;
@@ -84,7 +86,7 @@ export default function ExerciseBox({ id, kind, starter, stdin, choices }: Props
     // 提出したものをそのまま記録する。選ぶ練習は選んだ番号（第4.5節）
     const submitted = direct ? (kind === 'choose' ? String(picked ?? '') : typed) : codeRef.current;
     const graded = direct
-      ? gradeDirect(kind === 'choose' ? picked : typed, exercise)
+      ? gradeDirect(kind === 'choose' ? picked : typed, exercise, pasted)
       : await gradeExercise(codeRef.current, exercise, lesson.mistakes);
     const store = getProgressStore();
     await store.recordSubmission({
@@ -148,6 +150,7 @@ export default function ExerciseBox({ id, kind, starter, stdin, choices }: Props
               autoComplete="off"
               autoCapitalize="off"
               onChange={(e) => setTyped(e.target.value)}
+              onPaste={() => setPasted(true)}
             />
           </div>
         </div>
@@ -326,6 +329,9 @@ function Verdict({ result, kind }: { result: GradeResult; kind: ExerciseKind }) 
         </>
       ) : null}
       {f.kind === 'choice-miss' ? <p>選んだものは違います。選択肢をもう一度読んでください。</p> : null}
+      {f.kind === 'no-paste' ? (
+        <p>手で打っても同じ文字になりますが、この問題はコピーと貼り付けを使って解いてください。</p>
+      ) : null}
       {f.kind === 'forbidden' ? (
         <p>
           問題文で使わないように書いた <code>{f.word}</code> が入っています。別の書き方で解いてください。

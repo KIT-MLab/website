@@ -46,6 +46,11 @@ export type ExerciseData = {
   mistakes: string[];
   /** 問題文で禁じた書き方。提出コードの文字列検査に使う（第4.4節） */
   forbid: string[];
+  /**
+   * コピーと貼り付けを使って解く課題か（第11.7節）。kind="type" にだけ付く。
+   * 入力欄で貼り付けが起きていなければ通さない。貼り付けの中身は見ない。
+   */
+  requirePaste?: boolean;
 };
 
 export type LessonData = {
