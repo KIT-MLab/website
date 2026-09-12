@@ -20,9 +20,11 @@ export const LIMITS = {
   sentenceMax: 60,
   /** 第4.1節 1段落の文数 */
   sentencesPerParagraph: 3,
-  /** 第4.1節 節の本文（コードと課題を除く） */
-  bodyMin: 400,
+  /** 第4.1節 節の本文（コードと課題を除く）。下限は置かない（水増しを招くため） */
   bodyMax: 800,
+  /** 第4.1節 「説明」の要素 */
+  explainMin: 250,
+  explainMax: 600,
   /** 第2章 よくある間違い 1〜3個 */
   mistakeMin: 1,
   mistakeMax: 3,

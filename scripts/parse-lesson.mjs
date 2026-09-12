@@ -307,12 +307,26 @@ export function parseLesson(source, file) {
 
   const bodyParagraphs = [];
   const allParagraphs = [];
+  // 1つの塊が要素の境目をまたぐことがある（<Run> の直後から「説明」のマーカーを越えて続く、など）。
+  // 塊の頭の位置だけで要素を決めると、その塊が丸ごと手前の要素に数えられる。境目で切り分ける。
   for (const chunk of withoutComponents) {
-    const section = sectionOf(chunk.start);
-    for (const p of paragraphsOf(chunk.text)) {
-      const entry = { section, text: p, where: section ?? '（マーカーの外）' };
-      allParagraphs.push(entry);
-      if (section !== '課題') bodyParagraphs.push(entry);
+    const chunkEnd = chunk.start + chunk.text.length;
+    const cuts = [chunk.start, chunkEnd];
+    for (const sec of sections) {
+      for (const at of [sec.start, sec.end]) {
+        if (at > chunk.start && at < chunkEnd) cuts.push(at);
+      }
+    }
+    cuts.sort((a, b) => a - b);
+    for (let i = 0; i < cuts.length - 1; i++) {
+      const [from, to] = [cuts[i], cuts[i + 1]];
+      if (to <= from) continue;
+      const section = sectionOf(from);
+      for (const p of paragraphsOf(chunk.text.slice(from - chunk.start, to - chunk.start))) {
+        const entry = { section, text: p, where: section ?? '（マーカーの外）' };
+        allParagraphs.push(entry);
+        if (section !== '課題') bodyParagraphs.push(entry);
+      }
     }
   }
   for (const m of mistakes) {

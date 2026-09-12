@@ -164,10 +164,18 @@ for (const file of files) {
     }
   }
 
-  // --- 検査8 本文が400〜800字 ---
+  // --- 検査8 本文が800字以内。「説明」が250〜600字 ---
+  // 本文合計に下限を置かない。下限があると、内容として要らない一文を字数のために
+  // 足すことが起きる（第4.1節）。節が薄くなるのを防ぐ役目は「説明」の下限が担う。
   const bodyChars = lesson.bodyParagraphs.reduce((sum, p) => sum + countChars(plainText(p.text)), 0);
-  if (bodyChars < LIMITS.bodyMin || bodyChars > LIMITS.bodyMax) {
-    add(8, 1, `本文が${bodyChars}字です（${LIMITS.bodyMin}〜${LIMITS.bodyMax}字）`);
+  if (bodyChars > LIMITS.bodyMax) {
+    add(8, 1, `本文が${bodyChars}字です（${LIMITS.bodyMax}字以内）`);
+  }
+  const explainChars = lesson.bodyParagraphs
+    .filter((p) => p.section === '説明')
+    .reduce((sum, p) => sum + countChars(plainText(p.text)), 0);
+  if (explainChars < LIMITS.explainMin || explainChars > LIMITS.explainMax) {
+    add(8, 1, `「説明」が${explainChars}字です（${LIMITS.explainMin}〜${LIMITS.explainMax}字）`);
   }
 
   // --- 検査9 禁止表現 / 検査10 抽象語の言い換え ---
