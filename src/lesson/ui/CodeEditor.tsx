@@ -3,31 +3,71 @@
  *
  * CodeMirror を使う理由は行番号である。Python のエラーは `line 3` のように行番号で
  * 場所を示す。行番号のない入力欄では、エラーメッセージを読む練習ができない。
+ *
+ * 見た目は 10-lesson-and-writing.md 第10.9節の決定（案J）。
+ * 黒い面 #17140f に紙色5pxのマットを巻き、その外に1pxの墨罫。マットと罫は
+ * 親の .kit-code（lesson.css）が持つ。キャプションは札にしない（第10.6節）ので、
+ * 暗い面の中の小さな文字にする。
  */
 import { useEffect, useRef } from 'react';
 import { EditorView, basicSetup } from 'codemirror';
 import { python } from '@codemirror/lang-python';
+import { HighlightStyle, syntaxHighlighting } from '@codemirror/language';
+import { tags } from '@lezer/highlight';
 
-/** サイト本体のトークンに合わせた見た目。コードは14px以上（10-lesson 第9.4節 原則7）。 */
-const THEME = EditorView.theme({
-  '&': {
-    fontSize: '14.5px',
-    backgroundColor: 'var(--color-card)',
-    color: 'var(--color-ink)',
-    border: '1.5px solid var(--color-line)',
-    borderRadius: 'var(--radius)',
+/** 黒い面の上の見た目。コードは14px以上（10-lesson 第9.4節 原則7）。 */
+const THEME = EditorView.theme(
+  {
+    '&': {
+      fontSize: '15px',
+      backgroundColor: 'transparent',
+      color: 'var(--k-fg)',
+    },
+    '&.cm-focused': { outline: '2px solid var(--l-shu)', outlineOffset: '-2px' },
+    '.cm-scroller': { fontFamily: 'var(--font-mono)', lineHeight: '1.85' },
+    '.cm-content': { padding: '13px 0', caretColor: 'var(--k-fg)' },
+    '.cm-line': { padding: '0 16px 0 7px' },
+    '.cm-gutters': {
+      backgroundColor: 'transparent',
+      color: 'var(--k-gut)',
+      border: '0',
+      borderRight: '1px solid var(--k-line)',
+    },
+    '.cm-lineNumbers .cm-gutterElement': { padding: '0 9px 0 16px' },
+    '.cm-activeLine': { backgroundColor: 'rgba(236, 230, 216, 0.05)' },
+    '.cm-activeLineGutter': { backgroundColor: 'rgba(236, 230, 216, 0.05)', color: '#a2977f' },
+    '.cm-cursor, .cm-dropCursor': { borderLeftColor: 'var(--k-fg)' },
+    '&.cm-focused .cm-selectionBackground, .cm-selectionBackground, .cm-content ::selection': {
+      backgroundColor: 'var(--k-sel)',
+    },
+    '.cm-selectionMatch': { backgroundColor: 'rgba(236, 230, 216, 0.12)' },
+    '.cm-matchingBracket, .cm-nonmatchingBracket': {
+      backgroundColor: 'rgba(236, 230, 216, 0.16)',
+      outline: '0',
+    },
+    '.cm-panels, .cm-tooltip': {
+      backgroundColor: 'var(--k-bg2)',
+      color: 'var(--k-fg)',
+      border: '1px solid var(--k-line)',
+    },
+    '.cm-tooltip-autocomplete > ul > li[aria-selected]': {
+      backgroundColor: 'var(--k-sel)',
+      color: 'var(--k-fg)',
+    },
+    '.cm-foldPlaceholder': { backgroundColor: 'var(--k-sel)', color: 'var(--k-fg2)', border: '0' },
   },
-  '&.cm-focused': { outline: '2px solid var(--color-focus)', outlineOffset: '1px' },
-  '.cm-scroller': { fontFamily: 'var(--font-mono)', lineHeight: '1.7' },
-  '.cm-gutters': {
-    backgroundColor: 'transparent',
-    color: 'var(--color-ink-2)',
-    borderRight: '1px solid var(--color-line)',
-  },
-  '.cm-activeLine': { backgroundColor: 'rgba(179, 64, 42, 0.06)' },
-  '.cm-activeLineGutter': { backgroundColor: 'rgba(179, 64, 42, 0.06)' },
-  '.cm-content': { padding: '8px 0' },
-});
+  { dark: true },
+);
+
+/**
+ * 案Jのコードは単色である。CodeMirror の既定の配色は明るい地に合わせた濃い色
+ * （文字列 #a11 など）なので、黒い面では読めない。単色に戻し、コメントだけ沈める。
+ * fallback なしの syntaxHighlighting は既定の配色を置き換える。
+ */
+const HIGHLIGHT = HighlightStyle.define([
+  { tag: tags.comment, color: 'var(--k-dim)', fontStyle: 'italic' },
+  { tag: tags.invalid, color: 'var(--k-err)' },
+]);
 
 type Props = {
   value: string;
@@ -49,6 +89,7 @@ export default function CodeEditor({ value, onChange, readOnly = false, label, r
     const extensions = [
       basicSetup,
       python(),
+      syntaxHighlighting(HIGHLIGHT),
       THEME,
       EditorView.lineWrapping,
       EditorView.updateListener.of((update) => {
@@ -72,5 +113,10 @@ export default function CodeEditor({ value, onChange, readOnly = false, label, r
     v.dispatch({ changes: { from: 0, to: v.state.doc.length, insert: value } });
   }, [resetSignal]);
 
-  return <div className="kit-editor" ref={host} />;
+  return (
+    <div className={`kit-code${readOnly ? ' kit-code--ro' : ''}`}>
+      <div className="kit-code__label">{label}</div>
+      <div className="kit-editor" ref={host} />
+    </div>
+  );
 }

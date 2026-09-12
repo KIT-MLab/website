@@ -188,10 +188,10 @@ export default function ExerciseBox({ id, kind, starter, stdin }: Props) {
               別の書き方を見る
             </button>
           ) : (
-            <>
+            <div className="kit-out">
               <div className="kit-out__label">模範解答（通し方はこれ1つではありません）</div>
               <pre className="kit-out__text">{solution}</pre>
-            </>
+            </div>
           )}
           {solutionNote ? <p className="kit-solution__note">{solutionNote}</p> : null}
         </div>
@@ -228,7 +228,9 @@ function Verdict({ result }: { result: GradeResult }) {
       ) : null}
       {f.kind === 'mistake' ? (
         <>
-          <pre className="kit-out__text">{f.display}</pre>
+          <div className="kit-out kit-out--err">
+            <pre className="kit-out__text">{f.display}</pre>
+          </div>
           {f.line ? <p className="kit-verdict__where">{f.line} 行目で止まりました。</p> : null}
           <div className="kit-verdict__fix">
             <Prose text={f.mistake.fix} />
@@ -237,7 +239,9 @@ function Verdict({ result }: { result: GradeResult }) {
       ) : null}
       {f.kind === 'error' ? (
         <>
-          <pre className="kit-out__text">{f.display}</pre>
+          <div className="kit-out kit-out--err">
+            <pre className="kit-out__text">{f.display}</pre>
+          </div>
           {f.line ? <p className="kit-verdict__where">{f.line} 行目で止まりました。</p> : null}
           <p>{f.advice}</p>
         </>

@@ -47,48 +47,50 @@ const next = at < siblings.length - 1 ? siblings[at + 1] : null;
 ---
 
 <Base title={entry.data.title}>
-  <div class="lesson-top">
-    <p class="lesson-top__chapter">{chapterTitle(entry.data.chapter)}</p>
-    <h1 class="lesson-title">{entry.data.title}</h1>
-    <p class="lesson-top__meta">
-      この章の {at + 1} / {siblings.length} 節 ・ 目安 {entry.data.minutes} 分
-    </p>
-  </div>
+  <div class="lesson-page">
+    <div class="lesson-top">
+      <p class="lesson-top__chapter">{chapterTitle(entry.data.chapter)}</p>
+      <h1 class="lesson-title">{entry.data.title}</h1>
+      <p class="lesson-top__meta">
+        この章の {at + 1} / {siblings.length} 節 ・ 目安 {entry.data.minutes} 分
+      </p>
+    </div>
 
-  <div class="lesson-grid">
-    <article class="lesson-body">
-      <Content components={{ Run, Mistake, Exercise, Level0 }} />
+    <div class="lesson-grid">
+      <article class="lesson-body">
+        <Content components={{ Run, Mistake, Exercise, Level0 }} />
 
-      <nav class="lesson-nav" aria-label="節の移動">
-        {prev ? <a href={lessonHref(prev.id)}>← 前の節へ　{prev.data.title}</a> : <span class="lesson-nav__spacer" />}
-        {next ? <a href={lessonHref(next.id)}>次の節へ　{next.data.title} →</a> : <span class="lesson-nav__spacer" />}
-      </nav>
-    </article>
+        <nav class="lesson-nav" aria-label="節の移動">
+          {prev ? <a href={lessonHref(prev.id)}>← 前の節へ　{prev.data.title}</a> : <span class="lesson-nav__spacer" />}
+          {next ? <a href={lessonHref(next.id)}>次の節へ　{next.data.title} →</a> : <span class="lesson-nav__spacer" />}
+        </nav>
+      </article>
 
-    <aside class="lesson-rail">
-      <div class="rail__block">
-        <p class="rail__label">この章の節</p>
-        <ol class="rail__list">
-          {siblings.map((s) => (
-            <li data-lesson-id={s.data.id} class={s.id === entry.id ? 'is-now' : ''}>
-              <span class="rail__state">{s.id === entry.id ? 'いま' : '未'}</span>
-              <a href={lessonHref(s.id)}>{s.data.title}</a>
-            </li>
-          ))}
-        </ol>
-      </div>
+      <aside class="lesson-rail">
+        <div class="rail__block">
+          <p class="rail__label">この章の節</p>
+          <ol class="rail__list">
+            {siblings.map((s) => (
+              <li data-lesson-id={s.data.id} class={s.id === entry.id ? 'is-now' : ''}>
+                <span class="rail__state">{s.id === entry.id ? 'いま' : '未'}</span>
+                <a href={lessonHref(s.id)}>{s.data.title}</a>
+              </li>
+            ))}
+          </ol>
+        </div>
 
-      <div class="rail__block">
-        <p class="rail__label">用語集</p>
-        <a class="rail__link" href="/learn/glossary/">この教材で使う言葉</a>
-      </div>
+        <div class="rail__block">
+          <p class="rail__label">用語集</p>
+          <a class="rail__link" href="/learn/glossary/">この教材で使う言葉</a>
+        </div>
 
-      <div class="rail__block">
-        <p class="rail__label">先生に聞く</p>
-        <button class="rail__ask" type="button" disabled>準備中</button>
-        <p class="rail__note">ログインを作ったら使えるようになります。</p>
-      </div>
-    </aside>
+        <div class="rail__block">
+          <p class="rail__label">先生に聞く</p>
+          <button class="rail__ask" type="button" disabled>準備中</button>
+          <p class="rail__note">ログインを作ったら使えるようになります。</p>
+        </div>
+      </aside>
+    </div>
   </div>
 
   <script type="application/json" id="kit-lesson-data" set:html={dataJson} is:inline />
@@ -123,6 +125,12 @@ const next = at < siblings.length - 1 ? siblings[at + 1] : null;
     /* 本文720px + 右レール240px が収まる幅にする */
     main.wrap {
       max-width: 1080px;
+    }
+
+    /* 節の紙は教材の決定（第10.9節）の #f6f2e9。端まで敷くため body に置く。
+       マストヘッドとナビの組み方（tokens.css）は変えない */
+    body {
+      background: var(--l-paper);
     }
   </style>
 </Base>

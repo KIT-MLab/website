@@ -79,19 +79,21 @@ export function StdinBox({
   readOnly?: boolean;
 }) {
   return (
-    <div className="kit-stdin">
-      <label className="kit-stdin__label" htmlFor={id}>
-        入力
-      </label>
-      <textarea
-        id={id}
-        className="kit-stdin__area"
-        rows={Math.min(6, Math.max(2, value.split('\n').length))}
-        value={value}
-        readOnly={readOnly}
-        spellCheck={false}
-        onChange={(e) => onChange?.(e.target.value)}
-      />
+    <div className="kit-stdinwrap">
+      <div className="kit-stdin">
+        <label className="kit-stdin__label" htmlFor={id}>
+          入力
+        </label>
+        <textarea
+          id={id}
+          className="kit-stdin__area"
+          rows={Math.min(6, Math.max(2, value.split('\n').length))}
+          value={value}
+          readOnly={readOnly}
+          spellCheck={false}
+          onChange={(e) => onChange?.(e.target.value)}
+        />
+      </div>
       <p className="kit-stdin__note">input() は、この欄を上から1行ずつ読みます。</p>
     </div>
   );

@@ -28,8 +28,10 @@ const { id, kind, starter, stdin } = Astro.props;
 const STAGE: Record<string, string> = { trace: '例題', modify: '練習問題', build: '演習問題' };
 ---
 
-<section class="kit-ex" id={id}>
+<section class={`kit-ex kit-ex--${kind}`} id={id}>
   <p class="kit-ex__stage">{STAGE[kind] ?? kind}</p>
-  <div class="kit-ex__prompt"><slot /></div>
-  <ExerciseBox client:load id={id} kind={kind} starter={starter} stdin={stdin} />
+  <div class="kit-ex__in">
+    <div class="kit-ex__prompt"><slot /></div>
+    <ExerciseBox client:load id={id} kind={kind} starter={starter} stdin={stdin} />
+  </div>
 </section>

@@ -26,6 +26,8 @@ const key = nextId('mistake');
 
 <aside class="kit-mistake" id={id}>
   <p class="kit-mistake__label">よくある間違い</p>
-  <RunBox client:load code={code} expected={error} stdin={stdin} broken editorId={key} />
-  <div class="kit-mistake__fix"><slot /></div>
+  <div class="kit-mistake__in">
+    <RunBox client:load code={code} expected={error} stdin={stdin} broken editorId={key} />
+    <div class="kit-mistake__fix"><slot /></div>
+  </div>
 </aside>

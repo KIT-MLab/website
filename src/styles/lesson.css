@@ -1,39 +1,98 @@
 /* ============================================================
- * レッスンの画面（10-lesson-and-writing.md 第9章）
+ * レッスンの画面 — 案J ＋ 練習問題の帯を藍に
+ * 決定: design/spec/10-lesson-and-writing.md 第10.9節
+ * 出典の見本: public/design-explorations/lesson-picker-4.html（案J）
  *
- * ・本文は1カラム、最大720px。右レール240px
- * ・本文16px以上、コード14px以上（第9.4節 原則7）
- * ・色と書体は src/styles/tokens.css の決定に従う。サンドボックスの暗い配色は使わない
+ * 主従（第10.7節）
+ *   主 = どこからどこまでがひとまとまりか → 地色の濃さ・枠の太さ・帯の厚み
+ *   従 = どこが見出しか                   → 帯（札）。1節につき4種類だけ
+ *
+ * 札を付けるのは 例題 / 練習問題 / 演習問題 / よくある間違い の4つだけ（第10.6節）。
+ * 例・コードのキャプション・右レールの各節・レベル0 は素地の小さな文字にする。
+ *
+ * ・本文は1カラム最大720px、右レール240px、外枠1080px
+ * ・本文17.5px（16px以上）、コード15px（14px以上）
+ * ・マストヘッドとナビは第1次トークン（tokens.css）のまま。ここでは触らない
  * ============================================================ */
+
+:root {
+  /* 4段の地色（紙 → 例題 → 練習問題 → 演習問題） */
+  --l-paper: #f6f2e9;
+  --l-lv1: #efe8d8;
+  --l-lv2: #e5dbc4;
+  --l-lv3: #dacdaf;
+  /* よくある間違いだけ、階段と逆に紙より明るい */
+  --l-card: #fffdf7;
+
+  --l-ink: #1f1c17;
+  --l-ink-2: #5d564a;
+  --l-rule: #c2b8a4;
+  --l-strong: #2b261e;
+  --l-chip: #ece5d5; /* 本文中の `…` の地 */
+
+  --l-shu: #9c3b21; /* 朱 = 演習問題 */
+  --l-ai: #27506c; /* 藍 = 練習問題（第10.9節の唯一の変更点） */
+  --l-kohaku: #8a6a1f; /* 琥珀 = よくある間違い。4段の階段には乗らない */
+  --l-kohaku-bg: #f7edd6;
+
+  /* 帯の色と文字色 */
+  --l-band-trace: #e6dcc5;
+  --l-bandink-trace: #4e4638;
+  --l-band-modify: #27506c;
+  --l-bandink-modify: #ffffff;
+  --l-band-build: #9c3b21;
+  --l-bandink-build: #fffdf7;
+
+  /* 黒い面（コードと実行結果） */
+  --k-bg: #17140f;
+  --k-bg2: #100e0a;
+  --k-fg: #ece6d8;
+  --k-fg2: #d6cfbf;
+  --k-err: #e9b39b;
+  --k-dim: #968c7a;
+  --k-line: #3b352b;
+  --k-gut: #6b6355;
+  --k-sel: #34302a;
+}
+
+/* --- 紙と本文の組み ------------------------------------------ */
+.lesson-page {
+  background: var(--l-paper);
+  color: var(--l-ink);
+  font-family: "Noto Serif JP", "Zen Old Mincho", serif;
+  font-size: 17.5px;
+  line-height: 2.05;
+}
 
 /* --- 上部 --------------------------------------------------- */
 .lesson-top {
-  border-bottom: var(--rule);
-  padding-bottom: var(--space-md);
-  margin-bottom: var(--space-lg);
+  border-bottom: 3px double var(--l-strong);
+  padding-bottom: 16px;
+  margin-bottom: 34px;
 }
 
 .lesson-top__chapter {
   margin: 0;
-  font-size: 14px;
-  letter-spacing: 0.1em;
-  color: var(--color-ink-2);
+  font-family: "Zen Old Mincho", serif;
+  font-size: 14.5px;
+  letter-spacing: 0.18em;
+  color: var(--l-ink-2);
 }
 
 .lesson-title {
-  margin: calc(6px * var(--sp)) 0 0;
-  font-family: var(--font-head);
+  margin: 12px 0 0;
+  font-family: "Zen Old Mincho", serif;
   font-weight: 700;
-  font-size: 28px;
-  line-height: 1.5;
-  border-left: 5px solid var(--color-accent);
-  padding-left: var(--space-md);
+  font-size: 31px;
+  line-height: 1.55;
+  letter-spacing: 0.03em;
 }
 
 .lesson-top__meta {
-  margin: calc(8px * var(--sp)) 0 0;
-  font-size: 14px;
-  color: var(--color-ink-2);
+  margin: 12px 0 0;
+  font-size: 14.5px;
+  letter-spacing: 0.06em;
+  color: var(--l-ink-2);
 }
 
 /* --- 二段組 ------------------------------------------------- */
@@ -46,37 +105,39 @@
 
 .lesson-body {
   max-width: 720px;
-  font-size: 17px;
-  line-height: 1.95;
+  min-width: 0;
 }
 
 .lesson-body > p {
   margin: 0 0 1.1em;
+  text-indent: 1em;
 }
 
 .lesson-body h2 {
-  font-family: var(--font-head);
+  font-family: "Zen Old Mincho", serif;
+  font-weight: 700;
   font-size: 22px;
-  line-height: 1.5;
+  line-height: 1.6;
+  letter-spacing: 0.04em;
   margin: 2.2em 0 0.8em;
-  border-left: 5px solid var(--color-accent);
-  padding-left: var(--space-md);
+  border-bottom: 1px solid var(--l-rule);
+  padding-bottom: 8px;
 }
 
 .lesson-body h3 {
-  font-family: var(--font-head);
+  font-family: "Zen Old Mincho", serif;
+  font-weight: 700;
   font-size: 18px;
+  letter-spacing: 0.04em;
   margin: 1.8em 0 0.6em;
-  border-bottom: var(--rule-thin);
-  padding-bottom: 4px;
 }
 
 .lesson-body code {
   font-family: var(--font-mono);
   font-size: 15px;
-  background: var(--color-card);
-  border: 1px solid rgba(58, 58, 58, 0.28);
-  border-radius: 3px;
+  background: var(--l-chip);
+  border: 0;
+  border-radius: 0;
   padding: 0 4px;
 }
 
@@ -89,26 +150,33 @@
   margin-bottom: 0.3em;
 }
 
-/* --- 右レール ----------------------------------------------- */
+/* --- 右レール（札にしない。罫と書体で組む） ------------------- */
 .lesson-rail {
   position: sticky;
-  top: var(--space-md);
+  top: 24px;
   font-size: 14px;
-  line-height: 1.7;
+  line-height: 1.8;
+  color: var(--l-ink);
 }
 
-.rail__label {
-  margin: 0 0 calc(6px * var(--sp));
-  font-family: var(--font-head);
-  font-weight: 700;
-  font-size: 14px;
-  letter-spacing: 0.08em;
-  border-bottom: var(--rule-thin);
-  padding-bottom: 4px;
+.rail__block {
+  background: var(--l-lv1);
+  border: 1px solid var(--l-rule);
+  padding: 14px 15px;
 }
 
 .rail__block + .rail__block {
-  margin-top: var(--space-lg);
+  margin-top: 18px;
+}
+
+.rail__label {
+  margin: 0 0 10px;
+  font-family: "Zen Old Mincho", serif;
+  font-weight: 700;
+  font-size: 14.5px;
+  letter-spacing: 0.14em;
+  border-bottom: 1px solid var(--l-rule);
+  padding-bottom: 5px;
 }
 
 .rail__list {
@@ -118,32 +186,33 @@
 }
 
 .rail__list li {
-  margin-bottom: calc(8px * var(--sp));
   display: flex;
-  gap: 8px;
+  gap: 9px;
+  margin-bottom: 10px;
   align-items: baseline;
+}
+
+.rail__list li:last-child {
+  margin-bottom: 0;
 }
 
 .rail__state {
   flex: 0 0 auto;
-  width: 2.4em;
-  font-size: 12px;
-  color: var(--color-ink-2);
-  border: 1px solid rgba(58, 58, 58, 0.3);
-  border-radius: 3px;
+  width: 2.6em;
   text-align: center;
-  background: var(--color-card);
+  font-family: "Zen Old Mincho", serif;
+  font-size: 12px;
+  color: var(--l-ink-2);
 }
 
 .rail__list li.is-now .rail__state {
-  color: var(--color-card);
-  background: var(--color-accent);
-  border-color: var(--color-accent);
+  color: var(--l-shu);
+  font-weight: 700;
 }
 
 .rail__list li.is-done .rail__state {
-  color: var(--color-accent);
-  border-color: var(--color-accent);
+  color: var(--l-strong);
+  font-weight: 700;
 }
 
 .rail__list a {
@@ -166,54 +235,46 @@
 }
 
 .rail__ask {
-  font: inherit;
-  font-family: var(--font-body);
+  font-family: "Zen Old Mincho", serif;
+  font-size: 14px;
   width: 100%;
-  padding: 6px 10px;
-  border: 1.5px dashed rgba(58, 58, 58, 0.4);
-  border-radius: var(--radius);
-  background: transparent;
-  color: var(--color-ink-2);
+  padding: 7px 10px;
+  border: 1px dotted var(--l-rule);
+  border-radius: 0;
+  background: var(--l-card);
+  color: var(--l-ink-2);
 }
 
 .rail__note {
   margin: 6px 0 0;
-  font-size: 12px;
-  color: var(--color-ink-2);
+  font-size: 12.5px;
+  line-height: 1.7;
+  color: var(--l-ink-2);
 }
 
 /* --- 節の移動 ----------------------------------------------- */
 .lesson-nav {
   display: flex;
   justify-content: space-between;
-  gap: var(--space-md);
-  margin-top: var(--space-xl);
-  border-top: var(--rule);
-  padding-top: var(--space-lg);
+  gap: 16px;
+  margin-top: 46px;
+  border-top: 1px solid var(--l-rule);
+  padding-top: 20px;
 }
 
 .lesson-nav a {
   display: inline-block;
   max-width: 46%;
-  padding: 8px 18px;
-  border: 1.5px solid var(--color-line);
-  box-shadow: 3px 3px 0 var(--color-line);
-  border-radius: var(--radius);
-  background: var(--color-card);
-  color: var(--color-ink);
+  font-family: "Zen Old Mincho", serif;
+  font-size: 16px;
+  color: inherit;
   text-decoration: none;
-  font-size: 15px;
+  border-bottom: 1px solid var(--l-rule);
+  padding-bottom: 3px;
 }
 
 .lesson-nav a:hover {
-  background: var(--color-accent);
-  border-color: var(--color-accent);
-  color: #fff;
-}
-
-.lesson-nav a:active {
-  transform: translate(2px, 2px);
-  box-shadow: 1px 1px 0 var(--color-line);
+  border-bottom-color: var(--l-strong);
 }
 
 .lesson-nav__spacer {
@@ -222,135 +283,229 @@
 
 /* --- ボタン ------------------------------------------------- */
 .kit-btn {
-  font-family: var(--font-body);
+  font-family: "Zen Old Mincho", serif;
   font-size: 15px;
-  padding: 5px 16px;
-  border: 1.5px solid var(--color-line);
-  box-shadow: 3px 3px 0 var(--color-line);
-  border-radius: var(--radius);
-  background: var(--color-card);
-  color: var(--color-ink);
+  letter-spacing: 0.08em;
+  padding: 6px 18px;
+  border: 1px solid var(--l-strong);
+  border-radius: 0;
+  background: var(--l-card);
+  color: var(--l-ink);
   cursor: pointer;
 }
 
 .kit-btn:hover:not(:disabled) {
-  background: var(--color-accent);
-  border-color: var(--color-accent);
-  color: #fff;
+  background: var(--l-lv1);
 }
 
 .kit-btn:active:not(:disabled) {
-  transform: translate(2px, 2px);
-  box-shadow: 1px 1px 0 var(--color-line);
+  background: var(--l-lv2);
 }
 
 .kit-btn:disabled {
   opacity: 0.55;
   cursor: default;
-  box-shadow: none;
 }
 
 .kit-btn--strong {
   font-weight: 700;
-  background: var(--color-accent);
-  border-color: var(--color-accent);
-  color: #fff;
+  background: var(--l-strong);
+  border-color: var(--l-strong);
+  color: var(--l-card);
 }
 
 .kit-btn--strong:hover:not(:disabled) {
-  background: var(--color-ink);
-  border-color: var(--color-ink);
+  background: #000;
 }
 
 .kit-btn--quiet {
-  box-shadow: none;
-  border-style: dashed;
-  font-size: 14px;
+  border-style: dotted;
+  color: var(--l-ink-2);
 }
 
-/* --- コード例と実行結果 -------------------------------------- */
+/* ============================================================
+ * 「例」— 帯を持たない。左の2px縦罫と素地の小さな文字だけ。
+ * 本文の流れを切らないのが役目なので、地色の階段には乗らない。
+ * ============================================================ */
 .kit-runwrap {
-  margin: 1.4em 0;
+  margin: 2.1em 0;
+  padding-left: 20px;
+  border-left: 2px solid var(--l-rule);
 }
 
-.kit-run__bar,
+.kit-runwrap__label {
+  margin: 0 0 8px;
+  font-family: "Zen Old Mincho", serif;
+  font-weight: 700;
+  font-size: 14px;
+  letter-spacing: 0.18em;
+  color: var(--l-ink-2);
+}
+
+.kit-run__bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 0 0 10px;
+}
+
 .kit-ex__bar {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   flex-wrap: wrap;
-  margin-bottom: 8px;
+  margin: 14px 0 0;
+}
+
+/* ============================================================
+ * コードと実行結果 — 黒い面に紙色5pxのマットを巻き、外に1pxの墨罫。
+ * キャプションは札にしない。暗い面の中の小さな文字＋仕切りの罫。
+ * ============================================================ */
+.kit-code,
+.kit-out,
+.kit-stdin {
+  border: 5px solid var(--l-card);
+  outline: 1px solid var(--l-strong);
+  margin-top: 14px;
+}
+
+.kit-code {
+  background: var(--k-bg);
+}
+
+.kit-out,
+.kit-stdin {
+  background: var(--k-bg2);
+}
+
+.kit-out {
+  margin-top: 12px;
+}
+
+.kit-code__label,
+.kit-out__label,
+.kit-stdin__label {
+  display: block;
+  margin: 0;
+  font-family: "Zen Old Mincho", serif;
+  font-size: 13px;
+  letter-spacing: 0.14em;
+  color: var(--k-dim);
+  padding: 5px 14px;
+  border-bottom: 1px solid var(--k-line);
+}
+
+.kit-run--broken .kit-code__label,
+.kit-out--err .kit-out__label {
+  color: #e2a98f;
+}
+
+.kit-out__text {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 15px;
+  line-height: 1.85;
+  color: var(--k-fg2);
+  background: none;
+  border: 0;
+  padding: 13px 16px;
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow-x: auto;
+}
+
+.kit-out--err .kit-out__text {
+  color: var(--k-err);
 }
 
 .kit-editor .cm-editor {
   max-height: 22em;
 }
 
-.kit-out {
-  margin-top: 10px;
+/* 読み取り専用のコード例では、いまの行を示す帯は意味を持たないので消す */
+.kit-code--ro .cm-activeLine,
+.kit-code--ro .cm-activeLineGutter {
+  background-color: transparent !important;
 }
 
-.kit-out__label {
-  font-size: 13px;
-  letter-spacing: 0.08em;
-  color: var(--color-ink-2);
-  margin-bottom: 3px;
+.kit-code--ro .cm-activeLineGutter {
+  color: var(--k-gut) !important;
 }
 
-.kit-out__text {
-  margin: 0;
+/* 本文の ``` で書いたコード（例題の「打つコード」）。
+   Shiki が地色と字色を要素に直接書くので、単色に戻して黒い面に揃える */
+.lesson-body pre.astro-code {
+  margin: 14px 0 0;
+  padding: 0;
+  overflow: hidden !important;
+  background: var(--k-bg) !important;
+  color: var(--k-fg) !important;
+  border: 5px solid var(--l-card);
+  outline: 1px solid var(--l-strong);
   font-family: var(--font-mono);
-  font-size: 14.5px;
-  line-height: 1.7;
-  white-space: pre-wrap;
-  word-break: break-word;
-  background: var(--color-card);
-  border: 1.5px solid var(--color-line);
-  border-left-width: 5px;
-  border-radius: var(--radius);
-  padding: 8px 12px;
-  overflow-x: auto;
+  font-size: 15px;
+  line-height: 1.85;
 }
 
-.kit-run--broken .kit-out__text {
-  border-left-color: var(--color-accent);
+.lesson-body pre.astro-code code {
+  display: block;
+  overflow-x: auto;
+  padding: 13px 16px;
+  background: none;
+  border: 0;
+  font-size: 15px;
+}
+
+.lesson-body pre.astro-code span {
+  color: var(--k-fg) !important;
+}
+
+/* 例題の中の ``` は「打つコード」。札にしない小さな文字のキャプション（第10.6節） */
+.kit-ex--trace .kit-ex__prompt > pre.astro-code::before {
+  content: "打つコード";
+  display: block;
+  font-family: "Zen Old Mincho", serif;
+  font-size: 13px;
+  letter-spacing: 0.14em;
+  color: var(--k-dim);
+  padding: 5px 14px;
+  border-bottom: 1px solid var(--k-line);
 }
 
 /* --- 入力欄（20-platform.md 第3.2節） ------------------------ */
-.kit-stdin {
-  margin-top: 10px;
+.kit-stdinwrap {
+  margin-top: 12px;
 }
 
-.kit-stdin__label {
-  display: block;
-  font-size: 13px;
-  letter-spacing: 0.08em;
-  color: var(--color-ink-2);
-  margin-bottom: 3px;
+.kit-stdin {
+  margin-top: 0;
 }
 
 .kit-stdin__area {
+  display: block;
   width: 100%;
   font-family: var(--font-mono);
-  font-size: 14.5px;
-  line-height: 1.7;
-  padding: 6px 10px;
-  border: 1.5px solid var(--color-line);
-  border-radius: var(--radius);
-  background: var(--color-card);
-  color: var(--color-ink);
+  font-size: 15px;
+  line-height: 1.85;
+  padding: 11px 16px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--k-fg);
   resize: vertical;
 }
 
 .kit-stdin__area:focus-visible {
-  outline: 2px solid var(--color-focus);
-  outline-offset: 1px;
+  outline: 2px solid var(--l-shu);
+  outline-offset: -2px;
 }
 
 .kit-stdin__note {
-  margin: 4px 0 0;
-  font-size: 13px;
-  color: var(--color-ink-2);
+  margin: 6px 0 0;
+  font-size: 13.5px;
+  text-indent: 0;
+  color: var(--l-ink-2);
 }
 
 /* --- 読み込みの進捗 ------------------------------------------ */
@@ -359,78 +514,152 @@
   align-items: center;
   gap: 8px;
   font-size: 13px;
-  color: var(--color-ink-2);
+  color: var(--l-ink-2);
 }
 
 .kit-loadbar__track {
   display: inline-block;
   width: 120px;
   height: 6px;
-  background: rgba(58, 58, 58, 0.15);
-  border-radius: 3px;
+  background: rgba(43, 38, 30, 0.15);
   overflow: hidden;
 }
 
 .kit-loadbar__fill {
   display: block;
   height: 100%;
-  background: var(--color-accent);
+  background: var(--l-strong);
   transition: width 120ms var(--ease-out);
 }
 
-/* --- よくある間違い ------------------------------------------ */
+/* ============================================================
+ * よくある間違い — 階段には乗らない。地は紙より明るく、枠は琥珀の二重罫。
+ * 見出しは全幅の帯ではなく、角を落とした小札（第10.9節）。
+ * ============================================================ */
 .kit-mistake {
-  margin: 1.6em 0;
-  padding: var(--space-md);
-  background: var(--color-card);
-  border: 1.5px solid var(--color-line);
-  border-top: 5px solid var(--color-accent);
-  border-radius: var(--radius);
+  position: relative;
+  margin: 3em 0;
+  padding: 8px 0 0;
+  background: var(--l-card);
+  border: 3px double var(--l-kohaku);
+  border-radius: 0;
 }
 
 .kit-mistake__label {
-  margin: 0 0 10px;
-  font-family: var(--font-head);
+  position: absolute;
+  left: 22px;
+  top: 0;
+  transform: translateY(-50%);
+  margin: 0;
+  font-family: "Zen Old Mincho", serif;
   font-weight: 700;
-  font-size: 15px;
-  letter-spacing: 0.08em;
+  font-size: 14.5px;
+  letter-spacing: 0.18em;
+  background: var(--l-kohaku-bg);
+  color: var(--l-kohaku);
+  border: 1px solid var(--l-kohaku);
+  border-radius: 4px;
+  padding: 3px 16px;
+}
+
+.kit-mistake__in {
+  padding: 20px 22px;
 }
 
 .kit-mistake__fix {
-  margin-top: 10px;
-  font-size: 16px;
+  margin-top: 14px;
+  font-size: 16.5px;
 }
 
 .kit-mistake__fix p {
   margin: 0 0 0.6em;
 }
 
-/* --- 課題 --------------------------------------------------- */
+.kit-mistake__fix p:last-child {
+  margin-bottom: 0;
+}
+
+/* ============================================================
+ * 課題の3段 — まとまりの範囲は地色の濃さと枠の太さで作る。
+ * その上に、厚みの違う全幅の帯を1つだけ置く。
+ *
+ *            地色      枠      帯の厚み  帯の色          文字
+ *   例題     #efe8d8   1px     6px       無彩 #e6dcc5    濃い墨
+ *   練習問題 #e5dbc4   1.5px   9px       藍   #27506c    白
+ *   演習問題 #dacdaf   2.5px   13px      朱   #9c3b21    白
+ * ============================================================ */
 .kit-ex {
-  margin: 1.8em 0;
-  padding: var(--space-md);
-  border: 1.5px solid var(--color-line);
-  border-radius: var(--radius);
-  background: var(--color-card);
+  border-radius: 0;
+}
+
+.kit-ex--trace {
+  margin: 2.5em 0;
+  background: var(--l-lv1);
+  border: 1px solid var(--l-rule);
+}
+
+.kit-ex--modify {
+  margin: 2.9em 0;
+  background: var(--l-lv2);
+  border: 1.5px solid var(--l-strong);
+}
+
+.kit-ex--build {
+  margin: 3.3em 0;
+  background: var(--l-lv3);
+  border: 2.5px solid var(--l-shu);
 }
 
 .kit-ex__stage {
-  display: inline-block;
-  margin: 0 0 8px;
-  padding: 1px 10px;
-  font-size: 13px;
-  letter-spacing: 0.1em;
-  border: 1.5px solid var(--color-line);
-  border-radius: var(--radius);
-  background: var(--color-paper);
+  display: block;
+  margin: 0;
+  font-family: "Zen Old Mincho", serif;
+  font-weight: 700;
+  letter-spacing: 0.2em;
 }
 
-.kit-ex__prompt {
-  font-size: 16px;
+.kit-ex--trace .kit-ex__stage {
+  background: var(--l-band-trace);
+  color: var(--l-bandink-trace);
+  border-bottom: 1px solid var(--l-rule);
+  font-size: 14.5px;
+  padding: 6px 22px;
+}
+
+.kit-ex--modify .kit-ex__stage {
+  background: var(--l-band-modify);
+  color: var(--l-bandink-modify);
+  border-bottom: 1px solid rgba(43, 38, 30, 0.28);
+  font-size: 15.5px;
+  padding: 9px 22px;
+}
+
+.kit-ex--build .kit-ex__stage {
+  background: var(--l-band-build);
+  color: var(--l-bandink-build);
+  font-size: 17px;
+  letter-spacing: 0.24em;
+  padding: 13px 22px;
+}
+
+.kit-ex__in {
+  padding: 16px 22px 20px;
+}
+
+.kit-ex--modify .kit-ex__in {
+  padding: 18px 22px 20px;
+}
+
+.kit-ex--build .kit-ex__in {
+  padding: 20px 22px;
 }
 
 .kit-ex__prompt p {
   margin: 0 0 0.7em;
+}
+
+.kit-ex__prompt p:last-child {
+  margin-bottom: 0;
 }
 
 .kit-ex__work {
@@ -438,33 +667,36 @@
 }
 
 .kit-ex__badge {
+  font-family: "Zen Old Mincho", serif;
   font-size: 13px;
   font-weight: 700;
-  color: var(--color-accent);
-  border: 1.5px solid var(--color-accent);
-  border-radius: var(--radius);
+  letter-spacing: 0.1em;
+  color: var(--l-strong);
+  border: 1px solid var(--l-strong);
   padding: 1px 10px;
 }
 
 .kit-ex__missing {
   font-size: 14px;
-  color: var(--color-accent);
+  color: var(--l-shu);
 }
 
 /* --- 採点の応答 --------------------------------------------- */
 .kit-verdict {
-  margin-top: 12px;
-  padding: 10px 14px;
-  border: 1.5px solid var(--color-line);
+  margin-top: 14px;
+  padding: 12px 16px;
+  background: var(--l-card);
+  border: 1px solid var(--l-rule);
   border-left-width: 5px;
-  border-radius: var(--radius);
-  background: var(--color-paper);
-  font-size: 16px;
+  border-radius: 0;
+  font-size: 16.5px;
 }
 
 .kit-verdict strong {
   display: block;
-  font-size: 16px;
+  font-family: "Zen Old Mincho", serif;
+  font-size: 16.5px;
+  letter-spacing: 0.06em;
   margin-bottom: 4px;
 }
 
@@ -472,21 +704,21 @@
   margin: 0 0 0.5em;
 }
 
+.kit-verdict p:last-child {
+  margin-bottom: 0;
+}
+
 .kit-verdict--pass {
-  border-left-color: var(--color-accent);
+  border-left-color: var(--l-strong);
 }
 
 .kit-verdict--fail {
-  border-left-color: var(--color-ink-2);
+  border-left-color: var(--l-shu);
 }
 
 .kit-verdict__where {
   font-size: 14px;
-  color: var(--color-ink-2);
-}
-
-.kit-verdict .kit-out__text {
-  margin: 6px 0;
+  color: var(--l-ink-2);
 }
 
 .kit-diff {
@@ -502,7 +734,7 @@
   white-space: nowrap;
   padding: 4px 12px 4px 0;
   font-weight: 400;
-  color: var(--color-ink-2);
+  color: var(--l-ink-2);
   width: 8em;
 }
 
@@ -514,22 +746,27 @@
   margin: 0;
   font-family: var(--font-mono);
   font-size: 14.5px;
+  line-height: 1.7;
   white-space: pre-wrap;
   word-break: break-word;
+  background: var(--l-chip);
+  padding: 4px 8px;
 }
 
 .kit-hints {
-  margin-top: 12px;
-  padding: 8px 14px;
-  border: 1.5px dashed rgba(58, 58, 58, 0.45);
-  border-radius: var(--radius);
-  font-size: 15px;
+  margin-top: 14px;
+  padding: 10px 16px;
+  background: var(--l-card);
+  border: 1px dashed var(--l-rule);
+  border-radius: 0;
+  font-size: 15.5px;
 }
 
 .kit-hints__label {
+  font-family: "Zen Old Mincho", serif;
   font-size: 13px;
-  letter-spacing: 0.08em;
-  color: var(--color-ink-2);
+  letter-spacing: 0.14em;
+  color: var(--l-ink-2);
 }
 
 .kit-hints ol {
@@ -538,41 +775,53 @@
 }
 
 .kit-solution {
-  margin-top: 12px;
+  margin-top: 14px;
 }
 
 .kit-solution__note {
   margin: 6px 0 0;
   font-size: 14px;
-  color: var(--color-ink-2);
+  color: var(--l-ink-2);
 }
 
-/* --- レベル0の補足 ------------------------------------------- */
+/* --- レベル0の補足（札にしない） ------------------------------ */
 .kit-level0 {
-  margin: 1.4em 0;
-  border: 1.5px solid rgba(58, 58, 58, 0.4);
-  border-radius: var(--radius);
-  background: var(--color-card);
-  font-size: 16px;
+  margin: 2.3em 0;
+  border: 1px dashed var(--l-rule);
+  border-radius: 0;
+  background: var(--l-lv1);
 }
 
 .kit-level0__title {
   cursor: pointer;
-  padding: 8px 14px;
-  font-size: 14px;
-  letter-spacing: 0.06em;
-  color: var(--color-ink-2);
+  font-family: "Zen Old Mincho", serif;
+  font-size: 14.5px;
+  letter-spacing: 0.1em;
+  color: var(--l-ink-2);
+  padding: 10px 16px;
+}
+
+.kit-level0__fu {
+  border-right: 1px solid var(--l-rule);
+  padding-right: 11px;
+  margin-right: 11px;
+  font-size: 12.5px;
 }
 
 .kit-level0__body {
-  padding: 0 14px 10px;
+  padding: 0 16px 13px;
+  font-size: 16.5px;
 }
 
 .kit-level0__body p {
   margin: 0 0 0.6em;
 }
 
-/* --- 用語集 -------------------------------------------------- */
+.kit-level0__body p:last-child {
+  margin-bottom: 0;
+}
+
+/* --- 用語集（第1次トークンのまま） --------------------------- */
 .glossary-table {
   border-collapse: collapse;
   width: 100%;
@@ -605,7 +854,7 @@
 
   .lesson-rail {
     position: static;
-    border-top: var(--rule);
-    padding-top: var(--space-lg);
+    border-top: 3px double var(--l-strong);
+    padding-top: 24px;
   }
 }

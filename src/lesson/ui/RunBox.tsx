@@ -44,7 +44,7 @@ export default function RunBox({ code, expected = '', stdin, broken = false, edi
       </div>
       <CodeEditor value={code} readOnly label={broken ? '壊れたコードの例' : 'コード例'} />
       {stdin !== undefined ? <StdinBox id={`${editorId}-stdin`} value={stdinValue} onChange={setStdinValue} /> : null}
-      <div className="kit-out">
+      <div className={`kit-out${broken ? ' kit-out--err' : ''}`}>
         <div className="kit-out__label">{broken ? '出るエラー' : '実行結果'}</div>
         <pre className="kit-out__text">{showing === '' ? '（何も出ません）' : showing}</pre>
       </div>
