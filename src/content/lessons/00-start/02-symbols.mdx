@@ -1,0 +1,125 @@
+---
+id: start-02-symbols
+chapter: 00-start
+title: 記号を半角で打つ
+minutes: 10
+terms: []
+---
+
+{/* 困る例 */}
+
+Python では `_` や `#` や `[` のような記号をよく使います。日本語入力がオンのままだと、これらは別の文字になります。キーボードの配置は人によって違うので、位置を覚えても打てるとは限りません。
+
+{/* やってみる */}
+
+<Exercise
+  id="start-02-symbols-2"
+  kind="type"
+  tests={[{ kind: 'text', expect: `my_data` }]}
+  hints={[]}
+  mistakes={[]}
+>
+次の文字列を、そのまま半角で打ってください。打てたら「採点する」を押します。
+
+```text
+my_data
+```
+</Exercise>
+
+{/* 説明 */}
+
+記号の多くは、`Shift` を押しながら数字や文字のキーを打ちます。組み合わせるキーは、キーボードによって違います。この節では、実際に打って合っているかを確かめます。
+
+記号を打つときも、日本語入力はオフにします。オンのままだと全角の記号になり、Python には読み取れません。
+
+<Level0 title="記号が打てないとき">
+キーボードによって、記号の位置は変わります。近くのキーも試しながら、下の欄で確かめてください。
+</Level0>
+
+{/* よくある間違い */}
+
+<Mistake id="start-symbols-hash" code={`＃comment
+print(1)`} error={`SyntaxError: invalid character '＃' (U+FF03)`}>
+全角の `＃` になっています。半角の `#` を、日本語入力をオフにしてから打ってください。
+</Mistake>
+
+<Mistake id="start-symbols-bracket" code={`data = [1, 2, 3]
+print(data［0］)`} error={`SyntaxError: invalid character '［' (U+FF3B)`}>
+全角の `［` になっています。半角の `[` を、日本語入力をオフにしてから打ってください。
+</Mistake>
+
+{/* 課題 */}
+
+<Exercise
+  id="start-02-symbols-1"
+  kind="type"
+  tests={[{ kind: 'text', expect: `" _ # * [ { | ~` }]}
+  hints={['日本語入力をオフにしてから、1つずつ打ちます。']}
+  mistakes={[]}
+>
+次の記号を、すべて半角で、間に半角の空白を1つずつ入れて打ってください。
+
+```text
+" _ # * [ { | ~
+```
+</Exercise>
+
+<Exercise
+  id="start-02-symbols-3"
+  kind="type"
+  tests={[{ kind: 'text', expect: `# comment` }]}
+  hints={[]}
+  mistakes={['start-symbols-hash']}
+>
+次の文字列を、そのまま半角で打ってください。
+
+```text
+# comment
+```
+</Exercise>
+
+<Exercise
+  id="start-02-symbols-4"
+  kind="type"
+  tests={[{ kind: 'text', expect: `[1, 2, 3]` }]}
+  hints={[]}
+  mistakes={['start-symbols-bracket']}
+>
+次の文字列を、そのまま半角で打ってください。
+
+```text
+[1, 2, 3]
+```
+</Exercise>
+
+<Exercise
+  id="start-02-symbols-5"
+  kind="type"
+  tests={[{ kind: 'text', expect: `{1, 2}` }]}
+  hints={[]}
+  mistakes={[]}
+>
+次の文字列を、そのまま半角で打ってください。
+
+```text
+{1, 2}
+```
+</Exercise>
+
+<Exercise
+  id="start-02-symbols-6"
+  kind="type"
+  tests={[{ kind: 'text', expect: `a | ~b` }]}
+  hints={[]}
+  mistakes={[]}
+>
+次の文字列を、そのまま半角で打ってください。
+
+```text
+a | ~b
+```
+</Exercise>
+
+{/* つながり */}
+
+次の節では、コピーと貼り付け、取り消しの使い方を練習します。
