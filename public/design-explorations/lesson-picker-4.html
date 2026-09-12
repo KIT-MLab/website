@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>レッスン画面ピッカー 第4回 — 案J / 案K / 案L</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Zen+Old+Mincho:wght@400;700&family=BIZ+UDPGothic:wght@400;700&family=Noto+Serif+JP:wght@400;600;700&family=Noto+Sans+JP:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+ * レッスン画面ピッカー 第4回（最終）
+ *
+ * 第3回への回答（design/spec/10-lesson-and-writing.md 第10.6〜10.8節）:
+ *   「札を使いすぎ。打つコード・あなたのコード・壊れたコードの例まで
+ *     全部が見出しになっていて良くない」
+ *   「Fと、Hから過度な色背景＋白文字の使用を減らしたものの中間に、
+ *     案Gの角を落とした小札を、必要があれば少し使ってみてもよい」
+ *
+ * 3案が共通して守ること（比較軸にしない）
+ *   1. まとまりの範囲は案Fの「地色の濃さ」で作る
+ *        例＝紙のまま → 例題＝わずかに沈む → 練習問題＝もう一段
+ *        → 演習問題＝最も濃い。枠の太さも同じ向きに増やす
+ *   2. 見出しは案Hの「全幅の帯」の構造を借りる
+ *        帯はブロックの頭にあり、幅いっぱい。帯の厚みも階段になる
+ *   3. 案Aの雰囲気（明朝の見出し・罫・紙の落ち着き・余白）
+ *        本文の書体と行間は案Aのまま動かさない → .vbase
+ *   4. コードは黒い面（#17140f 系）。案Fの「紙色の5pxマットを巻く」を引き継ぐ
+ *   5. 第10.6節の限定を守る。札（見出しの帯）は1節あたり4つだけ
+ *        例題1・練習問題1・演習問題1・よくある間違い1
+ *        「例」・コードのキャプション（打つコード／あなたのコード／
+ *        壊れたコードの例／実行結果／入力）・右レールの各節・
+ *        レベル0の補足は、札にしない。素地の小さな文字にする
+ *
+ * 3案で変えること ＝ 色地＋白文字をどこまで残すか。これだけ
+ *   案J もっとも控えめ  色地＋白文字は演習問題だけ（1箇所）
+ *                       よくある間違いは案Gの角を落とした小札を1つ
+ *   案K 中間            色地＋白文字は演習問題（朱）と
+ *                       よくある間違い（琥珀）の2つ
+ *   案L 段階的          4つとも帯。彩度と文字色が段階的に上がる。
+ *                       よくある間違いは破線の別系統で階段から外す
+ *
+ * ・マストヘッドとナビは第1次トークンのまま共通
+ * ・本文17.5px（16px以上）、コード15px（14px以上）
+ * ・本文720px＋右レール240px、外枠1080px（実装と同一）
+ * ============================================================ */
+
+/* ---------- ツールの枠（案の一部ではない） ---------- */
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:#0f0f11;font-family:"Noto Sans JP",sans-serif}
+#tool{position:sticky;top:0;z-index:60;background:#1c1c1e;color:#e8e8e8;border-bottom:1px solid #34343a;
+  padding:9px 18px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+#tool .t-name{font-size:13px;font-weight:700;letter-spacing:.06em;white-space:nowrap}
+#tool .t-tabs{display:flex;gap:6px}
+#tool button{font-family:inherit;font-size:13px;padding:5px 14px;border-radius:5px;border:1px solid #46464e;
+  background:#2a2a2c;color:#ddd;cursor:pointer}
+#tool button:hover{border-color:#8f8f98}
+#tool button[aria-pressed="true"]{background:#ececec;color:#111;border-color:#ececec;font-weight:700}
+#tool .t-desc{font-size:12px;color:#9c9ca4;flex:1;min-width:260px;line-height:1.6}
+#tool .t-jump{font-size:12px;color:#9c9ca4;text-decoration:underline;white-space:nowrap}
+
+/* ---------- サイト共通のマストヘッド（tokens.css の値をそのまま） ---------- */
+.site{background:#f2f1ee;color:#232323;font-family:"BIZ UDPGothic","Noto Sans JP",sans-serif;
+  border-bottom:3px double #3a3a3a;padding-top:16.5px}
+.site__wrap{max-width:960px;margin:0 auto;padding:0 24px}
+.site__name{display:block;text-align:center;text-decoration:none;color:inherit;font-family:"Zen Old Mincho",serif;
+  font-weight:700;font-size:24px;letter-spacing:.08em;line-height:1.4}
+.site__full{margin:4.5px 0 0;text-align:center;font-size:11.5px;letter-spacing:.14em;color:#5a5650}
+.site__links{display:flex;justify-content:center;flex-wrap:wrap;gap:19.5px;margin-top:10.5px;
+  border-top:1px solid #3a3a3a;padding:7.5px 0}
+.site__links a{text-decoration:none;color:inherit;font-size:13.6px;white-space:nowrap;padding-bottom:2px}
+.site__links a[aria-current="page"]{border-bottom:4px solid #b3402a;font-weight:700}
+
+/* ---------- レッスン領域の骨格（3案共通の寸法） ---------- */
+.lesson{padding:48px 0 78px}
+.lesson__wrap{max-width:1080px;margin:0 auto;padding:0 24px}
+.lgrid{display:grid;grid-template-columns:minmax(0,720px) 240px;gap:48px;align-items:start}
+.lbody{max-width:720px;min-width:0}
+.lesson .rail{position:sticky;top:70px}
+.cmp__pane .rail{position:static}
+.lbody p{margin:0 0 1.1em}
+.blk{margin:1.9em 0}
+.blk__tab{margin:0}
+.prompt p:last-child{margin-bottom:0}
+.bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.btn{font-family:inherit;cursor:pointer}
+.rail ol,.rail ul{list-style:none;margin:0;padding:0}
+.rail a{color:inherit}
+
+/* ============================================================
+ * 黒い面（3案共通）
+ * 純黒ではなく紙に寄せた温かい墨色。第2回から引き継ぐ。
+ * キャプションは札にしない ＝ 暗い面の中の、素地の小さな文字。
+ * ============================================================ */
+:root{
+  --k-bg:#17140f;      /* コードの面 */
+  --k-bg2:#100e0a;     /* 実行結果の面（1段沈む） */
+  --k-fg:#ece6d8;      /* コードの字 */
+  --k-fg2:#d6cfbf;     /* 結果の字 */
+  --k-err:#e9b39b;     /* エラーの字 */
+  --k-dim:#968c7a;     /* 暗い面のキャプション */
+  --k-line:#3b352b;    /* 暗い面の中の仕切り */
+  --k-gut:#6b6355;     /* 行番号 */
+}
+.code{background:var(--k-bg)}
+.out{background:var(--k-bg2)}
+.code pre,.out pre{margin:0;white-space:pre;overflow-x:auto;font-family:"IBM Plex Mono",monospace;
+  font-size:15px;line-height:1.85;padding:13px 16px}
+.code pre{color:var(--k-fg)}
+.out pre{color:var(--k-fg2)}
+.out--err pre{color:var(--k-err)}
+.ln{display:block}
+.code--num pre{counter-reset:ln}
+.code--num .ln{counter-increment:ln;padding-left:3.1em;position:relative}
+.code--num .ln::before{content:counter(ln);position:absolute;left:0;width:2.1em;text-align:right;color:var(--k-gut)}
+/* 書き換えるエディタ（行番号の溝つき） */
+.ed-wrap{display:flex;align-items:stretch;background:var(--k-bg)}
+.ed-gut{flex:0 0 auto;font-family:"IBM Plex Mono",monospace;font-size:15px;line-height:1.85;
+  color:var(--k-gut);text-align:right;padding:13px 9px 13px 16px;user-select:none}
+.ed-gut span{display:block}
+textarea.ed{flex:1;min-width:0;display:block;font-family:"IBM Plex Mono",monospace;font-size:15px;line-height:1.85;
+  padding:13px 16px 13px 7px;border:0;outline:0;resize:vertical;background:transparent;color:var(--k-fg)}
+textarea.sin{display:block;width:100%;font-family:"IBM Plex Mono",monospace;font-size:15px;line-height:1.85;
+  padding:11px 16px;border:0;outline:0;resize:vertical;background:var(--k-bg2);color:var(--k-fg)}
+
+/* ============================================================
+ * .vbase ＝ 3案が共有する「案Aの雰囲気」
+ * 明朝の見出し、罫線で作る構造、紙の落ち着き、余白。
+ * 本文の書体と行間は案Aのまま動かさない。
+ * ============================================================ */
+.vbase{
+  --paper:#f6f2e9;   /* 例 ＝ 紙のまま */
+  --lv1:#efe8d8;     /* 例題 ＝ わずかに沈む */
+  --lv2:#e5dbc4;     /* 練習問題 ＝ もう一段 */
+  --lv3:#dacdaf;     /* 演習問題 ＝ 最も濃い */
+  --card:#fffdf7;    /* よくある間違い ＝ 階段と逆に紙より明るい */
+  --ink:#1f1c17;--ink2:#5d564a;--rule:#c2b8a4;--strong:#2b261e;
+  --shu:#9c3b21;     /* 朱 ＝ 演習問題 */
+  --kohaku:#8a6a1f;  /* 琥珀 ＝ よくある間違い（4段の階段の色から外す） */
+  background:var(--paper);
+  color:var(--ink);font-family:"Noto Serif JP",serif;font-size:17.5px;line-height:2.05}
+.vbase code{font-family:"IBM Plex Mono",monospace;font-size:15px;background:#ece5d5;padding:0 4px}
+
+/* 章と節の見出し・進度（本文の見出しなので札にしない。罫と書体で組む） */
+.vbase .ltop{border-bottom:3px double var(--strong);padding-bottom:16px;margin-bottom:34px}
+.vbase .ltop__ch{margin:0;font-family:"Zen Old Mincho",serif;font-size:14.5px;letter-spacing:.18em;color:var(--ink2)}
+.vbase .ltop__h1{margin:12px 0 0;font-family:"Zen Old Mincho",serif;font-weight:700;font-size:31px;
+  line-height:1.55;letter-spacing:.03em}
+.vbase .ltop__h1 .sec{color:var(--shu);margin-right:16px}
+.vbase .ltop__meta{margin:12px 0 0;font-size:14.5px;color:var(--ink2);letter-spacing:.06em}
+.vbase .lbody>p{text-indent:1em}
+.vbase .lbody>p.noind{text-indent:0}
+
+/* ------------------------------------------------------------
+ * 【共通1】まとまりの範囲 ＝ 地色の濃さと枠の太さ（案F）
+ * ---------------------------------------------------------- */
+.vbase .t-rei{margin:2.1em 0;padding-left:20px;border-left:2px solid var(--rule)}
+.vbase .t-reidai{margin:2.5em 0;background:var(--lv1);border:1px solid var(--rule)}
+.vbase .t-renshu{margin:2.9em 0;background:var(--lv2);border:1.5px solid var(--strong)}
+.vbase .t-enshu{margin:3.3em 0;background:var(--lv3);border:2.5px solid var(--shu)}
+.vbase .t-reidai .blk__in{padding:16px 22px 20px}
+.vbase .t-renshu .blk__in{padding:18px 22px 20px}
+.vbase .t-enshu .blk__in{padding:20px 22px 20px}
+.vbase .t-enshu .blk__foot{border-top:1px solid rgba(43,38,30,.32);padding:14px 22px}
+.vbase .t-enshu .blk__foot .bar{margin:0}
+
+/* ------------------------------------------------------------
+ * 【共通2】見出し ＝ ブロックの頭に置く全幅の帯（案H）
+ * 帯の厚みも階段になる（6 → 9 → 13px）。
+ * 色地＋白文字をどこまで残すかだけを、案ごとの変数で変える。
+ * ---------------------------------------------------------- */
+.vbase .blk__tab{display:block;font-family:"Zen Old Mincho",serif;font-weight:700;letter-spacing:.2em}
+.vbase .t-reidai .blk__tab{background:var(--bd-reidai);color:var(--bt-reidai);
+  border-bottom:1px solid var(--rule);font-size:14.5px;padding:6px 22px}
+.vbase .t-renshu .blk__tab{background:var(--bd-renshu);color:var(--bt-renshu);
+  border-bottom:1px solid rgba(43,38,30,.28);font-size:15.5px;padding:9px 22px}
+.vbase .t-enshu .blk__tab{background:var(--bd-enshu);color:var(--bt-enshu);
+  font-size:17px;padding:13px 22px;letter-spacing:.24em}
+
+/* 「例」だけは帯を持たない ＝ 本文の流れを切らない。素地の小さな文字 */
+.vbase .t-rei .blk__tab{background:none;border:0;padding:0;font-weight:700;font-size:14px;
+  letter-spacing:.18em;color:var(--ink2);margin-bottom:8px}
+
+/* ------------------------------------------------------------
+ * 【共通3】コードは黒い面。紙色の5pxマットを巻いて額装する（案F）
+ * キャプションは札にしない ＝ 暗い面の中の小さな文字＋仕切りの罫
+ * ---------------------------------------------------------- */
+.vbase .code,.vbase .out,.vbase .stdin{border:5px solid var(--card);outline:1px solid var(--strong);margin-top:14px}
+.vbase .out{margin-top:12px}
+.vbase .code__lab,.vbase .out__lab,.vbase .stdin__lab{display:block;font-family:"Zen Old Mincho",serif;
+  font-size:13px;letter-spacing:.14em;color:var(--k-dim);padding:5px 14px;border-bottom:1px solid var(--k-line)}
+.vbase .code--broken .code__lab,.vbase .out--err .out__lab{color:#e2a98f}
+
+/* ------------------------------------------------------------
+ * 【共通4】右レール・レベル0・そのほか（札にしない）
+ * ---------------------------------------------------------- */
+.vbase .judge{margin:14px 0 0;font-size:16px;color:var(--ink2);
+  border-top:1px dotted rgba(43,38,30,.35);border-bottom:1px dotted rgba(43,38,30,.35);padding:8px 0}
+.vbase .stdin__note{margin:6px 0 0;font-size:13.5px;color:var(--ink2);text-indent:0}
+.vbase .mistake__fix{margin-top:14px;font-size:16.5px}
+.vbase .mistake__fix p{margin:0}
+.vbase .lv0{margin:2.3em 0;border:1px dashed var(--rule);background:var(--lv1)}
+.vbase .lv0__t{cursor:pointer;font-family:"Zen Old Mincho",serif;font-size:14.5px;letter-spacing:.1em;
+  color:var(--ink2);padding:10px 16px}
+.vbase .lv0__fu{border-right:1px solid var(--rule);padding-right:11px;margin-right:11px;font-size:12.5px}
+.vbase .lv0__b{padding:0 16px 13px;font-size:16.5px}
+.vbase .lv0__b p{margin:0}
+.vbase .lnav{display:flex;justify-content:space-between;gap:16px;margin-top:46px;
+  border-top:1px solid var(--rule);padding-top:20px}
+.vbase .lnav a{font-family:"Zen Old Mincho",serif;font-size:16px;color:inherit;text-decoration:none;
+  border-bottom:1px solid var(--rule);padding-bottom:3px}
+.vbase .btn{font-family:"Zen Old Mincho",serif;font-size:15px;letter-spacing:.08em;padding:6px 18px;
+  border-radius:0;border:1px solid var(--strong);background:var(--card);color:var(--ink)}
+.vbase .btn--strong{background:var(--strong);color:var(--card);font-weight:700}
+.vbase .btn--quiet{border-style:dotted;color:var(--ink2)}
+.vbase .bar{margin:14px 0 0}
+.vbase .bar--top{margin:0 0 10px}
+.vbase .rail{font-size:14px;line-height:1.8;color:var(--ink)}
+.vbase .rail__blk{background:var(--lv1);border:1px solid var(--rule);padding:14px 15px}
+.vbase .rail__blk+.rail__blk{margin-top:18px}
+.vbase .rail__lab{margin:0 0 10px;font-family:"Zen Old Mincho",serif;font-weight:700;font-size:14.5px;
+  letter-spacing:.14em;border-bottom:1px solid var(--rule);padding-bottom:5px}
+.vbase .rail li{display:flex;gap:9px;margin-bottom:10px;align-items:baseline}
+.vbase .rail li:last-child{margin-bottom:0}
+.vbase .rail__st{flex:0 0 auto;width:2.6em;text-align:center;font-family:"Zen Old Mincho",serif;
+  font-size:12px;color:var(--ink2)}
+.vbase .rail li.is-now .rail__st{color:var(--shu);font-weight:700}
+.vbase .rail li.is-now a{font-weight:700}
+.vbase .rail a{text-decoration:none}
+.vbase .rail__note{margin:6px 0 0;font-size:12.5px;color:var(--ink2);line-height:1.7}
+.vbase .rail__ask{width:100%;border:1px dotted var(--rule);background:var(--card);color:var(--ink2);
+  padding:7px 10px;font-family:"Zen Old Mincho",serif;font-size:14px}
+
+/* よくある間違いの共通の素 ── 階段と逆に紙より明るい面。左右の枠は持つが、
+   地色の階段（lv1→lv2→lv3）には一切乗らないので4段に混ざらない */
+.vbase .mistake{margin:3em 0;background:var(--card);position:relative}
+.vbase .mistake__lab{margin:0;font-family:"Zen Old Mincho",serif;font-weight:700;letter-spacing:.18em}
+.vbase .mistake__in{padding:18px 22px 20px}
+
+/* ============================================================
+ * 案J ＝ もっとも控えめ
+ *
+ * 色地＋白文字は「演習問題の帯」1箇所だけ。
+ * 例題・練習問題の帯は、その課題の地色より一段濃いだけの無彩の帯に
+ * 濃い墨の文字を置く（白文字にしない）。
+ * よくある間違いだけ、案Gの角を落とした小札を1つ使う。
+ *   小札は淡い琥珀地＋琥珀の文字＋琥珀1pxの縁。二重罫をまたいで座る。
+ *   「小札という形」を実例として見せるが、色地＋白文字にはしない。
+ * ============================================================ */
+.v-j{
+  --bd-reidai:#e6dcc5;--bt-reidai:#4e4638;
+  --bd-renshu:#d7cbad;--bt-renshu:#2b261e;
+  --bd-enshu:#9c3b21; --bt-enshu:#fffdf7;
+}
+.v-j .mistake{border:3px double var(--kohaku);padding-top:8px}
+.v-j .mistake__lab{position:absolute;left:22px;top:0;transform:translateY(-50%);
+  background:#f7edd6;color:var(--kohaku);border:1px solid var(--kohaku);border-radius:4px;
+  font-size:14.5px;padding:3px 16px}
+.v-j .mistake__in{padding:20px 22px 20px}
+
+/* ============================================================
+ * 案K ＝ 中間
+ *
+ * 色地＋白文字は「演習問題（朱）」と「よくある間違い（琥珀）」の2つ。
+ * 例題・練習問題は案Jと同じ、濃淡の帯＋濃い文字。
+ * よくある間違いは全幅の琥珀帯。朱の階段とは別系統の色なので、
+ * 4段の重さの階段には混ざらない。
+ * ============================================================ */
+.v-k{
+  --bd-reidai:#e6dcc5;--bt-reidai:#4e4638;
+  --bd-renshu:#d7cbad;--bt-renshu:#2b261e;
+  --bd-enshu:#9c3b21; --bt-enshu:#fffdf7;
+}
+/* 枠は3pxの二重罫。4段のどれも二重罫を使わないので、色を抜いても形で別系統と分かる */
+.v-k .mistake{border:3px double var(--kohaku)}
+.v-k .mistake__lab{display:block;background:var(--kohaku);color:#fffdf7;font-size:15.5px;padding:9px 22px}
+
+/* ============================================================
+ * 案L ＝ 段階的
+ *
+ * 4つとも帯を持ち、彩度と文字色が段階的に上がる。
+ *   例題    ごく薄い（ほぼ無彩）帯 ＋ 中間の墨
+ *   練習問題 中くらいの褐色の帯   ＋ 濃い墨
+ *   演習問題 彩度の高い朱の帯     ＋ 白文字
+ * よくある間違いはこの階段から外す。地も帯も紙より明るいまま、
+ * 枠と帯の仕切りを琥珀の破線にして、別系統であることを形で示す。
+ * ============================================================ */
+.v-l{
+  --bd-reidai:#ece3cf;--bt-reidai:#5d564a;
+  --bd-renshu:#d9c1a4;--bt-renshu:#3a2f22;
+  --bd-enshu:#9c3b21; --bt-enshu:#fffdf7;
+}
+.v-l .mistake{border:2px dashed var(--kohaku)}
+.v-l .mistake__lab{display:block;background:var(--card);color:var(--kohaku);
+  border-bottom:1.5px dashed var(--kohaku);font-size:15.5px;padding:10px 22px}
+
+/* ============================================================
+ * 下部: 4種類の見分けだけを比べる欄
+ * ============================================================ */
+#compare{background:#17171a;color:#e6e6ea;padding:44px 0 64px;border-top:3px solid #000}
+#compare .cwrap{max-width:1200px;margin:0 auto;padding:0 24px}
+#compare h2{margin:0;font-size:19px;letter-spacing:.06em}
+#compare .cnote{margin:8px 0 26px;font-size:13px;color:#9c9ca4;line-height:1.8;max-width:880px}
+.cmp{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;align-items:start}
+.cmp__head{margin:0 0 4px;font-size:14px;font-weight:700;letter-spacing:.06em}
+.cmp__axis{margin:0 0 10px;font-size:12px;color:#9c9ca4;line-height:1.7}
+.cmp__pane{padding:30px 20px 34px}
+.cmp__pane .blk{margin:0 0 26px}
+.cmp__pane .mistake{margin:40px 0 0}
+.cmp__pane .blk__in p,.cmp__pane .mistake__in p{margin:0;font-size:15px;line-height:1.75}
+.cmp__pane .blk__in pre{margin:0;font-family:"IBM Plex Mono",monospace;font-size:14px}
+.cmp__gray{filter:grayscale(1)}
+#compare .cbtn{font-family:inherit;font-size:12px;padding:4px 12px;border-radius:5px;border:1px solid #46464e;
+  background:#2a2a2c;color:#ddd;cursor:pointer;margin-bottom:18px}
+#compare .cbtn[aria-pressed="true"]{background:#ececec;color:#111;border-color:#ececec;font-weight:700}
+</style>
+</head>
+<body>
+
+<header id="tool">
+  <span class="t-name">レッスン画面ピッカー 第4回</span>
+  <span class="t-tabs">
+    <button type="button" data-v="j" aria-pressed="true">案J 控えめ</button>
+    <button type="button" data-v="k" aria-pressed="false">案K 中間</button>
+    <button type="button" data-v="l" aria-pressed="false">案L 段階的</button>
+  </span>
+  <span class="t-desc" id="tdesc"></span>
+  <a class="t-jump" href="#compare">4種類の見分けだけを比べる ↓</a>
+</header>
+
+<div id="stage"></div>
+
+<section id="compare">
+  <div class="cwrap">
+    <h2>4種類の見分けだけを比べる</h2>
+    <p class="cnote">全体を見ずに、例 / 例題 / 練習問題 / 演習問題 の付き方だけを比べる欄です。上から下へ「軽い→重い」の順に並べ、最後によくある間違いを置いています。3案とも、範囲は地色の濃さ（紙のまま → わずかに沈む → もう一段 → 最も濃い）で作り、見出しは全幅の帯です。違うのは色地＋白文字をどこまで残すかだけ。下のボタンで色を抜くと、地色の濃さと帯の厚みだけで4段の順序が読めるか、よくある間違いが階段から外れて見えるかを確かめられます。</p>
+    <button type="button" class="cbtn" id="cgray" aria-pressed="false">色を抜いて見る</button>
+    <div class="cmp" id="cmp"></div>
+  </div>
+</section>
+
+<script>
+/* ------------------------------------------------------------
+ * 中身は src/content/lessons/01-python/01-print.mdx のまま。
+ * 3案で同じ文章・同じコード・同じ問題を出し、
+ * 色地＋白文字をどこまで残すかだけを変える。
+ * ---------------------------------------------------------- */
+var esc = function (s) {
+  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+};
+var lines = function (arr) {
+  return arr.map(function (l) { return '<span class="ln">' + (l === '' ? '&nbsp;' : esc(l)) + '</span>'; }).join('');
+};
+var code = function (label, arr, mod) {
+  return '<div class="code code--num' + (mod ? ' ' + mod : '') + '">' +
+    '<div class="code__lab">' + label + '</div><pre>' + lines(arr) + '</pre></div>';
+};
+var out = function (label, arr, mod) {
+  return '<div class="out' + (mod ? ' ' + mod : '') + '">' +
+    '<div class="out__lab">' + label + '</div><pre>' + lines(arr) + '</pre></div>';
+};
+var ed = function (label, val, rows) {
+  var g = '';
+  for (var i = 1; i <= rows; i++) { g += '<span>' + i + '</span>'; }
+  return '<div class="code code--ed"><div class="code__lab">' + label + '</div>' +
+    '<div class="ed-wrap"><div class="ed-gut">' + g + '</div>' +
+    '<textarea class="ed" rows="' + rows + '" spellcheck="false">' + esc(val) + '</textarea></div></div>';
+};
+var stdin = function (val) {
+  return '<div class="stdin"><label class="stdin__lab">入力</label>' +
+    '<textarea class="sin" rows="2" spellcheck="false">' + esc(val) + '</textarea></div>' +
+    '<p class="stdin__note">input() は、この欄を上から1行ずつ読みます。</p>';
+};
+var btn = function (t, mod) {
+  return '<button type="button" class="btn' + (mod ? ' btn--' + mod : '') + '">' + t + '</button>';
+};
+var blk = function (type, kind, num, inner, foot) {
+  return '<section class="blk t-' + type + '">' +
+    '<p class="blk__tab">' + kind + ' ' + num + '</p>' +
+    '<div class="blk__in">' + inner + '</div>' +
+    (foot ? '<div class="blk__foot">' + foot + '</div>' : '') + '</section>';
+};
+
+/* ---- 4種類の中身（すべて 01-print.mdx の実物） ---- */
+var REI = blk('rei', '例', '1',
+  '<div class="bar bar--top">' + btn('▶ 実行') + '</div>' +
+  code('コード例', ['print("Hello")', 'print(10 + 20)']) +
+  out('実行結果', ['Hello', '30']));
+
+var REIDAI = blk('reidai', '例題', '1',
+  '<div class="prompt"><p>次のコードを入力して実行し、採点してください。</p></div>' +
+  code('打つコード', ['print("Python")']) +
+  ed('あなたのコード', '', 3) +
+  '<div class="bar">' + btn('採点する', 'strong') + btn('▶ 試す') + '</div>');
+
+var RENSHU = blk('renshu', '練習問題', '1',
+  '<div class="prompt"><p>上のコードを書き足して、1行目に <code>赤</code>、2行目に <code>青</code> と表示されるようにしてください。</p></div>' +
+  ed('コード', 'print("赤")', 3) +
+  '<div class="bar">' + btn('採点する', 'strong') + btn('▶ 試す') + btn('最初の形に戻す', 'quiet') + '</div>');
+
+var ENSHU = blk('enshu', '演習問題', '1',
+  '<div class="prompt"><p>入力欄の1行を読み取り、その前後に <code>【</code> と <code>】</code> を付けて表示するプログラムを書いてください。入力欄の1行を読むには <code>input()</code> と書きます。<code>input()</code> の説明は次の節で行います。</p></div>' +
+  '<p class="judge">判定に使う入力: <code>りんご</code>　<code>0</code>　<code>-5</code></p>' +
+  ed('解答のコード', '', 5) +
+  stdin('りんご'),
+  '<div class="bar">' + btn('採点する', 'strong') + btn('▶ 試す') + btn('最初の形に戻す', 'quiet') + '</div>');
+
+var MISTAKE =
+  '<aside class="mistake"><p class="mistake__lab">よくある間違い</p><div class="mistake__in">' +
+  '<div class="bar bar--top">' + btn('▶ 実行') + '</div>' +
+  code('壊れたコードの例', ['print(“Python”)'], 'code--broken') +
+  out('出るエラー', ["SyntaxError: invalid character '“' (U+201C)"], 'out--err') +
+  '<div class="mistake__fix"><p>全角のダブルクォートを使っています。<code>"</code> は半角で入力してください。日本語入力がオンになっていると全角になります。</p></div>' +
+  '</div></aside>';
+
+var LEVEL0 =
+  '<details class="lv0" open><summary class="lv0__t"><span class="lv0__fu">操作の補足</span>半角のダブルクォートの入れ方</summary>' +
+  '<div class="lv0__b"><p><code>Shift</code> を押しながら数字の <code>2</code> のキーを押すと <code>"</code> が入ります。' +
+  '日本語入力がオンのときは <code>”</code> になります。<code>半角/全角</code> キーで日本語入力を切り替えてください。</p></div></details>';
+
+var RAIL =
+  '<aside class="rail">' +
+  '<div class="rail__blk"><p class="rail__lab">この章の節</p><ol>' +
+  '<li class="is-now"><span class="rail__st">いま</span><a href="#">printで値を表示する</a></li>' +
+  '<li><span class="rail__st">未</span><a href="#">inputで値を受け取る</a></li>' +
+  '</ol></div>' +
+  '<div class="rail__blk"><p class="rail__lab">用語集</p>' +
+  '<a href="#">この教材で使う言葉</a></div>' +
+  '<div class="rail__blk"><p class="rail__lab">先生に聞く</p>' +
+  '<button type="button" class="rail__ask" disabled>準備中</button>' +
+  '<p class="rail__note">ログインを作ったら使えるようになります。</p></div>' +
+  '</aside>';
+
+var SITE =
+  '<header class="site"><div class="site__wrap">' +
+  '<a class="site__name" href="#">KIT 機械学習プロジェクト</a>' +
+  '<p class="site__full">AI・機械学習を全課程で0から学べるプロジェクト</p>' +
+  '<nav class="site__links">' +
+  '<a href="#">ホーム</a><a href="#">プロジェクトについて</a><a href="#">活動</a>' +
+  '<a href="#" aria-current="page">学習</a><a href="#">成果・お知らせ</a>' +
+  '</nav></div></header>';
+
+function lessonHTML(v) {
+  return '<section class="lesson vbase v-' + v + '"><div class="lesson__wrap">' +
+    '<div class="ltop">' +
+      '<p class="ltop__ch">第1章 Python を書きはじめる</p>' +
+      '<h1 class="ltop__h1"><span class="sec">1.1</span>printで値を表示する</h1>' +
+      '<p class="ltop__meta">この章の 1 / 2 節 ・ 目安 12 分</p>' +
+    '</div>' +
+    '<div class="lgrid"><article class="lbody">' +
+
+      '<p>10と20を足す式を書いても、画面には何も出ません。計算の結果を画面に出す手立てがないと、合っているかを目で確かめられません。数が合わないときに、どこで違ったのかも分かりません。</p>' +
+
+      '<p class="noind">次のコードの ▶ を押してください。</p>' +
+      REI +
+
+      '<p>1行目の <code>print</code> は、渡した値を画面に表示する関数です。かっこの中に書いた値を引数（ひきすう）と呼びます。1行目の引数は <code>"Hello"</code> です。</p>' +
+      '<p><code>"</code> で囲んだものを文字列（string）と呼びます。囲みの <code>"</code> は画面に出ません。出るのは中の文字だけです。</p>' +
+      '<p>2行目の引数は <code>10 + 20</code> です。かっこの中が先に計算され、結果の <code>30</code> が表示されます。<code>print</code> は1回呼ぶごとに1行を表示します。</p>' +
+      '<p><code>print</code> を書かずに <code>10 + 20</code> とだけ書いた場合、計算は行われますが画面には何も出ません。表示するかどうかは、書いた人が <code>print</code> で指示します。</p>' +
+
+      LEVEL0 +
+      MISTAKE +
+      REIDAI +
+      RENSHU +
+      ENSHU +
+
+      '<p><code>print</code> で値を出せるようになりました。次の節では、こちらから値を渡す <code>input()</code> を扱います。</p>' +
+
+      '<nav class="lnav"><span></span><a href="#">次の節へ　inputで値を受け取る →</a></nav>' +
+    '</article>' + RAIL + '</div></div></section>';
+}
+
+var DESC = {
+  j: '案J もっとも控えめ — 色地＋白文字は演習問題の帯だけ（1箇所）。例題・練習問題の帯は、その課題の地色より一段濃いだけの無彩の帯に濃い墨の文字。よくある間違いだけ、案Gの角を落とした小札を1つ使う（淡い琥珀地＋琥珀の文字。白文字にはしない）。',
+  k: '案K 中間 — 色地＋白文字は演習問題（朱）とよくある間違い（琥珀）の2箇所。例題・練習問題は案Jと同じ濃淡の帯＋濃い文字。朱と琥珀は別系統の色なので、よくある間違いは4段の階段に混ざらない。',
+  l: '案L 段階的 — 4つとも帯を持ち、彩度と文字色が段階的に上がる（ほぼ無彩の帯＋中間の墨 → 褐色の帯＋濃い墨 → 朱の帯＋白文字）。色地＋白文字は演習問題の1箇所。よくある間違いは琥珀の破線という別系統にして階段から外す。'
+};
+
+var stage = document.getElementById('stage');
+stage.innerHTML = ['j', 'k', 'l'].map(function (v) {
+  return '<div class="pane" id="pane-' + v + '"' + (v === 'j' ? '' : ' hidden') + '>' + SITE + lessonHTML(v) + '</div>';
+}).join('');
+
+var tabs = document.querySelectorAll('#tool button[data-v]');
+var desc = document.getElementById('tdesc');
+function show(v) {
+  ['j', 'k', 'l'].forEach(function (k) { document.getElementById('pane-' + k).hidden = k !== v; });
+  tabs.forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.v === v)); });
+  desc.textContent = DESC[v];
+  window.scrollTo(0, 0);
+}
+tabs.forEach(function (b) { b.addEventListener('click', function () { show(b.dataset.v); }); });
+desc.textContent = DESC.j;
+
+/* ---- 下部: 4種類＋よくある間違いの見分けだけ ---- */
+var SHORT = [
+  ['rei', '例', '1', '<pre>print("Hello")</pre>'],
+  ['reidai', '例題', '1', '<p>次のコードを入力して実行し、採点してください。</p>'],
+  ['renshu', '練習問題', '1', '<p>上のコードを書き足して、1行目に 赤、2行目に 青 と…</p>'],
+  ['enshu', '演習問題', '1', '<p>入力欄の1行を読み取り、その前後に 【 と 】 を付けて…</p>']
+];
+var SHORT_MISS =
+  '<aside class="mistake"><p class="mistake__lab">よくある間違い</p>' +
+  '<div class="mistake__in"><p>全角のダブルクォートを使っています。半角で入力してください。</p></div></aside>';
+var COLS = [
+  ['j', '案J もっとも控えめ', '色地＋白文字は演習問題の帯だけ。例題・練習問題は地色より一段濃いだけの帯＋濃い文字。よくある間違いは角を落とした小札が二重罫をまたぐ。'],
+  ['k', '案K 中間', '色地＋白文字は演習問題（朱）とよくある間違い（琥珀）の2つ。例題・練習問題は案Jと同じ濃淡の帯＋濃い文字。'],
+  ['l', '案L 段階的', '4つとも帯。彩度と文字色が段階的に上がる（ほぼ無彩 → 褐色 → 朱＋白文字）。よくある間違いは琥珀の破線で階段から外す。']
+];
+document.getElementById('cmp').innerHTML = COLS.map(function (c) {
+  return '<div class="cmp__col"><p class="cmp__head">' + c[1] + '</p><p class="cmp__axis">' + c[2] + '</p>' +
+    '<div class="lesson vbase v-' + c[0] + ' cmp__pane">' +
+    SHORT.map(function (s) { return blk(s[0], s[1], s[2], s[3]); }).join('') + SHORT_MISS +
+    '</div></div>';
+}).join('');
+
+var cgray = document.getElementById('cgray');
+cgray.addEventListener('click', function () {
+  var on = cgray.getAttribute('aria-pressed') !== 'true';
+  cgray.setAttribute('aria-pressed', String(on));
+  document.getElementById('cmp').classList.toggle('cmp__gray', on);
+  cgray.textContent = on ? '色を戻す' : '色を抜いて見る';
+});
+</script>
+</body>
+</html>
