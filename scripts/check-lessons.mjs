@@ -267,12 +267,16 @@ for (const file of files) {
     if (!words.has(term)) add(12, 1, `用語集（design/spec/glossary.md）にない語です: ${term}`);
   }
 
-  // --- 検査13 <Level0> の中に用語集の語が出てこないこと ---
+  // --- 検査13 <Level0> の中に、その節が新しく名前を付ける語が出てこないこと ---
+  // 第7.3節が禁じているのは「概念の説明をレベル0に隠すこと」。禁じる対象は
+  // その節の terms（この節が名前を付ける概念）だけ。前の節で習った語や、
+  // 画面にそのまま出る文字列まで禁じると、操作の説明が書けなくなる。
+  const ownTerms = Array.isArray(fm.terms) ? fm.terms : [];
   for (const l of lesson.level0) {
     const text = plainText(l.text);
-    for (const w of words) {
+    for (const w of ownTerms) {
       if (text.includes(w)) {
-        add(13, l.line, `<Level0> に用語「${w}」が出ています。補足に書けるのは操作だけです`);
+        add(13, l.line, `<Level0> に、この節が名前を付ける語「${w}」が出ています。概念は本文に書いてください`);
       }
     }
   }
