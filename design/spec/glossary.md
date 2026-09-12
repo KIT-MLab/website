@@ -20,3 +20,12 @@
 | エラー | error | Python が実行を続けられないときに出す知らせ。種類の名前と場所が出る。 | 01-python |
 | f文字列 | f-string | 文字列の前に `f` を付けた書き方。`{}` の中に変数を書くと値が展開される。 | 01-python |
 | str | | 値を文字列に変える関数。 | 01-python |
+| float | | 文字列や整数を小数に変える関数。小数を表す型の名前でもある。 | 02-numbers |
+| round | | 数値を指定した桁数に丸める関数。第2引数に残す桁数を書く。 | 02-numbers |
+| べき乗 | exponentiation | ある数を何回か掛け合わせる計算。Python では `**` を使う。 | 02-numbers |
+| 剰余 | remainder | 割り算の余り。Python では `%` を使う。 | 02-numbers |
+| 整数除算 | floor division | 割り算の商を整数で求める計算。Python では `//` を使う。 | 02-numbers |
+| 優先順位 | precedence | 1つの式に複数の演算子があるとき、先に計算する順番。 | 02-numbers |
+| import | | 他のモジュールの機能を使えるようにする文。 | 02-numbers |
+| モジュール | module | 関連する関数や値をまとめたファイル。`import` で読み込む。 | 02-numbers |
+| math | | 平方根や円周率など、数学の計算をまとめたモジュール。 | 02-numbers |

@@ -1,0 +1,110 @@
+---
+id: python-02-int-float
+chapter: 02-numbers
+title: intとfloatを使い分ける
+minutes: 12
+terms: [float]
+---
+
+{/* 困る例 */}
+
+10個のりんごを2人で分けると、答えは `5` のはずです。ところが `10 / 2` を計算すると `5.0` になります。整数のつもりで書いた式が、いつも小数の形で返ってきます。
+
+{/* やってみる */}
+
+次のコードの ▶ を押してください。
+
+<Run
+  code={`print(10 / 4)
+print(9 / 3)`}
+  out={`2.5
+3.0`}
+/>
+
+{/* 説明 */}
+
+`/` で割り算をすると、結果は必ず小数になります。1行目の `10 / 4` は `2.5` に、2行目の `9 / 3` は割り切れる式でも `3.0` になります。
+
+この小数の型を float と呼びます。整数と小数を混ぜて計算すると、結果も自動的に float になります。たとえば `1 + 2.5` は `3.5` です。
+
+`float()` は、文字列や整数を小数に変える関数です。`int()` が文字列を整数に変えるのと対になる関数で、小数を含む入力を読み取るときに使います。
+
+`int()` に小数を渡すと、小数点以下を切り捨てて整数にします。`int(7.9)` の結果は `7` で、`8` には丸まりません。
+
+{/* よくある間違い */}
+
+<Mistake id="int-cant-decimal" code={`age = int(input())
+print(age)`} stdin={`3.5`} error={`ValueError: invalid literal for int() with base 10: '3.5'`}>
+入力に小数点が含まれると `int()` はエラーになります。小数として読み取るときは `float()` を使ってください。
+</Mistake>
+
+<Mistake id="float-bad-string" code={`weight = float(input())
+print(weight)`} stdin={`abc`} error={`ValueError: could not convert string to float: 'abc'`}>
+`float()` は数字として読める文字列しか変換できません。入力に数字以外の文字が混ざっていないか確認してください。
+</Mistake>
+
+{/* 課題 */}
+
+<Exercise
+  id="python-02-int-float-t1"
+  kind="trace"
+  tests={[{ kind: 'stdout' }]}
+  hints={[]}
+  mistakes={['int-cant-decimal', 'float-bad-string']}
+>
+次のコードを入力して実行してください。
+
+```python
+print(10 / 4)
+print(9 / 3)
+```
+</Exercise>
+
+<Exercise
+  id="python-02-int-float-m1"
+  kind="modify"
+  starter={`print(10 / 4)
+print(9 / 3)`}
+  tests={[{ kind: 'stdout' }]}
+  hints={[]}
+  mistakes={['int-cant-decimal']}
+>
+上のコードを書き換えて、`20 / 8` と `12 / 4` を表示するようにしてください。`2.5` と `3.0` が表示されれば合っています。
+</Exercise>
+
+<Exercise
+  id="python-02-int-float-m2"
+  kind="modify"
+  starter={`print(float(10))
+print(int(10))`}
+  tests={[{ kind: 'stdout' }]}
+  hints={['上の「説明」で確認した、`int()` が小数をどう扱うかを思い出してください。']}
+  mistakes={['int-cant-decimal']}
+>
+上のコードを書き換えて、`float(7)` と `int(7.9)` を表示するようにしてください。`7.0` と `7` が表示されれば合っています。
+</Exercise>
+
+<Exercise
+  id="python-02-int-float-b1"
+  kind="build"
+  stdin={`10
+2`}
+  tests={[
+    { kind: 'stdout', stdin: `10\n2\n` },
+    { kind: 'stdout', stdin: `10\n3\n` },
+    { kind: 'stdout', stdin: `0\n4\n` },
+    { kind: 'stdout', stdin: `-9\n2\n` },
+    { kind: 'stdout', stdin: `5\n5\n` },
+  ]}
+  hints={[
+    '入力欄の2行を読み取るには `input()` を2回使います。第1章の内容を思い出してください。',
+    '`int()` が小数点以下をどう扱うかを、上の「説明」で確認してください。',
+  ]}
+  mistakes={['int-cant-decimal', 'float-bad-string']}
+>
+入力欄の2行から数を2つ読み取り、1つ目を2つ目で割った値を、小数のままの形と整数に変えた形の両方で表示してください。`小数:5.0 整数:5` のように、間に半角空白を1つ入れて1行で表示します。
+</Exercise>
+
+{/* つながり */}
+
+int と float を区別できるようになりました。次の節では、`round()` を使って表示する桁を整えます。

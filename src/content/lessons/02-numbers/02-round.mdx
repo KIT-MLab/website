@@ -1,0 +1,115 @@
+---
+id: python-02-round
+chapter: 02-numbers
+title: round()で桁を整える
+minutes: 12
+terms: [round]
+---
+
+{/* 困る例 */}
+
+3教科の平均を出すとき、`240 / 3` なら `80.0` です。しかし `245 / 3` は `81.66666666666667` になり、読みにくい桁数のまま表示されてしまいます。
+
+{/* やってみる */}
+
+次のコードの ▶ を押してください。
+
+<Run
+  code={`total = 245
+average = total / 3
+print(average)
+print(round(average, 1))`}
+  out={`81.66666666666667
+81.7`}
+/>
+
+{/* 説明 */}
+
+`round(値, 桁数)` は、指定した桁数に数値を丸める関数です。3行目で `average` をそのまま表示すると、長い小数のままです。
+
+4行目の `round(average, 1)` は、小数第1位までに丸めた `81.7` を返します。第2引数の `1` が、残す小数点以下の桁数です。
+
+`round()` は新しい値を返すだけで、元の `average` の中身は変わりません。表示するときや、別の変数に入れるときに使います。
+
+第2引数を `0` にすると小数点以下がなくなり、`2` にすると小数第2位まで残ります。桁数を省略すると、整数に丸められます。教科の数が増えても、`round()` の書き方は変わりません。
+
+{/* よくある間違い */}
+
+<Mistake id="round-digits-string" code={`average = 81.666
+print(round(average, "1"))`} error={`TypeError: 'str' object cannot be interpreted as an integer`}>
+第2引数の桁数は整数で書きます。`"1"` のように文字列で渡すとエラーになります。
+</Mistake>
+
+<Mistake id="round-of-string" code={`average = "81.6"
+print(round(average, 1))`} error={`TypeError: type str doesn't define __round__ method`}>
+`round()` は数値にしか使えません。`average` が文字列のままなら、先に `float()` で変えてください。
+</Mistake>
+
+{/* 課題 */}
+
+<Exercise
+  id="python-02-round-t1"
+  kind="trace"
+  tests={[{ kind: 'stdout' }]}
+  hints={[]}
+  mistakes={['round-digits-string', 'round-of-string']}
+>
+次のコードを入力して実行してください。
+
+```python
+value = 19 / 6
+print(round(value, 1))
+```
+</Exercise>
+
+<Exercise
+  id="python-02-round-m1"
+  kind="modify"
+  starter={`value = 19 / 6
+print(round(value, 1))`}
+  tests={[{ kind: 'stdout' }]}
+  hints={[]}
+  mistakes={['round-digits-string']}
+>
+上のコードの第2引数を `2` に書き換えて、小数第2位まで表示してください。
+</Exercise>
+
+<Exercise
+  id="python-02-round-m2"
+  kind="modify"
+  starter={`japanese = 60
+mathematics = 70
+english = 80
+total = japanese + mathematics + english
+print(f"合計{total}点")`}
+  tests={[{ kind: 'stdout' }]}
+  hints={['平均は合計を教科の数で割れば求まります。']}
+  mistakes={['round-of-string']}
+>
+上のコードを書き換えて、平均を小数第1位まで丸めて表示するようにしてください。`平均70.0点` のように表示します。
+</Exercise>
+
+<Exercise
+  id="python-02-round-b1"
+  kind="build"
+  stdin={`80
+70
+90`}
+  tests={[
+    { kind: 'stdout', stdin: `80\n70\n90\n` },
+    { kind: 'stdout', stdin: `0\n0\n0\n` },
+    { kind: 'stdout', stdin: `100\n50\n0\n` },
+    { kind: 'stdout', stdin: `7\n7\n8\n` },
+  ]}
+  hints={[
+    '3つの `input()` と `int()` で数を読み取り、変数に入れます。',
+    '平均を求めてから `round()` に渡します。',
+  ]}
+  mistakes={['round-digits-string', 'round-of-string']}
+>
+3つの数を読み取り、その平均を小数第1位まで丸めて1行で表示するプログラムを書いてください。
+</Exercise>
+
+{/* つながり */}
+
+桁をそろえて表示できるようになりました。次の節では、べき乗と余りを求める演算子を扱います。

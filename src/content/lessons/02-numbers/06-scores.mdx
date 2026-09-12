@@ -1,0 +1,131 @@
+---
+id: python-02-scores
+chapter: 02-numbers
+title: 点数表の平均を整える
+minutes: 14
+terms: []
+---
+
+{/* 困る例 */}
+
+第1章で作った点数表は、平均が `81.66666666666667` のように長く出ることがあります。合格の基準点も、コードのどこにも書かれていません。
+
+{/* やってみる */}
+
+次のコードの ▶ を押してください。
+
+<Run
+  code={`japanese = 65
+mathematics = 82
+english = 70
+average = (japanese + mathematics + english) / 3
+print(f"平均{round(average, 1)}点")`}
+  out={`平均72.3点`}
+/>
+
+{/* 説明 */}
+
+1〜3行目は変数（第1章第3節）に点数を残し、4行目で平均を計算しています。5行目の `round(average, 1)` で小数第1位に丸めています。
+
+合格の基準点も `threshold = 60` のように変数にしておくと、値を変えたいとき1か所を直すだけで済みます。基準点を出力にも含めておけば、今どの値で判定しているかがすぐ分かります。
+
+f文字列（第1章第4節）を使えば、平均と基準点をまとめて1行で表示できます。`{round(average, 1)}` のように、`{}` の中に計算式をそのまま書けます。
+
+基準点を使って合否をどう決めるかは、次の章で学ぶif文で扱います。ここでは基準点を変数にして、出力に含めるところまでを整えます。
+
+{/* よくある間違い */}
+
+<Mistake id="threshold-mismatch" code={`threshold = 60
+japanese = 70
+mathematics = 65
+english = 80
+average = (japanese + mathematics + english) / 3
+print(f"平均{round(average, 1)}点 基準{thresholds}点")`} error={`NameError: name 'thresholds' is not defined`}>
+`threshold` と `thresholds` は別の名前です。変数名を定義した箇所とそろえてください。
+</Mistake>
+
+<Mistake id="scores-forgot-int" code={`japanese = int(input())
+mathematics = input()
+english = int(input())
+average = (japanese + mathematics + english) / 3
+print(round(average, 1))`} stdin={`80
+70
+90`} error={`TypeError: unsupported operand type(s) for +: 'int' and 'str'`}>
+`mathematics` だけ `int()` を付け忘れています。3つとも整数に変えてから計算してください。
+</Mistake>
+
+{/* 課題 */}
+
+<Exercise
+  id="python-02-scores-t1"
+  kind="trace"
+  tests={[{ kind: 'stdout' }]}
+  hints={[]}
+  mistakes={['threshold-mismatch', 'scores-forgot-int']}
+>
+次のコードを入力して実行してください。
+
+```python
+japanese = 90
+mathematics = 55
+english = 70
+average = (japanese + mathematics + english) / 3
+print(f"平均{round(average, 1)}点")
+```
+</Exercise>
+
+<Exercise
+  id="python-02-scores-m1"
+  kind="modify"
+  starter={`japanese = 90
+mathematics = 55
+english = 70
+average = (japanese + mathematics + english) / 3
+print(f"平均{round(average, 1)}点")`}
+  tests={[{ kind: 'stdout' }]}
+  hints={[]}
+  mistakes={['threshold-mismatch']}
+>
+上のコードの1行目に `threshold = 60` を足し、表示の末尾に ` 基準60点` が付くようにしてください。`平均71.7点 基準60点` と表示されれば合っています。
+</Exercise>
+
+<Exercise
+  id="python-02-scores-m2"
+  kind="modify"
+  starter={`threshold = 60
+japanese = 90
+mathematics = 55
+english = 70
+average = (japanese + mathematics + english) / 3
+print(f"平均{round(average, 1)}点 基準{threshold}点")`}
+  tests={[{ kind: 'stdout' }]}
+  hints={[]}
+  mistakes={['threshold-mismatch']}
+>
+上のコードの `threshold` の値だけを `70` に変えて実行してください。`基準70点` と表示されれば合っています。
+</Exercise>
+
+<Exercise
+  id="python-02-scores-b1"
+  kind="build"
+  stdin={`80
+70
+90`}
+  tests={[
+    { kind: 'stdout', stdin: `80\n70\n90\n` },
+    { kind: 'stdout', stdin: `0\n0\n0\n` },
+    { kind: 'stdout', stdin: `60\n60\n61\n` },
+    { kind: 'stdout', stdin: `-5\n-5\n-5\n` },
+  ]}
+  hints={[
+    '3つの `input()` と `int()` で国語・数学・英語の点数を読み取ります。',
+    '基準点を変数にする書き方を、上の「説明」で確認してください。',
+  ]}
+  mistakes={['threshold-mismatch', 'scores-forgot-int']}
+>
+国語・数学・英語の順に3つの点数を読み取り、平均を小数第1位まで表示してください。合格の基準点は変数にし、出力にも含めます。`平均80.0点 基準60点` のように表示します。
+</Exercise>
+
+{/* つながり */}
+
+平均と基準点を整えられるようになりました。次の章では、基準点をもとに合否を分けるif文を扱います。

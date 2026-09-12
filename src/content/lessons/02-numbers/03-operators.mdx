@@ -1,0 +1,115 @@
+---
+id: python-02-operators
+chapter: 02-numbers
+title: べき乗と余りを求める
+minutes: 14
+terms: [べき乗, 剰余, 整数除算]
+---
+
+{/* 困る例 */}
+
+「3の5乗」を計算したくても `3 * 3 * 3 * 3 * 3` と書くのは大変です。「10を3で割った余り」を求める書き方も、まだ知りません。
+
+{/* やってみる */}
+
+次のコードの ▶ を押してください。
+
+<Run
+  code={`print(3 ** 5)
+print(10 % 3)
+print(10 // 3)`}
+  out={`243
+1
+3`}
+/>
+
+{/* 説明 */}
+
+1行目の `3 ** 5` はべき乗（exponentiation）の計算です。`3` を5回掛け合わせた `243` になります。
+
+2行目の `10 % 3` は剰余（remainder）です。10を3で割った余りの `1` を返します。`%` の記号を使います。
+
+3行目の `10 // 3` は整数除算（floor division）です。10を3で割った商を、小数点以下を切り捨てた整数の `3` で返します。
+
+`//` は `%` と対になっています。割った商を `//` で、余りを `%` で求めれば、割り算の結果を2つの整数に分けられます。
+
+`**` は `*` や `/` より先に計算されます。`2 * 3 ** 2` は `2 * 9` として計算され、`18` になります。
+
+{/* よくある間違い */}
+
+<Mistake id="pow-needs-int" code={`n = input()
+print(3 ** n)`} stdin={`5`} error={`TypeError: unsupported operand type(s) for ** or pow(): 'int' and 'str'`}>
+`input()` の結果は文字列です。べき乗の計算に使う前に `int()` で整数に変えてください。
+</Mistake>
+
+<Mistake id="mod-by-zero" code={`print(10 % 0)`} error={`ZeroDivisionError: division by zero`}>
+0で割ることはできません。`%` と `//` のどちらも、右側の数が0だとエラーになります。
+</Mistake>
+
+{/* 課題 */}
+
+<Exercise
+  id="python-02-operators-t1"
+  kind="trace"
+  tests={[{ kind: 'stdout' }]}
+  hints={[]}
+  mistakes={['pow-needs-int', 'mod-by-zero']}
+>
+次のコードを入力して実行してください。
+
+```python
+print(2 ** 4)
+print(13 % 5)
+print(13 // 5)
+```
+</Exercise>
+
+<Exercise
+  id="python-02-operators-m1"
+  kind="modify"
+  starter={`print(2 ** 4)
+print(13 % 5)
+print(13 // 5)`}
+  tests={[{ kind: 'stdout' }]}
+  hints={[]}
+  mistakes={['pow-needs-int']}
+>
+上のコードを書き換えて、`2 ** 10` と `20 % 6` と `20 // 6` を表示するようにしてください。
+</Exercise>
+
+<Exercise
+  id="python-02-operators-m2"
+  kind="modify"
+  starter={`seconds = 90
+minutes = seconds // 60
+print(minutes)`}
+  tests={[{ kind: 'stdout' }]}
+  hints={['余りを求める演算子を、上の「説明」で確認してください。']}
+  mistakes={['mod-by-zero']}
+>
+上のコードを書き換えて、`minutes` の下に、90秒を60で割った余りを表示する行を足してください。
+</Exercise>
+
+<Exercise
+  id="python-02-operators-b1"
+  kind="build"
+  stdin={`125`}
+  tests={[
+    { kind: 'stdout', stdin: `125\n` },
+    { kind: 'stdout', stdin: `59\n` },
+    { kind: 'stdout', stdin: `0\n` },
+    { kind: 'stdout', stdin: `3661\n` },
+    { kind: 'stdout', stdin: `60\n` },
+  ]}
+  hints={[
+    '入力欄の1行を `int()` で整数に変えて読み取ります。',
+    '60で割った商が分、余りが秒です。'
+  ]}
+  mistakes={['pow-needs-int', 'mod-by-zero']}
+>
+入力欄の1行から秒数を読み取り、`2分5秒` のように「分」と「秒」に分けて1行で表示するプログラムを書いてください。
+</Exercise>
+
+{/* つながり */}
+
+`**` `%` `//` を使い分けられるようになりました。次の節では、複数の演算子が並んだ式の計算順を扱います。

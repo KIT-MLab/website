@@ -1,0 +1,112 @@
+---
+id: python-02-math
+chapter: 02-numbers
+title: mathモジュールを使う
+minutes: 14
+terms: [import, モジュール, math]
+---
+
+{/* 困る例 */}
+
+平方根や円周率を使う計算をしたくても、`print` や `+` `-` `*` `/` だけでは書けません。自分で近い値を探すのは大変です。
+
+{/* やってみる */}
+
+次のコードの ▶ を押してください。
+
+<Run
+  code={`import math
+print(math.sqrt(2))
+print(math.pi)`}
+  out={`1.4142135623730951
+3.141592653589793`}
+/>
+
+{/* 説明 */}
+
+1行目の `import math` は、math というモジュール（module）を読み込む文です。モジュールは、関連する関数や値をまとめたファイルです。
+
+2行目の `math.sqrt(2)` は、2の平方根を計算します。`モジュール名.関数名` の形で、モジュールの中の関数を呼び出します。
+
+3行目の `math.pi` は円周率の値です。かっこが無いのは、これが呼び出す関数ではなく、あらかじめ用意された値だからです。
+
+`import` を書き忘れると、`math` という名前が見つからずエラーになります。使う前に必ず1回読み込んでください。
+
+{/* よくある間違い */}
+
+<Mistake id="math-not-imported" code={`print(math.sqrt(4))`} error={`NameError: name 'math' is not defined`}>
+`import math` を書く前に `math` を使っています。ファイルの先頭で1回 `import math` してください。
+</Mistake>
+
+<Mistake id="sqrt-negative" code={`import math
+print(math.sqrt(-4))`} error={`ValueError: expected a nonnegative input, got -4.0`}>
+負の数の平方根は実数の範囲で計算できません。`math.sqrt()` に渡す値が0以上か確認してください。
+</Mistake>
+
+{/* 課題 */}
+
+<Exercise
+  id="python-02-math-t1"
+  kind="trace"
+  tests={[{ kind: 'stdout' }]}
+  hints={[]}
+  mistakes={['math-not-imported', 'sqrt-negative']}
+>
+次のコードを入力して実行してください。
+
+```python
+import math
+print(math.sqrt(9))
+print(math.pi)
+```
+</Exercise>
+
+<Exercise
+  id="python-02-math-m1"
+  kind="modify"
+  starter={`import math
+print(math.sqrt(9))`}
+  tests={[{ kind: 'stdout' }]}
+  hints={[]}
+  mistakes={['math-not-imported']}
+>
+上のコードを書き換えて、`16` の平方根を表示してください。`4.0` と表示されれば合っています。
+</Exercise>
+
+<Exercise
+  id="python-02-math-m2"
+  kind="modify"
+  starter={`import math
+print(math.sqrt(2 ** 2 + 3 ** 2))`}
+  tests={[{ kind: 'stdout' }]}
+  hints={['前の節で扱った `**` を、2つとも書き換えます。']}
+  mistakes={['sqrt-negative']}
+>
+上のコードを書き換えて、`3 ** 2` と `4 ** 2` の和の平方根を表示してください。`5.0` と表示されれば合っています。
+</Exercise>
+
+<Exercise
+  id="python-02-math-b1"
+  kind="build"
+  stdin={`3`}
+  tests={[
+    { kind: 'stdout', stdin: `0\n` },
+    { kind: 'stdout', stdin: `1\n` },
+    { kind: 'stdout', stdin: `2.5\n` },
+    { kind: 'stdout', stdin: `10\n` },
+  ]}
+  hints={[
+    '半径の入力には小数もあります。読み取り方を第1節の `float()` の説明で確認してください。',
+    '円周率の値を、上の「説明」で確認してください。',
+  ]}
+  mistakes={['math-not-imported']}
+  forbid={['3.14']}
+>
+入力欄から半径を読み取ってください。円周の長さと面積を、小数第2位までの形で `円周:6.28 面積:3.14` のように1行で表示します。
+
+円周率は `math` から取ってください。`3.14` のように自分で書いた値は使えません。
+</Exercise>
+
+{/* つながり */}
+
+モジュールを読み込んで使えるようになりました。次の節では、ここまでの道具で点数表の平均を整えます。

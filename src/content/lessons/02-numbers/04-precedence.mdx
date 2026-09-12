@@ -1,0 +1,107 @@
+---
+id: python-02-precedence
+chapter: 02-numbers
+title: 計算の順番とかっこ
+minutes: 12
+terms: [優先順位]
+---
+
+{/* 困る例 */}
+
+`2 + 3 * 4` を計算すると、左から順に `20` になりそうですが、Python では `14` になります。思った順番で計算させる書き方が分かりません。
+
+{/* やってみる */}
+
+次のコードの ▶ を押してください。
+
+<Run
+  code={`print(2 + 3 * 4)
+print((2 + 3) * 4)`}
+  out={`14
+20`}
+/>
+
+{/* 説明 */}
+
+Python は `*` と `/` を、`+` と `-` より先に計算します。この順番を優先順位（precedence）と呼びます。
+
+1行目の `2 + 3 * 4` は、先に `3 * 4` が計算されて `12` になり、`2` を足した `14` になります。`**` は `*` よりさらに先に計算されます。
+
+2行目の `(2 + 3) * 4` は `()` で囲んだ `2 + 3` が最初に計算され、`5` になってから `4` を掛けます。`()` は優先順位を無視して、中を最初に計算させます。
+
+かっこは何重にも重ねられます。`((2 + 3) * 4) - 1` のように書くと、内側の `()` から順に計算され、`19` になります。式が複雑になったら、かっこで区切ると読みやすくなります。
+
+{/* よくある間違い */}
+
+<Mistake id="missing-close-paren" code={`print((2 + 3) * 4`} error={`SyntaxError: '(' was never closed`}>
+`(` の数だけ `)` が要ります。開いたかっこを閉じ忘れていないか、行の終わりを確認してください。
+</Mistake>
+
+<Mistake id="extra-close-paren" code={`print((2 + 3) * 4))`} error={`SyntaxError: unmatched ')'`}>
+`)` が `(` より1つ多くなっています。対応するかっこの数を数え直してください。
+</Mistake>
+
+{/* 課題 */}
+
+<Exercise
+  id="python-02-precedence-t1"
+  kind="trace"
+  tests={[{ kind: 'stdout' }]}
+  hints={[]}
+  mistakes={['missing-close-paren', 'extra-close-paren']}
+>
+次のコードを入力して実行してください。
+
+```python
+print(5 + 2 * 3)
+print((5 + 2) * 3)
+```
+</Exercise>
+
+<Exercise
+  id="python-02-precedence-m1"
+  kind="modify"
+  starter={`print(5 + 2 * 3)
+print((5 + 2) * 3)`}
+  tests={[{ kind: 'stdout' }]}
+  hints={[]}
+  mistakes={['missing-close-paren']}
+>
+上のコードを書き換えて、`4 + 3 * 2` と `(4 + 3) * 2` を表示するようにしてください。
+</Exercise>
+
+<Exercise
+  id="python-02-precedence-m2"
+  kind="modify"
+  starter={`print(2 + 3 * 4)`}
+  tests={[{ kind: 'stdout' }]}
+  hints={['`()` を使うと、中の計算を先に行わせられます。']}
+  mistakes={['extra-close-paren']}
+>
+上のコードを書き換えて、先に `2 + 3` を計算してから `4` を掛けた値を表示してください。`20` と表示されれば合っています。
+</Exercise>
+
+<Exercise
+  id="python-02-precedence-b1"
+  kind="build"
+  stdin={`2
+3
+4`}
+  tests={[
+    { kind: 'stdout', stdin: `2\n3\n4\n` },
+    { kind: 'stdout', stdin: `3\n4\n0\n` },
+    { kind: 'stdout', stdin: `-2\n3\n4\n` },
+    { kind: 'stdout', stdin: `2\n2\n2\n` },
+  ]}
+  hints={[
+    '3つの数を読み取るには `input()` と `int()` を3回使います。',
+    '「1つ目と2つ目を先に足す」ことを `()` でどう表すか、上の「説明」を見てください。',
+  ]}
+  mistakes={['missing-close-paren', 'extra-close-paren']}
+>
+3つの数を読み取ってください。「1つ目と2つ目の和に3つ目を掛けた値」と「1つ目に2つ目と3つ目の積を足した値」を、この順に1行ずつ表示します。
+</Exercise>
+
+{/* つながり */}
+
+計算の順番をかっこで制御できるようになりました。次の節では、平方根や円周率を計算する道具を扱います。
