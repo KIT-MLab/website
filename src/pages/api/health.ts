@@ -10,8 +10,13 @@
  *
  * 全体を try で包んでいるのは、**紐付けが無いときに 500 で終わらせないため**。
  * 何が無いのかを知るための口が、無いことで落ちては役に立たない。
+ *
+ * 紐付けの取り方は Astro v6 で変わった。locals.runtime.env は廃止され、
+ * cloudflare:workers の env を読む。この import は Worker の中でだけ解決できるので、
+ * prerender = false のルートに限る。
  */
 import type { APIRoute } from 'astro';
+import { env as workerEnv } from 'cloudflare:workers';
 
 export const prerender = false;
 
@@ -23,17 +28,15 @@ function json(body: unknown): Response {
 
 const message = (e: unknown) => (e instanceof Error ? `${e.name}: ${e.message}` : String(e));
 
-export const GET: APIRoute = async (context) => {
+export const GET: APIRoute = async () => {
   const out: Record<string, string> = {};
 
   let env: Record<string, unknown> = {};
   try {
-    const runtime = (context.locals as { runtime?: { env?: Record<string, unknown> } }).runtime;
-    env = runtime?.env ?? {};
-    out.runtime = runtime ? 'あり' : 'なし';
+    env = (workerEnv ?? {}) as Record<string, unknown>;
     out.bindings = Object.keys(env).sort().join(' ') || '(空)';
   } catch (e) {
-    out.runtime = `読めない: ${message(e)}`;
+    out.bindings = `読めない: ${message(e)}`;
     return json(out);
   }
 
