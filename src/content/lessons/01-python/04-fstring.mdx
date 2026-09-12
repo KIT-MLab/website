@@ -1,0 +1,114 @@
+---
+id: python-01-fstring
+chapter: 01-python
+title: f文字列で文章にまとめる
+minutes: 14
+terms: [f文字列, str]
+---
+
+{/* 困る例 */}
+
+名前と点数を1行にまとめて表示したいとします。`"点数は" + 80` のように文字列と数を `+` でつなぐと、Pythonはエラーで止まり、報告の文が作れません。
+
+{/* やってみる */}
+
+次のコードの ▶ を押してください。
+
+<Run
+  code={`name = "佐藤"
+score = 80
+print(f"名前:{name} 点数:{score}")`}
+  out={`名前:佐藤 点数:80`}
+/>
+
+{/* 説明 */}
+
+文字列の前に `f` を付けたものをf文字列（f-string）と呼びます。`{name}` のように `{}` の中に変数を書くと、その値が文字列の中に展開されます。
+
+1行目の `{name}` には `"佐藤"` が、`{score}` には `80` が入ります。数値も `{}` の中に書けば、そのまま文字の並びとして出ます。
+
+`{}` の中には、変数だけでなく計算の式も書けます。`{100 - score}` のように書くと、計算した結果がそのまま文字列に展開されます。
+
+`+` で数値を文字列とつなぐときは、先に `str()` で文字列に変えます。`"点数は" + str(80)` は `"点数は80"` になります。f文字列を使えば、この `str()` を書かずに済みます。
+
+{/* よくある間違い */}
+
+<Mistake id="str-plus-int-literal" code={`print("点数は" + 80)`} error={`TypeError: can only concatenate str (not "int") to str`}>
+文字列と数値は `+` で直接つなげません。`str(80)` のように文字列に変えるか、f文字列を使ってください。
+</Mistake>
+
+<Mistake id="fstring-missing-brace" code={`name = "佐藤"
+print(f"名前:{name")`} error={`SyntaxError: f-string: expecting '}'`}>
+`{` に対応する `}` が抜けています。f文字列の `{}` は開いたら必ず閉じてください。
+</Mistake>
+
+{/* 課題 */}
+
+<Exercise
+  id="python-01-fstring-t1"
+  kind="trace"
+  tests={[{ kind: 'stdout' }]}
+  hints={[]}
+  mistakes={['str-plus-int-literal', 'fstring-missing-brace']}
+>
+次のコードを入力して実行してください。
+
+```python
+name = "鈴木"
+score = 95
+print(f"名前:{name} 点数:{score}")
+```
+</Exercise>
+
+<Exercise
+  id="python-01-fstring-m1"
+  kind="modify"
+  starter={`name = "鈴木"
+score = 95
+print(f"名前:{name} 点数:{score}")`}
+  tests={[{ kind: 'stdout' }]}
+  hints={[]}
+  mistakes={['fstring-missing-brace']}
+>
+上のコードを書き換えて、`点数:95` の後ろに `点` を付けて `点数:95点` と表示してください。
+</Exercise>
+
+<Exercise
+  id="python-01-fstring-m2"
+  kind="modify"
+  starter={`name = "鈴木"
+score = 95
+print(f"名前:{name} 点数:{score}点")`}
+  tests={[{ kind: 'stdout' }]}
+  hints={[]}
+  mistakes={['fstring-missing-brace']}
+>
+上のコードを書き換えて、`点数:95点 名前:鈴木` のように、点数を先に、名前をあとに表示してください。
+</Exercise>
+
+<Exercise
+  id="python-01-fstring-b1"
+  kind="build"
+  stdin={`田中
+80`}
+  tests={[
+    { kind: 'stdout', stdin: `田中\n80\n` },
+    { kind: 'stdout', stdin: `佐藤\n0\n` },
+    { kind: 'stdout', stdin: `山田\n-10\n` },
+    { kind: 'stdout', stdin: `鈴木\n100\n` },
+  ]}
+  hints={[
+    '1行目を `input()` で読み取り、そのまま名前として使います。',
+    '2行目は `int(input())` で点数に変えます。',
+    '上の「説明」にある、`{}` に計算の式を書けることを思い出してください。',
+  ]}
+  mistakes={['str-plus-int-literal']}
+>
+入力欄の1行目を名前、2行目を点数として読み取ってください。名前・点数に加えて、100点まであと何点かを `名前:田中 点数:80点 残り20点` のように1行で表示します。
+
+判定に使う入力: `田中` と `80` / `佐藤` と `0` / `山田` と `-10` / `鈴木` と `100`
+</Exercise>
+
+{/* つながり */}
+
+文字列と数値を組み合わせて表示できるようになりました。次の節では、ここまでの道具を使って点数表を作ります。

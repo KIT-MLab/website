@@ -1,0 +1,118 @@
+---
+id: python-01-variable
+chapter: 01-python
+title: 変数に値を残す
+minutes: 14
+terms: [変数]
+---
+
+{/* 困る例 */}
+
+100円の品物の代金・税込み価格・割引後の価格を3行で計算するとします。`100` を3か所に書いた場合、値段が90円に変わると3か所とも書き直すことになります。
+
+{/* やってみる */}
+
+次のコードの ▶ を押してください。
+
+<Run
+  code={`price = 100
+print(price + 50)
+print(price - 20)`}
+  out={`150
+80`}
+/>
+
+{/* 説明 */}
+
+1行目の `price = 100` は、`price` という名前に `100` を結び付けています。これを変数（variable）と呼びます。`=` の左に名前、右に値を書きます。
+
+`=` は数学の等号とは違います。右の値を左の名前に結び付ける記号で、`price` と `100` が等しいという意味ではありません。
+
+2行目と3行目の `price` を書いた場所には、結び付けた `100` が入って計算されます。同じ値を2か所以上で使うとき、変数を使えば1か所を直すだけで済みます。
+
+`price = 150` のように書き直すと、値は新しいものに置き換わります。前の `100` という値は残らず、以後の `price` は `150` として扱われます。
+
+名前は自分で決められますが、途中に空白を入れることはできません。
+
+{/* よくある間違い */}
+
+<Mistake id="name-mismatch" code={`score = 80
+print(scores)`} error={`NameError: name 'scores' is not defined`}>
+`score` と `scores` は別の名前です。`scores` は定義されていないため、`NameError` になります。綴りを揃えてください。
+</Mistake>
+
+<Mistake id="name-with-space" code={`my score = 80
+print(my score)`} error={`SyntaxError: invalid syntax`}>
+変数名に空白を含めることはできません。`my_score` のように `_` でつなぐか、`myscore` のように詰めて書いてください。
+</Mistake>
+
+{/* 課題 */}
+
+<Exercise
+  id="python-01-variable-t1"
+  kind="trace"
+  tests={[{ kind: 'stdout' }]}
+  hints={[]}
+  mistakes={['name-mismatch', 'name-with-space']}
+>
+次のコードを入力して実行してください。
+
+```python
+age = 20
+print(age + 5)
+print(age - 5)
+```
+</Exercise>
+
+<Exercise
+  id="python-01-variable-m1"
+  kind="modify"
+  starter={`age = 20
+print(age + 5)
+print(age - 5)`}
+  tests={[{ kind: 'stdout' }]}
+  hints={[]}
+  mistakes={['name-mismatch']}
+>
+上のコードの `age` を `30` に変えて実行してください。`35` と `25` が表示されれば合っています。
+</Exercise>
+
+<Exercise
+  id="python-01-variable-m2"
+  kind="modify"
+  starter={`a = 3
+b = 5
+print(a)
+print(b)`}
+  tests={[{ kind: 'stdout' }]}
+  hints={['上の「説明」で見た、変数に値を代入する書き方を思い出してください。']}
+  mistakes={['name-mismatch']}
+>
+上のコードを書き換えて、`a` と `b` の和を `c` という変数に入れ、`c` の値だけを表示してください。
+</Exercise>
+
+<Exercise
+  id="python-01-variable-b1"
+  kind="build"
+  stdin={`5
+3`}
+  tests={[
+    { kind: 'stdout', stdin: `5\n3\n` },
+    { kind: 'stdout', stdin: `0\n0\n` },
+    { kind: 'stdout', stdin: `-2\n-7\n` },
+    { kind: 'stdout', stdin: `1\n2\n` },
+  ]}
+  hints={[
+    '`input()` を2回呼んで、それぞれ `int()` で整数にしてから変数に入れます。',
+    '`a = b` のあとに `b = a` と書くと、`a` の元の値も `b` と同じになるかを確かめてください。',
+  ]}
+  mistakes={['name-mismatch', 'name-with-space']}
+>
+入力欄の2行を読み取り、1行目の値と2行目の値を入れ替えて、入れ替えたあとの順で表示するプログラムを書いてください。
+
+判定に使う入力: `5` と `3` / `0` と `0` / `-2` と `-7` / `1` と `2`
+</Exercise>
+
+{/* つながり */}
+
+値を名前で残せるようになりました。次の節では、文字列と数値を1つの行にまとめて表示する方法を扱います。

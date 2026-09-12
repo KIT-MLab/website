@@ -1,0 +1,128 @@
+---
+id: python-01-scores
+chapter: 01-python
+title: 点数表を作る
+minutes: 16
+terms: []
+---
+
+{/* 困る例 */}
+
+国語・数学・英語の点数から合計と平均を出したいとします。点数を受け取り、名前で覚えておき、結果を文章で示せないと、確認するたびにコードを書き換えることになります。
+
+{/* やってみる */}
+
+次のコードの ▶ を押してください。
+
+<Run
+  code={`japanese = 80
+mathematics = 70
+total = japanese + mathematics
+print(f"合計{total}点")`}
+  out={`合計150点`}
+/>
+
+{/* 説明 */}
+
+1行目と2行目は変数（第3節）です。点数に名前を付けて残しています。3行目は `+` で合計を計算し、`total` という変数に入れています。
+
+4行目はf文字列（第4節）です。`{total}` の場所に計算した値が入り、1行の文章になります。入力欄から点数を受け取るときは `input()` と `int()`（第2節）を使います。
+
+教科が増えても、変数を増やして `+` でつなげば合計が出せます。平均は合計を教科の数で割れば求まります。
+
+教科の数がもっと増えると、変数を増やすたびにコードも長くなります。値をまとめて扱うリストは、第4章で扱います。リストを使うと、教科の数が変わっても同じ書き方で処理できます。
+
+{/* よくある間違い */}
+
+<Mistake id="forgot-int" code={`japanese = int(input())
+mathematics = input()
+english = int(input())
+print(japanese + mathematics + english)`} stdin={`80
+70
+90`} error={`TypeError: unsupported operand type(s) for +: 'int' and 'str'`}>
+`mathematics` だけ `int()` を付け忘れています。`input()` の結果は文字列なので、計算する前に必ず整数に変えてください。エラー文の `int` と `str` は、`japanese` が整数、`mathematics` が文字列のままであることを示しています。
+</Mistake>
+
+<Mistake id="total-mismatch" code={`japanese = 80
+mathematics = 70
+english = 90
+total = japanese + mathematics + english
+print(f"合計{totals}点")`} error={`NameError: name 'totals' is not defined`}>
+`total` と `totals` は別の名前です。`totals` は定義されていないため、`NameError` になります。合計を表す変数名をそろえてください。
+</Mistake>
+
+{/* 課題 */}
+
+<Exercise
+  id="python-01-scores-t1"
+  kind="trace"
+  tests={[{ kind: 'stdout' }]}
+  hints={[]}
+  mistakes={['forgot-int', 'total-mismatch']}
+>
+次のコードを入力して実行してください。
+
+```python
+japanese = 65
+mathematics = 82
+total = japanese + mathematics
+print(f"合計{total}点")
+```
+</Exercise>
+
+<Exercise
+  id="python-01-scores-m1"
+  kind="modify"
+  starter={`japanese = 65
+mathematics = 82
+total = japanese + mathematics
+print(f"合計{total}点")`}
+  tests={[{ kind: 'stdout' }]}
+  hints={[]}
+  mistakes={['total-mismatch']}
+>
+上のコードを書き換えて、`english = 70` も合計に加えてください。`合計217点` と表示されれば合っています。
+</Exercise>
+
+<Exercise
+  id="python-01-scores-m2"
+  kind="modify"
+  starter={`japanese = 60
+mathematics = 70
+english = 80
+total = japanese + mathematics + english
+print(f"合計{total}点")`}
+  tests={[{ kind: 'stdout' }]}
+  hints={['上の「説明」に書いた、平均の求め方を確認してください。']}
+  mistakes={['total-mismatch']}
+>
+上のコードを書き換えて、平均も表示してください。`平均70.0点 合計210点` のように、平均を先に、合計をあとに表示してください。
+</Exercise>
+
+<Exercise
+  id="python-01-scores-b1"
+  kind="build"
+  stdin={`80
+70
+90`}
+  tests={[
+    { kind: 'stdout', stdin: `80\n70\n90\n` },
+    { kind: 'stdout', stdin: `0\n0\n0\n` },
+    { kind: 'stdout', stdin: `100\n50\n0\n` },
+    { kind: 'stdout', stdin: `60\n60\n60\n` },
+  ]}
+  hints={[
+    '3つの `input()` と `int()` で点数を読み取り、変数に入れます。',
+    '合計は `+` でつなげます。',
+    '上の「説明」に書いた、平均の求め方を確認してください。',
+  ]}
+  mistakes={['forgot-int', 'total-mismatch']}
+>
+国語・数学・英語の順に3つの点数を読み取ってください。`合計240点 平均80.0点` のように合計と平均を1行で表示します。
+
+判定に使う入力: `80` と `70` と `90` / `0` と `0` と `0` / `100` と `50` と `0` / `60` と `60` と `60`
+</Exercise>
+
+{/* つながり */}
+
+点数を扱うプログラムができました。次の章では、平均をきれいな桁で表示し、基準点を変えやすくする書き方を扱います。
