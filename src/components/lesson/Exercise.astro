@@ -3,10 +3,18 @@
  * <Exercise> — 課題（10-lesson-and-writing.md 第3章、20-platform.md 第4章）。
  *
  * 問題文はサーバ側で組み、エディタと採点だけを島にする。
- * tests / hints / mistakes / forbid は scripts/build-tests.mjs が読んで
+ * hints / mistakes / forbid は scripts/build-tests.mjs が読んで
  * src/generated/lesson-data.json を作る。ここでは受け取るだけで使わない。
+ *
+ * tests はここでも使う。「組む」の「判定に使う入力」を tests から組んで出す
+ * （10-lesson-and-writing.md 第3.1節）。書き手が問題文に手で書くと、隠しテストと
+ * ずれても誰も気づかないため。手で書いたものは check-lessons.mjs が落とす。
  */
 import ExerciseBox from '../../lesson/ui/ExerciseBox';
+
+type Test =
+  | { kind: 'stdout'; stdin?: string }
+  | { kind: 'call'; fn: string; args?: unknown[] };
 
 interface Props {
   id: string;
@@ -15,23 +23,75 @@ interface Props {
   starter?: string;
   /** 入力欄の初期値 */
   stdin?: string;
-  tests?: unknown[];
+  tests?: Test[];
   hints?: string[];
   mistakes?: string[];
   forbid?: string[];
 }
 
-const { id, kind, starter, stdin } = Astro.props;
+const { id, kind, starter, stdin, tests } = Astro.props;
 
 /* 画面に出す名前。内部の呼び名（なぞる・変える・組む）は学習者には見せない。
    10-lesson-and-writing.md 第3章 */
 const STAGE: Record<string, string> = { trace: '例題', modify: '練習問題', build: '演習問題' };
+
+/* 値を Python の見た目で出す。src/lesson/grade.ts の showValue と同じ規則。
+   grade.ts は Pyodide の走らせ方を抱えているので、ここからは読まずに写している。 */
+function showValue(value: unknown): string {
+  if (value === null || value === undefined) return 'None';
+  if (typeof value === 'boolean') return value ? 'True' : 'False';
+  if (typeof value === 'string') return JSON.stringify(value);
+  if (Array.isArray(value)) return `[${value.map(showValue).join(', ')}]`;
+  return JSON.stringify(value);
+}
+
+/** 1件のテストを1組の値にほどく。stdout は入力欄の各行、call は呼び出しの形。 */
+function valuesOf(test: Test): string[] {
+  if (!test || typeof test !== 'object') return [];
+  if (test.kind === 'call') return [`${test.fn}(${(test.args ?? []).map(showValue).join(', ')})`];
+  const text = typeof test.stdin === 'string' ? test.stdin : '';
+  if (text === '') return [];
+  const lines = text.split('\n');
+  if (lines[lines.length - 1] === '') lines.pop();
+  return lines.map((line) => (line === '' ? '（空の行）' : line));
+}
+
+/* 1組が1行。組の区切りが目で分かることが要件（第3.1節）。 */
+const cases = kind === 'build' ? (tests ?? []).map(valuesOf) : [];
+const showCases = cases.some((values) => values.length > 0);
+/* 値の数が組ごとに違っても、縦の位置がそろうように。足りない分は最後の升が受ける */
+const columns = Math.max(1, ...cases.map((values) => values.length));
 ---
 
 <section class={`kit-ex kit-ex--${kind}`} id={id}>
   <p class="kit-ex__stage">{STAGE[kind] ?? kind}</p>
   <div class="kit-ex__in">
     <div class="kit-ex__prompt"><slot /></div>
+    {
+      showCases && (
+        <div class="kit-cases">
+          <p class="kit-cases__label">判定に使う入力</p>
+          <table class="kit-cases__table">
+            <tbody>
+              {cases.map((values, i) => (
+                <tr>
+                  <th scope="row">{i + 1}組目</th>
+                  {values.length === 0 ? (
+                    <td class="kit-cases__none" colspan={columns}>
+                      入力なし
+                    </td>
+                  ) : (
+                    values.map((value, j) => (
+                      <td colspan={j === values.length - 1 ? columns - values.length + 1 : 1}>{value}</td>
+                    ))
+                  )}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )
+    }
     <ExerciseBox client:load id={id} kind={kind} starter={starter} stdin={stdin} />
   </div>
 </section>

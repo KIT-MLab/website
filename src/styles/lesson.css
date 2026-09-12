@@ -667,6 +667,64 @@
   margin-bottom: 0;
 }
 
+/* --- 判定に使う入力（「組む」だけ） --------------------------
+ * tests から <Exercise> が組んで出す（10-lesson 第3.1節）。
+ * 1組が1行。組の区切りは行を分ける罫が示す。
+ * 札は増やさない（第10.6節。1節に4種類だけ）ので、見出しは素地の小さな文字。
+ * ------------------------------------------------------------ */
+.kit-cases {
+  margin-top: 16px;
+}
+
+.kit-cases__label {
+  margin: 0;
+  font-family: "Zen Old Mincho", serif;
+  font-size: 13px;
+  letter-spacing: 0.14em;
+  color: var(--l-ink-2);
+}
+
+.kit-cases__table {
+  border-collapse: collapse;
+  margin-top: 5px;
+  border-top: 1px solid var(--l-strong);
+}
+
+.kit-cases__table th,
+.kit-cases__table td {
+  text-align: left;
+  vertical-align: baseline;
+  padding: 4px 22px 4px 0;
+  border-bottom: 1px solid rgba(43, 38, 30, 0.22);
+}
+
+.kit-cases__table th {
+  font-family: "Zen Old Mincho", serif;
+  font-weight: 400;
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  color: var(--l-ink-2);
+  white-space: nowrap;
+  padding-right: 18px;
+}
+
+.kit-cases__table td {
+  font-family: var(--font-mono);
+  font-size: 14.5px;
+  line-height: 1.8;
+  word-break: break-word;
+}
+
+.kit-cases__table td:last-child {
+  padding-right: 0;
+}
+
+.kit-cases__table td.kit-cases__none {
+  font-family: "Zen Old Mincho", serif;
+  font-size: 13.5px;
+  color: var(--l-ink-2);
+}
+
 .kit-ex__work {
   margin-top: 12px;
 }

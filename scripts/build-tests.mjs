@@ -9,6 +9,9 @@
  * ついでに <Run> の out（併記した実行結果）が実際の出力と合っているかも確かめる。
  * 本文に嘘の実行結果が載ったまま公開されるのを止めるため。
  *
+ * 模範解答をすべてここで読むので、使い回しの照合もここでやる
+ * （10-lesson-and-writing.md 第3.5節「組む」は書き写しにしない）。
+ *
  *   node scripts/build-tests.mjs
  */
 import { mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
@@ -35,6 +38,33 @@ function listMdx(dir) {
 const failures = [];
 function fail(where, message) {
   failures.push(`${where}  ${message}`);
+}
+
+/** 画面に出す名前。落ちたときのメッセージを読む人向け（10-lesson-and-writing.md 第3章） */
+const STAGE = { trace: '例題', modify: '練習問題', build: '演習問題' };
+
+/**
+ * 空白と改行を落とす。字下げの深さ・行内の空白の数・空行・改行の位置の違いを無視する。
+ * 文字列の中の空白まで落ちるので、`"a b"` と `"ab"` は同じと見なす。
+ * 写したかどうかを見るための照合なので、そこまで似ていれば拾ってよい。
+ */
+function squash(code) {
+  return String(code ?? '').replace(/\s+/g, '');
+}
+
+/** 第3.5節の照合。空白と改行の違いを除いて同じか。 */
+function sameCode(a, b) {
+  const x = squash(a);
+  return x.length > 0 && x === squash(b);
+}
+
+/** ``` で囲んだコードを拾う。例題の「打つコード」は問題文の中にある。 */
+function fencedCode(text) {
+  const out = [];
+  const re = /```[^\n]*\n([\s\S]*?)```/g;
+  let m;
+  while ((m = re.exec(text)) !== null) out.push(m[1]);
+  return out;
 }
 
 /** 実行が失敗していたら、そのまま止める。模範解答が動かないまま出荷しないため。 */
@@ -96,6 +126,7 @@ for (const file of files) {
   }
 
   const exercises = {};
+  const solutions = [];
   for (const e of lesson.exercises) {
     const solutionPath = join(dirname(file), 'solutions', `${e.id}.py`);
     let solution;
@@ -105,6 +136,7 @@ for (const file of files) {
       fail(`${rel}:${e.line}`, `模範解答がありません: ${relative(ROOT, solutionPath).replace(/\\/g, '/')}`);
       continue;
     }
+    solutions.push({ id: e.id, kind: e.kind, line: e.line, code: solution });
 
     for (const forbidden of e.forbid) {
       if (solution.includes(forbidden)) {
@@ -152,6 +184,37 @@ for (const file of files) {
       mistakes: e.mistakes,
       forbid: e.forbid,
     };
+  }
+
+  // 模範解答の使い回しの照合（10-lesson-and-writing.md 第3.5節）。
+  // 「変える」の答えと「組む」の答えが1文字も違わない事故が起きたので、人の目に頼らない。
+  for (let i = 0; i < solutions.length; i++) {
+    for (let j = i + 1; j < solutions.length; j++) {
+      const [a, b] = [solutions[i], solutions[j]];
+      if (!sameCode(a.code, b.code)) continue;
+      fail(
+        `${rel}:${b.line}`,
+        `${STAGE[b.kind] ?? b.kind} ${b.id} の模範解答が、${STAGE[a.kind] ?? a.kind} ${a.id} の模範解答と同じです（空白と改行の違いを除いて）`,
+      );
+    }
+  }
+
+  // 「組む」は書き写しにしない（第3.5節）。同じ節の <Run> や例題の「打つコード」を
+  // そのまま写して通る形になっていないか。
+  const traceCode = lesson.exercises
+    .filter((e) => e.kind === 'trace')
+    .flatMap((e) => fencedCode(e.prompt).map((code) => ({ id: e.id, code })));
+  for (const b of solutions.filter((s) => s.kind === 'build')) {
+    for (const run of lesson.runs) {
+      if (sameCode(b.code, run.code)) {
+        fail(`${rel}:${b.line}`, `演習問題 ${b.id} の模範解答が、${run.line}行目の <Run> のコードと同じです`);
+      }
+    }
+    for (const t of traceCode) {
+      if (sameCode(b.code, t.code)) {
+        fail(`${rel}:${b.line}`, `演習問題 ${b.id} の模範解答が、例題 ${t.id} の打つコードと同じです`);
+      }
+    }
   }
 
   lessons[lessonId] = {
