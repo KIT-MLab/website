@@ -1,0 +1,136 @@
+---
+id: python-03-andor
+chapter: 03-branch
+title: and・or・notで条件を組み合わせる
+minutes: 16
+terms: [and, or, not]
+---
+
+{/* 困る例 */}
+
+点数が60以上80未満のときだけ「合格ラインです」と出したいとします。2つの条件を同時に満たすかどうかを、1つのifでまだ書けません。
+
+{/* やってみる */}
+
+次のコードの ▶ を押してください。
+
+<Run
+  code={`score = 55
+if score >= 60 and score < 80:
+    print("合格ラインです")
+else:
+    print("合格ラインではありません")`}
+  out={`合格ラインではありません`}
+/>
+
+{/* 説明 */}
+
+2行目の `score >= 60 and score < 80` はandを使った条件です。`and` の両側が両方成り立つときだけ、全体が成り立ちます。
+
+`or` は、両側のどちらか一方でも成り立てば全体が成り立ちます。`score < 0 or score > 100` は、0未満か100より大きいかのどちらかで成り立ちます。
+
+`not` は、条件の成り立つ・成り立たないを反転させます。`not (score >= 60)` は `score >= 60` が成り立たないときに成り立ちます。
+
+`and` は `or` より先に評価されます。複数を組み合わせるときは、`()` で区切ると意図が伝わりやすくなります。
+
+{/* よくある間違い */}
+
+<Mistake
+  id="andor-double-amp"
+  code={`score = 70
+if score >= 60 && score < 80:
+    print("合格ラインです")`}
+  error={`SyntaxError: invalid syntax`}
+>
+`&&` という書き方はありません。両方が成り立つ条件には `and` を使います。
+</Mistake>
+
+<Mistake
+  id="andor-missing-colon"
+  code={`score = 70
+if score >= 60 and score < 80
+    print("合格ラインです")`}
+  error={`SyntaxError: expected ':'`}
+>
+条件が長くなっても、行の最後に `:` が要ります。コロンが抜けていないか確かめてください。
+</Mistake>
+
+{/* 課題 */}
+
+<Exercise
+  id="python-03-andor-t1"
+  kind="trace"
+  tests={[{ kind: 'stdout' }]}
+  hints={[]}
+  mistakes={['andor-double-amp', 'andor-missing-colon']}
+>
+次のコードを入力して実行してください。
+
+```python
+score = 65
+if score >= 60 and score < 80:
+    print("合格ラインです")
+else:
+    print("合格ラインではありません")
+```
+</Exercise>
+
+<Exercise
+  id="python-03-andor-m1"
+  kind="modify"
+  starter={`score = 65
+if score >= 60 and score < 80:
+    print("合格ラインです")
+else:
+    print("合格ラインではありません")`}
+  tests={[{ kind: 'stdout' }]}
+  hints={[]}
+  mistakes={['andor-missing-colon']}
+>
+上のコードの `score` を `85` に変えて実行してください。`合格ラインではありません` と表示されれば合っています。
+</Exercise>
+
+<Exercise
+  id="python-03-andor-m2"
+  kind="modify"
+  starter={`score = 50
+if score < 0 or score > 100:
+    print("範囲外です")
+else:
+    print("範囲内です")`}
+  tests={[{ kind: 'stdout' }]}
+  hints={[]}
+  mistakes={['andor-double-amp']}
+>
+上のコードの `score` を `120` に変えて実行してください。`範囲外です` と表示されれば合っています。
+</Exercise>
+
+<Exercise
+  id="python-03-andor-b1"
+  kind="build"
+  stdin={`2024`}
+  forbid={['elif']}
+  tests={[
+    { kind: 'stdout', stdin: `2000\n` },
+    { kind: 'stdout', stdin: `1900\n` },
+    { kind: 'stdout', stdin: `2024\n` },
+    { kind: 'stdout', stdin: `2023\n` },
+    { kind: 'stdout', stdin: `0\n` },
+  ]}
+  hints={[
+    '`%` を使って割り切れるかどうかを確かめます。第2章の内容を思い出してください。',
+    '3つの条件をどう組み合わせるか、上の「説明」の `and`・`or` の使い方を見直してください。',
+  ]}
+  mistakes={['andor-double-amp', 'andor-missing-colon']}
+>
+入力欄の1行を西暦の年として読み取り、閏年かどうかを判定するプログラムを書いてください。
+閏年なら `うるう年です`、そうでなければ `うるう年ではありません` と表示します。
+
+閏年は4で割り切れる年です。ただし100で割り切れる年は除きます。ただし400で割り切れる年は含みます。
+
+elifは使わず、1つのif文で判定してください。
+</Exercise>
+
+{/* つながり */}
+
+条件を組み合わせられるようになりました。次の節では、ここまでの道具で点数表に合否を付けます。

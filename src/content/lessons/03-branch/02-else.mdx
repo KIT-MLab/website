@@ -1,0 +1,133 @@
+---
+id: python-03-else
+chapter: 03-branch
+title: elseで当てはまらない場合を書く
+minutes: 12
+terms: [else]
+---
+
+{/* 困る例 */}
+
+点数が60点未満のとき「不合格です」と出したいとします。ifだけでは、条件が成り立たないときに実行する行を指定できません。
+
+{/* やってみる */}
+
+次のコードの ▶ を押してください。
+
+<Run
+  code={`score = 45
+if score >= 60:
+    print("合格です")
+else:
+    print("不合格です")`}
+  out={`不合格です`}
+/>
+
+{/* 説明 */}
+
+3行目の `else:` はelseです。ifの条件が成り立たなかったときの処理を、直後のまとまりに書きます。
+
+`else` には条件を書きません。ifの条件が成り立つかどうかで、2つの処理のどちらか一方だけが実行されます。
+
+4行目の `print("不合格です")` はelseの中身で、3行目のifと同じ深さの字下げを付けます。`if` と `else` は対で使い、`else` だけを単独では書けません。
+
+このコードでは `score` が `45` なのでifの条件は成り立たず、elseの中身が実行されて `不合格です` が表示されます。ifとelseは片方しか動かないので、`合格です` と `不合格です` が同時に表示されることはありません。
+
+{/* よくある間違い */}
+
+<Mistake
+  id="else-zenkaku-colon"
+  code={`score = 45
+if score >= 60：
+    print("合格です")
+else:
+    print("不合格です")`}
+  error={`SyntaxError: invalid character '：' (U+FF1A)`}
+>
+コロンが全角になっています。`:` は半角で入力してください。日本語入力がオンだと全角になります。
+</Mistake>
+
+<Mistake
+  id="else-eq-mixup"
+  code={`score = 45
+if score = 60:
+    print("ちょうど60点です")
+else:
+    print("60点ではありません")`}
+  error={`SyntaxError: invalid syntax. Maybe you meant '==' or ':=' instead of '='?`}
+>
+比べるときは `==` を使います。`=` は変数に値を入れる記号で、比べる記号ではありません。
+</Mistake>
+
+{/* 課題 */}
+
+<Exercise
+  id="python-03-else-t1"
+  kind="trace"
+  tests={[{ kind: 'stdout' }]}
+  hints={[]}
+  mistakes={['else-zenkaku-colon', 'else-eq-mixup']}
+>
+次のコードを入力して実行してください。
+
+```python
+score = 55
+if score >= 60:
+    print("合格です")
+else:
+    print("不合格です")
+```
+</Exercise>
+
+<Exercise
+  id="python-03-else-m1"
+  kind="modify"
+  starter={`score = 55
+if score >= 60:
+    print("合格です")
+else:
+    print("不合格です")`}
+  tests={[{ kind: 'stdout' }]}
+  hints={[]}
+  mistakes={['else-eq-mixup']}
+>
+上のコードの `score` を `72` に変えて実行してください。`合格です` と表示されれば合っています。
+</Exercise>
+
+<Exercise
+  id="python-03-else-m2"
+  kind="modify"
+  starter={`number = -4
+if number >= 0:
+    print("0以上です")
+else:
+    print("負の数です")`}
+  tests={[{ kind: 'stdout' }]}
+  hints={[]}
+  mistakes={['else-zenkaku-colon']}
+>
+上のコードの `number` を `9` に変えて実行してください。`0以上です` と表示されれば合っています。
+</Exercise>
+
+<Exercise
+  id="python-03-else-b1"
+  kind="build"
+  stdin={`4`}
+  tests={[
+    { kind: 'stdout', stdin: `4\n` },
+    { kind: 'stdout', stdin: `7\n` },
+    { kind: 'stdout', stdin: `0\n` },
+    { kind: 'stdout', stdin: `-3\n` },
+  ]}
+  hints={[
+    '偶数かどうかは、2で割った余りが0かどうかで判定します。第2章の `%` を思い出してください。',
+    'ifの条件が成り立たない場合の処理を、elseに書きます。',
+  ]}
+  mistakes={['else-zenkaku-colon', 'else-eq-mixup']}
+>
+入力欄の1行を読み取り、その数が偶数なら `偶数です`、奇数なら `奇数です` と表示するプログラムを書いてください。
+</Exercise>
+
+{/* つながり */}
+
+成り立たなかったときの処理も書けるようになりました。次の節では、3段階以上に分けるelifを扱います。

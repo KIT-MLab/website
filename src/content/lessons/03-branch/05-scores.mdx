@@ -1,0 +1,164 @@
+---
+id: python-03-scores
+chapter: 03-branch
+title: 点数表に合否を付ける
+minutes: 16
+terms: []
+---
+
+{/* 困る例 */}
+
+第2章で作った点数表は、平均と基準点を表示するところまでです。基準点を上回っているかどうかは、自分の目で見比べる必要があります。
+
+{/* やってみる */}
+
+次のコードの ▶ を押してください。
+
+<Run
+  code={`japanese = 65
+mathematics = 82
+english = 70
+threshold = 60
+average = (japanese + mathematics + english) / 3
+if average >= threshold:
+    print(f"平均{round(average, 1)}点 合格")
+else:
+    print(f"平均{round(average, 1)}点 不合格")`}
+  out={`平均72.3点 合格`}
+/>
+
+{/* 説明 */}
+
+1〜5行目は前の章までに作った点数表です。変数（第1章）に点数を残し、平均を計算しています。
+
+6行目の `if average >= threshold:` はif文（第3章）です。平均が基準点以上かどうかを判定します。
+
+判定に使うのは、5行目で計算した `average` の値です。
+
+7〜9行目は、判定の結果に応じてf文字列（第1章）で表示を変えます。丸めた平均（`round`、第2章）に「合格」か「不合格」を続けます。
+
+基準点を変数にしているので、`threshold` の値を変えれば合格ラインを変えられます。`average` の値そのものは、ifの中でもelseの中でも変わりません。
+
+{/* よくある間違い */}
+
+<Mistake
+  id="scores-if-forgot-int"
+  code={`japanese = int(input())
+mathematics = input()
+english = int(input())
+threshold = 60
+average = (japanese + mathematics + english) / 3
+if average >= threshold:
+    print(f"平均{round(average, 1)}点 合格")
+else:
+    print(f"平均{round(average, 1)}点 不合格")`}
+  stdin={`80
+70
+90`}
+  error={`TypeError: unsupported operand type(s) for +: 'int' and 'str'`}
+>
+`mathematics` の `int()` を付け忘れています。3つとも整数に変えてから計算してください。
+</Mistake>
+
+<Mistake
+  id="scores-threshold-name"
+  code={`japanese = 80
+mathematics = 70
+english = 90
+average = (japanese + mathematics + english) / 3
+threshold = 60
+if average >= thresholds:
+    print(f"平均{round(average, 1)}点 合格")
+else:
+    print(f"平均{round(average, 1)}点 不合格")`}
+  error={`NameError: name 'thresholds' is not defined`}
+>
+`threshold` と `thresholds` は別の名前です。定義した名前とそろえてください。
+</Mistake>
+
+{/* 課題 */}
+
+<Exercise
+  id="python-03-scores-t1"
+  kind="trace"
+  tests={[{ kind: 'stdout' }]}
+  hints={[]}
+  mistakes={['scores-if-forgot-int', 'scores-threshold-name']}
+>
+次のコードを入力して実行してください。
+
+```python
+japanese = 40
+mathematics = 55
+english = 50
+threshold = 60
+average = (japanese + mathematics + english) / 3
+if average >= threshold:
+    print(f"平均{round(average, 1)}点 合格")
+else:
+    print(f"平均{round(average, 1)}点 不合格")
+```
+</Exercise>
+
+<Exercise
+  id="python-03-scores-m1"
+  kind="modify"
+  starter={`japanese = 40
+mathematics = 55
+english = 50
+threshold = 60
+average = (japanese + mathematics + english) / 3
+if average >= threshold:
+    print(f"平均{round(average, 1)}点 合格")
+else:
+    print(f"平均{round(average, 1)}点 不合格")`}
+  tests={[{ kind: 'stdout' }]}
+  hints={[]}
+  mistakes={['scores-threshold-name']}
+>
+上のコードの `threshold` を `40` に変えて実行してください。`平均48.3点 合格` と表示されれば合っています。
+</Exercise>
+
+<Exercise
+  id="python-03-scores-m2"
+  kind="modify"
+  starter={`japanese = 60
+mathematics = 60
+english = 60
+threshold = 60
+average = (japanese + mathematics + english) / 3
+if average >= threshold:
+    print(f"平均{round(average, 1)}点 合格")
+else:
+    print(f"平均{round(average, 1)}点 不合格")`}
+  tests={[{ kind: 'stdout' }]}
+  hints={[]}
+  mistakes={['scores-if-forgot-int']}
+>
+上のコードの `english` を `59` に変えて実行してください。`平均59.7点 不合格` と表示されれば合っています。
+</Exercise>
+
+<Exercise
+  id="python-03-scores-b1"
+  kind="build"
+  stdin={`80
+70
+90`}
+  tests={[
+    { kind: 'stdout', stdin: `80\n70\n90\n` },
+    { kind: 'stdout', stdin: `60\n60\n60\n` },
+    { kind: 'stdout', stdin: `0\n0\n0\n` },
+    { kind: 'stdout', stdin: `30\n20\n10\n` },
+  ]}
+  hints={[
+    '点数の読み取りは `input()` と `int()` を、平均の丸めは `round()` を使います。',
+    '合否の判定にはif文とelseを使います。',
+  ]}
+  mistakes={['scores-if-forgot-int', 'scores-threshold-name']}
+>
+入力欄の3行を国語・数学・英語の順に点数として読み取ってください。平均を小数第1位まで求め、基準点以上なら「合格」、そうでなければ「不合格」を、平均に続けて1行で表示します。基準点は `60` とし、変数にしてください。
+</Exercise>
+
+{/* つながり */}
+
+点数表に合否を付けられるようになりました。次の章では、人数ぶん繰り返して全員ぶん出すfor文を扱います。

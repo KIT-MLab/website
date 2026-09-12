@@ -1,0 +1,146 @@
+---
+id: python-03-elif
+chapter: 03-branch
+title: elifで3段階以上に分ける
+minutes: 14
+terms: [elif]
+---
+
+{/* 困る例 */}
+
+気温を「暑い」「ちょうどいい」「寒い」の3段階に分けたいとします。ifとelseだけでは2つにしか分けられず、3段階目を表せません。
+
+{/* やってみる */}
+
+次のコードの ▶ を押してください。
+
+<Run
+  code={`temperature = 32
+if temperature >= 30:
+    print("暑い")
+elif temperature >= 15:
+    print("ちょうどいい")
+else:
+    print("寒い")`}
+  out={`暑い`}
+/>
+
+{/* 説明 */}
+
+2行目と4行目の `if`・`elif` は、条件を上から順に確かめます。最初に成り立った条件のブロックだけが実行されます。
+
+1つ目の `if temperature >= 30` が成り立てば `暑い` が表示され、残りの条件は確かめられません。成り立たなければ、次の `elif temperature >= 15` に進みます。
+
+`elif` はいくつでも重ねられます。最後に置いた `else` は、どの条件にも当てはまらなかったときの処理です。
+
+境界の値がどちらに入るかは、比べる記号で決まります。`temperature` がちょうど `30` のときは最初のifが成り立ち、`暑い` になります。
+
+{/* よくある間違い */}
+
+<Mistake
+  id="elif-typo"
+  code={`score = 85
+if score >= 90:
+    print("優")
+elseif score >= 80:
+    print("良")
+else:
+    print("可")`}
+  error={`SyntaxError: invalid syntax`}
+>
+`elseif` という綴りはありません。`elif` と書いてください。
+</Mistake>
+
+<Mistake
+  id="elif-after-else"
+  code={`score = 85
+if score >= 90:
+    print("優")
+else:
+    print("可")
+elif score >= 80:
+    print("良")`}
+  error={`SyntaxError: 'elif' block follows an 'else' block`}
+>
+`elif` は `else` より前に置きます。並びを `if` → `elif` → `else` の順に直してください。
+</Mistake>
+
+{/* 課題 */}
+
+<Exercise
+  id="python-03-elif-t1"
+  kind="trace"
+  tests={[{ kind: 'stdout' }]}
+  hints={[]}
+  mistakes={['elif-typo', 'elif-after-else']}
+>
+次のコードを入力して実行してください。
+
+```python
+temperature = 5
+if temperature >= 30:
+    print("暑い")
+elif temperature >= 15:
+    print("ちょうどいい")
+else:
+    print("寒い")
+```
+</Exercise>
+
+<Exercise
+  id="python-03-elif-m1"
+  kind="modify"
+  starter={`temperature = 5
+if temperature >= 30:
+    print("暑い")
+elif temperature >= 15:
+    print("ちょうどいい")
+else:
+    print("寒い")`}
+  tests={[{ kind: 'stdout' }]}
+  hints={[]}
+  mistakes={['elif-typo']}
+>
+上のコードの `temperature` を `20` に変えて実行してください。`ちょうどいい` と表示されれば合っています。
+</Exercise>
+
+<Exercise
+  id="python-03-elif-m2"
+  kind="modify"
+  starter={`number = 150
+if number >= 100:
+    print("大きい")
+elif number >= 10:
+    print("普通")
+else:
+    print("小さい")`}
+  tests={[{ kind: 'stdout' }]}
+  hints={[]}
+  mistakes={['elif-after-else']}
+>
+上のコードの `number` を `5` に変えて実行してください。`小さい` と表示されれば合っています。
+</Exercise>
+
+<Exercise
+  id="python-03-elif-b1"
+  kind="build"
+  stdin={`95`}
+  tests={[
+    { kind: 'stdout', stdin: `95\n` },
+    { kind: 'stdout', stdin: `80\n` },
+    { kind: 'stdout', stdin: `60\n` },
+    { kind: 'stdout', stdin: `45\n` },
+    { kind: 'stdout', stdin: `0\n` },
+  ]}
+  hints={[
+    '点数の高い方から順に条件を確かめると書きやすくなります。',
+    '入力欄の1行を読み取るには、第1章の `input()` と `int()` を使います。',
+  ]}
+  mistakes={['elif-typo', 'elif-after-else']}
+>
+入力欄の1行を点数として読み取り、5段階の評価を表示するプログラムを書いてください。`90` 以上は `秀`、`80` 以上は `優`、`70` 以上は `良`、`60` 以上は `可`、それ未満は `不可` です。
+</Exercise>
+
+{/* つながり */}
+
+elifで3段階以上に分けられるようになりました。次の節では、1つの条件を組み合わせるand・or・notを扱います。

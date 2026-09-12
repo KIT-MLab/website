@@ -1,0 +1,137 @@
+---
+id: python-03-if
+chapter: 03-branch
+title: if文で条件によって処理を変える
+minutes: 14
+terms: [if文]
+---
+
+{/* 困る例 */}
+
+点数が60点以上なら「合格です」と出したいとします。これまでの書き方では、点数に関わらず同じ行が実行され、結果によって出す言葉を変えられません。
+
+{/* やってみる */}
+
+次のコードの ▶ を押してください。
+
+<Run
+  code={`score = 75
+if score >= 60:
+    print("合格です")
+print("判定を終えました")`}
+  out={`合格です
+判定を終えました`}
+/>
+
+{/* 説明 */}
+
+2行目の `if score >= 60:` はif文（if statement）です。`if` の後ろに条件を書き、行の最後に `:` を置きます。
+
+条件が成り立つとき、下の行が実行されます。3行目の `print("合格です")` は行の頭に空白があります。この空白を字下げ（インデント）と呼び、if文の中身であることを示します。
+
+`score >= 60` は、`score` が `60` 以上かどうかを表す条件です。`>=` は以上、`<=` は以下を表します。条件が成り立たなければ、字下げされた行は実行されません。
+
+4行目の `print("判定を終えました")` には字下げがなく、if文の外にあります。条件の成り立つ・成り立たないに関わらず、この行は必ず実行されます。
+
+<Level0 title="字下げの入力方法">
+行の頭に空白を入れるときは、`Tab` キーを押すか、半角空白を4つ続けて入力します。コロンで終わる行の次の行は、多くのエディタが自動で頭をそろえます。
+</Level0>
+
+{/* よくある間違い */}
+
+<Mistake
+  id="if-missing-colon"
+  code={`score = 75
+if score >= 60
+    print("合格です")`}
+  error={`SyntaxError: expected ':'`}
+>
+if文の条件の後ろに `:` がありません。行の最後にコロンを付けてください。
+</Mistake>
+
+<Mistake
+  id="if-missing-indent"
+  code={`score = 75
+if score >= 60:
+print("合格です")`}
+  error={`IndentationError: expected an indented block after 'if' statement on line 2`}
+>
+if文の中身の行に字下げがありません。`if` の次の行の頭に半角空白を入れてください。
+</Mistake>
+
+<Mistake
+  id="if-arrow"
+  code={`score = 75
+if score => 60:
+    print("合格です")`}
+  error={`SyntaxError: invalid syntax`}
+>
+`=>` という書き方はありません。「以上」を表すには `>=` と書きます。
+</Mistake>
+
+{/* 課題 */}
+
+<Exercise
+  id="python-03-if-t1"
+  kind="trace"
+  tests={[{ kind: 'stdout' }]}
+  hints={[]}
+  mistakes={['if-missing-colon', 'if-missing-indent', 'if-arrow']}
+>
+次のコードを入力して実行してください。
+
+```python
+number = -3
+if number < 0:
+    print("負の数です")
+```
+</Exercise>
+
+<Exercise
+  id="python-03-if-m1"
+  kind="modify"
+  starter={`number = -3
+if number < 0:
+    print("負の数です")`}
+  tests={[{ kind: 'stdout' }]}
+  hints={[]}
+  mistakes={['if-missing-indent']}
+>
+上のコードの `number` を `8` に変えて実行してください。何も表示されなければ合っています。
+</Exercise>
+
+<Exercise
+  id="python-03-if-m2"
+  kind="modify"
+  starter={`number = 0
+if number > 0:
+    print("正の数です")`}
+  tests={[{ kind: 'stdout' }]}
+  hints={['上の「説明」で見たif文の書き方を、もう1つ下に足します。']}
+  mistakes={['if-missing-colon']}
+>
+上のコードに、`number` が `0` のとき `0です` と表示するif文を1行足してください。
+</Exercise>
+
+<Exercise
+  id="python-03-if-b1"
+  kind="build"
+  stdin={`7`}
+  tests={[
+    { kind: 'stdout', stdin: `7\n` },
+    { kind: 'stdout', stdin: `0\n` },
+    { kind: 'stdout', stdin: `-4\n` },
+    { kind: 'stdout', stdin: `100\n` },
+  ]}
+  hints={[
+    '入力欄の1行を読み取るには、第1章で使った `input()` と `int()` を使います。',
+    '先に正の場合を確かめ、次に0の場合、次に負の場合を順に確かめます。',
+  ]}
+  mistakes={['if-missing-colon', 'if-missing-indent', 'if-arrow']}
+>
+入力欄の1行を読み取り、その数が正か0か負かで出す言葉を変えるプログラムを書いてください。`正の数です` `0です` `負の数です` のいずれかを表示します。
+</Exercise>
+
+{/* つながり */}
+
+条件が成り立つときだけ動くif文が書けました。次の節では、成り立たなかったときの処理を扱います。
