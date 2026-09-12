@@ -11,7 +11,8 @@
     "build:tests": "node scripts/build-tests.mjs",
     "build": "npm run check:lessons && npm run build:tests && astro build",
     "preview": "astro preview",
-    "astro": "astro"
+    "astro": "astro",
+    "deploy": "wrangler deploy -c dist/server/wrangler.json"
   },
   "dependencies": {
     "@astrojs/cloudflare": "^14.3.1",
