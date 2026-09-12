@@ -10,7 +10,22 @@
 
 export type Test =
   | { kind: 'stdout'; stdin?: string; expect: string }
-  | { kind: 'call'; fn: string; args: unknown[]; expect: unknown };
+  | { kind: 'call'; fn: string; args: unknown[]; expect: unknown }
+  /** 打った文字列そのものを見る（第0章だけ。第11.4節） */
+  | { kind: 'text'; expect: string }
+  /** 選んだ番号を見る。1から数える（第0章だけ。第11.4節） */
+  | { kind: 'choice'; correct: number };
+
+/**
+ * 課題の型（20-platform.md 第4.1節、第11.4節）。
+ * type と choose は第0章だけで使う。Python を動かさない。
+ */
+export type ExerciseKind = 'trace' | 'modify' | 'build' | 'type' | 'choose';
+
+/** Python を動かさない型か。true なら Pyodide も CodeMirror も使わない */
+export function isDirectKind(kind: ExerciseKind): boolean {
+  return kind === 'type' || kind === 'choose';
+}
 
 /** <Mistake> の中身。採点の応答で使う（第4.3節） */
 export type MistakeData = {
@@ -23,7 +38,7 @@ export type MistakeData = {
 
 export type ExerciseData = {
   id: string;
-  kind: 'trace' | 'modify' | 'build';
+  kind: ExerciseKind;
   tests: Test[];
   /** 段階的に出すヒント。0〜3個 */
   hints: string[];

@@ -11,14 +11,17 @@
  * ずれても誰も気づかないため。手で書いたものは check-lessons.mjs が落とす。
  */
 import ExerciseBox from '../../lesson/ui/ExerciseBox';
+import type { ExerciseKind } from '../../lesson/data';
 
 type Test =
   | { kind: 'stdout'; stdin?: string }
-  | { kind: 'call'; fn: string; args?: unknown[] };
+  | { kind: 'call'; fn: string; args?: unknown[] }
+  | { kind: 'text'; expect: string }
+  | { kind: 'choice'; correct: number };
 
 interface Props {
   id: string;
-  kind: 'trace' | 'modify' | 'build';
+  kind: ExerciseKind;
   /** 「変える」で渡す動くコード。「組む」では渡さない */
   starter?: string;
   /** 入力欄の初期値 */
@@ -31,9 +34,16 @@ interface Props {
 
 const { id, kind, starter, stdin, tests } = Astro.props;
 
-/* 画面に出す名前。内部の呼び名（なぞる・変える・組む）は学習者には見せない。
-   10-lesson-and-writing.md 第3章 */
-const STAGE: Record<string, string> = { trace: '例題', modify: '練習問題', build: '演習問題' };
+/* 画面に出す名前。内部の呼び名（なぞる・変える・組む・打つ・選ぶ）は学習者には見せない。
+   10-lesson-and-writing.md 第3章。type と choose の札は「練習問題」で、
+   札は4種類のまま増やさない（第10.6節・第11.5節） */
+const STAGE: Record<string, string> = {
+  trace: '例題',
+  modify: '練習問題',
+  build: '演習問題',
+  type: '練習問題',
+  choose: '練習問題',
+};
 
 /* 値を Python の見た目で出す。src/lesson/grade.ts の showValue と同じ規則。
    grade.ts は Pyodide の走らせ方を抱えているので、ここからは読まずに写している。 */
@@ -48,6 +58,7 @@ function showValue(value: unknown): string {
 /** 1件のテストを1組の値にほどく。stdout は入力欄の各行、call は呼び出しの形。 */
 function valuesOf(test: Test): string[] {
   if (!test || typeof test !== 'object') return [];
+  if (test.kind === 'text' || test.kind === 'choice') return [];
   if (test.kind === 'call') return [`${test.fn}(${(test.args ?? []).map(showValue).join(', ')})`];
   const text = typeof test.stdin === 'string' ? test.stdin : '';
   if (text === '') return [];
@@ -61,12 +72,36 @@ const cases = kind === 'build' ? (tests ?? []).map(valuesOf) : [];
 const showCases = cases.some((values) => values.length > 0);
 /* 値の数が組ごとに違っても、縦の位置がそろうように。足りない分は最後の升が受ける */
 const columns = Math.max(1, ...cases.map((values) => values.length));
+
+/* 「選ぶ練習」の選択肢は、問題文の中の箇条書き（<li>）として書かれる（第11.4節）。
+   最後の箇条書きを問題文から抜き、番号を振って選べる形にして島に渡す。
+   新しい部品は作らない。 */
+let promptHtml = '';
+let choices: string[] = [];
+if (kind === 'choose') {
+  promptHtml = Astro.slots.has('default') ? await Astro.slots.render('default') : '';
+  const lists = [...promptHtml.matchAll(/<ul[^>]*>([\s\S]*?)<\/ul>/g)];
+  const last = lists[lists.length - 1];
+  if (last) {
+    choices = [...last[1].matchAll(/<li[^>]*>([\s\S]*?)<\/li>/g)]
+      .map((m) => m[1].trim().replace(/^<p>([\s\S]*)<\/p>$/, '$1').trim());
+    promptHtml = promptHtml.slice(0, last.index) + promptHtml.slice((last.index ?? 0) + last[0].length);
+  }
+}
 ---
 
 <section class={`kit-ex kit-ex--${kind}`} id={id}>
   <p class="kit-ex__stage">{STAGE[kind] ?? kind}</p>
   <div class="kit-ex__in">
-    <div class="kit-ex__prompt"><slot /></div>
+    {
+      kind === 'choose' ? (
+        <div class="kit-ex__prompt" set:html={promptHtml} />
+      ) : (
+        <div class="kit-ex__prompt">
+          <slot />
+        </div>
+      )
+    }
     {
       showCases && (
         <div class="kit-cases">
@@ -92,6 +127,6 @@ const columns = Math.max(1, ...cases.map((values) => values.length));
         </div>
       )
     }
-    <ExerciseBox client:load id={id} kind={kind} starter={starter} stdin={stdin} />
+    <ExerciseBox client:load id={id} kind={kind} starter={starter} stdin={stdin} choices={choices} />
   </div>
 </section>

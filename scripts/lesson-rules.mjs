@@ -15,6 +15,22 @@ export const SECTION_ORDER = ['困る例', 'やってみる', '説明', 'よく�
 /** 任意の要素（無くてよい）。 */
 export const SECTION_OPTIONAL = new Set(['つながり']);
 
+/**
+ * 第0章「パソコンの操作」だけの例外（20-platform.md 第11.5節）。
+ * ほかの章には一切適用しない。
+ */
+export const START_CHAPTER = '00-start';
+
+/** 課題の型。type と choose は第0章だけで使える（第11.4節） */
+export const EXERCISE_KINDS = ['trace', 'modify', 'build'];
+export const START_EXERCISE_KINDS = [...EXERCISE_KINDS, 'type', 'choose'];
+
+/** 第0章の「説明」の字数（第11.5節）。説明より練習を主にするため短くする */
+export const START_LIMITS = {
+  explainMin: 100,
+  explainMax: 400,
+};
+
 export const LIMITS = {
   /** 第4.1節 1文の長さ */
   sentenceMax: 60,

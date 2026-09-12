@@ -16,9 +16,13 @@ import {
   ABSTRACT,
   BANNED,
   BANNED_CHARS,
+  EXERCISE_KINDS,
   LIMITS,
   SECTION_OPTIONAL,
   SECTION_ORDER,
+  START_CHAPTER,
+  START_EXERCISE_KINDS,
+  START_LIMITS,
   boundaryKinds,
   countChars,
   splitSentences,
@@ -53,6 +57,22 @@ function testInputs(test) {
   return lines;
 }
 
+/**
+ * 「選ぶ練習」の選択肢の数（20-platform.md 第11.4節）。
+ * <Exercise> は問題文の最後の箇条書きを選択肢にするので、ここも後ろから数える。
+ */
+function choiceCount(prompt) {
+  const lines = String(prompt ?? '').split('\n').map((l) => l.replace(/\s+$/, ''));
+  while (lines.length > 0 && lines[lines.length - 1] === '') lines.pop();
+  let count = 0;
+  for (let i = lines.length - 1; i >= 0; i--) {
+    if (/^[ \t]*[-*]\s+\S/.test(lines[i])) count++;
+    else if (lines[i] === '') continue;
+    else break;
+  }
+  return count;
+}
+
 const files = listMdx(LESSONS_DIR).sort();
 const words = glossaryWords();
 const problems = [];
@@ -67,6 +87,9 @@ for (const file of files) {
 
   // --- frontmatter（第2.2節）。13項目の前提になるので先に見る ---
   const fm = lesson.data ?? {};
+  /* 第0章だけの例外（20-platform.md 第11.5節）。chapter がちょうど 00-start のときだけ。
+     ほかの章の検査は1つも緩めない。 */
+  const isStart = fm.chapter === START_CHAPTER;
   for (const key of ['id', 'chapter', 'title', 'minutes']) {
     if (fm[key] === undefined || fm[key] === '') add('frontmatter', 1, `frontmatter に ${key} がありません`);
   }
@@ -97,10 +120,11 @@ for (const file of files) {
   }
 
   // --- 検査2 <Run> が「説明」より前にあること ---
+  // 第0章は Python を動かさないので <Run> を置かない（第11.5節）
   const runTags = lesson.components.filter((c) => c.name === 'Run');
   const explain = lesson.sections.find((s) => s.name === '説明');
   if (runTags.length === 0) {
-    add(2, 1, '<Run> がありません。実行できるコードと実行結果を「やってみる」に置いてください');
+    if (!isStart) add(2, 1, '<Run> がありません。実行できるコードと実行結果を「やってみる」に置いてください');
   } else if (explain && runTags[0].start > explain.start) {
     add(2, runTags[0].line, '<Run> が「説明」より後ろにあります');
   }
@@ -125,16 +149,50 @@ for (const file of files) {
     add(4, 1, `課題は${LIMITS.exerciseMin}〜${LIMITS.exerciseMax}問です。いまは${ex.length}問`);
   }
   const builds = ex.filter((e) => e.kind === 'build');
-  if (builds.length < LIMITS.buildMin) add(4, 1, '「組む」課題（kind="build"）が1問もありません');
+  // 第0章は「組む」を置かず、kind="type" か kind="choose" が1問以上（第11.5節）
+  if (isStart) {
+    const directs = ex.filter((e) => e.kind === 'type' || e.kind === 'choose');
+    if (directs.length < LIMITS.buildMin) {
+      add(4, 1, '第0章には kind="type" か kind="choose" の課題が1問以上要ります');
+    }
+  } else if (builds.length < LIMITS.buildMin) {
+    add(4, 1, '「組む」課題（kind="build"）が1問もありません');
+  }
+  const allowedKinds = isStart ? START_EXERCISE_KINDS : EXERCISE_KINDS;
   for (const e of ex) {
     if (!e.id) add(4, e.line, '<Exercise> に id がありません');
     else if (seenExerciseIds.has(e.id)) add(4, e.line, `課題の id が重複しています: ${e.id}`);
     else seenExerciseIds.set(e.id, rel);
-    if (!['trace', 'modify', 'build'].includes(e.kind)) add(4, e.line, `kind は trace / modify / build のどれかです: ${e.kind}`);
+    if (!allowedKinds.includes(e.kind)) add(4, e.line, `kind は ${allowedKinds.join(' / ')} のどれかです: ${e.kind}`);
     if (e.kind === 'modify' && !e.starter) add(4, e.line, '「変える」課題には starter（動くコード）が要ります');
     if (e.kind === 'build' && e.starter) add(4, e.line, '「組む」課題にコードを渡してはいけません（starter を消してください）');
-    if (!Array.isArray(e.tests) || e.tests.length === 0) add(4, e.line, '<Exercise> に tests がありません');
+    if ((e.kind === 'type' || e.kind === 'choose') && e.starter) {
+      add(4, e.line, `kind="${e.kind}" にコードを渡してはいけません（starter を消してください）`);
+    }
+    const tests = Array.isArray(e.tests) ? e.tests : [];
+    if (tests.length === 0) add(4, e.line, '<Exercise> に tests がありません');
     if (e.hints.length > 3) add(4, e.line, 'hints は0〜3個です');
+
+    // 課題の型と判定の型が合っていること（第11.4節）
+    if (e.kind === 'type') {
+      if (tests.length !== 1 || tests[0]?.kind !== 'text') {
+        add(4, e.line, "kind=\"type\" の tests は { kind: 'text', expect } の1件です");
+      } else if (typeof tests[0].expect !== 'string' || tests[0].expect.trim() === '') {
+        add(4, e.line, 'text の expect に、打つ見本の文字列を書いてください');
+      }
+    } else if (e.kind === 'choose') {
+      const items = choiceCount(e.prompt);
+      if (items < 2) {
+        add(4, e.line, 'kind="choose" の選択肢は、問題文の最後の箇条書きに2つ以上書いてください');
+      }
+      if (tests.length !== 1 || tests[0]?.kind !== 'choice') {
+        add(4, e.line, "kind=\"choose\" の tests は { kind: 'choice', correct } の1件です");
+      } else if (!Number.isInteger(tests[0].correct) || tests[0].correct < 1 || tests[0].correct > items) {
+        add(4, e.line, `choice の correct は1から数えた選択肢の番号です（選択肢は${items}個）: ${tests[0].correct}`);
+      }
+    } else if (tests.some((t) => t?.kind === 'text' || t?.kind === 'choice')) {
+      add(4, e.line, 'text / choice の判定が使えるのは kind="type" / kind="choose" だけです');
+    }
   }
 
   // --- 検査5 「組む」の tests に3件以上の入力があり、境界を含むこと ---
@@ -179,8 +237,11 @@ for (const file of files) {
   const explainChars = lesson.bodyParagraphs
     .filter((p) => p.section === '説明')
     .reduce((sum, p) => sum + countChars(plainText(p.text)), 0);
-  if (explainChars < LIMITS.explainMin || explainChars > LIMITS.explainMax) {
-    add(8, 1, `「説明」が${explainChars}字です（${LIMITS.explainMin}〜${LIMITS.explainMax}字）`);
+  // 第0章は「説明より練習を主にする」ので 100〜400字に読み替える（第11.5節）
+  const explainMin = isStart ? START_LIMITS.explainMin : LIMITS.explainMin;
+  const explainMax = isStart ? START_LIMITS.explainMax : LIMITS.explainMax;
+  if (explainChars < explainMin || explainChars > explainMax) {
+    add(8, 1, `「説明」が${explainChars}字です（${explainMin}〜${explainMax}字）`);
   }
 
   // --- 検査9 禁止表現 / 検査10 抽象語の言い換え ---

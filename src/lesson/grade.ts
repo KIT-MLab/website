@@ -9,6 +9,7 @@
  * 単なる「不正解」だけを返してはいけない（00-overview.md 第3.3節）。
  */
 import type { ExerciseData, MistakeData, Test } from './data';
+import { isDirectKind } from './data';
 import { execPython } from './runtime/runner';
 import type { ExecResult } from './runtime/types';
 import { INPUT_EMPTY_MESSAGE, TIMEOUT_MESSAGE } from './runtime/types';
@@ -26,7 +27,16 @@ export type Feedback =
   /** 当てはまらなかったので、エラーの型ごとの説明 */
   | { kind: 'error'; display: string; line: number | null; type: string; advice: string }
   /** エラーは出ないが結果が違う */
-  | { kind: 'diff'; input: string; expect: string; actual: string };
+  | { kind: 'diff'; input: string; expect: string; actual: string }
+  /* --- 第0章だけ（20-platform.md 第11.4節）。Python を動かさない型の応答 --- */
+  /** まだ打っていない・選んでいない */
+  | { kind: 'no-answer'; mode: 'type' | 'choose' }
+  /** 全角が混ざっている。この章の目的そのものなので専用の応答を持つ（第4.3節の例外） */
+  | { kind: 'zenkaku'; hits: ZenkakuHit[] }
+  /** 全角ではないが見本と違う。expect は答えそのものなので出さない */
+  | { kind: 'text-miss'; actual: string; at: number | null }
+  /** 選んだ番号が違う */
+  | { kind: 'choice-miss' };
 
 export type GradeResult = {
   passed: boolean;
@@ -101,12 +111,110 @@ export function showValue(value: unknown): string {
 
 /** テストの入力を、画面に出す1行にする。 */
 export function showInput(test: Test): string {
+  if (test.kind === 'text' || test.kind === 'choice') return '';
   if (test.kind === 'call') return `${test.fn}(${test.args.map(showValue).join(', ')})`;
   const stdin = test.stdin ?? '';
   if (stdin === '') return '（入力なし）';
   const lines = stdin.split('\n');
   if (lines[lines.length - 1] === '') lines.pop();
   return `入力欄: ${lines.map((l) => (l === '' ? '（空の行）' : l)).join(' / ')}`;
+}
+
+/* ============================================================
+ * 第0章だけの採点（20-platform.md 第11.4節）。
+ * Python を動かさない。打った文字列と選んだ番号を、その場で見るだけ。
+ * ============================================================ */
+
+export type ZenkakuHit = {
+  /** 混ざっていた全角の文字 */
+  char: string;
+  /** その半角の相手。空白だけは文字で示せないので null */
+  half: string | null;
+  /** 何文字目か。1から数える */
+  at: number;
+};
+
+/**
+ * 全角の文字に、半角の相手があれば返す。
+ *
+ * 拾うのは「半角で打つつもりが全角になったもの」だけである。ひらがなや漢字は
+ * 半角の相手を持たないので拾わない（打つ見本に日本語が入ることがあるため）。
+ */
+function halfOf(ch: string): string | null | undefined {
+  const c = ch.codePointAt(0);
+  if (c === undefined) return undefined;
+  if (c >= 0xff01 && c <= 0xff5e) return String.fromCodePoint(c - 0xfee0); // ！〜～ の全角英数記号
+  if (c === 0x3000) return null; // 全角の空白。半角の相手は空白なので文字では示せない
+  if (c === 0x201c || c === 0x201d) return '"'; // “ ”
+  if (c === 0x2018 || c === 0x2019) return "'"; // ‘ ’
+  return undefined;
+}
+
+/**
+ * 全角が混ざっていないか見る（第11.4節）。
+ * expect に元から入っている文字は、書き手が意図して置いたものなので拾わない。
+ */
+export function findZenkaku(text: string, expect = ''): ZenkakuHit[] {
+  const allowed = new Set(Array.from(expect));
+  const hits: ZenkakuHit[] = [];
+  const seen = new Set<string>();
+  Array.from(text).forEach((ch, i) => {
+    if (allowed.has(ch)) return;
+    const half = halfOf(ch);
+    if (half === undefined) return;
+    if (seen.has(ch)) return;
+    seen.add(ch);
+    hits.push({ char: ch, half, at: i + 1 });
+  });
+  return hits;
+}
+
+/** 見本と食い違う最初の位置。1から数える。同じ長さで同じなら null */
+function firstDiff(actual: string, expect: string): number | null {
+  const a = Array.from(actual);
+  const b = Array.from(expect);
+  for (let i = 0; i < Math.max(a.length, b.length); i++) {
+    if (a[i] !== b[i]) return i + 1;
+  }
+  return null;
+}
+
+/**
+ * 打った文字列・選んだ番号を、その場で見る（第11.4節）。
+ * Pyodide は通らない。同期で答えが出る。
+ */
+export function gradeDirect(answer: string | number | null, exercise: ExerciseData): GradeResult {
+  const mode: 'type' | 'choose' = exercise.kind === 'choose' ? 'choose' : 'type';
+  for (let i = 0; i < exercise.tests.length; i++) {
+    const test = exercise.tests[i];
+
+    if (test.kind === 'text') {
+      // 前後の空白だけ落とす。中の空白は落とさない（打ち間違いそのものなので）
+      const typed = String(answer ?? '').trim();
+      if (typed === '') return { passed: false, feedback: { kind: 'no-answer', mode }, failedTest: i, errorType: null };
+      const expect = test.expect.trim();
+      if (typed === expect) continue;
+      const hits = findZenkaku(typed, expect);
+      if (hits.length > 0) {
+        return { passed: false, feedback: { kind: 'zenkaku', hits }, failedTest: i, errorType: null };
+      }
+      return {
+        passed: false,
+        feedback: { kind: 'text-miss', actual: typed, at: firstDiff(typed, expect) },
+        failedTest: i,
+        errorType: null,
+      };
+    }
+
+    if (test.kind === 'choice') {
+      if (answer === null || answer === '') {
+        return { passed: false, feedback: { kind: 'no-answer', mode }, failedTest: i, errorType: null };
+      }
+      if (Number(answer) === test.correct) continue;
+      return { passed: false, feedback: { kind: 'choice-miss' }, failedTest: i, errorType: null };
+    }
+  }
+  return { passed: true, feedback: { kind: 'pass' }, failedTest: null, errorType: null };
 }
 
 /**
@@ -143,6 +251,9 @@ export async function gradeExercise(
   exercise: ExerciseData,
   mistakes: MistakeData[],
 ): Promise<GradeResult> {
+  // 第0章の型（type / choose）は Python を動かさない。こちらには来ない（第11.4節）
+  if (isDirectKind(exercise.kind)) return gradeDirect(code, exercise);
+
   // 書き方の指定は、問題文に書いた範囲だけを文字列で見る（第4.4節）
   for (const word of exercise.forbid) {
     if (code.includes(word)) {
@@ -152,6 +263,7 @@ export async function gradeExercise(
 
   for (let i = 0; i < exercise.tests.length; i++) {
     const test = exercise.tests[i];
+    if (test.kind !== 'stdout' && test.kind !== 'call') continue;
     const result = await execPython({
       code,
       stdin: test.kind === 'stdout' ? test.stdin : undefined,
@@ -178,7 +290,7 @@ export async function gradeExercise(
           errorType: null,
         };
       }
-    } else if (!valuesEqual(result.value, test.expect)) {
+    } else if (test.kind === 'call' && !valuesEqual(result.value, test.expect)) {
       return {
         passed: false,
         feedback: {

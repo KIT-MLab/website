@@ -487,7 +487,8 @@
   margin-top: 0;
 }
 
-.kit-stdin__area {
+.kit-stdin__area,
+.kit-stdin__line {
   display: block;
   width: 100%;
   font-family: var(--font-mono);
@@ -501,7 +502,13 @@
   resize: vertical;
 }
 
-.kit-stdin__area:focus-visible {
+/* 打つ練習の1行の入力欄（20-platform.md 第11.4節）。面の作りは入力欄と同じ */
+.kit-stdin__line {
+  resize: none;
+}
+
+.kit-stdin__area:focus-visible,
+.kit-stdin__line:focus-visible {
   outline: 2px solid var(--l-shu);
   outline-offset: -2px;
 }
@@ -603,7 +610,11 @@
   border: 1px solid var(--l-rule);
 }
 
-.kit-ex--modify {
+/* type（打つ練習）と choose（選ぶ練習）は第0章だけの型（20-platform.md 第11.4節）。
+   札は「練習問題」なので、地色・枠・帯も練習問題と同じものを使う。札は増やさない（第10.6節） */
+.kit-ex--modify,
+.kit-ex--type,
+.kit-ex--choose {
   margin: 2.9em 0;
   background: var(--l-lv2);
   border: 1.5px solid var(--l-strong);
@@ -631,7 +642,9 @@
   padding: 6px 22px;
 }
 
-.kit-ex--modify .kit-ex__stage {
+.kit-ex--modify .kit-ex__stage,
+.kit-ex--type .kit-ex__stage,
+.kit-ex--choose .kit-ex__stage {
   background: var(--l-band-modify);
   color: var(--l-bandink-modify);
   border-bottom: 1px solid rgba(43, 38, 30, 0.28);
@@ -651,7 +664,9 @@
   padding: 16px 22px 20px;
 }
 
-.kit-ex--modify .kit-ex__in {
+.kit-ex--modify .kit-ex__in,
+.kit-ex--type .kit-ex__in,
+.kit-ex--choose .kit-ex__in {
   padding: 18px 22px 20px;
 }
 
@@ -725,6 +740,60 @@
   color: var(--l-ink-2);
 }
 
+/* --- 選ぶ練習の選択肢（第0章だけ。20-platform.md 第11.4節） --------
+ * 素地に罫だけ。地色も帯も足さない（札は4種類のまま。第10.6節）。
+ * 番号は1から数える。書き手の correct と画面の番号を同じにするため。
+ * ------------------------------------------------------------ */
+.kit-choices {
+  list-style: none;
+  margin: 14px 0 0;
+  padding: 0;
+  border-top: 1px solid var(--l-strong);
+}
+
+.kit-choices li {
+  margin: 0;
+  border-bottom: 1px solid rgba(43, 38, 30, 0.22);
+}
+
+.kit-choices label {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 9px 4px;
+  cursor: pointer;
+}
+
+.kit-choices input[type="radio"] {
+  margin: 0;
+  accent-color: var(--l-strong);
+  flex: none;
+  align-self: center;
+}
+
+.kit-choices__no {
+  font-family: "Zen Old Mincho", serif;
+  font-size: 14px;
+  letter-spacing: 0.08em;
+  color: var(--l-ink-2);
+  flex: none;
+}
+
+.kit-choices li.is-picked .kit-choices__no {
+  color: var(--l-ink);
+  font-weight: 700;
+}
+
+.kit-choices__text {
+  font-size: 16.5px;
+  line-height: 1.75;
+}
+
+.kit-choices__text p {
+  margin: 0;
+  text-indent: 0;
+}
+
 .kit-ex__work {
   margin-top: 12px;
 }
@@ -769,6 +838,29 @@
 
 .kit-verdict p:last-child {
   margin-bottom: 0;
+}
+
+/* 全角の指摘（第0章だけ。20-platform.md 第11.4節）。この章の目的そのものなので、
+   「合っていません」で終わらせずに、どの文字が全角かまで出す */
+.kit-verdict__lead {
+  font-family: "Zen Old Mincho", serif;
+  font-weight: 700;
+}
+
+.kit-zenkaku {
+  margin: 0 0 0.5em;
+  padding-left: 1.4em;
+  font-size: 16px;
+}
+
+.kit-zenkaku li {
+  margin: 0;
+}
+
+/* 全角と半角の形の違いを見比べる欄なので、本文の `…` より一回り大きくする */
+.kit-zenkaku code {
+  font-size: 18px;
+  padding: 0 6px;
 }
 
 .kit-verdict--pass {

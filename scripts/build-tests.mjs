@@ -41,7 +41,14 @@ function fail(where, message) {
 }
 
 /** 画面に出す名前。落ちたときのメッセージを読む人向け（10-lesson-and-writing.md 第3章） */
-const STAGE = { trace: '例題', modify: '練習問題', build: '演習問題' };
+const STAGE = { trace: '例題', modify: '練習問題', build: '演習問題', type: '練習問題', choose: '練習問題' };
+
+/**
+ * 模範解答の .py が要る型。
+ * type（打つ練習）と choose（選ぶ練習）は Python を動かさないので置かない（第11.4節）。
+ * 期待値は書き手が書いた expect / correct をそのまま載せる。
+ */
+const NEEDS_SOLUTION = new Set(['trace', 'modify', 'build']);
 
 /**
  * 空白と改行を落とす。字下げの深さ・行内の空白の数・空行・改行の位置の違いを無視する。
@@ -128,25 +135,49 @@ for (const file of files) {
   const exercises = {};
   const solutions = [];
   for (const e of lesson.exercises) {
-    const solutionPath = join(dirname(file), 'solutions', `${e.id}.py`);
-    let solution;
-    try {
-      solution = readFileSync(solutionPath, 'utf8');
-    } catch {
-      fail(`${rel}:${e.line}`, `模範解答がありません: ${relative(ROOT, solutionPath).replace(/\\/g, '/')}`);
-      continue;
-    }
-    solutions.push({ id: e.id, kind: e.kind, line: e.line, code: solution });
+    let solution = null;
+    if (NEEDS_SOLUTION.has(e.kind)) {
+      const solutionPath = join(dirname(file), 'solutions', `${e.id}.py`);
+      try {
+        solution = readFileSync(solutionPath, 'utf8');
+      } catch {
+        fail(`${rel}:${e.line}`, `模範解答がありません: ${relative(ROOT, solutionPath).replace(/\\/g, '/')}`);
+        continue;
+      }
+      solutions.push({ id: e.id, kind: e.kind, line: e.line, code: solution });
 
-    for (const forbidden of e.forbid) {
-      if (solution.includes(forbidden)) {
-        fail(`${rel}:${e.line}`, `模範解答が、問題文で禁じた書き方「${forbidden}」を使っています`);
+      for (const forbidden of e.forbid) {
+        if (solution.includes(forbidden)) {
+          fail(`${rel}:${e.line}`, `模範解答が、問題文で禁じた書き方「${forbidden}」を使っています`);
+        }
       }
     }
 
     const tests = [];
     for (let i = 0; i < e.tests.length; i++) {
       const test = e.tests[i];
+
+      // 第0章の判定（第11.4節）。模範解答を走らせず、書き手の書いた値をそのまま載せる
+      if (test.kind === 'text') {
+        if (typeof test.expect !== 'string' || test.expect.trim() === '') {
+          fail(`${rel}:${e.line}`, `tests[${i}] の expect に、打つ見本の文字列を書いてください`);
+          continue;
+        }
+        tests.push({ kind: 'text', expect: test.expect });
+        continue;
+      }
+      if (test.kind === 'choice') {
+        if (!Number.isInteger(test.correct) || test.correct < 1) {
+          fail(`${rel}:${e.line}`, `tests[${i}] の correct は1から数えた選択肢の番号です: ${test.correct}`);
+          continue;
+        }
+        tests.push({ kind: 'choice', correct: test.correct });
+        continue;
+      }
+      if (!solution) {
+        fail(`${rel}:${e.line}`, `kind="${e.kind}" の tests[${i}] は text か choice です: ${test.kind}`);
+        continue;
+      }
       if (test.expect !== undefined) {
         fail(`${rel}:${e.line}`, `tests[${i}] に expect が書かれています。expect はビルド時に模範解答から作ります`);
         continue;
