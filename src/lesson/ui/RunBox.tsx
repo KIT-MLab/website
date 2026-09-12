@@ -11,7 +11,8 @@ import { execPython } from '../runtime/runner';
 
 type Props = {
   code: string;
-  /** 本文に併記した実行結果。押す前はこれを出す */
+  /** 壊れたコード（<Mistake>）で最初から見せるエラー文。<Run> では渡さない。
+      <Run> の実行結果は ▶ を押すまで出さない（10-lesson 第2.2節） */
   expected?: string;
   /** input() を使うコードのときの入力欄の初期値 */
   stdin?: string;
@@ -33,6 +34,8 @@ export default function RunBox({ code, expected = '', stdin, broken = false, edi
   }
 
   const showing = state === 'done' ? output : expected;
+  /** まだ押していない <Run>。結果の枠は残して高さを変えない */
+  const waiting = state !== 'done' && expected === '';
 
   return (
     <div className={`kit-run${broken ? ' kit-run--broken' : ''}`}>
@@ -46,7 +49,9 @@ export default function RunBox({ code, expected = '', stdin, broken = false, edi
       {stdin !== undefined ? <StdinBox id={`${editorId}-stdin`} value={stdinValue} onChange={setStdinValue} /> : null}
       <div className={`kit-out${broken ? ' kit-out--err' : ''}`}>
         <div className="kit-out__label">{broken ? '出るエラー' : '実行結果'}</div>
-        <pre className="kit-out__text">{showing === '' ? '（何も出ません）' : showing}</pre>
+        <pre className={`kit-out__text${waiting ? ' kit-out__text--wait' : ''}`}>
+          {waiting ? '▶ を押すと出ます' : showing === '' ? '（何も出ません）' : showing}
+        </pre>
       </div>
     </div>
   );

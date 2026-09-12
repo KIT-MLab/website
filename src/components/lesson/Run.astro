@@ -1,7 +1,8 @@
 ---
 /**
  * <Run> — その場で実行できるコード例（20-platform.md 第2.3節）。
- * 本文には実行結果を併記し（10-lesson 第2.2節）、▶ で実際に動かせる。
+ * 実行結果は ▶ を押すまで出さない（10-lesson 第2.2節）。押す前から答えが見えて
+ * いると押す理由がなくなるので、out はブラウザに渡さない。
  *
  * client:load にしている理由: コード欄（CodeMirror）は島が動いてはじめて中身が入る。
  * client:visible にすると、画面に入るまでコード例が空のままになる。コード例は
@@ -13,17 +14,18 @@ import { nextId } from '../../lesson/ui/ids';
 interface Props {
   /** 実行できる完全なコード。断片は置かない */
   code: string;
-  /** 本文に併記する実行結果 */
+  /** 期待する実行結果。表示には使わない。scripts/build-tests.mjs が MDX を読み、
+      実際に動かした結果と一致するかをビルド時に検査する */
   out?: string;
   /** input() を使うときの入力欄の初期値 */
   stdin?: string;
 }
 
-const { code, out = '', stdin } = Astro.props;
+const { code, stdin } = Astro.props;
 const key = nextId('run');
 ---
 
 <div class="kit-runwrap">
   <p class="kit-runwrap__label">例</p>
-  <RunBox client:load code={code} expected={out} stdin={stdin} editorId={key} />
+  <RunBox client:load code={code} stdin={stdin} editorId={key} />
 </div>

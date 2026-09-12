@@ -419,6 +419,11 @@
   color: var(--k-err);
 }
 
+/* ▶ を押す前。結果の枠は残し、文字だけ沈める（10-lesson 第2.2節） */
+.kit-out__text--wait {
+  color: var(--k-dim);
+}
+
 .kit-editor .cm-editor {
   max-height: 22em;
 }
