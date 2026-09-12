@@ -1,0 +1,117 @@
+---
+id: start-02-hankaku
+chapter: 00-start
+title: 半角と全角
+minutes: 10
+terms: [半角, 全角]
+---
+
+{/* 困る例 */}
+
+全角の数字で検索しても、目当ての物が見つからないことがあります。半角のつもりで打った記号が、日本語入力のせいで全角になっていることが原因です。見た目はよく似ているので、自分では気づきにくいです。
+
+{/* やってみる */}
+
+<Exercise
+  id="start-02-hankaku-1"
+  kind="type"
+  tests={[{ kind: 'text', expect: `2026` }]}
+  hints={[]}
+  mistakes={[]}
+>
+次の数を、そのまま半角で打ってください。
+
+```text
+2026
+```
+</Exercise>
+
+{/* 説明 */}
+
+半角と全角は、見た目が似ていても別の文字です。全角の数字や記号は、日本語入力がオンのときに打たれます。
+
+全角のままでは、検索でもファイル名でも、半角として扱われません。打つ前に、日本語入力をオフにしておくと安全です。
+
+この章の問題は、全角が混ざっていると、どこが全角かを教えてくれます。位置の手がかりをもとに、打ち直してください。
+
+<Level0 title="いまの入力方式を確かめる">
+画面右下、時計の左あたりに、小さな文字があります。`A` と出ていれば半角、`あ` と出ていれば全角です。
+
+クリックすると切り替わります。キーボードに専用のキーがあれば、それでも切り替えられます。
+</Level0>
+
+{/* 課題 */}
+
+<Exercise
+  id="start-02-hankaku-2"
+  kind="type"
+  tests={[{ kind: 'text', expect: `( ) : = 100 ,` }]}
+  hints={[]}
+  mistakes={[]}
+>
+次の記号を、すべて半角で打ってください。
+
+```text
+( ) : = 100 ,
+```
+</Exercise>
+
+<Exercise
+  id="start-02-hankaku-3"
+  kind="type"
+  tests={[{ kind: 'text', expect: `10:30` }]}
+  hints={[]}
+  mistakes={[]}
+>
+次の時刻を、そのまま半角で打ってください。
+
+```text
+10:30
+```
+</Exercise>
+
+<Exercise
+  id="start-02-hankaku-4"
+  kind="type"
+  tests={[{ kind: 'text', expect: `"締め切り"` }]}
+  hints={[]}
+  mistakes={[]}
+>
+次の文字列を、そのまま半角で打ってください。
+
+```text
+"締め切り"
+```
+</Exercise>
+
+<Exercise
+  id="start-02-hankaku-5"
+  kind="type"
+  tests={[{ kind: 'text', expect: `りんご,みかん,ぶどう` }]}
+  hints={[]}
+  mistakes={[]}
+>
+次の3つの言葉を、半角のコンマで区切って打ってください。
+
+```text
+りんご,みかん,ぶどう
+```
+</Exercise>
+
+<Exercise
+  id="start-02-hankaku-6"
+  kind="type"
+  tests={[{ kind: 'text', expect: `資料2026.pdf` }]}
+  hints={[]}
+  mistakes={[]}
+>
+次のファイル名を、そのまま半角で打ってください。
+
+```text
+資料2026.pdf
+```
+</Exercise>
+
+{/* つながり */}
+
+次の節では、記号の打ち方を練習します。

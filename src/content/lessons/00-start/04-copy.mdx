@@ -1,0 +1,116 @@
+---
+id: start-04-copy
+chapter: 00-start
+title: コピー・貼り付け・取り消し
+minutes: 10
+terms: []
+---
+
+{/* 困る例 */}
+
+長い文を1文字ずつ打ち直すのは、時間がかかります。消してはいけない部分を誤って消してしまうと、元に戻せるか不安になります。戻し方を知らないと、そのたびに最初から打ち直すことになります。
+
+{/* やってみる */}
+
+<Exercise
+  id="start-04-copy-1"
+  kind="type"
+  tests={[{ kind: 'text', expect: `晴れ のち 雨` }]}
+  hints={[]}
+  mistakes={[]}
+>
+次の言葉を、そのまま半角の空白で区切って打ってください。
+
+```text
+晴れ のち 雨
+```
+</Exercise>
+
+{/* 説明 */}
+
+`Ctrl+C` はコピー、`Ctrl+V` は貼り付けです。`Ctrl+A` は、いま見えている範囲をすべて選びます。ドラッグでも、好きな範囲を選べます。
+
+`Ctrl+Z` を押すと、直前の操作を1つ戻せます。打ち直す前に、まず `Ctrl+Z` を押すくせをつけると安心です。
+
+<Level0 title="行をまとめて選ぶ">
+行の左はしをクリックしてから、下にドラッグすると、複数の行を選べます。行の途中を3回続けてクリックしても、その行を選べます。
+</Level0>
+
+{/* 課題 */}
+
+<Exercise
+  id="start-04-copy-2"
+  kind="type"
+  requirePaste
+  tests={[{ kind: 'text', expect: `2026年度前期案内資料.pdf` }]}
+  hints={['コピーと貼り付けを使わないと、この問題は通りません。']}
+  mistakes={[]}
+>
+次の1行を、コピーと貼り付けで入力欄に入れてください。
+
+```text
+2026年度前期案内資料.pdf
+```
+</Exercise>
+
+<Exercise
+  id="start-04-copy-3"
+  kind="type"
+  requirePaste
+  tests={[{ kind: 'text', expect: `https://example.com/data.csv` }]}
+  hints={['コピーと貼り付けを使わないと、この問題は通りません。']}
+  mistakes={[]}
+>
+次の1行を、コピーと貼り付けで入力欄に入れてください。
+
+```text
+https://example.com/data.csv
+```
+</Exercise>
+
+<Exercise
+  id="start-04-copy-4"
+  kind="type"
+  tests={[{ kind: 'text', expect: `左 右` }]}
+  hints={['コピーしてから貼り付ける位置を変えると、打ち直さずに直せます。']}
+  mistakes={[]}
+>
+次の2つの言葉を、入れ替えて打ってください。区切りは半角の空白1つです。
+
+```text
+右 左
+```
+</Exercise>
+
+<Exercise
+  id="start-04-copy-5"
+  kind="type"
+  tests={[{ kind: 'text', expect: `月 金` }]}
+  hints={[]}
+  mistakes={[]}
+>
+次の3つの言葉から、真ん中の1語を消して打ってください。残りは半角の空白1つで区切ります。
+
+```text
+月 水 金
+```
+</Exercise>
+
+<Exercise
+  id="start-04-copy-6"
+  kind="choose"
+  tests={[{ kind: 'choice', correct: 1 }]}
+  hints={[]}
+  mistakes={[]}
+>
+書き間違えた直後に `Ctrl+Z` を押すと、何が起きますか。
+
+- 直前の操作が1つ戻る
+- すべての入力が消える
+- 選んだ範囲がコピーされる
+- 何も起きない
+</Exercise>
+
+{/* つながり */}
+
+次の節では、ファイルと拡張子について確認します。

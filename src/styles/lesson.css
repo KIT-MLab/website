@@ -1017,6 +1017,118 @@
   margin-bottom: 0;
 }
 
+/* --- 記号のキーの図（20-platform.md 第11.7節） -----------------
+   <Level0> の中だけに置く、詰まったときの手がかり。判定の代わりではない。
+   地は <Level0> の --l-lv1。キーは紙より明るい --l-card で浮かせ、
+   目立たせるキーだけ朱で塗る。色は第10.9節が決めたものだけを使う。
+   下の1行は札にしない（第10.6節）。コードのキャプションと同じ小さな文字。 */
+.kit-keys {
+  margin: 0.9em 0 0.2em;
+}
+
+.kit-keys__fig {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.kit-keys__cap {
+  fill: var(--l-card);
+  stroke: var(--l-rule);
+  stroke-width: 1;
+}
+
+/* 目立たせるキー */
+.kit-keys__cap.is-lit {
+  fill: var(--l-shu);
+  stroke: var(--l-shu);
+}
+
+/* Shift が要るときの Shift キー。塗らずに縁だけ朱にして、押す相手だと示す */
+.kit-keys__cap.is-mod {
+  stroke: var(--l-shu);
+  stroke-width: 2;
+}
+
+.kit-keys__glyph {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  fill: var(--l-ink);
+}
+
+/* 探している記号そのもの。上側にあれば Shift が要る */
+.kit-keys__glyph.is-target {
+  font-size: 15.5px;
+  font-weight: 600;
+  fill: var(--l-card);
+}
+
+/* 同じキートップのもう一方。キーを見分ける手がかりなので、沈めても読める濃さにする */
+.kit-keys__glyph.is-side {
+  font-size: 11.5px;
+  fill: var(--l-card);
+  opacity: 0.72;
+}
+
+.kit-keys__jp {
+  font-family: "Zen Old Mincho", serif;
+  font-size: 10px;
+  fill: var(--l-ink-2);
+}
+
+.kit-keys__letter {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  fill: var(--l-ink-2);
+}
+
+.kit-keys__mod {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  fill: var(--l-ink-2);
+}
+
+.kit-keys__mod.is-on {
+  font-weight: 600;
+  fill: var(--l-shu);
+}
+
+/* 省いたところ */
+.kit-keys__omit {
+  font-family: "Zen Old Mincho", serif;
+  font-size: 15px;
+  fill: var(--l-rule);
+}
+
+.kit-keys__note {
+  margin: 9px 0 0;
+  font-family: "Zen Old Mincho", serif;
+  font-size: 13px;
+  letter-spacing: 0.14em;
+  line-height: 1.95;
+  color: var(--l-ink-2);
+  text-indent: 0;
+}
+
+/* 1件ずつを項目にする。読み上げが「…のキー#は…」と続けて読まないようにするため。
+   .lesson-body ul / li の指定より強くするために2つ重ねている */
+.kit-keys .kit-keys__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.kit-keys .kit-keys__pair {
+  display: inline-block;
+  white-space: nowrap;
+  margin: 0 1.5em 0 0;
+}
+
+.kit-keys__note code {
+  font-size: 13px;
+  padding: 0 3px;
+}
+
 /* --- 用語集（第1次トークンのまま） --------------------------- */
 .glossary-table {
   border-collapse: collapse;

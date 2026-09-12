@@ -1,0 +1,210 @@
+---
+/**
+ * <Keys> — 記号のキーの位置の図（20-platform.md 第11.7節）。
+ *
+ * `~` `|` `{` `[` のように、日常で使わず探しにくい記号だけに使う。
+ * **判定の代わりではない。**配列は人によって違うので、合っているかは入力欄で見る
+ * （第11.1節）。この図は詰まったときの手がかりとして <Level0> の中にだけ置く。
+ *
+ * 描く範囲は記号が集まっているところだけ。数字の段は端から端まで、
+ * その下の3段は右の記号の列だけを描き、省いたところは「…」で示す。
+ * アルファベットの真ん中・ファンクションキー・テンキーは描かない。
+ *
+ * 見た目は 10-lesson-and-writing.md 第10.9節の決定の範囲で組む。
+ *   - 新しい札を作らない（第10.6節）。図の下の1行はコードのキャプションと同じ組み
+ *   - 色は朱（--l-shu）と墨だけ。<Level0> の地色 --l-lv1 の上に乗る
+ *   - キーの上側の文字 = Shift を押したときに出る文字（JIS のキートップと同じ並べ方）
+ */
+interface Props {
+  /** 目立たせる記号。打ち方を教えたい文字をそのまま並べる */
+  highlight: string[];
+}
+
+const { highlight } = Astro.props;
+
+const U = 46; // キーの間隔
+const KEY = 41; // キーの大きさ
+const PAD = 3;
+
+type Key = {
+  /** 左からの位置（キー1つ分を1とする） */
+  x: number;
+  /** そのまま押したときに出る文字。キートップの下側 */
+  lower: string;
+  /** Shift を押しながらのときに出る文字。キートップの上側 */
+  upper?: string;
+  /** 記号ではないキー。jp=日本語の名前、letter=目印の英字、mod=Shift */
+  kind?: 'jp' | 'letter' | 'mod';
+  /** kind="jp" の2行の名前 */
+  lines?: string[];
+};
+
+/**
+ * 日本語配列（JIS）の一例。x は実物の並びに合わせてずらしてある。
+ * 段1は 半角/全角 から ¥ まで。段2〜4は右端の記号だけを描き、
+ * 手前に1つだけ英字を置いて位置の目印にする。
+ */
+const ROWS: Key[][] = [
+  [
+    { x: 0, lower: '半角/全角', kind: 'jp', lines: ['半角', '全角'] },
+    { x: 1, lower: '1', upper: '!' },
+    { x: 2, lower: '2', upper: '"' },
+    { x: 3, lower: '3', upper: '#' },
+    { x: 4, lower: '4', upper: '$' },
+    { x: 5, lower: '5', upper: '%' },
+    { x: 6, lower: '6', upper: '&' },
+    { x: 7, lower: '7', upper: "'" },
+    { x: 8, lower: '8', upper: '(' },
+    { x: 9, lower: '9', upper: ')' },
+    { x: 10, lower: '0' },
+    { x: 11, lower: '-', upper: '=' },
+    { x: 12, lower: '^', upper: '~' },
+    { x: 13, lower: '¥', upper: '|' },
+  ],
+  [
+    { x: 10.5, lower: 'P', kind: 'letter' },
+    { x: 11.5, lower: '@', upper: '`' },
+    { x: 12.5, lower: '[', upper: '{' },
+  ],
+  [
+    { x: 9.75, lower: 'L', kind: 'letter' },
+    { x: 10.75, lower: ';', upper: '+' },
+    { x: 11.75, lower: ':', upper: '*' },
+    { x: 12.75, lower: ']', upper: '}' },
+  ],
+  [
+    { x: 8.25, lower: 'M', kind: 'letter' },
+    { x: 9.25, lower: ',', upper: '<' },
+    { x: 10.25, lower: '.', upper: '>' },
+    { x: 11.25, lower: '/', upper: '?' },
+    { x: 12.25, lower: '\\', upper: '_' },
+    { x: 13.25, lower: 'Shift', kind: 'mod' },
+  ],
+];
+
+const W = Math.round(14.25 * U) + PAD * 2;
+const H = (ROWS.length - 1) * U + KEY + PAD * 2;
+
+/** 目立たせる記号を、どのキーのどちら側かに割り当てる */
+type Found = { row: number; col: number; side: 'upper' | 'lower'; keyLabel: string };
+const found = new Map<string, Found>();
+for (let r = 0; r < ROWS.length; r++) {
+  for (let c = 0; c < ROWS[r].length; c++) {
+    const k = ROWS[r][c];
+    if (k.kind === 'jp' || k.kind === 'mod') continue;
+    if (k.upper && !found.has(k.upper)) found.set(k.upper, { row: r, col: c, side: 'upper', keyLabel: k.lower });
+    if (!found.has(k.lower)) found.set(k.lower, { row: r, col: c, side: 'lower', keyLabel: k.lower });
+  }
+}
+
+const marked = highlight.map((ch) => {
+  const hit = found.get(ch);
+  if (!hit) {
+    // 符号位置も出す。ビルドの失敗はアダプタを通ると日本語が化けることがあるため
+    const at = `U+${ch.codePointAt(0)?.toString(16).toUpperCase().padStart(4, '0')}`;
+    throw new Error(
+      `<Keys> の highlight に、図に描いていない文字「${ch}」(${at}) があります。` +
+        `描いてあるのは ${[...found.keys()].join(' ')} です。`,
+    );
+  }
+  return { ch, ...hit };
+});
+
+/** キーごとに、どちら側を目立たせるか */
+const litUpper = new Set<string>();
+const litLower = new Set<string>();
+for (const m of marked) {
+  (m.side === 'upper' ? litUpper : litLower).add(`${m.row}-${m.col}`);
+}
+const isLit = (r: number, c: number) => litUpper.has(`${r}-${c}`) || litLower.has(`${r}-${c}`);
+const needsShift = marked.some((m) => m.side === 'upper');
+
+const label =
+  `日本語配列のキーボードの図。${marked.map((m) => m.ch).join(' ')} のキーを示しています。`;
+---
+
+<figure class="kit-keys">
+  <svg
+    class="kit-keys__fig"
+    viewBox={`0 0 ${W} ${H}`}
+    role="img"
+    aria-label={label}
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    {ROWS.map((row, r) => {
+      const first = row[0].x;
+      const y = PAD + r * U;
+      return (
+        <g>
+          {first > 0 && (
+            <text
+              class="kit-keys__omit"
+              x={PAD + first * U - 11}
+              y={y + 28}
+              text-anchor="middle">…</text>
+          )}
+          {row.map((k, c) => {
+            const x = PAD + k.x * U;
+            const lit = isLit(r, c);
+            const shiftKey = k.kind === 'mod' && needsShift;
+            return (
+              <g>
+                <rect
+                  x={x}
+                  y={y}
+                  width={KEY}
+                  height={KEY}
+                  rx="4"
+                  class={lit ? 'kit-keys__cap is-lit' : shiftKey ? 'kit-keys__cap is-mod' : 'kit-keys__cap'}
+                />
+                {k.kind === 'jp' ? (
+                  k.lines!.map((line, i) => (
+                    <text class="kit-keys__jp" x={x + KEY / 2} y={y + 18 + i * 13} text-anchor="middle">{line}</text>
+                  ))
+                ) : k.kind === 'mod' ? (
+                  <text
+                    class={shiftKey ? 'kit-keys__mod is-on' : 'kit-keys__mod'}
+                    x={x + KEY / 2}
+                    y={y + 26}
+                    text-anchor="middle">{k.lower}</text>
+                ) : k.kind === 'letter' ? (
+                  <text class="kit-keys__letter" x={x + KEY / 2} y={y + 26} text-anchor="middle">{k.lower}</text>
+                ) : (
+                  <>
+                    {k.upper && (
+                      <text
+                        class={`kit-keys__glyph${litUpper.has(`${r}-${c}`) ? ' is-target' : lit ? ' is-side' : ''}`}
+                        x={x + KEY / 2}
+                        y={y + 16}
+                        text-anchor="middle">{k.upper}</text>
+                    )}
+                    <text
+                      class={`kit-keys__glyph${litLower.has(`${r}-${c}`) ? ' is-target' : lit ? ' is-side' : ''}`}
+                      x={x + KEY / 2}
+                      y={k.upper ? y + 33 : y + 26}
+                      text-anchor="middle">{k.lower}</text>
+                  </>
+                )}
+              </g>
+            );
+          })}
+        </g>
+      );
+    })}
+  </svg>
+
+  <figcaption class="kit-keys__note">
+    <ul class="kit-keys__list">
+      {marked.map((m) => (
+        <li class="kit-keys__pair">
+          <code>{m.ch}</code>
+          {m.side === 'upper' ? (
+            <>は <code>Shift</code> ＋ <code>{m.keyLabel}</code> のキー</>
+          ) : (
+            <>は <code>{m.keyLabel}</code> のキー（<code>Shift</code> なし）</>
+          )}
+        </li>
+      ))}
+    </ul>
+  </figcaption>
+</figure>

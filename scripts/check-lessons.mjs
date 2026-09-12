@@ -280,16 +280,27 @@ for (const file of files) {
     if (!words.has(term)) add(12, 1, `用語集（design/spec/glossary.md）にない語です: ${term}`);
   }
 
-  // --- 検査13 <Level0> の中に、その節が新しく名前を付ける語が出てこないこと ---
-  // 第7.3節が禁じているのは「概念の説明をレベル0に隠すこと」。禁じる対象は
-  // その節の terms（この節が名前を付ける概念）だけ。前の節で習った語や、
-  // 画面にそのまま出る文字列まで禁じると、操作の説明が書けなくなる。
-  const ownTerms = Array.isArray(fm.terms) ? fm.terms : [];
+  // --- 検査12.5 選ぶ練習の正解が全部同じ位置でないこと ---
+  // 全部1番だと、読まずに1番を選ぶだけで通ってしまう。
+  const chooses = ex.filter((e) => e.kind === 'choose');
+  if (chooses.length >= 3) {
+    const at = chooses.map((e) => (Array.isArray(e.tests) ? e.tests[0]?.correct : undefined));
+    if (new Set(at).size === 1) {
+      add(4, 1, `選ぶ練習${chooses.length}問の正解が全部${at[0]}番目です。読まずに通せるので、位置を散らしてください`);
+    }
+  }
+
+  // --- 検査13 <Level0> に概念の説明が入っていないこと ---
+  // 第7.3節が禁じているのは「概念の説明をレベル0に隠すこと」。語そのものは禁じない。
+  // 語で見ていた頃は、画面にそのまま出る文字列（「ファイル名拡張子」）の引用も、
+  // 「半角/全角 キーで切り替える」という操作の説明も書けなかった。3回とも誤検出で、
+  // 本物の違反は1件も見つからなかったので、定義の言い回しを見る形に変えた。
+  const DEFINING = ['とは', 'と呼び', 'と呼ぶ', 'という意味', 'のことです', 'を表します', 'を表す'];
   for (const l of lesson.level0) {
     const text = plainText(l.text);
-    for (const w of ownTerms) {
+    for (const w of DEFINING) {
       if (text.includes(w)) {
-        add(13, l.line, `<Level0> に、この節が名前を付ける語「${w}」が出ています。概念は本文に書いてください`);
+        add(13, l.line, `<Level0> に「${w}」があります。概念の説明は本文に書いてください。補足に書けるのは操作だけです`);
       }
     }
   }
