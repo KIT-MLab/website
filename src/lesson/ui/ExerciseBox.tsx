@@ -21,6 +21,18 @@ type Props = {
   choices?: string[];
 };
 
+/**
+ * 通ってから次の問題に入れ替わるまでの間（20-platform.md 第12.1節）。
+ * 覆いと印を先に出し、通ったことが見えてから入れ替える。
+ */
+const PASS_HOLD_MS = 1000;
+
+/**
+ * 正しい状態になってから自動で採点するまでの間（第12.3節）。
+ * 打っている途中でたまたま一致したときに早とちりしないための間。
+ */
+const AUTO_GRADE_MS = 500;
+
 export default function ExerciseBox({ id, kind, starter, stdin, choices }: Props) {
   const initial = starter ?? '';
   // 第0章の型（打つ練習・選ぶ練習）は Python を動かさない。
@@ -39,10 +51,22 @@ export default function ExerciseBox({ id, kind, starter, stdin, choices }: Props
   const [result, setResult] = useState<GradeResult | null>(null);
   const [fails, setFails] = useState(0);
   const [passed, setPassed] = useState(false);
+  /**
+   * 通った瞬間だけ箱全体を覆う（第12.1節の案D）。PASS_HOLD_MS で外すと、
+   * 覆いが帯の外まで縮んで薄くなり、帯の色が戻る。進度から戻したときは最初から
+   * false なので、開き直した画面でいきなり覆いが光ることはない。
+   */
+  const [sealFull, setSealFull] = useState(false);
   const [solution, setSolution] = useState<string | null>(null);
   const [solutionNote, setSolutionNote] = useState<string | null>(null);
   const [resetSignal, setResetSignal] = useState(0);
   const codeRef = useRef(initial);
+  /** 打つ欄・選択肢・コード欄を包む器。Ctrl＋Enter をここで捕まえる（第12.2節） */
+  const workRef = useRef<HTMLDivElement | null>(null);
+  /** いまの grade を指す。キーの処理と自動採点は張り直さずにこれを呼ぶ */
+  const gradeRef = useRef<() => void>(() => {});
+  /** 通ってから入れ替えるまでの待ち（第12.1節） */
+  const holdTimer = useRef<number | null>(null);
 
   /* 打つ練習の1行と、選ぶ練習の番号（1から数える。第11.4節） */
   const [typed, setTyped] = useState('');
@@ -66,6 +90,34 @@ export default function ExerciseBox({ id, kind, starter, stdin, choices }: Props
       alive = false;
     };
   }, [id]);
+
+  /**
+   * Ctrl ＋ Enter で採点する（20-platform.md 第12.2節）。
+   *
+   * 打つ欄・選択肢・コード欄の3つを包む器で、**捕まえる段（capture）**で受ける。
+   * CodeMirror の既定は Mod-Enter に空行の挿入を持っている（@codemirror/commands の
+   * defaultKeymap）。その処理は中の .cm-content に付いた上がる段の handler なので、
+   * ここで止めれば届かない。ボタンは残す。キーの操作は足すだけ（第12.2節）。
+   */
+  useEffect(() => {
+    const el = workRef.current;
+    if (!el) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Enter' || !(e.ctrlKey || e.metaKey)) return;
+      e.preventDefault();
+      e.stopPropagation();
+      gradeRef.current();
+    };
+    el.addEventListener('keydown', onKey, true);
+    return () => el.removeEventListener('keydown', onKey, true);
+  }, []);
+
+  useEffect(
+    () => () => {
+      if (holdTimer.current !== null) window.clearTimeout(holdTimer.current);
+    },
+    [],
+  );
 
   function update(next: string) {
     codeRef.current = next;
@@ -108,9 +160,38 @@ export default function ExerciseBox({ id, kind, starter, stdin, choices }: Props
     if (graded.passed) {
       const all = await Promise.all(lesson.exerciseIds.map((x) => store.exerciseResult(x)));
       if (all.every((r) => r.passed)) await store.finishLesson(lesson.lessonId);
-      window.dispatchEvent(new CustomEvent('kit:progress'));
+      // 覆いと印を先に出し、通ったことが見えてから入れ替える（第12.1節）。
+      // この合図で第0章の束が次の問題に進み、右レールの進度も塗り直す
+      if (holdTimer.current !== null) window.clearTimeout(holdTimer.current);
+      setSealFull(true);
+      holdTimer.current = window.setTimeout(() => {
+        holdTimer.current = null;
+        setSealFull(false);
+        window.dispatchEvent(new CustomEvent('kit:progress'));
+      }, PASS_HOLD_MS);
     }
   }
+
+  gradeRef.current = () => {
+    if (busy === 'none' && exercise) void grade();
+  };
+
+  /**
+   * 答えが決まっている課題は自動で採点する（20-platform.md 第12.3節）。
+   *
+   * 対象は type と choose だけ。Python の課題は動かしてみないと合否が決まらず、
+   * 打ち終わったかどうかを機械が決められないので、こちらには入れない。
+   * 正しい状態になってから 0.5秒待つのは、打っている途中でたまたま一致したときに
+   * 早とちりしないため。requirePaste の課題は gradeDirect が貼り付けを先に見るので、
+   * 手で打って同じ文字になっただけでは通らず、ここも動かない。
+   */
+  useEffect(() => {
+    if (!direct || !exercise || passed || busy !== 'none') return;
+    const answer = kind === 'choose' ? picked : typed;
+    if (!gradeDirect(answer, exercise, pasted).passed) return;
+    const timer = window.setTimeout(() => gradeRef.current(), AUTO_GRADE_MS);
+    return () => window.clearTimeout(timer);
+  }, [direct, exercise, passed, busy, kind, picked, typed, pasted]);
 
   async function showSolution() {
     setSolutionNote(null);
@@ -134,7 +215,7 @@ export default function ExerciseBox({ id, kind, starter, stdin, choices }: Props
   const editorLabel = kind === 'build' ? '解答のコード' : 'コード';
 
   return (
-    <div className="kit-ex__work">
+    <div className="kit-ex__work" ref={workRef}>
       {kind === 'type' ? (
         <div className="kit-stdinwrap">
           <div className="kit-stdin">
@@ -214,8 +295,9 @@ export default function ExerciseBox({ id, kind, starter, stdin, choices }: Props
             最初の形に戻す
           </button>
         ) : null}
+        {/* 押せることが画面から分かるように（第12.2節）。素地の小さな文字。札にしない */}
+        <span className="kit-ex__keyhint">Ctrl ＋ Enter でも採点できます</span>
         {!direct && busy !== 'none' ? <LoadBar /> : null}
-        {passed ? <span className="kit-ex__badge">通過</span> : null}
       </div>
 
       {runOutput !== null ? (
@@ -254,6 +336,31 @@ export default function ExerciseBox({ id, kind, starter, stdin, choices }: Props
             </div>
           )}
           {solutionNote ? <p className="kit-solution__note">{solutionNote}</p> : null}
+        </div>
+      ) : null}
+
+      {/*
+        通ったら箱を消さずに覆い、達成の印を重ねる（20-platform.md 第12.1節）。
+        印はチェックマークであって札ではない。地色つきのラベルは増やさない（第10.6節）。
+        覆いは触られない（pointer-events: none）ので、下の「別の書き方を見る」（第4.3.1節）も、
+        前の問題のコードを読むこと（第11.7節）も、そのまま続けられる。
+
+        覆いは通った瞬間だけ箱全体に掛かり、約1秒で帯の外まで縮んで薄くなる（案D）。
+        印は動かさない。変わるのは覆いの範囲と濃さだけである。
+      */}
+      {passed ? (
+        <div className={sealFull ? 'kit-ex__seal kit-ex__seal--full' : 'kit-ex__seal'}>
+          <svg
+            className="kit-ex__check"
+            viewBox="0 0 48 48"
+            role="img"
+            aria-label="この課題は通りました"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            {/* 下に紙色を敷く。黒い面（コード欄・打つ欄）の上でも緑が読めるように */}
+            <path className="kit-ex__check-halo" d="M9 25.5 L19.5 36 L39 12.5" />
+            <path className="kit-ex__check-line" d="M9 25.5 L19.5 36 L39 12.5" />
+          </svg>
         </div>
       ) : null}
     </div>

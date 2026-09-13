@@ -8,6 +8,7 @@
  *
  * 描く範囲は記号が集まっているところだけ。数字の段は端から端まで、
  * その下の3段は右の記号の列だけを描き、省いたところは「…」で示す。
+ * 最下段だけは左端の Shift も描く。左の Shift のほうがよく使われるため。
  * アルファベットの真ん中・ファンクションキー・テンキーは描かない。
  *
  * 見た目は 10-lesson-and-writing.md 第10.9節の決定の範囲で組む。
@@ -43,6 +44,7 @@ type Key = {
  * 日本語配列（JIS）の一例。x は実物の並びに合わせてずらしてある。
  * 段1は 半角/全角 から ¥ まで。段2〜4は右端の記号だけを描き、
  * 手前に1つだけ英字を置いて位置の目印にする。
+ * 段4だけは左端の Shift も描く。Shift が要るときは左右の両方を囲む。
  */
 const ROWS: Key[][] = [
   [
@@ -73,6 +75,8 @@ const ROWS: Key[][] = [
     { x: 12.75, lower: ']', upper: '}' },
   ],
   [
+    /* 左の Shift。右より使われるので、左端も描く。省いた真ん中は … が示す */
+    { x: 0, lower: 'Shift', kind: 'mod' },
     { x: 8.25, lower: 'M', kind: 'letter' },
     { x: 9.25, lower: ',', upper: '<' },
     { x: 10.25, lower: '.', upper: '>' },
@@ -132,23 +136,25 @@ const label =
     xmlns="http://www.w3.org/2000/svg"
   >
     {ROWS.map((row, r) => {
-      const first = row[0].x;
       const y = PAD + r * U;
       return (
         <g>
-          {first > 0 && (
-            <text
-              class="kit-keys__omit"
-              x={PAD + first * U - 11}
-              y={y + 28}
-              text-anchor="middle">…</text>
-          )}
           {row.map((k, c) => {
             const x = PAD + k.x * U;
             const lit = isLit(r, c);
             const shiftKey = k.kind === 'mod' && needsShift;
+            /* 手前に間が空いていれば、省いたところとして … を置く。
+               段2〜3は左をまるごと省く。段4は左端の Shift と M の間だけが空く */
+            const gap = k.x - (c === 0 ? 0 : row[c - 1].x + 1) > 0.5;
             return (
               <g>
+                {gap && (
+                  <text
+                    class="kit-keys__omit"
+                    x={x - 11}
+                    y={y + 28}
+                    text-anchor="middle">…</text>
+                )}
                 <rect
                   x={x}
                   y={y}

@@ -5,9 +5,11 @@
  * 包む側で、続けて並んだ課題を1つの束にして、通っていない最初の1問だけを見せる。
  *
  *   ・1問通ると、その場が次の問題に入れ替わる。通った問題は消す。戻る道は作らない
+ *     （入れ替えは ExerciseBox が覆いを出してから合図を投げる。第12.1節）
  *   ・いま何問目か・全部で何問かを、その場に出す。札は増やさない（第10.6節）ので
  *     コードのキャプションと同じ素地の小さな文字にする
- *   ・全部通ったら「この節の練習は終わりです」を出す
+ *   ・全部通ったら、最後の問題の箱を覆ったまま残し、その下に
+ *     「この節の練習は終わりです」を出す（第12.1節。箱は消さない）
  *   ・通った問題は開き直しても飛ばす。判断は進度の記録（store）だけを見て決める
  *
  * 束にするのは**続けて並んだ**課題だけである。「やってみる」に置く1問（第11.6節）は
@@ -69,16 +71,14 @@ export function setupExerciseQueue(): void {
   async function paint(): Promise<void> {
     for (const q of queues) {
       const states = await Promise.all(q.items.map((el) => store.exerciseResult(el.id)));
-      const at = states.findIndex((s) => !s.passed);
-      if (at < 0) {
-        for (const el of q.items) el.hidden = true;
-        q.done.hidden = false;
-        continue;
-      }
+      const miss = states.findIndex((s) => !s.passed);
+      // 全部通しても箱は消さない。最後の問題を覆ったまま残す（第12.1節）。
+      // 急に箱が消えて文字だけが出ると、何が起きたのか分からないため
+      const at = miss < 0 ? q.items.length - 1 : miss;
       q.items.forEach((el, i) => {
         el.hidden = i !== at;
       });
-      q.done.hidden = true;
+      q.done.hidden = miss >= 0;
       q.count.textContent = countText(q.items.length, at);
       const home = q.items[at].querySelector('.kit-ex__in');
       if (home && q.count.parentElement !== home) home.prepend(q.count);

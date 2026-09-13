@@ -34,6 +34,7 @@
   --l-ai: #27506c; /* 藍 = 練習問題（第10.9節の唯一の変更点） */
   --l-kohaku: #8a6a1f; /* 琥珀 = よくある間違い。4段の階段には乗らない */
   --l-kohaku-bg: #f7edd6;
+  --l-midori: #266432; /* 緑 = 通った印。20-platform.md 第12.1節。帯にも札にも使わない */
 
   /* 帯の色と文字色 */
   --l-band-trace: #e6dcc5;
@@ -602,6 +603,8 @@
  * ============================================================ */
 .kit-ex {
   border-radius: 0;
+  /* 通った印の覆いが、箱の枠の内側いっぱいに乗るように（第12.1節） */
+  position: relative;
 }
 
 .kit-ex--trace {
@@ -632,6 +635,36 @@
   font-family: "Zen Old Mincho", serif;
   font-weight: 700;
   letter-spacing: 0.2em;
+  /* 通った印の覆いより上に置く。落ち着いたあとは帯の色が戻る（第12.1節の案D）。
+     帯の色（藍・朱・無彩）と地色の4段がまとまりの範囲を作っている
+     （10-lesson 第10.9節）ので、通ったあとも帯の色は沈めたままにしない */
+  position: relative;
+  z-index: 1;
+}
+
+/* 覆う瞬間だけ、帯の上にも同じ紙色を重ねる。1秒後に消え、帯の色が戻る */
+.kit-ex__stage::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(246, 242, 233, 0);
+  pointer-events: none;
+  transition: background-color 0.45s ease;
+}
+
+/* 帯の下の罫も、覆う瞬間は一緒に沈める */
+.kit-ex--trace .kit-ex__stage::after,
+.kit-ex--modify .kit-ex__stage::after,
+.kit-ex--type .kit-ex__stage::after,
+.kit-ex--choose .kit-ex__stage::after {
+  bottom: -1px;
+}
+
+.kit-ex:has(.kit-ex__seal--full) .kit-ex__stage::after {
+  background: rgba(246, 242, 233, 0.62);
+  /* 覆う瞬間は待たせない。箱の中身は同じ瞬間に覆われるので、帯だけ遅れて沈むと
+     ひと続きに見えない。滑らかにするのは、落ち着いていく側だけでよい */
+  transition-duration: 0s;
 }
 
 .kit-ex--trace .kit-ex__stage {
@@ -839,14 +872,63 @@
   margin-top: 12px;
 }
 
-.kit-ex__badge {
+/* 押せることが画面から分かるように（第12.2節）。札にしない素地の小さな文字 */
+.kit-ex__keyhint {
   font-family: "Zen Old Mincho", serif;
   font-size: 13px;
-  font-weight: 700;
   letter-spacing: 0.1em;
-  color: var(--l-strong);
-  border: 1px solid var(--l-strong);
-  padding: 1px 10px;
+  color: var(--l-ink-2);
+}
+
+/* --- 通った印（20-platform.md 第12.1節） ----------------------
+ * 箱は消さずに残し、上を半透明で覆って緑のチェックマークを重ねる。
+ * 印はチェックマークであって札ではない（第10.6節。地色つきのラベルは増やさない）。
+ *
+ * 覆いは紙色を薄くかけるだけにする。第1章以降は通った課題が縦に並んだまま残り、
+ * 前の問題のコードを見ながら次を解くため（第11.7節）、下が読めなくなってはいけない。
+ * 触られない（pointer-events: none）ので、下の「別の書き方を見る」も押せる。
+ *
+ * 覆いは2つの状態を取る（案D）。通った瞬間は箱の枠の内側いっぱいを 0.62 で覆い、
+ * 約1秒（PASS_HOLD_MS）で帯の外だけの 0.35 に落ち着く。移り変わりは 0.45秒。
+ * 帯の上の覆いは .kit-ex__stage::after が受け持ち、落ち着くと帯の色が戻る。
+ * 印は動かさない。進度から戻したときは --full が付かないので、落ち着いた側で出る。
+ * ------------------------------------------------------------ */
+.kit-ex__seal {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(246, 242, 233, 0.35);
+  pointer-events: none;
+  transition: background-color 0.45s ease;
+}
+
+/* 通った瞬間だけ濃くする。帯の上の覆いは .kit-ex__stage::after が受け持つ */
+.kit-ex__seal--full {
+  background: rgba(246, 242, 233, 0.62);
+  /* 通ったあとにもう一度採点して通した場合も、覆う瞬間は待たせない */
+  transition-duration: 0s;
+}
+
+.kit-ex__check {
+  width: 60px;
+  height: 60px;
+  fill: none;
+  stroke-linecap: square;
+  stroke-linejoin: miter;
+}
+
+.kit-ex__check-halo {
+  stroke: var(--l-paper);
+  stroke-width: 12;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.kit-ex__check-line {
+  stroke: var(--l-midori);
+  stroke-width: 4.5;
 }
 
 .kit-ex__missing {
