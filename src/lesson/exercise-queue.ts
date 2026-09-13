@@ -13,8 +13,14 @@
  *   ・通った問題は開き直しても飛ばす。判断は進度の記録（store）だけを見て決める
  *
  * 束にするのは**続けて並んだ**課題だけである。「やってみる」に置く1問（第11.6節）は
- * 前後に本文が入るので1つきりの束になり、この仕組みは効かない。そこは読んでから
- * 説明に進む1問なので、入れ替える相手がいない。
+ * 前後に本文が入るので、1問きりの束になる。入れ替える相手がいないので何問目かの表示も
+ * 終わりの1行も出さない。
+ *
+ * 1問きりの束は、**開き直したときにだけ隠す**。隠さないと、覆いと印が付いたまま節の
+ * 先頭に残り、まだ答えていないのに印が出ているように見える（第12.1節）。
+ * ただし**通したその場では隠さない**。束の中の問題には入れ替わる相手がいるが、
+ * こちらには無いので、消えると「困る例」の次がいきなり「説明」になり、自分が何をしたかの
+ * 跡が消える。第12.1節が「急に箱が消えて文字だけが出ると分からない」と決めたそのものである。
  *
  * この関数が動くのは .lesson-body に data-exq が付いた節だけ。第1章以降の節では
  * 何もせずに戻る（Python の章は縦に並べたまま。第11.7節）。
@@ -23,8 +29,9 @@ import { getProgressStore } from './store/progress';
 
 type Queue = {
   items: HTMLElement[];
-  count: HTMLParagraphElement;
-  done: HTMLParagraphElement;
+  /** 1問きりの束（「やってみる」の1問）には付けない。入れ替える相手がいないため */
+  count: HTMLParagraphElement | null;
+  done: HTMLParagraphElement | null;
 };
 
 function countText(total: number, at: number): string {
@@ -45,7 +52,11 @@ export function setupExerciseQueue(): void {
 
   const queues: Queue[] = [];
   for (const items of groups) {
-    if (items.length < 2) continue;
+    if (items.length < 2) {
+      // 「やってみる」に置く1問（第11.6節）。表示は何も足さず、通ったら隠すだけ
+      queues.push({ items, count: null, done: null });
+      continue;
+    }
     const count = document.createElement('p');
     count.className = 'kit-exq__count';
     // 進度を読む前の見え方を、CSS だけで伏せてある状態（1問目が見えている）に合わせる
@@ -67,11 +78,19 @@ export function setupExerciseQueue(): void {
   }
 
   const store = getProgressStore();
+  /** 最初の塗りかどうか。1問きりの束を隠すのは、このときだけ */
+  let first = true;
 
   async function paint(): Promise<void> {
     for (const q of queues) {
       const states = await Promise.all(q.items.map((el) => store.exerciseResult(el.id)));
       const miss = states.findIndex((s) => !s.passed);
+      if (!q.count || !q.done) {
+        // 1問きりの束は、開き直したときにだけ隠す（第12.1節）。
+        // 通したその場で消すと、入れ替わる相手がいないので跡が詰まる
+        if (first) q.items[0].hidden = miss < 0;
+        continue;
+      }
       // 全部通しても箱は消さない。最後の問題を覆ったまま残す（第12.1節）。
       // 急に箱が消えて文字だけが出ると、何が起きたのか分からないため
       const at = miss < 0 ? q.items.length - 1 : miss;
@@ -84,6 +103,7 @@ export function setupExerciseQueue(): void {
       if (home && q.count.parentElement !== home) home.prepend(q.count);
     }
     body.dataset.exq = 'on';
+    first = false;
   }
 
   void paint();

@@ -67,6 +67,11 @@ export default function ExerciseBox({ id, kind, starter, stdin, choices }: Props
   const gradeRef = useRef<() => void>(() => {});
   /** 通ってから入れ替えるまでの待ち（第12.1節） */
   const holdTimer = useRef<number | null>(null);
+  /**
+   * 自動で採点した答え（選ぶ課題だけ）。採点が終わると busy が none に戻るので、
+   * 同じ答えをそのまま採点し続けないように、一度見た答えを覚えておく（第12.3節）。
+   */
+  const autoGraded = useRef<string | null>(null);
 
   /* 打つ練習の1行と、選ぶ練習の番号（1から数える。第11.4節） */
   const [typed, setTyped] = useState('');
@@ -181,14 +186,29 @@ export default function ExerciseBox({ id, kind, starter, stdin, choices }: Props
    *
    * 対象は type と choose だけ。Python の課題は動かしてみないと合否が決まらず、
    * 打ち終わったかどうかを機械が決められないので、こちらには入れない。
-   * 正しい状態になってから 0.5秒待つのは、打っている途中でたまたま一致したときに
-   * 早とちりしないため。requirePaste の課題は gradeDirect が貼り付けを先に見るので、
-   * 手で打って同じ文字になっただけでは通らず、ここも動かない。
+   *
+   * 打つ課題は**正しい状態になってから** 0.5秒待って採点する。打っている途中の
+   * 一致で早とちりしないためで、合っていないうちはボタンが受け持つ。
+   * requirePaste の課題は gradeDirect が貼り付けを先に見るので、手で打って同じ文字に
+   * なっただけでは通らず、ここも動かない。
+   *
+   * 選ぶ課題は**選んだらどれでも**採点する。ボタンを置かない（第12.3節）ので、
+   * 合っていないものを採点しないと、違う番号を選んでも何も返らなくなるためである。
+   * 0.5秒の間は押し間違いを選び直す猶予になる。選び直せば、そのつど採点し直す。
    */
   useEffect(() => {
     if (!direct || !exercise || passed || busy !== 'none') return;
-    const answer = kind === 'choose' ? picked : typed;
-    if (!gradeDirect(answer, exercise, pasted).passed) return;
+    if (kind === 'choose') {
+      if (picked === null) return;
+      const key = String(picked);
+      if (autoGraded.current === key) return;
+      const timer = window.setTimeout(() => {
+        autoGraded.current = key;
+        gradeRef.current();
+      }, AUTO_GRADE_MS);
+      return () => window.clearTimeout(timer);
+    }
+    if (!gradeDirect(typed, exercise, pasted).passed) return;
     const timer = window.setTimeout(() => gradeRef.current(), AUTO_GRADE_MS);
     return () => window.clearTimeout(timer);
   }, [direct, exercise, passed, busy, kind, picked, typed, pasted]);
@@ -268,37 +288,45 @@ export default function ExerciseBox({ id, kind, starter, stdin, choices }: Props
         <p className="kit-ex__missing">この課題の判定データが見つかりません（id: {id}）。</p>
       ) : null}
 
-      <div className="kit-ex__bar">
-        <button
-          type="button"
-          className="kit-btn kit-btn--strong"
-          onClick={grade}
-          disabled={busy !== 'none' || !exercise}
-        >
-          {busy === 'grade' ? '採点中' : '採点する'}
-        </button>
-        {direct ? null : (
-          <button type="button" className="kit-btn" onClick={tryRun} disabled={busy !== 'none'}>
-            {busy === 'run' ? '実行中' : '▶ 試す'}
-          </button>
-        )}
-        {!direct && starter ? (
+      {/*
+        選ぶ課題には採点の欄を置かない（20-platform.md 第12.3節）。選んだ時点で答えたのと
+        同じなので、押させる手数が1つ増えるだけである。選び直しは選択肢を選び直せばよい。
+        押すものが無いので「Ctrl ＋ Enter でも採点できます」も出さない。
+        打つ課題はボタンを残す。打っている途中は答えが定まらないため。
+      */}
+      {kind === 'choose' ? null : (
+        <div className="kit-ex__bar">
           <button
             type="button"
-            className="kit-btn kit-btn--quiet"
-            onClick={() => {
-              update(initial);
-              setResetSignal((n) => n + 1);
-            }}
-            disabled={busy !== 'none'}
+            className="kit-btn kit-btn--strong"
+            onClick={grade}
+            disabled={busy !== 'none' || !exercise}
           >
-            最初の形に戻す
+            {busy === 'grade' ? '採点中' : '採点する'}
           </button>
-        ) : null}
-        {/* 押せることが画面から分かるように（第12.2節）。素地の小さな文字。札にしない */}
-        <span className="kit-ex__keyhint">Ctrl ＋ Enter でも採点できます</span>
-        {!direct && busy !== 'none' ? <LoadBar /> : null}
-      </div>
+          {direct ? null : (
+            <button type="button" className="kit-btn" onClick={tryRun} disabled={busy !== 'none'}>
+              {busy === 'run' ? '実行中' : '▶ 試す'}
+            </button>
+          )}
+          {!direct && starter ? (
+            <button
+              type="button"
+              className="kit-btn kit-btn--quiet"
+              onClick={() => {
+                update(initial);
+                setResetSignal((n) => n + 1);
+              }}
+              disabled={busy !== 'none'}
+            >
+              最初の形に戻す
+            </button>
+          ) : null}
+          {/* 押せることが画面から分かるように（第12.2節）。素地の小さな文字。札にしない */}
+          <span className="kit-ex__keyhint">Ctrl ＋ Enter でも採点できます</span>
+          {!direct && busy !== 'none' ? <LoadBar /> : null}
+        </div>
+      )}
 
       {runOutput !== null ? (
         <div className="kit-out">
