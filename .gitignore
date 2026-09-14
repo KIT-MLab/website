@@ -30,3 +30,6 @@ pnpm-debug.log*
 .wrangler/
 # Cloudflare
 .wrangler/
+
+# Cloudflare の開発サーバに渡す秘密（手元用の使い捨て）
+.dev.vars

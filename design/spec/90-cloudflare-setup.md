@@ -35,20 +35,24 @@
 4. D1 database に、いま作った `mlab-course` を選ぶ
 5. **Deploy** を押す
 
-### 2.3 秘密鍵を登録する
+### 2.3 秘密鍵を登録する（済 / 2026-09-14）
 
 ログインの Cookie に署名するための鍵。
 
-1. 同じ Worker の **Settings** → **Variables and Secrets** → **Add**
-2. Type を **Secret** にする
-3. Variable name に `SESSION_SECRET`
-4. Value に、長いランダムな文字列を入れる。作り方の例（どちらでもよい）
-   - ブラウザのアドレス欄で使えないので、コマンドプロンプトで
-     ```
-     powershell -Command "[Convert]::ToBase64String((1..48|%{Get-Random -Max 256}))"
-     ```
-   - またはパスワード生成サイトで64文字程度のものを作る
-5. **Deploy** を押す
+**画面からは入れられなかった。** いまの Cloudflare の画面には、この Worker の **Settings → Runtime** にも **Bindings** にも「Variables and secrets」が無い。**Settings → Builds** の下にある同名の欄は**ビルド中にだけ渡る値**で、動いている Worker からは読めない。そこに入れても `/api/health` は「なし」のまま返る。
+
+効いたのは wrangler から入れる方法。
+
+```
+npx wrangler secret put SESSION_SECRET
+```
+
+対話で値を聞かれるので貼る。値の作り方の例（どちらでもよい）
+
+- `powershell -Command "[Convert]::ToBase64String((1..48|%{Get-Random -Max 256}))"`
+- パスワード生成サイトで64文字程度のものを作る
+
+入ったかどうかは `https://website.kit-machine-learning.workers.dev/api/health` で確かめる。`sessionSecret` が「あり」になれば届いている。**中身は返さない。**
 
 ### 2.4 私に伝えること
 
@@ -64,13 +68,23 @@
 
 上記を受け取ったあとに私が行う。
 
-1. `wrangler.jsonc` に D1 の紐付けを書く（Database ID が入る）
-2. `migrations/0001_init.sql` にテーブル定義を置く（`20-platform.md` 第6章と第10.3節）
-3. `npx wrangler d1 migrations apply mlab-course --remote` でテーブルを作る
-4. 最初の招待コードを2つ登録する
-   - 内部用（勉強会のメンバー向け）
-   - 外部用（常設の公開コード）
-5. あなたのアカウントを管理者にする
+1. ~~`wrangler.jsonc` に D1 の紐付けを書く（Database ID が入る）~~ 済
+2. ~~`migrations/0001_init.sql` にテーブル定義を置く（`20-platform.md` 第6章と第10.3節）~~ 済。招待コードは `0002_cohorts.sql`
+3. テーブルを作る。**この1行だけはあなたに実行してもらう**（下）
+4. ~~最初の招待コードを2つ登録する~~ 済。`MLAB-2026`（内部）と `MLAB-OPEN`（外部・常設）を `0002_cohorts.sql` に入れてある
+5. あなたのアカウントを管理者にする（あなたが登録したあと）
+
+### 3.1 本番のテーブルを作る（あなたの作業）
+
+私の側からは本番のデータベースへの書き込みが止められる。次の1行を実行してください。
+
+```
+npx wrangler d1 migrations apply mlab-course --remote
+```
+
+聞かれたら yes。手元の同じ SQL では 0001 と 0002 が両方通っている。
+
+以後、テーブルを足したり変えたりするたびに、私が `migrations/` に次の番号のファイルを置き、あなたがこの1行を実行する。**一度あてた migration は書き換えない。**
 
 ---
 
