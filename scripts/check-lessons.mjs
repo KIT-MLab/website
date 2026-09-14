@@ -2,7 +2,7 @@
  * 執筆規約の自動検査（20-platform.md 第2.4節）。
  *
  * 全 .mdx を読み、10-lesson-and-writing.md 第8章のチェックリストのうち
- * 機械判定できる13項目を検査する。1つでも落ちたら終了コード1を返す。
+ * 機械判定できる14項目を検査する。1つでも落ちたら終了コード1を返す。
  * この検査はビルドの前に走り、失敗したらビルドを止める。
  *
  *   node scripts/check-lessons.mjs
@@ -287,6 +287,23 @@ for (const file of files) {
     const at = chooses.map((e) => (Array.isArray(e.tests) ? e.tests[0]?.correct : undefined));
     if (new Set(at).size === 1) {
       add(4, 1, `選ぶ練習${chooses.length}問の正解が全部${at[0]}番目です。読まずに通せるので、位置を散らしてください`);
+    }
+  }
+
+  // --- 検査14 用語の言い換えを選ばせる問いが1節に2問以上ないこと ---
+  // 第3.7節。この形は選択肢から正しい言い換えを見分けるだけで通るので、何問も置くと
+  // 節全体が「読んだ内容を思い出す」試験になり、その節で身につけたはずの操作を
+  // 1度も使わないまま終わる。第0.5節が実際にそうなった（5問中3問）。
+  // 見るのは問題文の1行目だけ。選択肢の文にこの言い回しが出るのは普通なので数えない。
+  const RESTATING = ['の説明として', 'という言葉の説明', 'の意味として', 'とは何ですか', 'を説明したものは'];
+  const restating = ex.filter((e) => {
+    // 1行目だけを見る。選択肢の文にこの言い回しが出るのは普通なので数えない
+    const head = (String(e.prompt ?? '').match(/[^\r\n]+/) ?? [''])[0].trim();
+    return RESTATING.some((w) => head.includes(w));
+  });
+  if (restating.length > 1) {
+    for (const e of restating.slice(1)) {
+      add(14, e.line, `用語の言い換えを選ばせる問いが${restating.length}問あります。1節に1問までです。手を動かしてから答える問いに替えてください`);
     }
   }
 
