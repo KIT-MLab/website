@@ -84,24 +84,6 @@ print("青")`}
 上のコードを1行の `print` に書き換えて、`赤 青` と1行で表示されるようにしてください。引数は2つ渡します。
 </Exercise>
 
-<Exercise
-  id="python-01-print-b1"
-  kind="build"
-  stdin={`りんご`}
-  tests={[
-    { kind: 'stdout', stdin: `りんご\n` },
-    { kind: 'stdout', stdin: `0\n` },
-    { kind: 'stdout', stdin: `-5\n` },
-  ]}
-  hints={[
-    '入力欄の1行を読むには `input()` と書きます。',
-    '文字列どうしは `+` でつなげます。`"あ" + "い"` は `あい` になります。',
-  ]}
-  mistakes={['zenkaku-quote']}
->
-入力欄の1行を読み取り、その前後に `【` と `】` を付けて表示するプログラムを書いてください。入力欄の1行を読むには `input()` と書きます。`input()` の説明は次の節で行います。
-</Exercise>
-
 {/* つながり */}
 
 `print` で値を出せるようになりました。次の節では、こちらから値を渡す `input()` を扱います。

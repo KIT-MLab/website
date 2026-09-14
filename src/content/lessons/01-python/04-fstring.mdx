@@ -107,6 +107,25 @@ print(f"名前:{name} 点数:{score}点")`}
 入力欄の1行目を名前、2行目を点数として読み取ってください。名前・点数に加えて、100点まであと何点かを `名前:田中 点数:80点 残り20点` のように1行で表示します。
 </Exercise>
 
+<Exercise
+  id="python-01-fstring-b2"
+  kind="build"
+  stdin={`りんご`}
+  tests={[
+    { kind: 'stdout', stdin: `りんご\n` },
+    { kind: 'stdout', stdin: `0\n` },
+    { kind: 'stdout', stdin: `-5\n` },
+    { kind: 'stdout', stdin: `\n` },
+  ]}
+  hints={[
+    '上の「説明」にある、文字列を `+` でつなぐ書き方を、もう一度読んでください。',
+    'コンマで区切って `print` に渡すと、間に空白が入ります。1行だけ実行して確かめてください。',
+  ]}
+  mistakes={['str-plus-int-literal', 'fstring-missing-brace']}
+>
+入力欄の1行をそのまま読み取り、前後を `【` と `】` で囲んで1行で表示するプログラムを書いてください。
+</Exercise>
+
 {/* つながり */}
 
 文字列と数値を組み合わせて表示できるようになりました。次の節では、ここまでの道具を使って点数表を作ります。

@@ -2,13 +2,13 @@
  * 執筆規約の自動検査（20-platform.md 第2.4節）。
  *
  * 全 .mdx を読み、10-lesson-and-writing.md 第8章のチェックリストのうち
- * 機械判定できる15項目を検査する。1つでも落ちたら終了コード1を返す。
+ * 機械判定できる17項目を検査する。1つでも落ちたら終了コード1を返す。
  * この検査はビルドの前に走り、失敗したらビルドを止める。
  *
  *   node scripts/check-lessons.mjs
  */
-import { readdirSync, readFileSync, statSync } from 'node:fs';
-import { join, relative } from 'node:path';
+import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
+import { dirname, join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { glossaryWords } from './glossary.mjs';
 import { parseLesson, plainText } from './parse-lesson.mjs';
@@ -29,6 +29,7 @@ import {
   countChars,
   splitSentences,
 } from './lesson-rules.mjs';
+import { PYTHON_TOOLS } from './python-tools.mjs';
 
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const LESSONS_DIR = join(ROOT, 'src', 'content', 'lessons');
@@ -82,6 +83,8 @@ const seenLessonIds = new Map();
 const seenExerciseIds = new Map();
 /** 検査15 用。章ごとに節数・課題数・「組む」の数を貯める（第3.8節） */
 const chapters = new Map();
+/** 検査16・17 用。節の並び順に、その節が持つ Python のコードを貯める */
+const codeOf = [];
 
 for (const file of files) {
   const rel = relative(ROOT, file).replace(/\\/g, '/');
@@ -100,6 +103,30 @@ for (const file of files) {
   if (fm.id) {
     if (seenLessonIds.has(fm.id)) add('frontmatter', 1, `id が ${seenLessonIds.get(fm.id)} と重複しています: ${fm.id}`);
     else seenLessonIds.set(fm.id, rel);
+  }
+
+  /* 検査16・17 用にコードを集める。
+     `parts` は**学習者が動かすコード**だけ（本文のコードブロック、部品に渡すコード、模範解答）。
+     検査16（先取り）はこちらだけを見る。コードで使われている道具は、読み手が真似して動かす。
+
+     `mentions` はそれに地の文の中の `…` を足したもの。検査17（台帳のずれ）はこちらを見る。
+     道具は地の文で紹介されることがあり、「導入した」と言えるのは紹介も含むため。
+
+     分けているのは、地の文には英語のエラーメッセージが引用されるからである。
+     `name 'math' is not defined` の not を「and / or / not」と読むわけにいかない。 */
+  {
+    const parts = [];
+    for (const m of source.matchAll(/```python\n([\s\S]*?)```/g)) parts.push(['本文のコード', m[1]]);
+    for (const m of source.matchAll(/(?:code|starter)=\{?`([\s\S]*?)`\}?/g)) parts.push(['部品のコード', m[1]]);
+    const solDir = join(dirname(file), 'solutions');
+    if (fm.id && existsSync(solDir)) {
+      for (const name of readdirSync(solDir).filter((x) => x.startsWith(fm.id))) {
+        parts.push(['模範解答 ' + name, readFileSync(join(solDir, name), 'utf8')]);
+      }
+    }
+    const mentions = [...parts];
+    for (const m of source.matchAll(/`([^`\n]+)`/g)) mentions.push(['本文の中の引用', m[1]]);
+    codeOf.push({ id: fm.id ?? '', rel, parts, mentions });
   }
 
   // --- 検査1 要素の順序 ---
@@ -325,6 +352,43 @@ for (const file of files) {
       if (text.includes(w)) {
         add(13, l.line, `<Level0> に「${w}」があります。概念の説明は本文に書いてください。補足に書けるのは操作だけです`);
       }
+    }
+  }
+}
+
+/* --- 検査16 まだ教えていない道具を使っていないこと ---
+   教材でいちばん起こしやすい誤りは、書き手が知っている道具を、教える前の節で使うこと。
+   書き手は気づかず、読み手は詰まるが何が足りないのか言葉にできない。
+   台帳は scripts/python-tools.mjs（30-python-curriculum.md 第4章の課程表から起こしたもの）。 */
+{
+  const at = new Map(codeOf.map((l, i) => [l.id, i]));
+  for (const [i, lesson] of codeOf.entries()) {
+    for (const tool of PYTHON_TOOLS) {
+      const introAt = at.get(tool.in);
+      if (introAt === undefined || i >= introAt) continue;
+      const hit = lesson.parts.find(([, code]) => tool.re.test(code));
+      if (!hit) continue;
+      const line = (hit[1].split('\n').find((l) => tool.re.test(l)) ?? '').trim();
+      problems.push({
+        file: lesson.rel, check: 16, line: 1,
+        message: `${tool.name} を使っていますが、教えるのは「${tool.in}」です（${hit[0]}: ${line}）`,
+      });
+    }
+  }
+
+  /* --- 検査17 台帳が実物とずれていないこと ---
+     導入する節と書いてあるのに、その節に1度も出てこない道具があれば、台帳か中身の
+     どちらかが古い。放っておくと検査16 が意味を失う。 */
+  for (const tool of PYTHON_TOOLS) {
+    const lesson = codeOf.find((l) => l.id === tool.in);
+    if (!lesson) {
+      problems.push({ file: 'scripts/python-tools.mjs', check: 17, line: 1,
+        message: `台帳の「${tool.in}」という節がありません（${tool.name}）` });
+      continue;
+    }
+    if (!lesson.mentions.some(([, code]) => tool.re.test(code))) {
+      problems.push({ file: lesson.rel, check: 17, line: 1,
+        message: `この節が ${tool.name} を導入することになっていますが、コードに1度も出てきません` });
     }
   }
 }
