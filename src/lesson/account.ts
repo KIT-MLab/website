@@ -7,7 +7,7 @@
  *
  * 閉じる道を塞ぐ段が2つある。
  *
- *   段2（控える） … 合言葉の平文が出るのは登録の応答の1回だけで、しまってあるのは
+ *   段2（控える） … パスワードの平文が出るのは登録の応答の1回だけで、しまってあるのは
  *                   ハッシュなので、見落として閉じた人は先生が作り直すまで別の端末から
  *                   入れない（第5.2節）
  *   段4（この端末に残っている記録） … 途中で閉じられると、手元の記録が「誰のものか
@@ -62,7 +62,7 @@ async function postJson(path: string, body?: unknown): Promise<{ ok: boolean; da
   }
 }
 
-/** 合言葉を3桁ずつ空ける（第5.6節。紙に書き写す前提）。 */
+/** パスワードを3桁ずつ空ける（第5.6節。紙に書き写す前提）。 */
 function groupPasscode(code: string): string {
   return code.length === 6 ? `${code.slice(0, 3)} ${code.slice(3)}` : code;
 }
@@ -322,14 +322,14 @@ export function setupAccount(): void {
     const id = loginId.value.trim();
     const passcode = loginPass.value.replace(/\s/g, '');
     if (id === '') return deny('uid', '利用者IDを入れてください。');
-    if (passcode === '') return deny('pass', '合言葉を入れてください。');
+    if (passcode === '') return deny('pass', 'パスワードを入れてください。');
 
     loginSubmit.disabled = true;
     const { ok, data } = await postJson('/api/login', { id, passcode });
     loginSubmit.disabled = false;
     if (!ok) {
-      // ログインの断りは利用者IDと合言葉のどちらが違うかを言わない決まりなので、
-      // 送るボタンのすぐ上（合言葉）の下に出す。サーバも field で同じことを言う
+      // ログインの断りは利用者IDとパスワードのどちらが違うかを言わない決まりなので、
+      // 送るボタンのすぐ上（パスワード）の下に出す。サーバも field で同じことを言う
       return deny(data.field === 'uid' ? 'uid' : 'pass', typeof data.error === 'string' ? data.error : FALLBACK_DENY);
     }
 

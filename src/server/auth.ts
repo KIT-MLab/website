@@ -1,7 +1,7 @@
 /**
  * 登録とログインの土台（20-platform.md 第5章・第7章）。
  *
- * ここに置くのは「画面から見えない部分」だけ。利用者IDと合言葉の作り方、合言葉の
+ * ここに置くのは「画面から見えない部分」だけ。利用者IDとパスワードの作り方、パスワードの
  * しまい方、Cookie の作り方と読み方、待たせる時間の計算。API のルート
  * （src/pages/api/register.ts 他）はこの関数を並べるだけで済むようにしてある。
  *
@@ -156,7 +156,7 @@ export function normalizeUserId(raw: string): string {
 }
 
 /**
- * 合言葉。6桁の数字（`000000`〜`999999`）。
+ * パスワード。6桁の数字（`000000`〜`999999`）。
  *
  * 数ではなく文字列で組み立てる。**数にすると先頭の0が落ちて5桁になり、打ち直せなくなる。**
  * 1桁ずつ、250 未満のバイトだけを採って `% 10` する（250〜255 を採ると 0〜5 が
@@ -178,7 +178,7 @@ export function newSessionToken(): string {
   return toBase64Url(crypto.getRandomValues(new Uint8Array(32)));
 }
 
-// ---------------------------------------------------------------- 合言葉
+// ---------------------------------------------------------------- パスワード
 
 async function pbkdf2(passcode: string, salt: Uint8Array, iterations: number): Promise<Uint8Array> {
   const key = await crypto.subtle.importKey('raw', encoder.encode(passcode), 'PBKDF2', false, [
@@ -193,7 +193,7 @@ async function pbkdf2(passcode: string, salt: Uint8Array, iterations: number): P
 }
 
 /**
- * 合言葉をしまえる形にする。PBKDF2-HMAC-SHA256、ソルト16バイト、出力32バイト。
+ * パスワードをしまえる形にする。PBKDF2-HMAC-SHA256、ソルト16バイト、出力32バイト。
  *
  * 形は `pbkdf2$<回数>$<ソルトのbase64url>$<ハッシュのbase64url>`。
  * **回数を文字列の中に入れてあるのは、あとで回数を変えても古い記録が読めるようにするため。**
@@ -313,7 +313,7 @@ export async function startSession(db: Db, secret: string, userId: string, now: 
   return makeCookie(token, secret);
 }
 
-/** 画面と API が受け取る利用者の形。**合言葉もそのハッシュもここには入れない。** */
+/** 画面と API が受け取る利用者の形。**パスワードもそのハッシュもここには入れない。** */
 export type CurrentUser = {
   id: string;
   displayName: string;
