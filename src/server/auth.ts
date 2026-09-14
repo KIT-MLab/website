@@ -22,13 +22,27 @@ import { env as workerEnv } from 'cloudflare:workers';
  * D1 の型。`@cloudflare/workers-types` は入れていないので、使うぶんだけ自分で書く。
  * 依存を1つ増やして得られるのがこの6行だけなら、書いたほうが軽い。
  */
-type Stmt = {
+export type Stmt = {
   bind: (...values: unknown[]) => Stmt;
   first: <T>() => Promise<T | null>;
   all: <T>() => Promise<{ results: T[] }>;
   run: () => Promise<unknown>;
 };
-export type Db = { prepare: (sql: string) => Stmt };
+
+/**
+ * `batch` の1件ぶんの答え。`meta.changes` が「その文で実際に変わった行数」で、
+ * `INSERT OR IGNORE` が黙って捨てたときは 0 になる。/api/submit はこれを数える。
+ */
+export type BatchResult = { meta?: { changes?: number } };
+
+/**
+ * `batch` は複数の文を1往復で流す。**200件を1件ずつ `await` で回すと200往復になる**ので、
+ * まとめて書く口（/api/progress と /api/submit）はこちらを使う。
+ */
+export type Db = {
+  prepare: (sql: string) => Stmt;
+  batch: (statements: Stmt[]) => Promise<BatchResult[]>;
+};
 
 /** 利用者ID に使う字母。`0 O 1 I L` を抜いてある（紙に書き写して打ち直すため）。 */
 export const ID_ALPHABET = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';

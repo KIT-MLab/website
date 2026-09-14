@@ -9,6 +9,11 @@
  *
  * `last_seen_at` はここで更新する。第8.1節の「行の末尾に最終アクセス日」と
  * 第8.2節の「最後のアクセスから10日以上」が、この列を見るため。
+ *
+ * 節の状態に加えて**課題の結果**も返す（第6.1節の最後）。別の端末で入り直した人に、
+ * どの問題まで通したかを戻すため。課題の結果は専用の表には持たず、**提出の記録から
+ * 毎回作り直す**（第6.1節の表「課題の結果 … 提出の記録から作り直す」）。
+ * 同じことを2か所に持つと、送り直しや引き継ぎのたびに食い違うため。
  */
 import type { APIRoute } from 'astro';
 import { currentUser, json, serverConfig } from '../../server/auth';
@@ -16,6 +21,7 @@ import { currentUser, json, serverConfig } from '../../server/auth';
 export const prerender = false;
 
 type ProgressRow = { lesson_id: string; state: string; done_at: number | null; seconds: number };
+type ExerciseRow = { exercise_id: string; passed: number; fails: number };
 
 export const GET: APIRoute = async ({ request }) => {
   const config = serverConfig();
@@ -32,6 +38,19 @@ export const GET: APIRoute = async ({ request }) => {
     .bind(user.id)
     .all<ProgressRow>();
 
+  // `passed` は1回でもあれば通ったことにする（第6.1節の表）ので MAX。
+  // `fails` は落ちた提出の数で、ヒントを出す判断（第4.3節）と
+  // 「同じ課題を5回落とした」の判定（第9章の9）が見る。
+  const exercises = await config.db
+    .prepare(
+      `SELECT exercise_id,
+              MAX(passed) AS passed,
+              SUM(CASE WHEN passed = 0 THEN 1 ELSE 0 END) AS fails
+         FROM submissions WHERE user_id = ? GROUP BY exercise_id ORDER BY exercise_id`,
+    )
+    .bind(user.id)
+    .all<ExerciseRow>();
+
   return json(
     {
       user,
@@ -40,6 +59,11 @@ export const GET: APIRoute = async ({ request }) => {
         state: row.state,
         doneAt: row.done_at,
         seconds: row.seconds,
+      })),
+      exercises: exercises.results.map((row) => ({
+        exerciseId: row.exercise_id,
+        passed: row.passed === 1,
+        fails: row.fails,
       })),
     },
     200,
