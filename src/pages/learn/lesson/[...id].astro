@@ -13,6 +13,7 @@ import Mistake from '../../../components/lesson/Mistake.astro';
 import Exercise from '../../../components/lesson/Exercise.astro';
 import Level0 from '../../../components/lesson/Level0.astro';
 import Keys from '../../../components/lesson/Keys.astro';
+import AccountRail from '../../../components/lesson/AccountRail.astro';
 import { chapterTitle, lessonHref } from '../../../lesson/chapters';
 import generated from '../../../generated/lesson-data.json';
 import '../../../styles/lesson.css';
@@ -89,6 +90,8 @@ const oneAtATime = entry.data.chapter === '00-start' ? '' : undefined;
           <p class="rail__label">用語集</p>
           <a class="rail__link" href="/learn/glossary/">この教材で使う言葉</a>
         </div>
+
+        <AccountRail />
 
         <div class="rail__block">
           <p class="rail__label">先生に聞く</p>

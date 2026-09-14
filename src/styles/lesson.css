@@ -253,6 +253,135 @@
   color: var(--l-ink-2);
 }
 
+/* --- アカウント（20-platform.md 第5.6節） --------------------
+ * 右レールのブロックと、本文の上にかぶせる小窓。
+ * ボタンの形は増やさない。レールは .rail__ask、小窓は .kit-btn をそのまま使い、
+ * ここで足すのは並べ方と、紙に書き写すための等幅の大きい字だけである。
+ * 色は決定済みの --l-* から採る。断りの文は琥珀（--l-kohaku）。
+ * 緑（--l-midori）は通った印だけの色なので使わない。
+ * ------------------------------------------------------------ */
+.rail__acct-row {
+  display: flex;
+  gap: 8px;
+}
+
+.rail__acct-name {
+  margin: 0;
+  font-family: "Zen Old Mincho", serif;
+  font-weight: 700;
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.rail__acct .rail__ask {
+  margin-top: 10px;
+}
+
+.rail__acct-row .rail__ask {
+  margin-top: 0;
+}
+
+.kit-acct {
+  width: min(430px, calc(100vw - 32px));
+  max-height: calc(100vh - 40px);
+  overflow: auto;
+  padding: 0;
+  border: 1px solid var(--l-strong);
+  border-radius: 0;
+  background: var(--l-card);
+  color: var(--l-ink);
+}
+
+.kit-acct::backdrop {
+  background: var(--l-ink);
+  opacity: 0.5;
+}
+
+.kit-acct__panel {
+  padding: 20px 24px 22px;
+}
+
+.kit-acct__title {
+  margin: 0 0 10px;
+  font-family: "Zen Old Mincho", serif;
+  font-weight: 700;
+  font-size: 18px;
+  letter-spacing: 0.08em;
+  border-bottom: 1px solid var(--l-rule);
+  padding-bottom: 6px;
+}
+
+.kit-acct__note {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.8;
+  color: var(--l-ink-2);
+}
+
+.kit-acct__field {
+  margin-top: 14px;
+}
+
+.kit-acct__lab {
+  display: block;
+  margin: 0 0 5px;
+  font-family: "Zen Old Mincho", serif;
+  font-size: 13.5px;
+  letter-spacing: 0.1em;
+  color: var(--l-ink-2);
+}
+
+.kit-acct__in {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 7px 9px;
+  border: 1px solid var(--l-rule);
+  border-radius: 0;
+  background: var(--l-paper);
+  color: var(--l-ink);
+  font-size: 15px;
+}
+
+.kit-acct__in--mono {
+  font-family: var(--font-mono);
+  letter-spacing: 0.1em;
+}
+
+.kit-acct__in:focus {
+  outline: 2px solid var(--l-strong);
+  outline-offset: 1px;
+}
+
+/* 紙に書き写す前提なので、等幅で大きく出す（第5.6節） */
+.kit-acct__uid {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 21px;
+  letter-spacing: 0.12em;
+  color: var(--l-strong);
+}
+
+.kit-acct__pass {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 30px;
+  line-height: 1.3;
+  letter-spacing: 0.14em;
+  color: var(--l-strong);
+}
+
+/* 断りの文。欄の下に、琥珀で出す */
+.kit-acct__deny {
+  margin: 6px 0 0;
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--l-kohaku);
+}
+
+.kit-acct__deny:empty {
+  display: none;
+}
+
 /* --- 節の移動 ----------------------------------------------- */
 .lesson-nav {
   display: flex;

@@ -31,6 +31,9 @@ export const prerender = false;
 /** 利用者IDが無いときと合言葉が違うときで、必ずこの1つを返す（第5.3節）。 */
 const WRONG = '利用者IDか合言葉が違います。';
 
+/** どの欄の下に断りを出すか（第5.6節）。画面に文面を読ませて振り分けさせないため */
+const WRONG_FIELD = 'passcode';
+
 type LoginRow = UserRow & { pass_hash: string; fail_count: number; retry_after: number };
 
 export const POST: APIRoute = async ({ request }) => {
@@ -42,7 +45,9 @@ export const POST: APIRoute = async ({ request }) => {
   if (!body) return json({ error: '送信された内容を読み取れませんでした。' }, 400);
 
   const id = normalizeUserId(String(body.id ?? ''));
-  const passcode = String(body.passcode ?? '');
+  // 画面には 690 399 と3桁ずつ空けて出すので、そのまま写した人の空白を落とす（第5.6節）。
+  // 画面側でも落としているが、口はここ1つとは限らないのでサーバでも受ける
+  const passcode = String(body.passcode ?? '').replace(/s/g, '');
   const now = Date.now();
 
   // 1. 利用者を引く。無ければ合言葉違いと同じ文面で断る。
@@ -63,12 +68,15 @@ export const POST: APIRoute = async ({ request }) => {
   //    在るIDへの総当たりは待ち時間で頭打ちになるのに、こちらは頭打ちが無い。
   //    IDは32文字の字母の6桁で約10億通りあり、当てずっぽうで引ける数ではないので、
   //    速さの差は残し、計算の空回しはしない。
-  if (!user) return json({ error: WRONG }, 401);
+  if (!user) return json({ error: WRONG, field: WRONG_FIELD }, 401);
 
   // 2. まだ待ち時間の中なら、合言葉を確かめずに断る。
   //    ここで先に照合してしまうと、返答の内容や速さから「合言葉は合っていた」と分かる。
   if (user.retry_after > now) {
-    return json({ error: `あと${formatWait(user.retry_after - now)}たってからもう一度試してください。` }, 429);
+    return json(
+      { error: `あと${formatWait(user.retry_after - now)}たってからもう一度試してください。`, field: WRONG_FIELD },
+      429,
+    );
   }
 
   // 3. 違えば回数を1つ増やし、次に試せる時刻を書いて、1と同じ文面で断る。
@@ -78,7 +86,7 @@ export const POST: APIRoute = async ({ request }) => {
       .prepare('UPDATE users SET fail_count = ?, retry_after = ? WHERE id = ?')
       .bind(failCount, now + waitMsFor(failCount), user.id)
       .run();
-    return json({ error: WRONG }, 401);
+    return json({ error: WRONG, field: WRONG_FIELD }, 401);
   }
 
   // 4. 合えば回数を0に戻す。**打ち間違いを引きずらせない**（第5.3節）。

@@ -73,7 +73,10 @@ export const POST: APIRoute = async ({ request }) => {
     .prepare('SELECT code, name, kind FROM cohorts WHERE code = ?')
     .bind(code)
     .first<CohortRow>();
-  if (!cohort) return json({ error: '招待コードが違います。' }, 400);
+  // field は「どの欄の下に出すか」を画面に伝えるためだけのもの（第5.6節）。
+  // これが無いと画面が文面の中身を見て振り分けることになり、文面を直した瞬間に
+  // 断りの文が別の欄の下に出る。**文言と配置を結びつけない。**
+  if (!cohort) return json({ error: '招待コードが違います。', field: 'code' }, 400);
 
   // 長さは符号位置で数える。`String.length` は UTF-16 の単位なので、絵文字や一部の
   // 漢字が2文字と数えられ、画面に出す「40文字まで」と食い違う。
@@ -98,8 +101,10 @@ export const POST: APIRoute = async ({ request }) => {
 
   const displayName = String(body.displayName ?? '').trim();
   const nameLength = [...displayName].length;
-  if (nameLength === 0) return json({ error: '表示名を入れてください。' }, 400);
-  if (nameLength > NAME_MAX) return json({ error: `表示名は${NAME_MAX}文字までです。` }, 400);
+  if (nameLength === 0) return json({ error: '表示名を入れてください。', field: 'displayName' }, 400);
+  if (nameLength > NAME_MAX) {
+    return json({ error: `表示名は${NAME_MAX}文字までです。`, field: 'displayName' }, 400);
+  }
 
   const passcode = newPasscode();
   const passHash = await hashPasscode(passcode);
