@@ -20,7 +20,13 @@ import { currentUser, json, serverConfig } from '../../server/auth';
 
 export const prerender = false;
 
-type ProgressRow = { lesson_id: string; state: string; done_at: number | null; seconds: number };
+type ProgressRow = {
+  lesson_id: string;
+  state: string;
+  opened_at: number;
+  done_at: number | null;
+  seconds: number;
+};
 type ExerciseRow = { exercise_id: string; passed: number; fails: number };
 
 export const GET: APIRoute = async ({ request }) => {
@@ -34,7 +40,9 @@ export const GET: APIRoute = async ({ request }) => {
   await config.db.prepare('UPDATE users SET last_seen_at = ? WHERE id = ?').bind(now, user.id).run();
 
   const progress = await config.db
-    .prepare('SELECT lesson_id, state, done_at, seconds FROM progress WHERE user_id = ? ORDER BY lesson_id')
+    .prepare(
+      'SELECT lesson_id, state, opened_at, done_at, seconds FROM progress WHERE user_id = ? ORDER BY lesson_id',
+    )
     .bind(user.id)
     .all<ProgressRow>();
 
@@ -57,6 +65,9 @@ export const GET: APIRoute = async ({ request }) => {
       progress: progress.results.map((row) => ({
         lessonId: row.lesson_id,
         state: row.state,
+        // 手元へ引き写すときに要る。節を開いた時刻は「早いほう」で合わせるので、
+        // これが無いと引き写した側が必ず「いま」になり、開いた時刻が後ろへずれる（第6.1節）
+        openedAt: row.opened_at,
         doneAt: row.done_at,
         seconds: row.seconds,
       })),

@@ -318,6 +318,11 @@
   color: var(--l-ink-2);
 }
 
+/* 段4の問いかけ。上の説明との間を空けるだけ（第6.1節） */
+.kit-acct__ask {
+  margin-top: 12px;
+}
+
 .kit-acct__field {
   margin-top: 14px;
 }

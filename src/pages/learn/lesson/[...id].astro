@@ -133,6 +133,50 @@ const oneAtATime = entry.data.chapter === '00-start' ? '' : undefined;
     void paint();
     window.addEventListener('kit:progress', () => void paint());
 
+    /* 進度をサーバへ送る（20-platform.md 第6.2節「送る間隔」・第7章）。
+
+       送るのは**30秒ごとと、節を離れるとき**だけである。1操作ごとには送らない。
+       採点のたびに送ると、勉強会で30人が一斉に解いている間ずっと書き込みが走る。
+       入っていない人は store.flush() が何もせずに true を返すので、この仕掛けは
+       そのまま置いておける（判断を2か所に持たない）。
+
+       滞在の秒数は**画面が見えている間だけ**数える。裏に回っているタブや、別の
+       アプリの後ろに隠れている時間を足すと、読んでいない時間まで滞在になる。
+
+       離れたことは visibilitychange（hidden）と pagehide の両方で拾う。閉じるときに
+       visibilitychange が鳴らない環境があり、pagehide だけの環境でタブを切り替えると
+       鳴らないため、片方では足りない。 */
+    const SEND_EVERY_MS = 30000;
+    /** 見えている状態が続いている区間の始まり。裏に回っている間は null */
+    let watching: number | null = document.visibilityState === 'visible' ? Date.now() : null;
+
+    function countSeconds() {
+      if (!data || watching === null) return;
+      const whole = Math.floor((Date.now() - watching) / 1000);
+      if (whole <= 0) return;
+      // 端数は次に持ち越す。切り捨てたぶんを捨てると、30秒ごとに1秒弱ずつ目減りする
+      watching += whole * 1000;
+      void store.addSeconds(data.lessonId, whole);
+    }
+
+    function send() {
+      countSeconds();
+      void store.flush();
+    }
+
+    window.setInterval(send, SEND_EVERY_MS);
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) {
+        send();
+        watching = null;
+      } else {
+        watching = Date.now();
+      }
+    });
+
+    window.addEventListener('pagehide', send);
+
     /* 課題が1問も無い節を終わりにする（10-lesson-and-writing.md 第3.8節）。
        通す相手がいないので、ExerciseBox の「全部通したら done」が一度も走らない。
 

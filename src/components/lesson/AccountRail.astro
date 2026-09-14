@@ -9,9 +9,10 @@
  * 組み立てる時点ではログインしているかどうかが分からないため。入っている人に
  * 「登録する」を一瞬だけ見せないように、`/api/me` の答えが来てから塗る。
  *
- * 小窓は3つの段を1つの `<dialog>` に入れ、`hidden` で出し入れする。
- * **段2（控える）だけは閉じる道が「控えました」しか無い。**× を置かないのは
- * そのため。`Esc` と背景も account.ts で止める。
+ * 小窓は4つの段を1つの `<dialog>` に入れ、`hidden` で出し入れする。
+ * **段2（控える）と段4（この端末に残っている記録）は閉じる道を塞いである。**
+ * 段2は合言葉がこの一度しか出ないため、段4は手元の記録の行き先が決まらないまま
+ * 残ってしまうため（第6.1節）。どちらも × を置かず、`Esc` と背景も account.ts で止める。
  */
 ---
 
@@ -116,6 +117,21 @@
           <button class="kit-btn" type="button" data-acct-cancel>やめる</button>
         </div>
       </form>
+    </section>
+
+    <!-- 段4: この端末に残っている記録（第6.1節）。
+         閉じる手は「引き継ぐ」と「捨てる」の2つだけ。中途半端に閉じられると、
+         手元の記録の行き先が決まらないまま残る -->
+    <section data-acct-stage="carry" hidden>
+      <h2 class="kit-acct__title">この端末に残っている記録</h2>
+      <p class="kit-acct__note">
+        このパソコンに、入る前に進めた記録が残っています（<span id="kit-acct-carry-n">0</span>節）。
+      </p>
+      <p class="kit-acct__note kit-acct__ask">これはあなたの記録ですか。</p>
+      <div class="kit-ex__bar">
+        <button class="kit-btn kit-btn--strong" id="kit-acct-carry-yes" type="button">はい、引き継ぐ</button>
+        <button class="kit-btn" id="kit-acct-carry-no" type="button">いいえ、捨てる</button>
+      </div>
     </section>
   </div>
 </dialog>
