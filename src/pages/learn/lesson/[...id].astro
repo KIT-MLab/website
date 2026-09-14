@@ -129,6 +129,38 @@ const oneAtATime = entry.data.chapter === '00-start' ? '' : undefined;
 
     void paint();
     window.addEventListener('kit:progress', () => void paint());
+
+    /* 課題が1問も無い節を終わりにする（10-lesson-and-writing.md 第3.8節）。
+       通す相手がいないので、ExerciseBox の「全部通したら done」が一度も走らない。
+
+       目印にするのは節の移動の帯まで読み進めたこと。「次へ」を押した時点にしないのは
+       理由が2つある。章の最後の節には「次へ」が無いので永久に終われないことと、
+       押した直後にページが移るので書き込みが間に合わないことがあるためである。
+
+       IntersectionObserver は使わない。描画していない環境（画面に出ていない枠、
+       縮小表示の取り込みなど）では一度も鳴らず、そのとき**黙って何も起きない**。
+       進度が付かないことに誰も気づけないので、位置を自分で測る。
+       短い節では読み込んだ時点で帯が見えているため、最初に1回測る。
+
+       課題のある節では何もしない。そちらは全部通したときに立つ。 */
+    if (data && document.querySelectorAll('section.kit-ex').length === 0) {
+      const foot = document.querySelector('.lesson-nav');
+      if (foot) {
+        let marked = false;
+        const check = () => {
+          if (marked || foot.getBoundingClientRect().top > window.innerHeight) return;
+          marked = true;
+          window.removeEventListener('scroll', check);
+          window.removeEventListener('resize', check);
+          void store.finishLesson(data.lessonId).then(() => {
+            window.dispatchEvent(new CustomEvent('kit:progress'));
+          });
+        };
+        window.addEventListener('scroll', check, { passive: true });
+        window.addEventListener('resize', check);
+        check();
+      }
+    }
   </script>
 
   <style is:global>

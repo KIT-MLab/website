@@ -2,7 +2,7 @@
  * 執筆規約の自動検査（20-platform.md 第2.4節）。
  *
  * 全 .mdx を読み、10-lesson-and-writing.md 第8章のチェックリストのうち
- * 機械判定できる14項目を検査する。1つでも落ちたら終了コード1を返す。
+ * 機械判定できる15項目を検査する。1つでも落ちたら終了コード1を返す。
  * この検査はビルドの前に走り、失敗したらビルドを止める。
  *
  *   node scripts/check-lessons.mjs
@@ -17,6 +17,7 @@ import {
   BANNED,
   BANNED_CHARS,
   EXERCISE_KINDS,
+  CHAPTER_LIMITS,
   LIMITS,
   SECTION_OPTIONAL,
   SECTION_ORDER,
@@ -79,6 +80,8 @@ const words = glossaryWords();
 const problems = [];
 const seenLessonIds = new Map();
 const seenExerciseIds = new Map();
+/** 検査15 用。章ごとに節数・課題数・「組む」の数を貯める（第3.8節） */
+const chapters = new Map();
 
 for (const file of files) {
   const rel = relative(ROOT, file).replace(/\\/g, '/');
@@ -151,21 +154,24 @@ for (const file of files) {
     if (!m.fix) add(3, m.line, '<Mistake> に原因と直し方の本文がありません');
   }
 
-  // --- 検査4 <Exercise> が4〜7個、うち kind="build" が1個以上 ---
+  // --- 検査4 <Exercise> が0〜7個。型ごとの書き方が揃っていること ---
+  // **節ごとの下限は置かない**（第3.8節）。下限があると、足りない節を厚くするようには
+  // 働かず、要らない課題を足すように働く。第0.5節は4問に届かせるために用語を選ばせる
+  // 問いを3つ足し、Python の第1〜3章は16節すべてがちょうど4問で止まっていた。
+  // 総量は章の合計で担保する（検査15）。
   const ex = lesson.exercises;
-  if (ex.length < LIMITS.exerciseMin || ex.length > LIMITS.exerciseMax) {
-    add(4, 1, `課題は${LIMITS.exerciseMin}〜${LIMITS.exerciseMax}問です。いまは${ex.length}問`);
+  if (ex.length > LIMITS.exerciseMax) {
+    add(4, 1, `課題は${LIMITS.exerciseMax}問までです。いまは${ex.length}問`);
   }
   const builds = ex.filter((e) => e.kind === 'build');
-  // 第0章は「組む」を置かず、kind="type" か kind="choose" が1問以上（第11.5節）
-  if (isStart) {
-    const directs = ex.filter((e) => e.kind === 'type' || e.kind === 'choose');
-    if (directs.length < LIMITS.buildMin) {
-      add(4, 1, '第0章には kind="type" か kind="choose" の課題が1問以上要ります');
-    }
-  } else if (builds.length < LIMITS.buildMin) {
-    add(4, 1, '「組む」課題（kind="build"）が1問もありません');
-  }
+  // 第0章は「組む」を置かず「打つ」「選ぶ」で数える（第11.5節）
+  const directs = ex.filter((e) => e.kind === 'type' || e.kind === 'choose');
+  const chapter = String(fm.chapter ?? '(章なし)');
+  const tally = chapters.get(chapter) ?? { sections: 0, exercises: 0, builds: 0, file: rel, isStart };
+  tally.sections += 1;
+  tally.exercises += ex.length;
+  tally.builds += isStart ? directs.length : builds.length;
+  chapters.set(chapter, tally);
   const allowedKinds = isStart ? START_EXERCISE_KINDS : EXERCISE_KINDS;
   for (const e of ex) {
     if (!e.id) add(4, e.line, '<Exercise> に id がありません');
@@ -320,6 +326,27 @@ for (const file of files) {
         add(13, l.line, `<Level0> に「${w}」があります。概念の説明は本文に書いてください。補足に書けるのは操作だけです`);
       }
     }
+  }
+}
+
+// --- 検査15 章の合計（第3.8節） ---
+// 節ごとの下限を外した代わりに、練習の総量はここで担保する。薄い節は0問、
+// 厚い節は6問と配分できるが、章として痩せることは認めない。
+for (const [chapter, t] of chapters) {
+  const wantEx = t.sections * CHAPTER_LIMITS.exercisesPerSection;
+  const wantBuild = t.sections * CHAPTER_LIMITS.buildsPerSection;
+  const name = t.isStart ? '「打つ」「選ぶ」' : '「組む」';
+  if (t.exercises < wantEx) {
+    problems.push({
+      file: t.file, check: 15, line: 1,
+      message: `章 ${chapter} の課題が合計${t.exercises}問です。${t.sections}節あるので${wantEx}問以上要ります`,
+    });
+  }
+  if (t.builds < wantBuild) {
+    problems.push({
+      file: t.file, check: 15, line: 1,
+      message: `章 ${chapter} の${name}課題が合計${t.builds}問です。${t.sections}節あるので${wantBuild}問以上要ります`,
+    });
   }
 }
 

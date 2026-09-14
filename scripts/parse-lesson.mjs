@@ -229,6 +229,12 @@ export function plainText(text) {
  * 返すもの: frontmatter、要素マーカー、部品、文章。
  */
 export function parseLesson(source, file) {
+  /* 改行を LF にそろえる。
+     Windows の git は既定で作業ファイルを CRLF で書き出す。段落は空行で
+     区切って数えているので、CRLF のままだと段落が1つも割れず、節まるごとが1段落と
+     数えられて検査7（段落は3文以内）が落ちる。**clone した直後の全22節が落ちる。**
+     読む側でそろえれば、どの環境から来たファイルでも同じ結果になる。 */
+  source = String(source).replace(/\r\n/g, '\n');
   const { data, body } = splitFrontmatter(source);
   const markers = findMarkers(body);
   const components = findComponents(body);

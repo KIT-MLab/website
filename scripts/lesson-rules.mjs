@@ -12,8 +12,11 @@
 /** 節の要素。この順序で {/* 名前 *\/} のマーカーを本文に置く（20-platform.md 第2.4節 検査1）。 */
 export const SECTION_ORDER = ['困る例', 'やってみる', '説明', 'よくある間違い', '課題', 'つながり'];
 
-/** 任意の要素（無くてよい）。 */
-export const SECTION_OPTIONAL = new Set(['つながり']);
+/**
+ * 任意の要素（無くてよい）。
+ * 「課題」が任意なのは、課題を1問も置かない節を認めたため（第3.8節）。
+ */
+export const SECTION_OPTIONAL = new Set(['課題', 'つながり']);
 
 /**
  * 第0章「パソコンの操作」だけの例外（20-platform.md 第11.5節）。
@@ -31,6 +34,16 @@ export const START_SECTION_ORDER = ['困る例', 'やってみる', '説明', '�
 /** 課題の型。type と choose は第0章だけで使える（第11.4節） */
 export const EXERCISE_KINDS = ['trace', 'modify', 'build'];
 export const START_EXERCISE_KINDS = [...EXERCISE_KINDS, 'type', 'choose'];
+
+/**
+ * 第3.8節 章の合計で保つぶん。節ごとの下限を外した代わりに、ここで総量を担保する。
+ *   課題      … その章の節数 × 3 問以上
+ *   「組む」  … その章の節数 以上（第0章は「打つ」と「選ぶ」の合計で数える）
+ */
+export const CHAPTER_LIMITS = {
+  exercisesPerSection: 3,
+  buildsPerSection: 1,
+};
 
 /** 第0章の「説明」の字数（第11.5節）。説明より練習を主にするため短くする */
 export const START_LIMITS = {
@@ -51,11 +64,8 @@ export const LIMITS = {
   /** 第2章 よくある間違い 1〜3個 */
   mistakeMin: 1,
   mistakeMax: 3,
-  /** 第3章 課題 4〜7問 */
-  exerciseMin: 4,
+  /** 第3.8節 1つの節の課題。**下限は置かない**（下限が目標になり水増しを招くため） */
   exerciseMax: 7,
-  /** 第3章 「組む」は1問以上 */
-  buildMin: 1,
   /** 20-platform.md 第2.4節 検査5 「組む」のテストは3件以上 */
   buildTestsMin: 3,
 };
