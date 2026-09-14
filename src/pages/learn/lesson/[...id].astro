@@ -14,6 +14,7 @@ import Exercise from '../../../components/lesson/Exercise.astro';
 import Level0 from '../../../components/lesson/Level0.astro';
 import Keys from '../../../components/lesson/Keys.astro';
 import AccountRail from '../../../components/lesson/AccountRail.astro';
+import AskRail from '../../../components/lesson/AskRail.astro';
 import { chapterTitle, lessonHref } from '../../../lesson/chapters';
 import generated from '../../../generated/lesson-data.json';
 import '../../../styles/lesson.css';
@@ -96,11 +97,7 @@ const oneAtATime = entry.data.chapter === '00-start' ? '' : undefined;
         {/* 入っている人にだけ出す（20-platform.md 第10.1節）。
             入らずに読んでいる人に、押せない欄を見せる意味がない。
             出し入れは src/lesson/account.ts の paint() が /api/me の結果で行う。 */}
-        <div class="rail__block" data-rail-ask hidden>
-          <p class="rail__label">質問</p>
-          <button class="rail__ask" type="button" disabled>質問する</button>
-          <p class="rail__note">まだ作っている途中です。</p>
-        </div>
+        <AskRail />
       </aside>
     </div>
   </div>

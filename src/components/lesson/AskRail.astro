@@ -1,0 +1,54 @@
+---
+/**
+ * 質問（20-platform.md 第10.1節・第8.5節）。
+ *
+ * 右レールの1ブロックと、本文の上にかぶせる小窓。中身の塗りと開け閉めは
+ * src/lesson/ask.ts が受け持つ。
+ *
+ * **入っている人にだけ出す**（第10.1節）。送り先が自分のアカウントに紐づくので、
+ * 入っていない人には置き場所がない。押せない欄を見せる意味もない。出し入れは
+ * src/lesson/account.ts の paint() が `/api/me` の結果で行う（`[data-rail-ask]`）ので、
+ * ここでは `hidden` を立てたまま置いておく。
+ *
+ * **ボタンには役の名前を書かない**（第10.1節）。答えるのが上級生のことも卒業生のことも
+ * あるので、学習者には「質問する」とだけ見せる。未読があるときだけ件数を添える。
+ *
+ * 小窓はアカウントの小窓（AccountRail.astro）とは別の `<dialog>` にしてある。理由は
+ * src/lesson/ask.ts の頭に書いた。見た目は `.kit-acct` の綴りをそのまま借りている。
+ */
+---
+
+<div class="rail__block" data-rail-ask hidden>
+  <p class="rail__label">質問</p>
+  <button class="rail__ask" type="button" id="kit-ask-open">質問する</button>
+  <p class="rail__note">この節について質問できます。直前に出した課題のコードは自動で添えられます。</p>
+</div>
+
+<dialog class="kit-acct kit-ask" id="kit-ask" aria-label="質問">
+  <div class="kit-acct__panel">
+    <h2 class="kit-acct__title">質問する</h2>
+    <p class="kit-acct__note">
+      この節のやりとりです。古いものが上にあります。質問を送ると、いちばん最近に出した課題のコードが自動で添えられます。
+    </p>
+
+    <p class="kit-acct__note kit-acct__ask" id="kit-ask-none" hidden>まだやりとりはありません。</p>
+    <ol class="kit-ask__thread" id="kit-ask-thread"></ol>
+
+    <form id="kit-ask-form" novalidate>
+      <div class="kit-acct__field">
+        <label class="kit-acct__lab" for="kit-ask-body">質問</label>
+        <textarea class="kit-acct__in kit-ask__in" id="kit-ask-body" rows="4" maxlength="2000"></textarea>
+        <p class="kit-acct__deny" id="kit-ask-deny"></p>
+      </div>
+      <div class="kit-ex__bar">
+        <button class="kit-btn kit-btn--strong" id="kit-ask-go" type="submit">送る</button>
+        <button class="kit-btn" type="button" data-ask-cancel>閉じる</button>
+      </div>
+    </form>
+  </div>
+</dialog>
+
+<script>
+  import { setupAsk } from '../../lesson/ask';
+  setupAsk();
+</script>

@@ -348,6 +348,86 @@
   display: none;
 }
 
+/* --- 質問（20-platform.md 第10.1節・第8.5節） ----------------
+ * アカウントの小窓（.kit-acct）をそのまま借り、足すのはやりとりの並べ方だけ。
+ * 小窓の形も、欄も、ボタンも増やさない。色は決定済みの --l-* から採る。
+ * 自分の質問は罫、返事は藍で左の縁を分ける。**返事が目に入る側を強くする。**
+ * 朱は「いちばん重いもの」に当ててあるので、ここでは使わない。
+ * ------------------------------------------------------------ */
+.kit-ask {
+  /* コードが添えられるぶん、アカウントの小窓より広く取る */
+  width: min(560px, calc(100vw - 32px));
+}
+
+.kit-ask__thread {
+  list-style: none;
+  margin: 14px 0 0;
+  padding: 0;
+  max-height: min(42vh, 380px);
+  overflow-y: auto;
+}
+
+.kit-ask__thread:empty {
+  display: none;
+}
+
+.kit-ask__item {
+  border-left: 3px solid var(--l-rule);
+  padding: 0 0 0 11px;
+  margin-bottom: 14px;
+}
+
+.kit-ask__item--comment {
+  border-left-color: var(--l-ai);
+}
+
+.kit-ask__item:last-child {
+  margin-bottom: 0;
+}
+
+.kit-ask__from {
+  margin: 0 0 3px;
+  font-family: "Zen Old Mincho", serif;
+  font-size: 12.5px;
+  letter-spacing: 0.08em;
+  color: var(--l-ink-2);
+}
+
+.kit-ask__body {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.8;
+  white-space: pre-wrap;
+}
+
+/* 課題に紐づいた返事の頭に添える一言（第8.5節） */
+.kit-ask__about {
+  font-weight: 700;
+  color: var(--l-ai);
+}
+
+/* 添えたコード（第10.5節）。そのまま出す。長い行は折り返さず横に送る */
+.kit-ask__code {
+  margin: 6px 0 0;
+  padding: 7px 9px;
+  background: var(--l-paper);
+  border: 1px solid var(--l-rule);
+  overflow-x: auto;
+  white-space: pre;
+  tab-size: 4;
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--l-ink);
+}
+
+.kit-ask__in {
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 1.8;
+  resize: vertical;
+}
+
 /* --- 節の移動 ----------------------------------------------- */
 .lesson-nav {
   display: flex;

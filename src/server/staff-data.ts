@@ -18,6 +18,8 @@
 import type { CurrentUser, Db } from './auth';
 import { normalizeUserId } from './auth';
 import { visibleUsers } from './staff';
+// 課題の呼び方は src/lesson/exercise-place.ts に1つだけ置いてある。ここからは読むだけ
+export { exerciseLabel, exercisePlaces, type ExercisePlace } from '../lesson/exercise-place';
 
 /** 落ちた回数のしきい値（第8.2節）。src/pages/api/staff/stuck.ts と同じ値。 */
 const FAIL_LIMIT = 5;
@@ -394,52 +396,6 @@ export async function userDetail(
  * サーバ側なので、そのまま切ると日本の朝9時より前が前日の日付で出る。読むのは日本に
  * 居る運営なので、日本の日付で出す。
  */
-/**
- * 課題の呼び方（第8.4節・第8.6節）。
- *
- * **画面に課題の id をそのまま出さない。** `python-01-print-b1` と書かれても、運営には
- * 何問目のことか分からない。学習者が画面で見ているのと同じ呼び方にそろえる。
- *
- *   「printで値を表示する」の4問目（演習問題）
- *
- * 段の名前は src/components/lesson/Exercise.astro の STAGE と同じもの。
- * 引けないときだけ id をそのまま返す。何も出さないと、どの課題か分からなくなる。
- */
-const STAGE: Record<string, string> = {
-  trace: '例題',
-  modify: '練習問題',
-  build: '演習問題',
-  type: '練習問題',
-  choose: '練習問題',
-};
-
-type GenLesson = { title?: string; exerciseIds?: string[]; exercises?: Record<string, { kind?: string }> };
-
-export type ExercisePlace = { lessonId: string; lessonTitle: string; at: number; stage: string };
-
-export function exercisePlaces(generated: unknown): Map<string, ExercisePlace> {
-  const out = new Map<string, ExercisePlace>();
-  const lessons = (generated as { lessons?: Record<string, GenLesson> }).lessons ?? {};
-  for (const [lessonId, data] of Object.entries(lessons)) {
-    (data.exerciseIds ?? []).forEach((exerciseId, i) => {
-      const kind = data.exercises?.[exerciseId]?.kind ?? '';
-      out.set(exerciseId, {
-        lessonId,
-        lessonTitle: data.title ?? '',
-        at: i + 1,
-        stage: STAGE[kind] ?? '',
-      });
-    });
-  }
-  return out;
-}
-
-/** 「4問目（演習問題）」。引けなければ id をそのまま。 */
-export function exerciseLabel(place: ExercisePlace | undefined, exerciseId: string): string {
-  if (!place) return exerciseId;
-  return place.stage ? `${place.at}問目（${place.stage}）` : `${place.at}問目`;
-}
-
 /**
  * 節の通し番号。**章ごとに1から数える**（教材の課程表と同じ数え方）。
  *

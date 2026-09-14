@@ -12,6 +12,9 @@
  */
 import ExerciseBox from '../../lesson/ui/ExerciseBox';
 import type { ExerciseKind } from '../../lesson/data';
+/* 画面に出す札。内部の呼び名（なぞる・変える・組む・打つ・選ぶ）は学習者には見せない。
+   表は src/lesson/exercise-place.ts に1つだけ置いてある（運営の画面も同じものを使う） */
+import { STAGE } from '../../lesson/exercise-place';
 
 type Test =
   | { kind: 'stdout'; stdin?: string }
@@ -39,16 +42,6 @@ interface Props {
 
 const { id, kind, starter, stdin, tests } = Astro.props;
 
-/* 画面に出す名前。内部の呼び名（なぞる・変える・組む・打つ・選ぶ）は学習者には見せない。
-   10-lesson-and-writing.md 第3章。type と choose の札は「練習問題」で、
-   札は4種類のまま増やさない（第10.6節・第11.5節） */
-const STAGE: Record<string, string> = {
-  trace: '例題',
-  modify: '練習問題',
-  build: '演習問題',
-  type: '練習問題',
-  choose: '練習問題',
-};
 
 /* 値を Python の見た目で出す。src/lesson/grade.ts の showValue と同じ規則。
    grade.ts は Pyodide の走らせ方を抱えているので、ここからは読まずに写している。 */

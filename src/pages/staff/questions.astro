@@ -1,0 +1,211 @@
+---
+/**
+ * 質問（20-platform.md 第10.2節・第10.4節・第8.6節）。
+ *
+ * **未返信のものが上**、その中では古い順。待たせている人から先に見るため。並びは
+ * src/server/questions.ts の staffQuestions が決めている（口も同じ関数を呼ぶ）。
+ *
+ * 1行に、質問の本文・誰が・どの節の何問目・添えられたコード・その人の進度（済んだ節数）を
+ * 出す。**別の画面に飛ばさない**（第10.2節）。返事もその場で書き、送ったらその行の印だけを
+ * 書き換える。読み込み直さないのは、上から順に返事を書いていく場所だからである。
+ *
+ * **自分の API を fetch しない。**運営の画面は Worker の中で描かれるので、問い合わせは
+ * src/server/questions.ts をそのまま呼ぶ。返事を送るときだけ /api/staff/comment を叩く
+ * （書き込みは画面の操作で起きるため）。
+ *
+ * **画面に課題の id を出さない**（第8.4節）。学習者が見ているのと同じ呼び方にそろえる。
+ */
+export const prerender = false;
+
+import { getCollection } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import { serverConfig } from '../../server/auth';
+import { requireStaff } from '../../server/staff';
+import { staffQuestions } from '../../server/questions';
+import { exerciseLabel, exercisePlaces, sectionNumbers, ymd } from '../../server/staff-data';
+import { chapterTitle } from '../../lesson/chapters';
+import generated from '../../generated/lesson-data.json';
+import '../../styles/lesson-tokens.css';
+import '../../styles/staff.css';
+
+const config = serverConfig();
+const me = config && (await requireStaff(Astro.request));
+
+Astro.response.headers.set('cache-control', 'no-store');
+if (!me) Astro.response.status = 403;
+
+const now = Date.now();
+
+const lessons = me ? [...(await getCollection('lessons'))].sort((a, b) => a.id.localeCompare(b.id)) : [];
+const titles = new Map(lessons.map((l) => [l.data.id, l.data.title]));
+const places = exercisePlaces(generated);
+
+/* 節の呼び方。題だけだと教材のどこか分からないので「第1章1節」を前に付ける（第8.6節）。 */
+const sectionNo = sectionNumbers(lessons.map((l) => ({ lessonId: l.data.id, chapter: l.data.chapter })));
+const chapterOfLesson = new Map(lessons.map((l) => [l.data.id, l.data.chapter]));
+function place(lessonId: string): string {
+  const chapter = chapterOfLesson.get(lessonId);
+  const n = sectionNo.get(lessonId);
+  if (!chapter || !n) return '';
+  const full = chapterTitle(chapter);
+  const at = full.search(/[ 　]/);
+  return `${at > 0 ? full.slice(0, at) : full}${n}節`;
+}
+
+const questions = config && me ? await staffQuestions(config.db, me) : [];
+
+/* 1行ぶんの呼び方。「第1章1節「printで値を表示する」の4問目（演習問題）」。
+   課題に紐づいていない質問（レールから送られたもの）は節までで止める。 */
+const items = questions.map((item) => {
+  const title = titles.get(item.lessonId);
+  const where = title ? `${place(item.lessonId)}「${title}」` : item.lessonId;
+  const at = item.exerciseId ? exerciseLabel(places.get(item.exerciseId), item.exerciseId) : '';
+  return { ...item, where: at ? `${where}の${at}` : where };
+});
+
+const waiting = items.filter((item) => item.answeredAt === null).length;
+const total = lessons.length;
+---
+
+<Base title="質問">
+  {
+    !me ? (
+      <p class="staff-deny">この画面は開けません。</p>
+    ) : (
+      <div class="staff">
+        <div class="staff__top">
+          <h1 class="staff__title">質問</h1>
+          <p class="staff__meta">
+            {me.displayName}（{me.cohort.name}）・
+            {me.role === 'admin' ? 'すべての所属が見えています' : 'この所属だけが見えています'}・{ymd(now)}
+          </p>
+        </div>
+
+        <nav class="staff-nav" aria-label="運営の画面">
+          <a href="/staff/">詰まっているところ</a>
+          <a href="/staff/questions" aria-current="page">質問</a>
+        </nav>
+
+        <h2>
+          未返信が上・古い順
+          <span class="staff__count">
+            {items.length}件（未返信 <b data-waiting>{waiting}</b>件）
+          </span>
+        </h2>
+        {items.length === 0 ? <p class="staff__none">まだ質問は届いていません。</p> : null}
+
+        <ul class="qa">
+          {items.map((item) => (
+            <li
+              class={`qa__item ${item.answeredAt === null ? 'qa__item--waiting' : ''}`}
+              data-qa={item.id}
+              data-qa-user={item.userId}
+              data-qa-lesson={item.lessonId}
+              data-qa-exercise={item.exerciseId ?? ''}
+            >
+              <p class="qa__head">
+                <span class="qa__state" data-qa-state>
+                  {item.answeredAt === null ? '未返信' : '返信済み'}
+                </span>
+                <a class="qa__who" href={`/staff/user/${item.userId}`}>
+                  {item.displayName}
+                </a>
+                <span class="staff__id">{item.userId}</span>
+                <span class="qa__where">{item.where}</span>
+                <span class="qa__done">
+                  済んだ節 {item.done}/{total}
+                </span>
+                <span class="qa__when">{ymd(item.createdAt)}</span>
+              </p>
+
+              <p class="qa__body">{item.body}</p>
+
+              {/* 添えられたコード（第10.5節）。そのまま出す。整形しない（第8.4節） */}
+              {item.code ? <pre class="qa__code">{item.code}</pre> : <p class="qa__nocode">提出はまだありません。</p>}
+
+              <form class="qa__reply">
+                <textarea
+                  class="qa__in"
+                  rows="3"
+                  maxlength="2000"
+                  aria-label="返事"
+                  placeholder="返事を書く"
+                />
+                <div class="qa__bar">
+                  <button type="submit">返事を送る</button>
+                  <p class="qa__msg" data-qa-msg />
+                </div>
+              </form>
+            </li>
+          ))}
+        </ul>
+      </div>
+    )
+  }
+
+  <script>
+    /* その場で返事を送る（20-platform.md 第10.4節・第7.1節）。
+       通ったら**その行の印だけ**を書き換える。読み込み直さないのは、上から順に返事を
+       書いていく場所で、書き終えるたびに先頭へ戻されると続きが分からなくなるためである。
+       行の並びも動かさない。返事を書いた行がその場で沈むと、いま何に答えたのかを
+       見失う。並びが変わるのは次に開いたときでよい。 */
+    const waitingLabel = document.querySelector<HTMLElement>('[data-waiting]');
+
+    for (const row of document.querySelectorAll<HTMLElement>('[data-qa]')) {
+      const form = row.querySelector<HTMLFormElement>('.qa__reply');
+      const input = row.querySelector<HTMLTextAreaElement>('.qa__in');
+      const button = row.querySelector<HTMLButtonElement>('button[type="submit"]');
+      const message = row.querySelector<HTMLElement>('[data-qa-msg]');
+      const state = row.querySelector<HTMLElement>('[data-qa-state]');
+      if (!form || !input || !button || !message || !state) continue;
+
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        message.textContent = '';
+        message.classList.remove('qa__msg--ok');
+
+        const body = input.value.trim();
+        if (body === '') {
+          message.textContent = '返事を書いてください。';
+          return;
+        }
+
+        button.disabled = true;
+        try {
+          const res = await fetch('/api/staff/comment', {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({
+              toUserId: row.dataset.qaUser ?? '',
+              lessonId: row.dataset.qaLesson ?? '',
+              exerciseId: row.dataset.qaExercise || undefined,
+              body,
+              questionId: Number(row.dataset.qa ?? 0),
+            }),
+          });
+          const data = (await res.json().catch(() => ({}))) as { error?: string };
+          if (!res.ok) {
+            message.textContent = data.error ?? '送れませんでした。';
+            return;
+          }
+        } catch {
+          message.textContent = '送れませんでした。';
+          return;
+        } finally {
+          button.disabled = false;
+        }
+
+        input.value = '';
+        message.textContent = '送りました。';
+        message.classList.add('qa__msg--ok');
+        if (row.classList.contains('qa__item--waiting')) {
+          row.classList.remove('qa__item--waiting');
+          state.textContent = '返信済み';
+          if (waitingLabel) {
+            waitingLabel.textContent = String(Math.max(0, Number(waitingLabel.textContent ?? '0') - 1));
+          }
+        }
+      });
+    }
+  </script>
+</Base>
