@@ -26,7 +26,7 @@ export type LessonState = 'none' | 'opened' | 'done';
 export type Submission = {
   lessonId: string;
   exerciseId: string;
-  /** 提出したコードそのまま。先生が読むので整形しない（第8.4節） */
+  /** 提出したコードそのまま。運営が読むので整形しない（第8.4節） */
   code: string;
   passed: boolean;
   /** 落ちたテストの番号。0始まり。通ったときは null */

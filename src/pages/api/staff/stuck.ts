@@ -1,5 +1,5 @@
 /**
- * 詰まっているところ（20-platform.md 第8.2節）。**先生の画面の主役**。
+ * 詰まっているところ（20-platform.md 第8.2節）。**運営の画面の主役**。
  *
  * 3つの条件に当てはまる人と箇所を並べる。
  *
@@ -21,7 +21,7 @@
 import type { APIRoute } from 'astro';
 import { getCollection } from 'astro:content';
 import { json, serverConfig } from '../../../server/auth';
-import { requireTeacher, visibleUsers } from '../../../server/teacher';
+import { requireStaff, visibleUsers } from '../../../server/staff';
 
 export const prerender = false;
 
@@ -76,8 +76,8 @@ export const GET: APIRoute = async ({ request }) => {
   if (!config) return json({ error: 'サーバの設定が足りません。' }, 500);
   const { db } = config;
 
-  const me = await requireTeacher(request);
-  if (!me) return json({ error: '先生の画面です。' }, 403);
+  const me = await requireStaff(request);
+  if (!me) return json({ error: '運営の画面です。' }, 403);
 
   const scope = visibleUsers(me);
   const now = Date.now();

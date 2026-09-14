@@ -9,13 +9,13 @@
  *
  * **範囲の外の利用者は 404 にする。**「権限がありません」と返すと、そのIDの人が
  * 居ることだけは分かってしまう。誰が居るかを教えないため、居ないときと同じ文面にする
- * （第5.4節の範囲。判定は src/server/teacher.ts）。
+ * （第5.4節の範囲。判定は src/server/staff.ts）。
  *
  * 時刻はすべてミリ秒（第6章）。
  */
 import type { APIRoute } from 'astro';
 import { json, normalizeUserId, serverConfig } from '../../../../server/auth';
-import { requireTeacher, visibleUsers } from '../../../../server/teacher';
+import { requireStaff, visibleUsers } from '../../../../server/staff';
 
 export const prerender = false;
 
@@ -64,10 +64,10 @@ export const GET: APIRoute = async ({ params, request }) => {
   if (!config) return json({ error: 'サーバの設定が足りません。' }, 500);
   const { db } = config;
 
-  const me = await requireTeacher(request);
-  if (!me) return json({ error: '先生の画面です。' }, 403);
+  const me = await requireStaff(request);
+  if (!me) return json({ error: '運営の画面です。' }, 403);
 
-  // 利用者IDは打ち直される前提のもの（第5.3節）。先生が紙を見て打つこともあるので、
+  // 利用者IDは打ち直される前提のもの（第5.3節）。運営が紙を見て打つこともあるので、
   // ログインと同じように前後の空白を落として大文字に揃えてから引く。
   const id = normalizeUserId(params.id ?? '');
   const scope = visibleUsers(me);
@@ -94,7 +94,7 @@ export const GET: APIRoute = async ({ params, request }) => {
     .all<ProgressRow>();
 
   // 課題の結果は専用の表に持たず、提出の記録から作り直す（第6.1節の表）。
-  // 数え方は /api/me と同じにしてある。学生が自分で見る数と先生が見る数が
+  // 数え方は /api/me と同じにしてある。学生が自分で見る数と運営が見る数が
   // 食い違わないようにするため。
   const exercises = await db
     .prepare(

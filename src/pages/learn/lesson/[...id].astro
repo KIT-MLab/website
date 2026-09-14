@@ -93,10 +93,13 @@ const oneAtATime = entry.data.chapter === '00-start' ? '' : undefined;
 
         <AccountRail />
 
-        <div class="rail__block">
-          <p class="rail__label">先生に聞く</p>
-          <button class="rail__ask" type="button" disabled>準備中</button>
-          <p class="rail__note">ログインを作ったら使えるようになります。</p>
+        {/* 入っている人にだけ出す（20-platform.md 第10.1節）。
+            入らずに読んでいる人に、押せない欄を見せる意味がない。
+            出し入れは src/lesson/account.ts の paint() が /api/me の結果で行う。 */}
+        <div class="rail__block" data-rail-ask hidden>
+          <p class="rail__label">質問</p>
+          <button class="rail__ask" type="button" disabled>質問する</button>
+          <p class="rail__note">まだ作っている途中です。</p>
         </div>
       </aside>
     </div>

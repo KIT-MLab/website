@@ -1,8 +1,8 @@
 /**
  * ロールの変更（20-platform.md 第5.4節・第7章）。
  *
- * 管理者だけが使える。利用者IDを入れて「先生にする」を押す、その1画面ぶんの口である。
- * 所属の範囲は掛けない。**先生ロールの付与と剥奪は管理者だけができること**（第5.4節）で、
+ * 管理者だけが使える。利用者IDを入れて「運営にする」を押す、その1画面ぶんの口である。
+ * 所属の範囲は掛けない。**運営ロールの付与と剥奪は管理者だけができること**（第5.4節）で、
  * 管理者の範囲は全部だからである。
  *
  * **自分の管理者は外せない。**外した瞬間に管理者が0人になると、誰も誰かを管理者に
@@ -15,12 +15,12 @@
  */
 import type { APIRoute } from 'astro';
 import { json, normalizeUserId, readJsonObject, serverConfig } from '../../../server/auth';
-import { requireAdmin } from '../../../server/teacher';
+import { requireAdmin } from '../../../server/staff';
 
 export const prerender = false;
 
 /** 付けられるロール。第6章の `users.role` の値と同じ3つ。 */
-const ROLES = ['student', 'teacher', 'admin'];
+const ROLES = ['student', 'staff', 'admin'];
 
 export const POST: APIRoute = async ({ request }) => {
   const config = serverConfig();

@@ -2,7 +2,7 @@
 /**
  * アカウント（20-platform.md 第5.6節）。
  *
- * 右レールの「先生に聞く」の上に置く1ブロックと、本文の上にかぶせる小窓。
+ * 右レールの「質問」の上に置く1ブロックと、本文の上にかぶせる小窓。
  * 中身の塗り替えと小窓の開け閉めは src/lesson/account.ts が受け持つ。
  *
  * ブロックの最初の中身が「確かめています。」なのは、節のページが事前生成で、
@@ -29,7 +29,7 @@
     <section data-acct-stage="register">
       <h2 class="kit-acct__title">登録する</h2>
       <p class="kit-acct__note">
-        招待コードと表示名だけで登録できます。表示名は他の学習者には見えません。先生には見えます。
+        招待コードと表示名だけで登録できます。表示名は他の学習者には見えません。運営には見えます。学籍番号を入れてください。
       </p>
       <form id="kit-acct-reg-form" novalidate>
         <div class="kit-acct__field">
@@ -67,7 +67,7 @@
     <section data-acct-stage="save" hidden>
       <h2 class="kit-acct__title">控えてください</h2>
       <p class="kit-acct__note">
-        パスワードが出るのはこの一度だけです。別の端末から入るときに使いますので、紙に書き写してください。忘れたときは先生が作り直します。
+        パスワードが出るのはこの一度だけです。別の端末から入るときに使いますので、紙に書き写してください。忘れたときは運営が作り直します。
       </p>
       <div class="kit-acct__field">
         <p class="kit-acct__lab">利用者ID</p>

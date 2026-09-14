@@ -8,7 +8,7 @@
  * 閉じる道を塞ぐ段が2つある。
  *
  *   段2（控える） … パスワードの平文が出るのは登録の応答の1回だけで、しまってあるのは
- *                   ハッシュなので、見落として閉じた人は先生が作り直すまで別の端末から
+ *                   ハッシュなので、見落として閉じた人は運営が作り直すまで別の端末から
  *                   入れない（第5.2節）
  *   段4（この端末に残っている記録） … 途中で閉じられると、手元の記録が「誰のものか
  *                   決まらないまま」残る。次に入ったときにまた同じことを聞かれ、
@@ -140,6 +140,11 @@ export function setupAccount(): void {
 
   /** `note` は出るときに送りきれなかったことを伝える1行（第6.2節）。ふだんは null。 */
   function paint(user: User | null, note: string | null = null): void {
+    /* 質問の欄は入っている人にだけ出す（第10.1節）。
+       送り先が自分のアカウントに紐づくので、入っていない人には置き場所がない。 */
+    const ask = document.querySelector<HTMLElement>('[data-rail-ask]');
+    if (ask) ask.hidden = !user;
+
     rail!.replaceChildren();
     if (!user) {
       const row = document.createElement('div');

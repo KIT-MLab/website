@@ -1,7 +1,7 @@
 /**
  * 一覧（20-platform.md 第8.1節）。
  *
- * 先生の画面は「学生を行、章を列にした表」を描く。この口はその表の材料を返すだけで、
+ * 運営の画面は「学生を行、章を列にした表」を描く。この口はその表の材料を返すだけで、
  * 章にまとめる仕事も、内部と外部を分ける仕事も画面がやる。だから節の状態は
  * `lessons` にそのまま並べ、所属は `cohortKind` を必ず入れて渡す（第5.2節の
  * 「内部と外部を別のタブに分け、既定では内部だけを表示する」がそれを見る）。
@@ -16,7 +16,7 @@
  */
 import type { APIRoute } from 'astro';
 import { json, serverConfig } from '../../../server/auth';
-import { requireTeacher, visibleUsers } from '../../../server/teacher';
+import { requireStaff, visibleUsers } from '../../../server/staff';
 
 export const prerender = false;
 
@@ -37,8 +37,8 @@ export const GET: APIRoute = async ({ request }) => {
   if (!config) return json({ error: 'サーバの設定が足りません。' }, 500);
   const { db } = config;
 
-  const me = await requireTeacher(request);
-  if (!me) return json({ error: '先生の画面です。' }, 403);
+  const me = await requireStaff(request);
+  if (!me) return json({ error: '運営の画面です。' }, 403);
 
   const scope = visibleUsers(me);
 
