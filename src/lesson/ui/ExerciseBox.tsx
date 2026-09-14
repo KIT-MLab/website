@@ -216,10 +216,16 @@ export default function ExerciseBox({ id, kind, starter, stdin, choices }: Props
   async function showSolution() {
     setSolutionNote(null);
     try {
-      // passed=1 は「この課題を通した」という申告。いまはサーバがこれを信用している。
-      // D1 とログインを入れたら、サーバが submissions を見て判定するので、この引数は消す
-      // （src/pages/api/solution/[id].ts の冒頭のコメント）。
-      const res = await fetch(`/api/solution/${encodeURIComponent(id)}?passed=1`);
+      /* 先に未送信を送りきる。
+         サーバは submissions を見て「通したか」を判じる（第4.3.1節）。提出は30秒ごと
+         または節を離れるときに送るので、**通した直後に押すとまだサーバに届いていない**。
+         そのまま尋ねると、通したのに「通したあとに読めます」と返ってくる。 */
+      const sent = await getProgressStore().flush();
+      if (!sent) {
+        setSolutionNote('いまは通信ができていないため、模範解答を取り出せません。');
+        return;
+      }
+      const res = await fetch(`/api/solution/${encodeURIComponent(id)}`);
       const body = (await res.json()) as { code?: string; message?: string };
       if (res.ok && body.code) setSolution(body.code);
       else setSolutionNote(body.message ?? '模範解答を取り出せませんでした。');

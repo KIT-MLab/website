@@ -11,18 +11,19 @@
  *   入り、ブラウザに配る側（dist/_astro/ 等）には入らない。だから模範解答は
  *   クライアントのバンドルには現れない。開発サーバでも本番でも同じコードが動く。
  *
- * (2) のいま:
- *   合否の記録はまだ localStorage にある（src/lesson/store/progress.ts）。
- *   サーバからは本人の提出記録を見られないので、**いまは画面が「合格した」と申告した値を
- *   そのまま信用している**。申告は偽れるので、これは本物の制限ではない。
+ * (2) の作り（2026-09-14 に本物にした）:
+ *   Cookie のセッションから利用者を取り、submissions を
+ *   `user_id = ? AND exercise_id = ? AND passed = 1` で引く。1行でもあれば返す。
  *
- *   次に D1 とログイン（第5章・第6章）を入れたとき、ここを次のように差し替える。
- *     - Cookie のセッションから利用者IDを取る
- *     - submissions を `user_id = ? AND exercise_id = ? AND passed = 1` で引く
- *     - 1行でもあれば返す。無ければ 403
- *   そのときこの ?passed= は消す。
+ *   **入っていない人には返さない。** 提出の記録がサーバに無いので、通したかどうかを
+ *   確かめようがないためである。以前は画面が「合格した」と申告した `?passed=1` を
+ *   そのまま信用していたが、申告は偽れるので制限として働いていなかった。
+ *
+ *   入っていない人には「登録すると読めます」と伝える。本文と課題そのものは
+ *   入らなくても読めて解ける（第9章の12）。閉めるのは模範解答だけである。
  */
 import type { APIRoute } from 'astro';
+import { currentUser, serverConfig } from '../../../server/auth';
 
 export const prerender = false;
 
@@ -50,11 +51,23 @@ function json(body: unknown, status: number): Response {
   });
 }
 
-export const GET: APIRoute = async ({ params, url }) => {
+export const GET: APIRoute = async ({ params, request }) => {
   const id = params.id ?? '';
 
-  // いまは画面の申告をそのまま信用している。D1 を入れたら提出記録を見る（冒頭のコメント）。
-  if (url.searchParams.get('passed') !== '1') {
+  const config = serverConfig();
+  if (!config) return json({ message: 'サーバの設定が足りません。' }, 500);
+
+  const user = await currentUser(request);
+  if (!user) {
+    return json({ message: '模範解答は、登録して入ると読めます。' }, 403);
+  }
+
+  // 通した提出が1行でもあるか。無ければ返さない（第4.3.1節）
+  const passed = await config.db
+    .prepare('SELECT 1 AS ok FROM submissions WHERE user_id = ? AND exercise_id = ? AND passed = 1 LIMIT 1')
+    .bind(user.id, id)
+    .first<{ ok: number }>();
+  if (!passed) {
     return json({ message: 'この課題を通したあとに読めます。' }, 403);
   }
 
