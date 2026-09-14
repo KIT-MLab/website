@@ -439,3 +439,13 @@ main.wrap {
   border: 1px solid var(--l-rule);
   white-space: nowrap;
 }
+
+/* 進度の「N節」。教材と照らすための番号なので、題より弱く出す（第8.6節） */
+.prog__no {
+  width: 3.5em;
+  text-align: right;
+  padding-right: 10px;
+  color: var(--l-ink-2);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}

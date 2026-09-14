@@ -440,6 +440,23 @@ export function exerciseLabel(place: ExercisePlace | undefined, exerciseId: stri
   return place.stage ? `${place.at}問目（${place.stage}）` : `${place.at}問目`;
 }
 
+/**
+ * 節の通し番号。**章ごとに1から数える**（教材の課程表と同じ数え方）。
+ *
+ * 運営の画面は教材と照らし合わせる場所なので、題だけだと何番目の節か分からない。
+ * 渡す一覧は節の並び順（ファイル名の順）であること。
+ */
+export function sectionNumbers(ordered: { lessonId: string; chapter: string }[]): Map<string, number> {
+  const out = new Map<string, number>();
+  const count = new Map<string, number>();
+  for (const { lessonId, chapter } of ordered) {
+    const n = (count.get(chapter) ?? 0) + 1;
+    count.set(chapter, n);
+    out.set(lessonId, n);
+  }
+  return out;
+}
+
 export function ymd(ms: number): string {
   return new Date(ms + 9 * 60 * 60 * 1000).toISOString().slice(0, 10);
 }

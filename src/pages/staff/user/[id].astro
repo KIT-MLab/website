@@ -18,7 +18,7 @@ import { getCollection } from 'astro:content';
 import Base from '../../../layouts/Base.astro';
 import { serverConfig } from '../../../server/auth';
 import { requireAdmin, requireStaff } from '../../../server/staff';
-import { exerciseLabel, exercisePlaces, MAX_SUBMISSIONS, minutesLabel, userDetail, ymd } from '../../../server/staff-data';
+import { exerciseLabel, exercisePlaces, MAX_SUBMISSIONS, minutesLabel, sectionNumbers, userDetail, ymd } from '../../../server/staff-data';
 import generated from '../../../generated/lesson-data.json';
 import { chapterTitle } from '../../../lesson/chapters';
 import '../../../styles/lesson-tokens.css';
@@ -47,7 +47,9 @@ const ROLE_NAMES: Record<string, string> = { student: '学生', staff: '運営',
 const lessons = detail ? [...(await getCollection('lessons'))].sort((a, b) => a.id.localeCompare(b.id)) : [];
 const byLesson = new Map((detail?.progress ?? []).map((row) => [row.lessonId, row]));
 
-type Row = { id: string; title: string; state: 'none' | 'open' | 'done'; seconds: number };
+const sectionNo = sectionNumbers(lessons.map((l) => ({ lessonId: l.data.id, chapter: l.data.chapter })));
+
+type Row = { id: string; no: number; title: string; state: 'none' | 'open' | 'done'; seconds: number };
 const chapters: { title: string; rows: Row[] }[] = [];
 for (const lesson of lessons) {
   const title = chapterTitle(lesson.data.chapter);
@@ -59,6 +61,7 @@ for (const lesson of lessons) {
   const row = byLesson.get(lesson.data.id);
   chapter.rows.push({
     id: lesson.data.id,
+    no: sectionNo.get(lesson.data.id) ?? 0,
     title: lesson.data.title,
     state: row === undefined ? 'none' : row.state === 'done' ? 'done' : 'open',
     seconds: row?.seconds ?? 0,
@@ -122,11 +125,13 @@ const submissions = detail?.submissions ?? [];
               {chapters.map((chapter) => (
                 <tbody>
                   <tr class="prog__chapter">
-                    <th colspan="3">{chapter.title}</th>
+                    <th colspan="4">{chapter.title}</th>
                   </tr>
                   {chapter.rows.map((row) => (
                     <tr>
                       <td class={`prog__mark cell cell--${row.state}`}>{MARKS[row.state]}</td>
+                      {/* 題だけだと何番目の節か分からない。教材と照らすための番号（第8.6節） */}
+                      <td class="prog__no">{row.no}節</td>
                       <td>{row.title}</td>
                       <td class="prog__num">{row.seconds > 0 ? minutesLabel(row.seconds) : ''}</td>
                     </tr>

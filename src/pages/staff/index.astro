@@ -19,7 +19,7 @@ import { getCollection } from 'astro:content';
 import Base from '../../layouts/Base.astro';
 import { serverConfig } from '../../server/auth';
 import { requireStaff } from '../../server/staff';
-import { daysAgo, exercisePlaces, minutesLabel, rosterStudents, stuckItems, ymd } from '../../server/staff-data';
+import { daysAgo, exercisePlaces, minutesLabel, rosterStudents, sectionNumbers, stuckItems, ymd } from '../../server/staff-data';
 import { chapterTitle } from '../../lesson/chapters';
 import generated from '../../generated/lesson-data.json';
 import '../../styles/lesson-tokens.css';
@@ -67,6 +67,17 @@ for (const lesson of lessons) {
    STAGE と同じもの。 */
 const whereExercise = exercisePlaces(generated);
 
+/* 節の呼び方。題だけだと教材のどこか分からないので「第1章1節」を前に付ける（第8.6節）。
+   章の番号は chapterTitle の先頭（「第1章 …」）から取る。 */
+const sectionNo = sectionNumbers(lessons.map((l) => ({ lessonId: l.data.id, chapter: l.data.chapter })));
+const chapterOfLesson = new Map(lessons.map((l) => [l.data.id, l.data.chapter]));
+function place(lessonId: string): string {
+  const chapter = chapters.find((c) => c.key === chapterOfLesson.get(lessonId));
+  const n = sectionNo.get(lessonId);
+  if (!chapter || !n) return '';
+  return `${chapter.num}${n}節`;
+}
+
 const students = config && me ? await rosterStudents(config.db, me) : [];
 const stuck = config && me ? await stuckItems(config.db, me, minutes, now) : [];
 
@@ -78,16 +89,17 @@ const items = stuck.map((item) => {
   if (item.kind === 'fails') {
     const at = whereExercise.get(item.exerciseId);
     const title = titles.get(at?.lessonId ?? '');
+    const where = at ? place(at.lessonId) : '';
     // 場所が引けないときだけ id を出す。何も出さないと、どの課題か分からなくなる
     const code = at ? `${at.at}問目${at.stage ? `（${at.stage}）` : ''}` : item.exerciseId;
-    return { ...item, head: title ? `「${title}」の` : '', code, tail: `を${item.fails}回落としています` };
+    return { ...item, head: title ? `${where}「${title}」の` : '', code, tail: `を${item.fails}回落としています` };
   }
   if (item.kind === 'slow') {
     const title = titles.get(item.lessonId) ?? item.lessonId;
     const expected = Math.round(item.expectedSeconds / 60 / 3);
     return {
       ...item,
-      head: `「${title}」に${minutesLabel(item.seconds)}`,
+      head: `${place(item.lessonId)}「${title}」に${minutesLabel(item.seconds)}`,
       code: '',
       tail: `（想定${expected}分）`,
     };
