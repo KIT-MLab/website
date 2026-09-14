@@ -1,0 +1,222 @@
+---
+/**
+ * 運営の画面（20-platform.md 第8.6節）。
+ *
+ * 上に**詰まっているところ**（第8.2節・この画面の主役）、下に**一覧**（第8.1節）。
+ *
+ * 判定はサーバ側で1回だけ行う。**運営未満には 403 と一行だけの画面**を返す。学生には
+ * 存在しない画面なので、登録や問い合わせの案内は出さない（第8.6節）。
+ *
+ * **自分の API を fetch しない。**Worker の中から自分を呼び直すことになるため、
+ * 問い合わせは src/server/staff-data.ts をそのまま呼ぶ。
+ *
+ * 内部と外部の出し分けはページを読み込み直さずに行う（第5.2節）。読み直すと、
+ * サーバに同じ問い合わせをもう一度させることになるうえ、見ていた位置も失う。
+ */
+export const prerender = false;
+
+import { getCollection } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import { serverConfig } from '../../server/auth';
+import { requireStaff } from '../../server/staff';
+import { daysAgo, exercisePlaces, minutesLabel, rosterStudents, stuckItems, ymd } from '../../server/staff-data';
+import { chapterTitle } from '../../lesson/chapters';
+import generated from '../../generated/lesson-data.json';
+import '../../styles/lesson-tokens.css';
+import '../../styles/staff.css';
+
+// 設定が無ければ誰も入れない（requireStaff も中で同じ設定を見て null を返す）。
+const config = serverConfig();
+const me = config && (await requireStaff(Astro.request));
+
+Astro.response.headers.set('cache-control', 'no-store');
+if (!me) Astro.response.status = 403;
+
+const now = Date.now();
+
+// 教材から章立てを組む。節の並びはファイルの位置の順（第2.1節）。
+const lessons = me ? [...(await getCollection('lessons'))].sort((a, b) => a.id.localeCompare(b.id)) : [];
+const minutes = new Map(lessons.map((l) => [l.data.id, l.data.minutes]));
+const titles = new Map(lessons.map((l) => [l.data.id, l.data.title]));
+
+type Chapter = { key: string; num: string; name: string; lessonIds: string[] };
+const chapters: Chapter[] = [];
+for (const lesson of lessons) {
+  let chapter = chapters.find((c) => c.key === lesson.data.chapter);
+  if (!chapter) {
+    // 「第1章 Python を書きはじめる」を段に分ける。列が狭いので2行で出す。
+    const full = chapterTitle(lesson.data.chapter);
+    const at = full.search(/[ 　]/);
+    chapter = {
+      key: lesson.data.chapter,
+      num: at > 0 ? full.slice(0, at) : full,
+      name: at > 0 ? full.slice(at + 1) : '',
+      lessonIds: [],
+    };
+    chapters.push(chapter);
+  }
+  chapter.lessonIds.push(lesson.data.id);
+}
+
+/* 課題の id → その課題が節の何問目で、どの段か。submissions に節の列は無いので、
+   fails の行がどの節のものかは画面が引く（これは画面の仕事）。
+
+   **画面に課題の id をそのまま出さない。** python-01-print-b1 と書かれても、
+   運営には何問目のことか分からない。学習者が画面で見ているのと同じ呼び方
+   （「4問目（演習問題）」）にする。段の名前は src/components/lesson/Exercise.astro の
+   STAGE と同じもの。 */
+const whereExercise = exercisePlaces(generated);
+
+const students = config && me ? await rosterStudents(config.db, me) : [];
+const stuck = config && me ? await stuckItems(config.db, me, minutes, now) : [];
+
+/* 1行ぶんの文（第8.6節の表）。
+     fails … 「◯◯」の <課題> を7回落としています
+     slow  … 「◯◯」に38分（想定16分）
+     away  … 11日前から来ていません */
+const items = stuck.map((item) => {
+  if (item.kind === 'fails') {
+    const at = whereExercise.get(item.exerciseId);
+    const title = titles.get(at?.lessonId ?? '');
+    // 場所が引けないときだけ id を出す。何も出さないと、どの課題か分からなくなる
+    const code = at ? `${at.at}問目${at.stage ? `（${at.stage}）` : ''}` : item.exerciseId;
+    return { ...item, head: title ? `「${title}」の` : '', code, tail: `を${item.fails}回落としています` };
+  }
+  if (item.kind === 'slow') {
+    const title = titles.get(item.lessonId) ?? item.lessonId;
+    const expected = Math.round(item.expectedSeconds / 60 / 3);
+    return {
+      ...item,
+      head: `「${title}」に${minutesLabel(item.seconds)}`,
+      code: '',
+      tail: `（想定${expected}分）`,
+    };
+  }
+  return { ...item, head: '', code: '', tail: `${daysAgo(item.lastSeenAt, now)}日前から来ていません` };
+});
+
+/* 一覧のセル。「その章で済んだ節数／その章の節数」を数字で出し、背景で3状態を示す。 */
+const rows = students.map((student) => ({
+  student,
+  cells: chapters.map((chapter) => {
+    let done = 0;
+    let touched = 0;
+    for (const lessonId of chapter.lessonIds) {
+      const state = student.lessons[lessonId];
+      if (state === undefined) continue;
+      touched += 1;
+      if (state === 'done') done += 1;
+    }
+    const state = done === chapter.lessonIds.length ? 'done' : touched > 0 ? 'open' : 'none';
+    return { state, done, total: chapter.lessonIds.length };
+  }),
+}));
+---
+
+<Base title="運営">
+  {
+    !me ? (
+      <p class="staff-deny">この画面は開けません。</p>
+    ) : (
+      <div class="staff">
+        <div class="staff__top">
+          <h1 class="staff__title">運営の画面</h1>
+          <p class="staff__meta">
+            {me.displayName}（{me.cohort.name}）・
+            {me.role === 'admin' ? 'すべての所属が見えています' : 'この所属だけが見えています'}・{ymd(now)}
+          </p>
+        </div>
+
+        <div class="staff-tabs" role="tablist" aria-label="所属">
+          <button type="button" role="tab" data-tab="internal" aria-selected="true">内部</button>
+          <button type="button" role="tab" data-tab="external" aria-selected="false">外部</button>
+        </div>
+
+        <h2>詰まっているところ<span class="staff__count" data-count="stuck" /></h2>
+        <p class="staff__none" data-none="stuck" hidden>いまは出ていません。</p>
+        <ul class="stuck">
+          {items.map((item) => (
+            <li data-row="stuck" data-kind={item.cohortKind}>
+              <a class={`stuck__row stuck__row--${item.kind}`} href={`/staff/user/${item.userId}`}>
+                <span class="stuck__who">{item.displayName}</span>
+                <span class="stuck__id">{item.userId}</span>
+                <span class="stuck__what">
+                  {item.head}
+                  {item.code ? <code>{item.code}</code> : null}
+                  {item.tail}
+                </span>
+              </a>
+            </li>
+          ))}
+        </ul>
+
+        <h2>一覧<span class="staff__count" data-count="roster" /></h2>
+        <p class="staff__none" data-none="roster" hidden>この所属の利用者はいません。</p>
+        <table class="roster">
+          <thead>
+            <tr>
+              <th>学習者（進度の遅い順）</th>
+              {chapters.map((chapter) => (
+                <th class="roster__ch">
+                  {chapter.num}
+                  <span class="roster__chname">{chapter.name}</span>
+                </th>
+              ))}
+              <th class="roster__seen">最終アクセス</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((row) => (
+              <tr data-row="roster" data-kind={row.student.cohortKind}>
+                <td class="roster__who">
+                  <a href={`/staff/user/${row.student.id}`}>{row.student.displayName}</a>
+                  {/* 学生以外は行の見た目が同じだと見分けられない。役を小さく添える */}
+                  {row.student.role === 'student' ? null : (
+                    <span class="roster__role">{row.student.role === 'admin' ? '管理者' : '運営'}</span>
+                  )}
+                  <span class="roster__uid">{row.student.id}</span>
+                </td>
+                {row.cells.map((cell) => (
+                  <td class={`cell cell--${cell.state}`}>
+                    {cell.done}/{cell.total}
+                  </td>
+                ))}
+                <td class="roster__seen">{ymd(row.student.lastSeenAt)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    )
+  }
+
+  <script>
+    /* 内部と外部の出し分け（20-platform.md 第5.2節）。**既定は内部**。
+       ページを読み込み直さずに、行の hidden だけを付け外しする。詰まっているところも
+       一覧も、どちらも同じ所属のものだけが出るようにする。1つの画面で見ている所属が
+       段ごとに違うと、上から順に読めなくなるためである。 */
+    const tabs = Array.from(document.querySelectorAll<HTMLButtonElement>('[data-tab]'));
+    const rows = Array.from(document.querySelectorAll<HTMLElement>('[data-row]'));
+
+    function show(kind: string) {
+      for (const tab of tabs) tab.setAttribute('aria-selected', String(tab.dataset.tab === kind));
+
+      const shown: Record<string, number> = { stuck: 0, roster: 0 };
+      for (const row of rows) {
+        const hit = row.dataset.kind === kind;
+        row.hidden = !hit;
+        if (hit) shown[row.dataset.row ?? ''] = (shown[row.dataset.row ?? ''] ?? 0) + 1;
+      }
+
+      for (const [name, count] of Object.entries(shown)) {
+        const label = document.querySelector<HTMLElement>(`[data-count="${name}"]`);
+        if (label) label.textContent = `${count}件`;
+        const none = document.querySelector<HTMLElement>(`[data-none="${name}"]`);
+        if (none) none.hidden = count > 0;
+      }
+    }
+
+    for (const tab of tabs) tab.addEventListener('click', () => show(tab.dataset.tab ?? 'internal'));
+    show('internal');
+  </script>
+</Base>

@@ -15,46 +15,7 @@
  * ・マストヘッドとナビは第1次トークン（tokens.css）のまま。ここでは触らない
  * ============================================================ */
 
-:root {
-  /* 4段の地色（紙 → 例題 → 練習問題 → 演習問題） */
-  --l-paper: #f6f2e9;
-  --l-lv1: #efe8d8;
-  --l-lv2: #e5dbc4;
-  --l-lv3: #dacdaf;
-  /* よくある間違いだけ、階段と逆に紙より明るい */
-  --l-card: #fffdf7;
-
-  --l-ink: #1f1c17;
-  --l-ink-2: #5d564a;
-  --l-rule: #c2b8a4;
-  --l-strong: #2b261e;
-  --l-chip: #ece5d5; /* 本文中の `…` の地 */
-
-  --l-shu: #9c3b21; /* 朱 = 演習問題 */
-  --l-ai: #27506c; /* 藍 = 練習問題（第10.9節の唯一の変更点） */
-  --l-kohaku: #8a6a1f; /* 琥珀 = よくある間違い。4段の階段には乗らない */
-  --l-kohaku-bg: #f7edd6;
-  --l-midori: #266432; /* 緑 = 通った印。20-platform.md 第12.1節。帯にも札にも使わない */
-
-  /* 帯の色と文字色 */
-  --l-band-trace: #e6dcc5;
-  --l-bandink-trace: #4e4638;
-  --l-band-modify: #27506c;
-  --l-bandink-modify: #ffffff;
-  --l-band-build: #9c3b21;
-  --l-bandink-build: #fffdf7;
-
-  /* 黒い面（コードと実行結果） */
-  --k-bg: #17140f;
-  --k-bg2: #100e0a;
-  --k-fg: #ece6d8;
-  --k-fg2: #d6cfbf;
-  --k-err: #e9b39b;
-  --k-dim: #968c7a;
-  --k-line: #3b352b;
-  --k-gut: #6b6355;
-  --k-sel: #34302a;
-}
+@import './lesson-tokens.css';
 
 /* --- 紙と本文の組み ------------------------------------------ */
 .lesson-page {

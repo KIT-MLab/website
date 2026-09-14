@@ -1,0 +1,441 @@
+/* ============================================================
+ * 運営の画面 — 20-platform.md 第8.6節
+ *
+ * **読む場所ではなく道具**として組む。レッスンの画面は紙色と明朝でゆったり読ませるが、
+ * こちらは勉強会の直前に一覧して判断する場所である。字を詰め、余白を削り、1画面に
+ * 入る量を増やす。**色だけレッスンと共有**して地続きに見せる。
+ *
+ * ・本文14px・行間1.6。見出しだけレッスンと同じ明朝
+ * ・表の中と利用者IDは等幅
+ * ・幅は1280pxまで（レッスンの1080pxより広い。表が主役のため）
+ *
+ * 色は lesson-tokens.css の `--l-*` だけを使う。**新しい色を作らない。**
+ * 読み込み順はページの frontmatter で決めている（lesson-tokens.css → staff.css）。
+ * この綴りは lesson.css には足さない。あちらを太らせないため。
+ * ============================================================ */
+
+/* 地と幅。Base.astro の `body { background: var(--color-paper) }` と
+   `.wrap { max-width: 960px }` を上書きする。
+   **順番ではなく詳しさで勝たせている**（`html body` と `main.wrap`）。
+   綴りの読み込み順は組み立ての都合で変わることがあり、そこに頼ると静かに戻る。 */
+html body {
+  background: var(--l-paper);
+}
+
+main.wrap {
+  max-width: 1280px;
+}
+
+.staff {
+  color: var(--l-ink);
+  font-family: var(--font-body);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+/* --- 上部 --------------------------------------------------- */
+.staff__top {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  border-bottom: 3px double var(--l-strong);
+  padding-bottom: 8px;
+  margin-bottom: 14px;
+}
+
+.staff__title {
+  margin: 0;
+  font-family: "Zen Old Mincho", serif;
+  font-weight: 700;
+  font-size: 21px;
+  letter-spacing: 0.06em;
+  line-height: 1.4;
+}
+
+.staff__meta {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--l-ink-2);
+}
+
+.staff__back {
+  margin-left: auto;
+  font-size: 12.5px;
+  color: var(--l-ai);
+}
+
+.staff h2 {
+  margin: 20px 0 7px;
+  font-family: "Zen Old Mincho", serif;
+  font-weight: 700;
+  font-size: 16px;
+  letter-spacing: 0.08em;
+}
+
+.staff h2:first-of-type {
+  margin-top: 0;
+}
+
+.staff__count {
+  margin-left: 8px;
+  font-family: var(--font-body);
+  font-weight: 400;
+  font-size: 12px;
+  color: var(--l-ink-2);
+}
+
+.staff__none {
+  margin: 0 0 4px;
+  font-size: 13px;
+  color: var(--l-ink-2);
+}
+
+/* 入れない人への一行（第8.6節）。案内は足さない */
+.staff-deny {
+  margin: 0;
+  font-size: 14px;
+  font-family: var(--font-body);
+  color: var(--l-ink);
+}
+
+/* --- 内部 / 外部のタブ（第5.2節） ----------------------------- */
+.staff-tabs {
+  display: flex;
+  gap: 2px;
+  margin: 0 0 14px;
+  border-bottom: 1px solid var(--l-rule);
+}
+
+.staff-tabs button {
+  appearance: none;
+  background: none;
+  border: 0;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -1px;
+  padding: 5px 16px;
+  font: inherit;
+  font-size: 13px;
+  color: var(--l-ink-2);
+  cursor: pointer;
+}
+
+.staff-tabs button[aria-selected='true'] {
+  color: var(--l-ink);
+  font-weight: 700;
+  border-bottom-color: var(--l-ai);
+}
+
+.staff-tabs button:hover {
+  color: var(--l-ink);
+}
+
+/* --- 詰まっているところ（第8.2節・この画面の主役） -------------- */
+.stuck {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.stuck__row {
+  display: grid;
+  grid-template-columns: 11em 7.5em minmax(0, 1fr);
+  align-items: baseline;
+  gap: 4px 12px;
+  margin-bottom: 3px;
+  padding: 5px 10px;
+  background: var(--l-card);
+  border: 1px solid var(--l-rule);
+  /* 左端に4pxの縁。種類を色で分ける（第8.6節の表） */
+  border-left: 4px solid var(--l-rule);
+  color: inherit;
+  text-decoration: none;
+}
+
+.stuck__row--fails {
+  border-left-color: var(--l-shu);
+}
+
+.stuck__row--slow {
+  border-left-color: var(--l-kohaku);
+}
+
+.stuck__row--away {
+  border-left-color: var(--l-rule);
+}
+
+.stuck__row:hover {
+  background: var(--l-lv1);
+}
+
+.stuck__who {
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.stuck__id,
+.staff__id {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--l-ink-2);
+}
+
+.stuck__what {
+  font-size: 13.5px;
+}
+
+.stuck__what code {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+}
+
+/* --- 一覧（第8.1節） ------------------------------------------ */
+.roster {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.roster th,
+.roster td {
+  border: 1px solid var(--l-rule);
+  padding: 4px 8px;
+  text-align: left;
+}
+
+.roster thead th {
+  background: var(--l-lv1);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.roster__ch {
+  text-align: center;
+  width: 7.5em;
+}
+
+.roster__chname {
+  display: block;
+  font-weight: 400;
+  font-size: 11px;
+  color: var(--l-ink-2);
+}
+
+.roster__who a {
+  color: inherit;
+  font-weight: 700;
+}
+
+.roster__uid {
+  margin-left: 8px;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: var(--l-ink-2);
+}
+
+/* セルは「済んだ節数／その章の節数」。背景の濃さで3状態（第8.6節の表） */
+.cell {
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+}
+
+.cell--none {
+  color: var(--l-ink-2);
+}
+
+.cell--open {
+  background: var(--l-lv1);
+}
+
+.cell--done {
+  background: var(--l-ai);
+  color: var(--l-card);
+}
+
+.roster__seen {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  white-space: nowrap;
+  width: 7em;
+}
+
+/* --- 1人の詳細（第8.4節） ------------------------------------- */
+.detail__facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 18px;
+  margin: 0 0 4px;
+  font-size: 12.5px;
+  color: var(--l-ink-2);
+}
+
+.detail__facts b {
+  font-weight: 700;
+  color: var(--l-ink);
+}
+
+.detail__cols {
+  display: grid;
+  grid-template-columns: minmax(0, 340px) minmax(0, 1fr);
+  gap: 24px;
+  align-items: start;
+}
+
+.prog {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12.5px;
+}
+
+.prog th,
+.prog td {
+  border: 1px solid var(--l-rule);
+  padding: 3px 7px;
+  text-align: left;
+}
+
+.prog__chapter th {
+  background: var(--l-lv1);
+  font-size: 12px;
+}
+
+.prog__mark {
+  width: 2.4em;
+  text-align: center;
+  font-size: 11.5px;
+}
+
+.prog__num {
+  width: 4.5em;
+  text-align: right;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: var(--l-ink-2);
+}
+
+/* 提出の履歴。**コードはそのまま出す。整形しない**（第8.4節） */
+.subs {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.sub {
+  margin-bottom: 5px;
+  background: var(--l-card);
+  border: 1px solid var(--l-rule);
+}
+
+.sub__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 12px;
+  padding: 4px 9px;
+  border-bottom: 1px solid var(--l-rule);
+  font-size: 12px;
+  color: var(--l-ink-2);
+}
+
+.sub__when,
+.sub__ex {
+  font-family: var(--font-mono);
+}
+
+.sub__ex {
+  color: var(--l-ink);
+}
+
+.sub__ok {
+  font-weight: 700;
+  color: var(--l-midori);
+}
+
+.sub__ng {
+  font-weight: 700;
+  color: var(--l-shu);
+}
+
+/* 長い行は折り返さず、箱の中で横に送る（第8.6節） */
+.sub__code {
+  margin: 0;
+  padding: 7px 9px;
+  overflow-x: auto;
+  white-space: pre;
+  tab-size: 4;
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--l-ink);
+}
+
+/* --- ロールを変える欄（管理者だけ・第5.4節） -------------------- */
+.role {
+  margin: 0 0 16px;
+  padding: 9px 12px;
+  background: var(--l-card);
+  border: 1px solid var(--l-rule);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+}
+
+.role__label {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--l-ink-2);
+}
+
+.role select {
+  font: inherit;
+  font-size: 13px;
+  padding: 2px 6px;
+  color: var(--l-ink);
+  background: var(--l-paper);
+  border: 1px solid var(--l-rule);
+}
+
+.role button {
+  font: inherit;
+  font-size: 13px;
+  padding: 3px 14px;
+  color: var(--l-ink);
+  background: var(--l-lv1);
+  border: 1px solid var(--l-rule);
+  cursor: pointer;
+}
+
+.role button:hover {
+  background: var(--l-lv2);
+}
+
+.role button[disabled] {
+  color: var(--l-ink-2);
+  cursor: default;
+}
+
+/* 断りの文は琥珀。第5.6節で決めた色をそのまま使う */
+.role__msg {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--l-kohaku);
+}
+
+.role__msg--ok {
+  color: var(--l-ink-2);
+}
+
+/* 一覧の中で、学生でない人に添える役の名前。
+   行の見た目が同じだと、運営や管理者の行を学生と読み違える。
+   目立たせる必要はないので、地の色に近い小さな文字にする */
+.roster__role {
+  margin-left: 6px;
+  padding: 1px 5px;
+  font-size: 11px;
+  color: var(--l-ink-2);
+  border: 1px solid var(--l-rule);
+  white-space: nowrap;
+}

@@ -1,0 +1,221 @@
+---
+/**
+ * 1人の詳細（20-platform.md 第8.4節・第8.6節）。
+ *
+ * 進度と、提出の履歴（新しい順・200件まで）。**コードはそのまま出す。整形しない。**
+ * 長い行は折り返さず、箱の中で横に送る。書き方の癖と誤解を読むための画面なので、
+ * 見た目を整えると意味がなくなる。
+ *
+ * **範囲の外の利用者は 404**（第5.4節の範囲。判定は src/server/staff.ts の visibleUsers）。
+ * 「権限がありません」と返すと、そのIDの人が居ることだけは分かってしまう。居ないときと
+ * 同じ文面にする。
+ *
+ * ロールを変える欄は requireAdmin が通る人にだけ出す（第5.4節）。
+ */
+export const prerender = false;
+
+import { getCollection } from 'astro:content';
+import Base from '../../../layouts/Base.astro';
+import { serverConfig } from '../../../server/auth';
+import { requireAdmin, requireStaff } from '../../../server/staff';
+import { exerciseLabel, exercisePlaces, MAX_SUBMISSIONS, minutesLabel, userDetail, ymd } from '../../../server/staff-data';
+import generated from '../../../generated/lesson-data.json';
+import { chapterTitle } from '../../../lesson/chapters';
+import '../../../styles/lesson-tokens.css';
+import '../../../styles/staff.css';
+
+const config = serverConfig();
+const me = config && (await requireStaff(Astro.request));
+
+Astro.response.headers.set('cache-control', 'no-store');
+
+const detail = config && me ? await userDetail(config.db, me, Astro.params.id ?? '') : null;
+
+/* 提出の行に課題の id をそのまま出さない（第8.6節）。学習者が見ているのと同じ呼び方にする */
+const places = exercisePlaces(generated);
+
+// 入れない人は 403、範囲の外の利用者は 404。**どちらも一行だけの画面**にする。
+if (!me) Astro.response.status = 403;
+else if (!detail) Astro.response.status = 404;
+
+// ロールの付け外しは管理者だけ（第5.4節）。判定はこの1か所に任せる。
+const admin = detail ? await requireAdmin(Astro.request) : null;
+
+const ROLE_NAMES: Record<string, string> = { student: '学生', staff: '運営', admin: '管理者' };
+
+// 進度は章ごとにまとめて出す。まだ開いていない節も並べる（どこまで来ていないかを見るため）。
+const lessons = detail ? [...(await getCollection('lessons'))].sort((a, b) => a.id.localeCompare(b.id)) : [];
+const byLesson = new Map((detail?.progress ?? []).map((row) => [row.lessonId, row]));
+
+type Row = { id: string; title: string; state: 'none' | 'open' | 'done'; seconds: number };
+const chapters: { title: string; rows: Row[] }[] = [];
+for (const lesson of lessons) {
+  const title = chapterTitle(lesson.data.chapter);
+  let chapter = chapters.find((c) => c.title === title);
+  if (!chapter) {
+    chapter = { title, rows: [] };
+    chapters.push(chapter);
+  }
+  const row = byLesson.get(lesson.data.id);
+  chapter.rows.push({
+    id: lesson.data.id,
+    title: lesson.data.title,
+    state: row === undefined ? 'none' : row.state === 'done' ? 'done' : 'open',
+    seconds: row?.seconds ?? 0,
+  });
+}
+
+const MARKS: Record<string, string> = { none: '未', open: '開', done: '済' };
+const submissions = detail?.submissions ?? [];
+---
+
+<Base title={detail ? detail.user.displayName : '運営'}>
+  {
+    !me ? (
+      <p class="staff-deny">この画面は開けません。</p>
+    ) : !detail ? (
+      <p class="staff-deny">見つかりません。</p>
+    ) : (
+      <div class="staff">
+        <div class="staff__top">
+          <h1 class="staff__title">{detail.user.displayName}</h1>
+          <p class="staff__meta">
+            <span class="staff__id">{detail.user.id}</span>
+          </p>
+          <a class="staff__back" href="/staff/">運営の画面へ戻る</a>
+        </div>
+
+        <p class="detail__facts">
+          <span>
+            所属 <b>{detail.user.cohort.name}</b>（{detail.user.cohort.kind === 'internal' ? '内部' : '外部'}）
+          </span>
+          <span>
+            ロール <b data-role-now>{ROLE_NAMES[detail.user.role] ?? detail.user.role}</b>
+          </span>
+          <span>
+            登録 <b>{ymd(detail.user.createdAt)}</b>
+          </span>
+          <span>
+            最終アクセス <b>{ymd(detail.user.lastSeenAt)}</b>
+          </span>
+        </p>
+
+        {admin ? (
+          <div class="role" data-role={detail.user.id}>
+            <p class="role__label">ロールを変える</p>
+            <select aria-label="ロール">
+              {['student', 'staff', 'admin'].map((role) => (
+                <option value={role} selected={role === detail.user.role}>
+                  {ROLE_NAMES[role]}
+                </option>
+              ))}
+            </select>
+            <button type="button">変える</button>
+            <p class="role__msg" data-role-msg />
+          </div>
+        ) : null}
+
+        <div class="detail__cols">
+          <section>
+            <h2>進度</h2>
+            <table class="prog">
+              {chapters.map((chapter) => (
+                <tbody>
+                  <tr class="prog__chapter">
+                    <th colspan="3">{chapter.title}</th>
+                  </tr>
+                  {chapter.rows.map((row) => (
+                    <tr>
+                      <td class={`prog__mark cell cell--${row.state}`}>{MARKS[row.state]}</td>
+                      <td>{row.title}</td>
+                      <td class="prog__num">{row.seconds > 0 ? minutesLabel(row.seconds) : ''}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              ))}
+            </table>
+          </section>
+
+          <section>
+            <h2>
+              提出の履歴
+              <span class="staff__count">
+                新しい順・{submissions.length}件{submissions.length >= MAX_SUBMISSIONS ? `（${MAX_SUBMISSIONS}件まで）` : ''}
+              </span>
+            </h2>
+            {submissions.length === 0 ? <p class="staff__none">まだ提出がありません。</p> : null}
+            <ul class="subs">
+              {submissions.map((submission) => (
+                <li class="sub">
+                  <p class="sub__head">
+                    <span class="sub__when">{ymd(submission.createdAt)}</span>
+                    <span class="sub__ex">
+                      {places.get(submission.exerciseId)?.lessonTitle
+                        ? `「${places.get(submission.exerciseId)!.lessonTitle}」の`
+                        : ''}
+                      {exerciseLabel(places.get(submission.exerciseId), submission.exerciseId)}
+                    </span>
+                    {submission.passed ? (
+                      <span class="sub__ok">通った</span>
+                    ) : (
+                      <span class="sub__ng">落ちた</span>
+                    )}
+                    {submission.errorType ? <span>{submission.errorType}</span> : null}
+                    {!submission.passed && !submission.errorType && submission.failedTest !== null ? (
+                      <span>テスト{submission.failedTest}</span>
+                    ) : null}
+                  </p>
+                  {/* そのまま出す。整形しない（第8.4節） */}
+                  <pre class="sub__code">{submission.code}</pre>
+                </li>
+              ))}
+            </ul>
+          </section>
+        </div>
+      </div>
+    )
+  }
+
+  <script>
+    /* ロールを変える（20-platform.md 第5.4節・第7.1節）。
+       通ったらその場で表示を書き換える。読み込み直さないのは、提出の履歴を見ながら
+       操作する場所なので、見ていた位置を失わせないためである。 */
+    const box = document.querySelector<HTMLElement>('[data-role]');
+    const NAMES: Record<string, string> = { student: '学生', staff: '運営', admin: '管理者' };
+
+    if (box) {
+      const select = box.querySelector<HTMLSelectElement>('select');
+      const button = box.querySelector<HTMLButtonElement>('button');
+      const message = box.querySelector<HTMLElement>('[data-role-msg]');
+      const shown = document.querySelector<HTMLElement>('[data-role-now]');
+      const id = box.dataset.role ?? '';
+
+      button?.addEventListener('click', async () => {
+        if (!select || !button || !message) return;
+        button.disabled = true;
+        message.textContent = '';
+        message.classList.remove('role__msg--ok');
+        try {
+          const res = await fetch('/api/admin/role', {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({ id, role: select.value }),
+          });
+          const body = (await res.json()) as { error?: string; role?: string };
+          if (!res.ok || !body.role) {
+            message.textContent = body.error ?? '変えられませんでした。';
+            return;
+          }
+          if (shown) shown.textContent = NAMES[body.role] ?? body.role;
+          select.value = body.role;
+          message.textContent = '変えました。';
+          message.classList.add('role__msg--ok');
+        } catch {
+          message.textContent = '送れませんでした。';
+        } finally {
+          button.disabled = false;
+        }
+      });
+    }
+  </script>
+</Base>
