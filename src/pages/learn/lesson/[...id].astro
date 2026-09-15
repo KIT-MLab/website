@@ -12,6 +12,7 @@ import Run from '../../../components/lesson/Run.astro';
 import Mistake from '../../../components/lesson/Mistake.astro';
 import Exercise from '../../../components/lesson/Exercise.astro';
 import Level0 from '../../../components/lesson/Level0.astro';
+import Figure from '../../../components/lesson/Figure.astro';
 import Keys from '../../../components/lesson/Keys.astro';
 import AccountRail from '../../../components/lesson/AccountRail.astro';
 import AskRail from '../../../components/lesson/AskRail.astro';
@@ -66,7 +67,7 @@ const oneAtATime = entry.data.chapter === '00-start' ? '' : undefined;
 
     <div class="lesson-grid">
       <article class="lesson-body" data-exq={oneAtATime}>
-        <Content components={{ Run, Mistake, Exercise, Level0, Keys }} />
+        <Content components={{ Run, Mistake, Exercise, Level0, Keys, Figure }} />
 
         <nav class="lesson-nav" aria-label="節の移動">
           {prev ? <a href={lessonHref(prev.id)}>← 前の節へ　{prev.data.title}</a> : <span class="lesson-nav__spacer" />}

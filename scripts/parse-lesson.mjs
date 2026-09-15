@@ -17,7 +17,7 @@
  * つまりコード中の「\」は JavaScript の規則で解釈される（`\\n` と書くと Python の `\n`）。
  */
 
-const COMPONENTS = ['Run', 'Mistake', 'Exercise', 'Level0', 'Experiment'];
+const COMPONENTS = ['Run', 'Mistake', 'Exercise', 'Level0', 'Experiment', 'Keys', 'Figure'];
 
 export function lineOf(text, index) {
   let line = 1;
@@ -369,6 +369,17 @@ export function parseLesson(source, file) {
       }
       tableChars[section] = (tableChars[section] ?? 0) + n;
     }
+  }
+
+  /* 図（<Figure>）の中の説明文も、表と同じ理由で字数に数える。
+     部品の属性は地の文から外されるので、数えないと図を置くほど「説明」が短くなる。
+     かな漢字だけを数えるのは、属性の名前やコードを含めないためである。 */
+  for (const c of components) {
+    if (c.name !== 'Figure') continue;
+    const section = sectionOf(c.start) ?? '（マーカーの外）';
+    const raw = body.slice(c.start, c.end);
+    const jp = raw.match(/[ぁ-んァ-ヴー一-龥]/g);
+    tableChars[section] = (tableChars[section] ?? 0) + (jp ? jp.length : 0);
   }
 
   for (const m of mistakes) {

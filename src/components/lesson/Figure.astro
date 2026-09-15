@@ -1,0 +1,106 @@
+---
+/**
+ * <Figure> — コードの一部に罫を引いて、計算や変換の順番を示す図
+ * （10-lesson-and-writing.md 第11.4節）。
+ *
+ * **書き手に座標を書かせない。** 渡すのは「コードのどの部分か」を表す文字列だけで、
+ * 位置は部品が数える。等幅なので 1文字 = 1ch として、左からの文字数と長さで罫を引く。
+ *
+ *   <Figure
+ *     caption="値のうつりかわり"
+ *     code="int( input() )"
+ *     marks={[
+ *       { part: 'input()',        note: 'input() が入力欄の1行を読む', value: '"5"' },
+ *       { part: 'int( input() )', note: 'int() が整数に変える',        value: '5' },
+ *     ]}
+ *   />
+ *
+ * 座標を手で書く形にしていたときは、番号が罫の真ん中から外れていた。人が見ないと
+ * 合っているか分からない書き方だったためである。番号は罫の中に入れて中央寄せにしてあり、
+ * **ずれる余地が無い。**
+ *
+ * 見つからない・重なる・等幅で数えられない、のどれかならビルド時に落とす。
+ * 黙って変な図を出すより、書き手にその場で知らせるほうがよい（<Keys> と同じ）。
+ *
+ * 色は朱（--l-shu）と墨だけ。新しい色も新しい札も作らない（第10.6節・第10.9節）。
+ */
+interface Mark {
+  /** `code` の中の、罫を引く部分。そのまま書き写す。2か所に出てくるものは使えない */
+  part: string;
+  /** その段で何が起きるか */
+  note: string;
+  /** その段のあとの値。計算の図では結果、変換の図では変わったあとの値 */
+  value?: string;
+}
+
+interface Props {
+  /** 図の上に出す短い題 */
+  caption: string;
+  /** 罫を引く相手のコード。1行だけ */
+  code: string;
+  marks: Mark[];
+}
+
+const { caption, code, marks } = Astro.props;
+
+const where = `<Figure caption="${caption}">`;
+
+if (code.includes('\n')) {
+  throw new Error(`${where} の code は1行だけです。複数行のコードには使えません。`);
+}
+/* 半角でない文字が混ざると、1文字 = 1ch が崩れて罫がずれる。
+   図の相手は Python のコードなので、混ざっていたら書き手の間違いである。 */
+for (const ch of code) {
+  if (ch.charCodeAt(0) > 0x7e) {
+    throw new Error(`${where} の code に半角でない文字「${ch}」があります。罫の位置を数えられません。`);
+  }
+}
+if (!Array.isArray(marks) || marks.length === 0) {
+  throw new Error(`${where} に marks がありません。`);
+}
+
+const rows = marks.map((mark, i) => {
+  const at = code.indexOf(mark.part);
+  if (at < 0) {
+    throw new Error(`${where} の marks[${i}] の part「${mark.part}」が code の中にありません。`);
+  }
+  if (code.indexOf(mark.part, at + 1) >= 0) {
+    throw new Error(
+      `${where} の marks[${i}] の part「${mark.part}」が code の中に2か所あります。` +
+        'どちらか一方だけに当たるよう、前後を足して長くしてください。',
+    );
+  }
+  return { ...mark, no: i + 1, left: at, width: mark.part.length };
+});
+
+const hasValue = rows.some((row) => row.value !== undefined);
+---
+
+<figure class="kit-fig">
+  <p class="kit-fig__cap">{caption}</p>
+  <div class="kit-fig__in">
+    <div class="kit-fig__code">{code}</div>
+    {
+      rows.map((row) => (
+        <div class="kit-fig__row">
+          <span class="kit-fig__bar" style={`left:${row.left}ch;width:${row.width}ch`}>
+            <span class="kit-fig__no">{row.no}</span>
+          </span>
+        </div>
+      ))
+    }
+    <table class="kit-fig__steps">
+      <tbody>
+        {
+          rows.map((row) => (
+            <tr>
+              <td class="kit-fig__stepno">{row.no}</td>
+              <td>{row.note}</td>
+              {hasValue && <td class="kit-fig__val">{row.value ?? ''}</td>}
+            </tr>
+          ))
+        }
+      </tbody>
+    </table>
+  </div>
+</figure>
