@@ -337,6 +337,40 @@ export function parseLesson(source, file) {
       }
     }
   }
+  /* 表の字数を、要素ごとに数えておく（20-platform.md 第2.4節 検査8）。
+     段落としては数えない（1行3文以内のような規定は表の行に当てはまらない）が、
+     **字数には数える。表は説明である。**
+     数えないままだと、文章を表に置き換えるほど「説明」が短くなり、下限に
+     押し戻されて要らない一文を足すことになる。字数の下限が水増しを生むのは
+     これで3度目である（本文の下限・課題の数の下限・ここ）。 */
+  const tableChars = {};
+  for (const chunk of withoutComponents) {
+    const chunkEnd = chunk.start + chunk.text.length;
+    const cuts = [chunk.start, chunkEnd];
+    for (const sec of sections) {
+      for (const at of [sec.start, sec.end]) {
+        if (at > chunk.start && at < chunkEnd) cuts.push(at);
+      }
+    }
+    cuts.sort((a, b) => a - b);
+    for (let i = 0; i < cuts.length - 1; i++) {
+      const [from, to] = [cuts[i], cuts[i + 1]];
+      if (to <= from) continue;
+      const section = sectionOf(from) ?? '（マーカーの外）';
+      const text = chunk.text.slice(from - chunk.start, to - chunk.start);
+      let n = 0;
+      for (const row of text.split('\n')) {
+        const line = row.trim();
+        if (!line.startsWith('|') || !line.endsWith('|')) continue;
+        if (/^\|[\s:|-]*\|$/.test(line)) continue; // 区切りの行
+        // 字数の数え方は lesson-rules.mjs の countChars と同じ（空白を数えない）。
+        // ここで import すると循環するので、1行だけ写している
+        n += plainText(line.split('|').join(' ')).replace(/\s+/g, '').length;
+      }
+      tableChars[section] = (tableChars[section] ?? 0) + n;
+    }
+  }
+
   for (const m of mistakes) {
     for (const p of paragraphsOf(m.fix)) {
       const entry = { section: 'よくある間違い', text: p, where: `<Mistake id="${m.id}">` };
@@ -369,5 +403,6 @@ export function parseLesson(source, file) {
     experiments,
     bodyParagraphs,
     allParagraphs,
+    tableChars,
   };
 }

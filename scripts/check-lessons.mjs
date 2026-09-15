@@ -2,7 +2,7 @@
  * 執筆規約の自動検査（20-platform.md 第2.4節）。
  *
  * 全 .mdx を読み、10-lesson-and-writing.md 第8章のチェックリストのうち
- * 機械判定できる17項目を検査する。1つでも落ちたら終了コード1を返す。
+ * 機械判定できる18項目を検査する。1つでも落ちたら終了コード1を返す。
  * この検査はビルドの前に走り、失敗したらビルドを止める。
  *
  *   node scripts/check-lessons.mjs
@@ -10,7 +10,7 @@
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { dirname, join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { glossaryWords } from './glossary.mjs';
+import { glossaryWords, loadGlossary } from './glossary.mjs';
 import { parseLesson, plainText } from './parse-lesson.mjs';
 import {
   ABSTRACT,
@@ -78,6 +78,8 @@ function choiceCount(prompt) {
 
 const files = listMdx(LESSONS_DIR).sort();
 const words = glossaryWords();
+/** 検査18 用。語と「初出の章」 */
+const glossary = loadGlossary();
 const problems = [];
 const seenLessonIds = new Map();
 const seenExerciseIds = new Map();
@@ -126,7 +128,28 @@ for (const file of files) {
     }
     const mentions = [...parts];
     for (const m of source.matchAll(/`([^`\n]+)`/g)) mentions.push(['本文の中の引用', m[1]]);
-    codeOf.push({ id: fm.id ?? '', rel, parts, mentions });
+    /* 検査18 用の地の文。コードブロック・部品の属性（={…} と ="…"）を落とす。
+       英語のエラーメッセージが本文に引用されるので、落とさないと not / and / int を拾う */
+    let prose = '';
+    {
+      // frontmatter を飛ばす。title や terms に語が入るので、地の文として数えない
+      const src = lesson.body ?? source;
+      let fence = false;
+      let depth = 0;
+      for (let i = 0; i < src.length; i++) {
+        if (!fence && src.startsWith('```', i)) { fence = true; i += 2; continue; }
+        if (fence) { if (src.startsWith('```', i)) { fence = false; i += 2; } continue; }
+        if (src.startsWith('={', i)) { depth++; i += 1; continue; }
+        if (src.startsWith('="', i)) { const e = src.indexOf('"', i + 2); i = e < 0 ? src.length : e; continue; }
+        if (depth > 0) {
+          if (src[i] === '{') depth++;
+          else if (src[i] === '}') depth--;
+          continue;
+        }
+        prose += src[i];
+      }
+    }
+    codeOf.push({ id: fm.id ?? '', rel, chapter: String(fm.chapter ?? ''), parts, mentions, prose });
   }
 
   // --- 検査1 要素の順序 ---
@@ -280,9 +303,11 @@ for (const file of files) {
   if (bodyChars > LIMITS.bodyMax) {
     add(8, 1, `本文が${bodyChars}字です（${LIMITS.bodyMax}字以内）`);
   }
-  const explainChars = lesson.bodyParagraphs
-    .filter((p) => p.section === '説明')
-    .reduce((sum, p) => sum + countChars(plainText(p.text)), 0);
+  // 表の字数も「説明」に数える。**表は説明である**（parse-lesson.mjs の tableChars）
+  const explainChars =
+    lesson.bodyParagraphs
+      .filter((p) => p.section === '説明')
+      .reduce((sum, p) => sum + countChars(plainText(p.text)), 0) + (lesson.tableChars?.['説明'] ?? 0);
   // 第0章は「説明より練習を主にする」ので 100〜400字に読み替える（第11.5節）
   const explainMin = isStart ? START_LIMITS.explainMin : LIMITS.explainMin;
   const explainMax = isStart ? START_LIMITS.explainMax : LIMITS.explainMax;
@@ -389,6 +414,40 @@ for (const file of files) {
     if (!lesson.mentions.some(([, code]) => tool.re.test(code))) {
       problems.push({ file: lesson.rel, check: 17, line: 1,
         message: `この節が ${tool.name} を導入することになっていますが、コードに1度も出てきません` });
+    }
+  }
+}
+
+/* --- 検査18 まだ出てきていない語を地の文で使っていないこと ---
+   用語集の「初出の章」より前の章で、その語を地の文に使っていたら落とす。
+   検査16 が Python の道具を見るのに対し、こちらは**説明のための語**を見る。
+   字下げ・型・クリック・デスクトップのような語は、書き手には当たり前すぎて
+   説明を飛ばされやすい。読み手は詰まるが、何が分からないのかを言えない。
+
+   見るのは地の文だけである。コードブロック・部品の属性・引用符の中は落とす。
+   `name 'math' is not defined` の not を「not」と読むわけにいかないため。
+
+   行き先を書いた先送り（「第3章で扱います」）は通す（第4.2節）。 */
+{
+  const AHEAD = ['章で扱', '節で扱', '章で学', '節で学', '章で出', '節で出', '章で使', '章で詳しく'];
+  const BOUND = '[^A-Za-z0-9_]';
+  const ascii = (w) => [...w].every((c) => c.charCodeAt(0) < 128);
+  const hit = (text, w) =>
+    ascii(w)
+      ? new RegExp('(^|' + BOUND + ')' + w.split('.').join('[.]') + '($|' + BOUND + ')').test(text)
+      : text.includes(w);
+  const chapterAt = new Map([...new Set(codeOf.map((l) => l.chapter))].map((c, i) => [c, i]));
+  for (const lesson of codeOf) {
+    for (const term of glossary) {
+      const home = chapterAt.get(term.chapter);
+      if (home === undefined || chapterAt.get(lesson.chapter) >= home) continue;
+      const line = lesson.prose.split('\n').find((l) => hit(l, term.word));
+      if (!line) continue;
+      if (AHEAD.some((a) => line.includes(a))) continue;
+      problems.push({
+        file: lesson.rel, check: 18, line: 1,
+        message: `「${term.word}」を使っていますが、初出は ${term.chapter} です（${line.trim().slice(0, 50)}）`,
+      });
     }
   }
 }
