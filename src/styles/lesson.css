@@ -1452,15 +1452,16 @@
 .kit-fig__code {
   font-family: var(--font-mono);
   font-size: 18px;
-  line-height: 1.5;
+  line-height: 1.35;
   white-space: pre;
   color: var(--l-strong);
 }
 
-/* 段ごとに1行を使う。番号は罫の中に入れて中央に置くので、位置を手で決める場所が無い */
+/* 段ごとに1行を使う。番号は罫の中に入れて中央に置くので、位置を手で決める場所が無い。
+   高さは罫と番号の実寸ぶんだけ。余らせると段が縦に間延びして、入れ子の近さが薄れる */
 .kit-fig__row {
   position: relative;
-  height: 1.85em;
+  height: 1.45em;
   font-family: var(--font-mono);
   font-size: 18px;
 }
@@ -1478,11 +1479,11 @@
   position: absolute;
   left: 0;
   right: 0;
-  top: 0.4em;
+  top: 0.38em;
   text-align: center;
   font-family: "Noto Serif JP", serif;
-  font-size: 13.5px;
-  line-height: 1.4;
+  font-size: 13px;
+  line-height: 1.25;
   color: var(--l-shu);
 }
 
