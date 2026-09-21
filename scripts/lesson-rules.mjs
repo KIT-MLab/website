@@ -41,10 +41,6 @@ export const START_EXERCISE_KINDS = [...EXERCISE_KINDS, 'type', 'choose'];
  * 第3.8節 章の合計で保つぶん。節ごとの下限を外した代わりに、ここで総量を担保する。
  *   「組む」  … その章の節数 以上（第0章は「打つ」と「選ぶ」の合計で数える）
  */
-export const CHAPTER_LIMITS = {
-  buildsPerSection: 1,
-};
-
 /** 第0章の「説明」の字数（第11.5節）。説明より練習を主にするため短くする */
 export const START_LIMITS = {
   explainMin: 100,

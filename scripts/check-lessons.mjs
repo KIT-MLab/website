@@ -17,7 +17,6 @@ import {
   BANNED,
   BANNED_CHARS,
   EXERCISE_KINDS,
-  CHAPTER_LIMITS,
   LIMITS,
   SECTION_OPTIONAL,
   SECTION_ORDER,
@@ -83,8 +82,6 @@ const glossary = loadGlossary();
 const problems = [];
 const seenLessonIds = new Map();
 const seenExerciseIds = new Map();
-/** 検査15 用。章ごとに節数・課題数・「組む」の数を貯める（第3.8節） */
-const chapters = new Map();
 /** 検査16・17 用。節の並び順に、その節が持つ Python のコードを貯める */
 const codeOf = [];
 
@@ -222,12 +219,29 @@ for (const file of files) {
   const builds = ex.filter((e) => e.kind === 'build');
   // 第0章は「組む」を置かず「打つ」「選ぶ」で数える（第11.5節）
   const directs = ex.filter((e) => e.kind === 'type' || e.kind === 'choose');
-  const chapter = String(fm.chapter ?? '(章なし)');
-  const tally = chapters.get(chapter) ?? { sections: 0, exercises: 0, builds: 0, file: rel, isStart };
-  tally.sections += 1;
-  tally.exercises += ex.length;
-  tally.builds += isStart ? directs.length : builds.length;
-  chapters.set(chapter, tally);
+  /* --- 検査15 節ごとに「組む」課題があること（第3.8節） ---
+     課題の総数に下限は置かない。数は「その節を理解したか確かめるのに要る最小限」で
+     決める。下限を置くと、足りない節を厚くするようには働かず、要らないものを足す
+     ように働く。この教材で5回確かめた。
+
+     「組む」だけは残す。量の目標ではなく、**自分の頭で書く場が節ごとに消えない
+     ための歯止め**である。
+
+     **章の合計ではなく、節ごとに見る。** 合計で見ていたとき、「組む」を置けない節
+     （第5.4節 有効範囲）のぶんを別の節が2問持ち、その2問目は1問目に含まれるもの
+     だった。合計は「節ごとに消えない」を守らない。
+
+     置けない節は frontmatter の nobuild に理由を書く。**例外を無くすのではなく、
+     見えるようにする。** */
+  const hands = isStart ? directs : builds;
+  const nobuild = typeof fm.nobuild === 'string' ? fm.nobuild.trim() : '';
+  const handName = isStart ? '「打つ」「選ぶ」' : '「組む」';
+  if (hands.length === 0 && !nobuild) {
+    add(15, 1, `${handName}課題がありません。置くか、置かない理由を frontmatter の nobuild に書いてください（第3.8節）`);
+  }
+  if (hands.length > 0 && nobuild) {
+    add(15, 1, `nobuild に理由がありますが、${handName}課題が${hands.length}問あります。どちらかが古いままです`);
+  }
   const allowedKinds = isStart ? START_EXERCISE_KINDS : EXERCISE_KINDS;
   for (const e of ex) {
     if (!e.id) add(4, e.line, '<Exercise> に id がありません');
@@ -555,24 +569,6 @@ for (const file of files) {
         message: `「${term.word}」を使っていますが、初出は ${term.chapter} です（${line.trim().slice(0, 50)}）`,
       });
     }
-  }
-}
-
-/* --- 検査15 章の「組む」の数（第3.8節） ---
-   課題の総数に下限は置かない。数は「その節を理解したか確かめるのに要る最小限」で
-   決める（第3.8節）。下限を置くと、足りない節を厚くするようには働かず、要らない
-   ものを足すように働く。この教材で4回確かめた。
-
-   「組む」の下限だけは残す。量の目標ではなく、**自分の頭で書く場が節ごとに
-   消えないための歯止め**である。 */
-for (const [chapter, t] of chapters) {
-  const wantBuild = t.sections * CHAPTER_LIMITS.buildsPerSection;
-  const name = t.isStart ? '「打つ」「選ぶ」' : '「組む」';
-  if (t.builds < wantBuild) {
-    problems.push({
-      file: t.file, check: 15, line: 1,
-      message: `章 ${chapter} の${name}課題が合計${t.builds}問です。${t.sections}節あるので${wantBuild}問以上要ります`,
-    });
   }
 }
 

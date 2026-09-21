@@ -12,6 +12,8 @@ const lessons = defineCollection({
     title: z.string(),
     minutes: z.number(),
     terms: z.array(z.string()).default([]),
+    // 「組む」課題を置かない節は、置かない理由をここに書く（検査15。第3.8節）
+    nobuild: z.string().optional(),
   }),
 });
 

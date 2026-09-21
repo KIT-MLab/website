@@ -1,0 +1,91 @@
+---
+id: python-05-return
+chapter: 05-function
+title: returnで値を持ち帰る
+minutes: 14
+terms: [return]
+---
+
+{/* 困る例 */}
+
+前の節の `show_average` は、平均を表示します。表示した数をそのあとの計算に使おうとしても、変数に取り出す方法がありません。
+
+{/* やってみる */}
+
+次のコードの ▶ を押してください。
+
+<Run
+  code={`def average(a, b):
+    return (a + b) / 2
+
+result = average(80, 90)
+print(result + 10)`}
+  out={`95.0`}
+/>
+
+{/* 説明 */}
+
+1行目の `def average(a, b):` は関数の定義です。2行目の `return (a + b) / 2` がこの節の新しい書き方です。
+
+`return` は、計算した値を呼び出した場所に持ち帰ります。ここで関数の実行は終わり、それより後の行には進みません。
+
+4行目の `result = average(80, 90)` で、返ってきた値を `result` という変数に入れています。5行目のように、受け取った値をそのあとの計算に使えます。
+
+前の節の `show_average` は `print` だけをしていて、値を持ち帰りませんでした。`return` があると、関数の外で値を使い回せます。
+
+{/* よくある間違い */}
+
+<Mistake
+  id="return-none"
+  code={`def average(a, b):
+    print((a + b) / 2)
+
+result = average(80, 90)
+print(result + 10)`}
+  error={`TypeError: unsupported operand type(s) for +: 'NoneType' and 'int'`}
+>
+`average` の中が `print` だけで `return` がありません。呼び出した側が受け取る `result` は自動的に `None` になります。値を返すには `return` を書いてください。
+</Mistake>
+
+{/* 課題 */}
+
+<Exercise
+  id="python-05-return-m1"
+  kind="modify"
+  starter={`def average(a, b):
+    return (a + b) / 2
+
+result = average(80, 90)
+print(result + 10)`}
+  tests={[{ kind: 'stdout' }]}
+  hints={[]}
+  mistakes={['return-none']}
+>
+上のコードを書き換えて、`70.0` と表示されるようにしてください。
+</Exercise>
+
+<Exercise
+  id="python-05-return-b1"
+  kind="build"
+  stdin={`3
+7
+2`}
+  forbid={['max']}
+  tests={[
+    { kind: 'stdout', stdin: `3\n7\n2\n` },
+    { kind: 'stdout', stdin: `-1\n-5\n-3\n` },
+    { kind: 'stdout', stdin: `5\n5\n5\n` },
+    { kind: 'stdout', stdin: `0\n-2\n-3\n` },
+  ]}
+  hints={[
+    '先に `a` と `b` を比べて大きいほうを求め、それと `c` を比べます。',
+    '値を比べる書き方は、第3章の `if` と `else` を見てください。',
+  ]}
+  mistakes={['return-none']}
+>
+入力欄の3行を整数として読み取ってください。そのうち最大の値を返す関数 `largest(a, b, c)` を書いてください。`max` は使わないでください。
+</Exercise>
+
+{/* つながり */}
+
+returnで、計算した値を関数の外に持ち帰れるようになりました。次の節では、関数に渡す引数を増やしたときの書き方を扱います。

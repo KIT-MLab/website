@@ -1,0 +1,83 @@
+---
+id: python-05-scope
+chapter: 05-function
+title: 関数の中と外の有効範囲
+minutes: 14
+terms: [有効範囲]
+nobuild: 有効範囲は使う道具ではなく知らないと間違える決まり。組む課題では使わずに通せる
+---
+
+{/* 困る例 */}
+
+関数の中で `total = a + b` のように変数を作ったとします。この `total` を関数の外の `print(total)` で使おうとしても、見つけられません。
+
+{/* やってみる */}
+
+次のコードの ▶ を押してください。
+
+<Run
+  code={`x = 10
+
+def show_local():
+    x = 5
+    print(x)
+
+show_local()
+print(x)`}
+  out={`5
+10`}
+/>
+
+{/* 説明 */}
+
+1行目の `x = 10` は関数の外で作った変数です。4行目の `x = 5` は `show_local` の中で作った、名前は同じでも別の `x` です。
+
+関数の中で付けた名前は、その関数の中でしか使えません。この範囲を有効範囲（scope）と呼びます。
+
+5行目の `print(x)` は関数の中の `x`（`5`）を表示します。7行目で呼び出したあと、8行目の `print(x)` は関数の外の `x`（`10`）を表示します。
+
+関数の中の `x` を変えても、外の `x` は変わりません。名前が同じでも、別の場所に置かれた別の変数として扱われます。
+
+関数の引数として受け取った名前も、その関数の中だけで使える変数です。次の課題に出てくる `total` という名前も、外の `total` とは別の場所に置かれます。
+
+{/* よくある間違い */}
+
+<Mistake
+  id="scope-name-error"
+  code={`def show_local():
+    y = 5
+    print(y)
+
+show_local()
+print(y)`}
+  error={`NameError: name 'y' is not defined`}
+>
+`y` は `show_local` の中だけで有効です。関数の外の `print(y)` では見つかりません。外でも使いたい値は `return` で持ち帰ってください。
+</Mistake>
+
+{/* 課題 */}
+
+<Exercise
+  id="python-05-scope-m1"
+  kind="modify"
+  starter={`total = 100
+
+def apply_discount(total):
+    total = total - 20
+    print(total)
+
+apply_discount(total)
+print(total)`}
+  tests={[{ kind: 'stdout' }]}
+  hints={[
+    'まず、いまのコードをそのまま実行して、1行目と2行目に何が表示されるか確かめてください。',
+    '関数の中の `total` を外に持ち帰るには、前の節の `return` を使います。',
+  ]}
+  mistakes={['scope-name-error']}
+>
+`apply_discount` を呼び出したあと、外側の `total` にも割引後の値が入るように書き換えてください。`80` `80` の順に表示されれば直っています。
+</Exercise>
+
+{/* つながり */}
+
+同じ名前でも、関数の中と外では別の変数になることが分かりました。次の節では、ここまでの関数を使って点数表の合計と平均を出します。

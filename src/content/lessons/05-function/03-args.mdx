@@ -1,0 +1,70 @@
+---
+id: python-05-args
+chapter: 05-function
+title: 引数と既定値
+minutes: 16
+terms: [既定値]
+---
+
+{/* 困る例 */}
+
+商品の税込み価格を計算する関数に、値段と税率を渡すとします。`price_with_tax(1000, 0.1)` と `price_with_tax(0.1, 1000)` は順番が逆です。エラーにはならず、違う答えを返します。
+
+{/* やってみる */}
+
+次のコードの ▶ を押してください。
+
+<Run
+  code={`def price_with_tax(amount, rate=0.1):
+    return amount * (1 + rate)
+
+print(price_with_tax(1000))
+print(price_with_tax(1000, 0.2))`}
+  out={`1100.0
+1200.0`}
+/>
+
+{/* 説明 */}
+
+1行目の `rate=0.1` の部分が既定値（default value）です。呼び出すときに `rate` を渡さなければ、この値が使われます。
+
+4行目は `rate` を渡していないので、既定値の `0.1` が使われます。結果は `1100.0` です。5行目のように渡せば、その値が既定値の代わりに使われます。
+
+`amount` には既定値がありません。呼び出すたびに必ず渡す必要があります。既定値のある引数は、既定値のない引数より後ろに書きます。
+
+引数の順番を間違えても、名前で意味が決まっている既定値なら迷いにくくなります。渡す値の数が変わっても、同じ関数を使い回せます。
+
+{/* よくある間違い */}
+
+<Mistake
+  id="args-default-order"
+  code={`def price_with_tax(rate=0.1, amount):
+    return amount * (1 + rate)`}
+  error={`SyntaxError: parameter without a default follows parameter with a default`}
+>
+既定値のない引数を、既定値のある引数より後ろに書いています。`amount` を先に、`rate=0.1` をあとに書いてください。
+</Mistake>
+
+{/* 課題 */}
+
+<Exercise
+  id="python-05-args-b1"
+  kind="build"
+  tests={[
+    { kind: 'call', fn: 'price_with_tax', args: [1000] },
+    { kind: 'call', fn: 'price_with_tax', args: [2000, 0.2] },
+    { kind: 'call', fn: 'price_with_tax', args: [0, 0.1] },
+    { kind: 'call', fn: 'price_with_tax', args: [1000, 0] },
+  ]}
+  hints={[
+    '既定値の書き方は、この節の `rate=0.1` の説明を見てください。',
+    '`price_with_tax(1000)` のように呼び出すと、`rate` に既定値が使われます。',
+  ]}
+  mistakes={['args-default-order']}
+>
+税込み価格を返す関数 `price_with_tax(amount, rate)` を書いてください。`rate` の既定値を `0.1` にし、渡さなかったときは10%として計算してください。渡したときは、その税率を使ってください。
+</Exercise>
+
+{/* つながり */}
+
+引数に既定値を持たせられるようになりました。次の節では、関数の中と外で同じ名前を使ったときの範囲を扱います。

@@ -1,0 +1,98 @@
+---
+id: python-05-scores
+chapter: 05-function
+title: 点数表の合計と平均を関数にする
+minutes: 18
+terms: []
+---
+
+{/* 困る例 */}
+
+第4章の点数表は、合計と平均を出す計算を、人数ぶんそのまま書いていました。人数が増えるたびに、同じ形の行が繰り返し並ぶことになります。
+
+{/* やってみる */}
+
+次のコードの ▶ を押してください。
+
+<Run
+  code={`def total_score(scores):
+    total = 0
+    for value in scores:
+        total = total + value
+    return total
+
+def average_score(scores):
+    return round(total_score(scores) / len(scores), 1)
+
+scores = [40, 55, 50]
+print(total_score(scores))
+print(average_score(scores))`}
+  out={`145
+48.3`}
+/>
+
+{/* 説明 */}
+
+1〜5行目の `total_score` は、リストの値を合計して `return` する関数です。第4章のfor文をそのまま使っています。
+
+7〜8行目の `average_score` は `total_score(scores)` を呼び出しています。その結果を `len(scores)` で割ることで、平均を求めています。関数の中から、別の関数を呼び出せます。
+
+10〜12行目で `scores` を作り、2つの関数をそれぞれ呼び出して表示しています。合計と平均を求める部分が、名前を呼ぶだけで使えるようになりました。
+
+点数の数が増えても、直すのは `total_score` と `average_score` の中身だけです。呼び出す側の書き方は変わりません。
+
+{/* よくある間違い */}
+
+<Mistake
+  id="scores-func-no-int"
+  code={`def total_score(scores):
+    total = 0
+    for value in scores:
+        total = total + value
+    return total
+
+scores = [input(), input(), input()]
+print(total_score(scores))`}
+  stdin={`40
+55
+50`}
+  error={`TypeError: unsupported operand type(s) for +: 'int' and 'str'`}
+>
+`scores` の値が文字列のままです。`int(input())` のように整数へ変えてから、リストに入れてください。
+</Mistake>
+
+{/* 課題 */}
+
+<Exercise
+  id="python-05-scores-b1"
+  kind="build"
+  stdin={`2
+40
+55
+50
+65
+82
+70`}
+  forbid={['sum']}
+  tests={[
+    { kind: 'stdout', stdin: `2\n40\n55\n50\n65\n82\n70\n` },
+    { kind: 'stdout', stdin: `1\n60\n60\n60\n` },
+    { kind: 'stdout', stdin: `0\n` },
+    { kind: 'stdout', stdin: `1\n0\n0\n0\n` },
+  ]}
+  hints={[
+    '人数を先に読み取り、第4章のfor文で人数ぶん繰り返します。',
+    '呼び出す側に計算を書かないでください。合計と平均は2つの関数に任せます。',
+  ]}
+  mistakes={['scores-func-no-int']}
+>
+入力欄の1行目を人数として読み取ってください。続けて人数ぶん、3教科の点数を読み取ります。1人ずつ `平均48.3点 不合格` の形で、平均と合否を表示してください。
+
+合計を返す `total_score(scores)` を定義してください。平均を返す `average_score(scores)` も定義し、その中で呼び出します。基準点は `60` とし、変数にします。
+
+`sum` は使わないでください。
+</Exercise>
+
+{/* つながり */}
+
+合計と平均を出す部分を、関数として呼び出せるようになりました。次の章では、ここまでに出会ったエラーの読み方をまとめて扱います。
