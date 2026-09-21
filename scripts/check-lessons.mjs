@@ -288,6 +288,94 @@ for (const file of files) {
     }
   }
 
+  /* --- 検査19 問題文に答えのコードが書いてないこと ---
+     「変える」課題の問題文に、書き足すコードがそのまま書いてあると、読み手は
+     それを書き写すだけで通る。何も確かめていない。
+     出力を指定して、値や式は読み手に決めさせる形に直す（第3.8節）。
+
+     見方: 模範解答から starter を引いた残り（数・文字列・演算子）が、
+     すべて問題文の中のコード（引用符で囲った部分）に出てくるなら、
+     書き写せば通るということである。
+
+     名前（print や変数名）は数えない。名前を問題文で指定するのは仕様であって答えではない。
+     日本語を含む引用も数えない。**出力を言うのは正しい書き方**だからである。
+
+     この形は2度作った。例題を廃したあとにも「値を変えて実行」が10問残っていた。
+     人が読んで見つけるのをやめ、機械に見させる。 */
+  {
+    const BS = String.fromCharCode(92);
+    const LF = String.fromCharCode(10);
+    const TICK = String.fromCharCode(96);
+    const OPS2 = ['**', '//', '==', '!=', '>=', '<='];
+    const OPS1 = '+-*/%<>=';
+    const isName = (c) => c !== undefined && (c === '_' || (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || c.charCodeAt(0) > 127);
+    const isDigit = (c) => c !== undefined && c >= '0' && c <= '9';
+    /** 数・文字列・演算子だけを返す。名前と括弧は数えない */
+    const meat = (code) => {
+      const out = [];
+      let i = 0;
+      while (i < code.length) {
+        const c = code[i];
+        if (c === '#') {
+          while (i < code.length && code[i] !== LF) i++;
+          continue;
+        }
+        if (c === '"' || c === "'") {
+          let j = i + 1;
+          while (j < code.length && code[j] !== c) j += code[j] === BS ? 2 : 1;
+          out.push(code.slice(i, j + 1));
+          i = j + 1;
+          continue;
+        }
+        if (isDigit(c)) {
+          let j = i;
+          while (j < code.length && (isDigit(code[j]) || code[j] === '.')) j++;
+          out.push(code.slice(i, j));
+          i = j;
+          continue;
+        }
+        if (isName(c)) {
+          let j = i;
+          while (j < code.length && (isName(code[j]) || isDigit(code[j]))) j++;
+          i = j;
+          continue;
+        }
+        const two = code.slice(i, i + 2);
+        if (OPS2.includes(two)) {
+          out.push(two);
+          i += 2;
+          continue;
+        }
+        if (OPS1.includes(c)) out.push(c);
+        i++;
+      }
+      return out;
+    };
+    /** a から b を1つずつ取り去った残り */
+    const minus = (a, b) => {
+      const left = [...b];
+      return a.filter((t) => {
+        const i = left.indexOf(t);
+        if (i < 0) return true;
+        left.splice(i, 1);
+        return false;
+      });
+    };
+    for (const e of ex) {
+      if (e.kind !== 'modify' || !e.starter) continue;
+      const solutionPath = join(dirname(file), 'solutions', e.id + '.py');
+      if (!existsSync(solutionPath)) continue;
+      const solution = readFileSync(solutionPath, 'utf8').split('\r\n').join(LF);
+      const added = minus(meat(solution), meat(e.starter));
+      if (added.length === 0) continue;
+      const quoted = e.prompt.split(TICK).filter((s, i) => i % 2 === 1);
+      const asCode = quoted.filter((s) => [...s].every((c) => c.charCodeAt(0) < 128));
+      if (minus(added, meat(asCode.join(LF))).length === 0) {
+        add(19, e.line, e.id + ' 問題文に答えのコードが書いてあります（書き写せば通ります）。出力を指定して、値や式は読み手に決めさせてください');
+      }
+    }
+  }
+
   // --- 検査6 すべての文が60字以内 / 検査7 すべての段落が3文以内 ---
   for (const p of lesson.allParagraphs) {
     const sentences = splitSentences(p.text);
@@ -445,7 +533,9 @@ for (const file of files) {
 
    行き先を書いた先送り（「第3章で扱います」）は通す（第4.2節）。 */
 {
-  const AHEAD = ['章で扱', '節で扱', '章で学', '節で学', '章で出', '節で出', '章で使', '章で詳しく'];
+  const AHEAD = ['章で扱', '節で扱', '章で学', '節で学', '章で出', '節で出', '章で使', '章で詳しく',
+    /* 「次の章では、…for文を扱います」のように間に語が挟まる書き方も先送りである（第4.2節）*/
+    '次の章', '次の節', 'あとの章', 'あとの節'];
   const BOUND = '[^A-Za-z0-9_]';
   const ascii = (w) => [...w].every((c) => c.charCodeAt(0) < 128);
   const hit = (text, w) =>

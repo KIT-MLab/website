@@ -207,6 +207,24 @@ for (const file of files) {
       }
     }
 
+    /* starter のまま通ってしまう「変える」課題を落とす（10-lesson-and-writing.md 第3.9節）。
+       問題文を「出力を指定して値を決めさせる」形に直すとき、starter の初期値が
+       すでにその出力だと、読み手は何もせずに通る。**目で見ても気づきにくい。**
+       模範解答はここで走らせているので、starter も走らせて確かめる。 */
+    if (e.kind === 'modify' && e.starter && tests.length > 0 && tests.every((t) => t.kind === 'stdout')) {
+      let asIs = true;
+      for (const t of tests) {
+        const r = await execPython({ code: e.starter, stdin: t.stdin });
+        if (describeError(r) || r.stdout !== t.expect) {
+          asIs = false;
+          break;
+        }
+      }
+      if (asIs) {
+        fail(`${rel}:${e.line}`, `${e.id} は starter のままで通ります。読み手が何もしなくても正解になる課題です（第3.9節）`);
+      }
+    }
+
     exercises[e.id] = {
       id: e.id,
       kind: e.kind,

@@ -1,4 +1,4 @@
-threshold = 70
+threshold = 80
 japanese = 90
 mathematics = 55
 english = 70

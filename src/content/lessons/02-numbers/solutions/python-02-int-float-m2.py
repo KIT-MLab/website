@@ -1,2 +1,2 @@
-print(float(7))
-print(int(7.9))
+print(float(9))
+print(int(6.7))

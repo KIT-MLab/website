@@ -1,4 +1,4 @@
-number = 9
+number = -9
 if number >= 0:
     print("0以上です")
 else:
