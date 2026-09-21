@@ -36,4 +36,29 @@ export const PYTHON_TOOLS = [
   { name: 'else',           in: 'python-03-else',       re: /^[ \t]*else\s*:/m },
   { name: 'elif',           in: 'python-03-elif',       re: /^[ \t]*elif\s/m },
   { name: 'and / or / not', in: 'python-03-andor',      re: /\b(and|or|not)\b/ },
+
+  /* ここから下はまだ書いていない章（30-python-curriculum.md 第4章の課程表）。
+     **先に順番を決めて置いてある。** こうしておけば、書き手が先の道具に手を伸ばした
+     瞬間に検査16 が落とす。第1.1節が print しか教えていないのに input() を使う課題を
+     置いてしまったのは、順番が機械に入っていなかったからである。
+     `in` の節の id もここで決めてある。書くときはこの id に合わせる。 */
+
+  // 第4章 繰り返す
+  { name: 'for',            in: 'python-04-for',      re: /^[ \t]*for\s/m },
+  { name: 'range()',        in: 'python-04-for',      re: /\brange\s*\(/ },
+  { name: 'リスト',          in: 'python-04-list',     re: /=\s*\[|\[\s*\]/ },
+  { name: '添字 []',         in: 'python-04-index',    re: /\w\s*\[\s*[^\]]*\s*\]/ },
+  { name: 'len()',          in: 'python-04-index',    re: /\blen\s*\(/ },
+  { name: 'append()',       in: 'python-04-append',   re: /\.append\s*\(/ },
+  { name: 'remove()',       in: 'python-04-append',   re: /\.remove\s*\(/ },
+  { name: 'while',          in: 'python-04-while',    re: /^[ \t]*while\s/m },
+
+  // 第5章 まとめて名前を付ける
+  { name: 'def',            in: 'python-05-def',      re: /^[ \t]*def\s/m },
+  { name: 'return',         in: 'python-05-return',   re: /^[ \t]*return\b/m },
+  { name: '既定値のある引数',  in: 'python-05-args',     re: /def\s+\w+\s*\([^)]*=[^)]*\)/ },
+
+  // 第7章 数をまとめて扱う（numpy）。第6章は新しい道具を増やさない
+  { name: 'numpy',          in: 'python-07-array',    re: /\bnumpy\b|\bnp\./ },
+  { name: 'スライス',        in: 'python-07-select',   re: /\[[^\]]*:[^\]]*\]/ },
 ];

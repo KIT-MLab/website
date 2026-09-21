@@ -90,7 +90,13 @@ const codeOf = [];
 
 for (const file of files) {
   const rel = relative(ROOT, file).replace(/\\/g, '/');
-  const source = readFileSync(file, 'utf8');
+  const rawSource = readFileSync(file, 'utf8');
+  /* 改行を LF にそろえてから探す。
+     Windows の git は作業ファイルを CRLF で書き出す。```python のあとが \r\n になると
+     この正規表現に当たらず、**その節のコードが1行も集まらない。**
+     検査16 と18 が黙って何も見ない状態になるので、読む側でそろえる。
+     parse-lesson.mjs でも同じ罠を踏んでいる。 */
+  const source = rawSource.split('\r\n').join('\n');
   const lesson = parseLesson(source, rel);
   const add = (check, line, message) => problems.push({ file: rel, check, line, message });
 
@@ -390,7 +396,10 @@ for (const file of files) {
   for (const [i, lesson] of codeOf.entries()) {
     for (const tool of PYTHON_TOOLS) {
       const introAt = at.get(tool.in);
-      if (introAt === undefined || i >= introAt) continue;
+      /* 導入する節がまだ無い道具は、**これから書く章のもの**である（台帳は課程表でもある）。
+         その場合どの節で使っても早すぎるので、飛ばさずに落とす。
+         ここで飛ばすと、先に順番を決めて置いた意味がまるごと消える。 */
+      if (introAt !== undefined && i >= introAt) continue;
       const hit = lesson.parts.find(([, code]) => tool.re.test(code));
       if (!hit) continue;
       const line = (hit[1].split('\n').find((l) => tool.re.test(l)) ?? '').trim();
@@ -402,11 +411,18 @@ for (const file of files) {
   }
 
   /* --- 検査17 台帳が実物とずれていないこと ---
-     導入する節と書いてあるのに、その節に1度も出てこない道具があれば、台帳か中身の
-     どちらかが古い。放っておくと検査16 が意味を失う。 */
+     導入する節と書いてあるのに、その節に一度も出てこない道具があれば、台帳か中身の
+     どちらかが古い。放っておくと検査16 が意味を失う。
+
+     **まだ書いていない章は責めない。** 台帳は課程表でもあり、書く前から順番を決めて
+     置いてある（30-python-curriculum.md 第4章）。その章の節が1つも無ければ、
+     まだ書いていないということなので飛ばす。章が書かれ始めたら、そこからは責める。 */
+  const writtenChapters = new Set(codeOf.map((l) => l.chapter.split('-')[0]));
   for (const tool of PYTHON_TOOLS) {
     const lesson = codeOf.find((l) => l.id === tool.in);
     if (!lesson) {
+      const num = tool.in.split('-')[1] ?? '';
+      if (!writtenChapters.has(num)) continue; // その章はまだ書いていない
       problems.push({ file: 'scripts/python-tools.mjs', check: 17, line: 1,
         message: `台帳の「${tool.in}」という節がありません（${tool.name}）` });
       continue;
