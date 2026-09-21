@@ -9,6 +9,7 @@ export const CHAPTER_TITLES: Record<string, string> = {
   '01-python': '第1章 Python を書きはじめる',
   '02-numbers': '第2章 数と計算',
   '03-branch': '第3章 場合で分ける',
+  '04-loop': '第4章 繰り返す',
 };
 
 export function chapterTitle(chapter: string): string {

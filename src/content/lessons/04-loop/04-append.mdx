@@ -1,0 +1,87 @@
+---
+id: python-04-append
+chapter: 04-loop
+title: append()とremove()でリストを変える
+minutes: 16
+terms: [append, remove, メソッド]
+---
+
+{/* 困る例 */}
+
+一度作ったリストに、後から値を1つ足したいとします。`numbers = [3, 7, 2]` と書いたあとで、`9` を加える書き方がまだありません。取り除くときも同じです。
+
+{/* やってみる */}
+
+次のコードの ▶ を押してください。
+
+<Run
+  code={`numbers = [3, 7, 2]
+numbers.append(9)
+numbers.remove(7)
+print(numbers)`}
+  out={`[3, 2, 9]`}
+/>
+
+{/* 説明 */}
+
+2行目の `numbers.append(9)` は、リストの末尾に `9` を1つ加えます。このように、値の後ろに `.` を付けて呼ぶ関数をメソッド（method）といいます。この時点で `numbers` は `[3, 7, 2, 9]` になります。
+
+3行目の `numbers.remove(7)` は、リストから値が `7` の要素を1つ取り除くメソッドです。この時点で `numbers` は `[3, 2, 9]` になります。
+
+`append()` も `remove()` も、`リスト名.append(値)` の形で書きます。`.` の前には、操作したいリストの名前を書きます。
+
+4行目の `print(numbers)` のように、リストをそのまま表示すると `[3, 2, 9]` の形で出ます。値をそのまま並べて確かめられます。
+
+{/* よくある間違い */}
+
+<Mistake
+  id="append-remove-not-found"
+  code={`numbers = [3, 7, 2]
+numbers.remove(100)`}
+  error={`ValueError: list.remove(x): x not in list`}
+>
+`remove()` は、リストに無い値を渡すとエラーになります。取り除きたい値が入っているか確かめてください。
+</Mistake>
+
+{/* 課題 */}
+
+<Exercise
+  id="python-04-append-m1"
+  kind="modify"
+  starter={`numbers = [3, 7, 2]
+numbers.append(9)
+numbers.remove(7)
+print(numbers)`}
+  tests={[{ kind: 'stdout' }]}
+  hints={['`remove()` の行をもう1つ、4行目に足します。']}
+  mistakes={['append-remove-not-found']}
+>
+`[2, 9]` と表示されるように、4行目に1行足してください。
+</Exercise>
+
+<Exercise
+  id="python-04-append-b1"
+  kind="build"
+  stdin={`3
+7
+2
+9
+4`}
+  tests={[
+    { kind: 'stdout', stdin: `3\n7\n2\n9\n4\n` },
+    { kind: 'stdout', stdin: `-2\n-1\n0\n1\n2\n` },
+    { kind: 'stdout', stdin: `2\n2\n2\n2\n2\n` },
+    { kind: 'stdout', stdin: `1\n3\n5\n7\n9\n` },
+  ]}
+  hints={[
+    '空のリスト `kept = []` を、繰り返しの前に1つ用意します。',
+    '偶数かどうかは、前の章の `%` を使って判定します。条件に合う値だけ `append()` します。',
+  ]}
+  mistakes={['append-remove-not-found']}
+>
+入力欄の5行を整数として読み取ってください。そのうち偶数だけを、読み取った順のまま1行ずつ表示するプログラムを書いてください。
+</Exercise>
+
+{/* つながり */}
+
+リストに値を足したり取り除いたりできるようになりました。次の節では、繰り返す回数を決めずに書けるwhile文を扱います。

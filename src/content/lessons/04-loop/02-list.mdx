@@ -1,0 +1,103 @@
+---
+id: python-04-list
+chapter: 04-loop
+title: リストで値をまとめて持つ
+minutes: 16
+terms: [リスト]
+---
+
+{/* 困る例 */}
+
+点数が5人ぶんあるとします。`score1` から `score5` まで、5つの変数を作ることになります。10人になれば10個です。
+
+{/* やってみる */}
+
+次のコードの ▶ を押してください。
+
+<Run
+  code={`numbers = [3, 7, 2, 9, 4]
+for value in numbers:
+    print(value)`}
+  out={`3
+7
+2
+9
+4`}
+/>
+
+{/* 説明 */}
+
+1行目の `numbers = [3, 7, 2, 9, 4]` はリスト（list）です。複数の値を1つの名前にまとめて持てます。値は `[` `]` の中に、`,` で区切って並べます。
+
+2行目の `for value in numbers:` は、リストの値を先頭から順に `value` に入れます。入れるたびに、字下げした行を繰り返します。1回目は `value` が `3`、2回目は `7` になります。
+
+この繰り返しは、リストに入っている値の数だけ続きます。3行目の `print(value)` で、そのつど `value` を表示しています。
+
+人数が増えても、リストの中に値を並べれば対応できます。変数を1つずつ増やす必要はありません。
+
+{/* よくある間違い */}
+
+<Mistake
+  id="list-missing-comma"
+  code={`numbers = [3 7 2 9 4]
+print(numbers)`}
+  error={`SyntaxError: invalid syntax. Perhaps you forgot a comma?`}
+>
+リストの値の間に `,` がありません。値と値の間には必ずコンマを書いてください。
+</Mistake>
+
+{/* 課題 */}
+
+<Exercise
+  id="python-04-list-m1"
+  kind="modify"
+  starter={`numbers = [3, 7, 2, 9, 4]
+for value in numbers:
+    print(value)`}
+  tests={[{ kind: 'stdout' }]}
+  hints={[]}
+  mistakes={['list-missing-comma']}
+>
+`numbers` に値を1つ加えて、出力の最後の行が、それより上の5行の合計になるようにしてください。
+</Exercise>
+
+<Exercise
+  id="python-04-list-m2"
+  kind="modify"
+  starter={`numbers = [3, 7, 2, 9, 4]
+for value in numbers:
+    print(value)`}
+  tests={[{ kind: 'stdout' }]}
+  hints={['`print` にわたす前に `value` を2倍にします。']}
+  mistakes={[]}
+>
+上のコードを書き換えて、それぞれの値を2倍にして表示してください。
+</Exercise>
+
+<Exercise
+  id="python-04-list-b1"
+  kind="build"
+  stdin={`3
+7
+2
+9
+4`}
+  forbid={['max']}
+  tests={[
+    { kind: 'stdout', stdin: `3\n7\n2\n9\n4\n` },
+    { kind: 'stdout', stdin: `-5\n-2\n-8\n-1\n-9\n` },
+    { kind: 'stdout', stdin: `5\n5\n5\n5\n5\n` },
+    { kind: 'stdout', stdin: `0\n0\n0\n0\n0\n` },
+  ]}
+  hints={[
+    '先に読み取った1つ目の値を、いまのところの最大として使います。',
+    '残りの値をリストに集め、for文で1つずつ比べて、大きいほうを残します。',
+  ]}
+  mistakes={['list-missing-comma']}
+>
+入力欄の5行を整数として読み取り、その中で最大の値を表示するプログラムを書いてください。`max` は使わないでください。
+</Exercise>
+
+{/* つながり */}
+
+複数の値をリストにまとめられるようになりました。次の節では、リストの何番目かを指定して値を取り出します。

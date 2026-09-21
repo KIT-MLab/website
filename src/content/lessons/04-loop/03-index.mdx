@@ -1,0 +1,114 @@
+---
+id: python-04-index
+chapter: 04-loop
+title: 添字とlen()で位置を指定する
+minutes: 16
+terms: [添字, len]
+---
+
+{/* 困る例 */}
+
+リストの中で、1番先頭の値と3番目の値だけを比べたいとします。`for value in numbers:` はすべての値を順に取り出す書き方で、決まった位置の値だけを選べません。
+
+{/* やってみる */}
+
+次のコードの ▶ を押してください。
+
+<Run
+  code={`numbers = [3, 7, 2, 9, 4]
+print(numbers[0])
+print(numbers[2])
+print(len(numbers))`}
+  out={`3
+2
+5`}
+/>
+
+{/* 説明 */}
+
+2行目の `numbers[0]` は添字（index）を使って値を取り出しています。添字は `0` から数えるので、`numbers[0]` は先頭の `3` です。
+
+3行目の `numbers[2]` は、先頭から3つ目の `2` です。`0`、`1`、`2` と数えるので、添字は3つ目でも `2` になります。
+
+4行目の `len(numbers)` は、リストに入っている値の数を返す関数です。`numbers` には5つの値があるので `5` です。
+
+`range(len(numbers))` と書けば、`0` から `len(numbers) - 1` までの添字を順に作れます。`for i in range(len(numbers)):` とすれば、添字を使って1つずつ処理できます。
+
+{/* よくある間違い */}
+
+<Mistake
+  id="index-out-of-range"
+  code={`numbers = [3, 7, 2, 9, 4]
+print(numbers[5])`}
+  error={`IndexError: list index out of range`}
+>
+添字は `0` から数えるので、最後の値の添字は `len(numbers) - 1` です。`numbers[5]` の位置には値がありません。
+</Mistake>
+
+<Mistake
+  id="index-len-method"
+  code={`numbers = [3, 7, 2, 9, 4]
+print(numbers.len())`}
+  error={`AttributeError: 'list' object has no attribute 'len'`}
+>
+`len` はリストの後ろに `.` を付けて呼ぶ形ではありません。`len(numbers)` のように、かっこの中にリストを渡します。
+</Mistake>
+
+{/* 課題 */}
+
+<Exercise
+  id="python-04-index-m1"
+  kind="modify"
+  starter={`numbers = [3, 7, 2, 9, 4]
+print(numbers[0])
+print(numbers[2])
+print(len(numbers))`}
+  tests={[{ kind: 'stdout' }]}
+  hints={[]}
+  mistakes={['index-out-of-range']}
+>
+`7` と `4` と `5` がこの順で表示されるように、2つの添字を決めてください。
+</Exercise>
+
+<Exercise
+  id="python-04-index-m2"
+  kind="modify"
+  forbid={['numbers[4]']}
+  starter={`numbers = [3, 7, 2, 9, 4]
+print(numbers[0])
+print(numbers[2])
+print(len(numbers))`}
+  tests={[{ kind: 'stdout' }]}
+  hints={['最後の値の添字は `len(numbers) - 1` です。']}
+  mistakes={['index-out-of-range']}
+>
+`numbers` の最後の値だけを表示してください。`4` と表示されれば合っています。リストの個数が変わっても動くよう、`len()` を使ってください。
+</Exercise>
+
+<Exercise
+  id="python-04-index-b1"
+  kind="build"
+  stdin={`3
+7
+2
+9
+4`}
+  forbid={['reversed', '[::']}
+  tests={[
+    { kind: 'stdout', stdin: `3\n7\n2\n9\n4\n` },
+    { kind: 'stdout', stdin: `-1\n-2\n-3\n-4\n-5\n` },
+    { kind: 'stdout', stdin: `5\n5\n5\n5\n5\n` },
+    { kind: 'stdout', stdin: `0\n1\n2\n3\n4\n` },
+  ]}
+  hints={[
+    '添字を `0` から `len(numbers) - 1` まで動かすには、前の節の `range(len(numbers))` を使います。',
+    '添字 `i` のとき、後ろから数えた値の添字は `len(numbers) - 1 - i` です。',
+  ]}
+  mistakes={['index-out-of-range']}
+>
+入力欄の5行を整数のリストとして読み取り、そのリストを逆順に、1行ずつ表示するプログラムを書いてください。`reversed` と `[::-1]` のような書き方は使わないでください。
+</Exercise>
+
+{/* つながり */}
+
+添字とlen()でリストの値を指定できるようになりました。次の節では、リストに後から値を足したり取り除いたりします。

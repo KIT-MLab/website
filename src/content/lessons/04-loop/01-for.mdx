@@ -1,0 +1,100 @@
+---
+id: python-04-for
+chapter: 04-loop
+title: for文で繰り返す
+minutes: 16
+terms: [for文, range]
+---
+
+{/* 困る例 */}
+
+1から10までを画面に表示したいとします。`print(1)` から `print(10)` まで、同じ形の行を10回書くことになります。数が増えれば、書く行もそのぶん増えます。
+
+{/* やってみる */}
+
+次のコードの ▶ を押してください。
+
+<Run
+  code={`for i in range(1, 6):
+    print(i)`}
+  out={`1
+2
+3
+4
+5`}
+/>
+
+{/* 説明 */}
+
+1行目の `for i in range(1, 6):` はfor文（for statement）です。`range(1, 6)` は `1` から `5` までの整数を順に生成する関数です。終わりの数そのものはふくみません。
+
+`for 変数 in ...:` と書くと、生成された値を順に変数へ入れながら、字下げした行を繰り返します。2行目の `print(i)` が5回実行され、`1` から `5` までが1行ずつ表示されます。
+
+`range(6)` のように数を1つだけ渡すと、`0` から `5` までになります。`1` から始めたいときは、`range(1, 6)` のように開始と終わりの2つを渡します。
+
+{/* よくある間違い */}
+
+<Mistake
+  id="for-typo-range"
+  code={`for i in ragne(1, 6):
+    print(i)`}
+  error={`NameError: name 'ragne' is not defined`}
+>
+`range` の綴りが `ragne` になっています。正しく `range` と書いてください。
+</Mistake>
+
+<Mistake
+  id="for-missing-colon"
+  code={`for i in range(1, 6)
+    print(i)`}
+  error={`SyntaxError: expected ':'`}
+>
+for文の条件の後ろに `:` がありません。行の最後にコロンを付けてください。
+</Mistake>
+
+<Mistake
+  id="for-missing-indent"
+  code={`for i in range(1, 6):
+print(i)`}
+  error={`IndentationError: expected an indented block after 'for' statement on line 1`}
+>
+for文の中身の行に字下げがありません。`for` の次の行の頭に半角空白を入れてください。
+</Mistake>
+
+{/* 課題 */}
+
+<Exercise
+  id="python-04-for-m1"
+  kind="modify"
+  starter={`for i in range(1, 6):
+    print(i)`}
+  tests={[{ kind: 'stdout' }]}
+  hints={[]}
+  mistakes={['for-missing-colon']}
+>
+上のコードを書き換えて、`1` から `10` までを表示してください。
+</Exercise>
+
+<Exercise
+  id="python-04-for-b1"
+  kind="build"
+  stdin={`5`}
+  forbid={['sum']}
+  tests={[
+    { kind: 'stdout', stdin: `5\n` },
+    { kind: 'stdout', stdin: `1\n` },
+    { kind: 'stdout', stdin: `0\n` },
+    { kind: 'stdout', stdin: `10\n` },
+  ]}
+  hints={[
+    '合計を入れておく変数を、繰り返しの前に1つ用意します。',
+    '`range(1, n + 1)` で生成される数を、1つずつその変数に足していきます。',
+  ]}
+  mistakes={['for-typo-range', 'for-missing-colon', 'for-missing-indent']}
+>
+入力欄の1行を整数 `n` として読み取り、`1` から `n` までの合計を表示するプログラムを書いてください。`sum` は使わないでください。
+</Exercise>
+
+{/* つながり */}
+
+for文で同じ処理を繰り返せるようになりました。次の節では、繰り返しの中で使う値をまとめて持つリストを扱います。

@@ -1,0 +1,111 @@
+---
+id: python-04-while
+chapter: 04-loop
+title: while文で終わりを決めずに繰り返す
+minutes: 18
+terms: [while文]
+---
+
+{/* 困る例 */}
+
+参加者が入力した行を、`終わり` と入力されるまで受け取りたいとします。for文は繰り返す回数を先に決める書き方で、回数が決まっていない繰り返しをまだ書けません。
+
+{/* やってみる */}
+
+入力欄に `a` `b` `c` `終わり` と4行書いてある状態で ▶ を押してください。
+
+<Run
+  code={`count = 0
+line = input()
+while line != "終わり":
+    count = count + 1
+    line = input()
+print(count)`}
+  stdin={`a
+b
+c
+終わり`}
+  out={`3`}
+/>
+
+{/* 説明 */}
+
+3行目の `while line != "終わり":` はwhile文（while statement）です。条件が成り立つ間、字下げした行を繰り返します。
+
+2行目の `input()` で、判定に使う最初の行を先に読みます。5行目でも同じように読み直すので、繰り返すたびに新しい行と比べられます。
+
+入力欄に `終わり` の行が来ると、3行目の条件が成り立たなくなり、繰り返しが終わります。for文と違い、繰り返す回数を先には決めません。
+
+4行目の `count = count + 1` で、繰り返すたびに数を1つ増やします。最後の `print(count)` で、`終わり` より前に読んだ行の数を表示します。
+
+{/* よくある間違い */}
+
+<Mistake
+  id="while-missing-quotes"
+  code={`line = input()
+while line != 終わり:
+    line = input()`}
+  stdin={`a`}
+  error={`NameError: name '終わり' is not defined`}
+>
+`終わり` に `"` が付いていません。文字列として比べるには `"終わり"` のように引用符で囲みます。
+</Mistake>
+
+<Mistake
+  id="while-forgot-int"
+  code={`total = 0
+line = input()
+while line != "終わり":
+    total = total + line
+    line = input()
+print(total)`}
+  stdin={`3
+5
+終わり`}
+  error={`TypeError: unsupported operand type(s) for +: 'int' and 'str'`}
+>
+`line` は文字列のままです。数として足すには `int(line)` のように整数へ変えてください。
+</Mistake>
+
+{/* 課題 */}
+
+<Exercise
+  id="python-04-while-m1"
+  kind="modify"
+  starter={`count = 0
+line = input()
+while line != "終わり":
+    count = count + 1
+    line = input()
+print(count)`}
+  tests={[{ kind: 'stdout', stdin: `a\nb\nc\n終わり\n` }]}
+  hints={[]}
+  mistakes={['while-missing-quotes']}
+>
+上のコードを書き換えて、数を数える代わりに、読み取った行をそのまま1行ずつ表示するようにしてください。
+</Exercise>
+
+<Exercise
+  id="python-04-while-b1"
+  kind="build"
+  stdin={`3
+5
+終わり`}
+  tests={[
+    { kind: 'stdout', stdin: `3\n5\n終わり\n` },
+    { kind: 'stdout', stdin: `0\n終わり\n` },
+    { kind: 'stdout', stdin: `-2\n4\n終わり\n` },
+    { kind: 'stdout', stdin: `終わり\n` },
+  ]}
+  hints={[
+    '繰り返しに入る前に、判定に使う1行を先に読んでおきます。',
+    '繰り返しの最後でも、次に比べる行をもう一度読みます。',
+  ]}
+  mistakes={['while-missing-quotes', 'while-forgot-int']}
+>
+入力欄の行を、`終わり` と入力されるまで整数として読み取り続け、合計を表示するプログラムを書いてください。
+</Exercise>
+
+{/* つながり */}
+
+while文で、終わりを決めずに繰り返せるようになりました。次の節では、ここまでの道具で人数ぶんの点数表を扱います。

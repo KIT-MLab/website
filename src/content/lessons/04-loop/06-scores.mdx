@@ -1,0 +1,112 @@
+---
+id: python-04-scores
+chapter: 04-loop
+title: 点数表を人数ぶん繰り返す
+minutes: 18
+terms: []
+---
+
+{/* 困る例 */}
+
+第3章までの点数表は、1人ぶんの判定しかできません。人数が増えると、同じコードを人数ぶん書き写すことになります。
+
+{/* やってみる */}
+
+次のコードの ▶ を押してください。
+
+<Run
+  code={`threshold = 60
+for i in range(2):
+    scores = [int(input()), int(input()), int(input())]
+    average = (scores[0] + scores[1] + scores[2]) / 3
+    if average >= threshold:
+        print(f"平均{round(average, 1)}点 合格")
+    else:
+        print(f"平均{round(average, 1)}点 不合格")`}
+  stdin={`40
+55
+50
+65
+82
+70`}
+  out={`平均48.3点 不合格
+平均72.3点 合格`}
+/>
+
+{/* 説明 */}
+
+2行目の `for i in range(2):` で、判定を2人ぶん繰り返します。3行目は `scores = [int(input()), int(input()), int(input())]` です。1人ぶんの3教科を、リストにまとめて読み取ります。
+
+第3章までは、3教科をそれぞれ別の変数に読み取っていました。リストにまとめたことで、人数が増えても同じ3行のままで対応できます。
+
+5〜8行目は第3章のif文とelseをそのまま使い、平均と基準点を比べています。繰り返しの中の変数は、1人判定するたびに読み取り直されます。同じ変数名を、人数ぶん使い回しています。
+
+{/* よくある間違い */}
+
+<Mistake
+  id="scores-loop-count-no-int"
+  code={`count = input()
+threshold = 60
+for i in range(count):
+    scores = [int(input()), int(input()), int(input())]
+    average = (scores[0] + scores[1] + scores[2]) / 3
+    print(average)`}
+  stdin={`1
+60
+60
+60`}
+  error={`TypeError: 'str' object cannot be interpreted as an integer`}
+>
+`count` が文字列のままです。`range()` に渡すには `int(input())` で整数に変えてください。
+</Mistake>
+
+<Mistake
+  id="scores-loop-threshold-name"
+  code={`count = int(input())
+threshold = 60
+for i in range(count):
+    scores = [int(input()), int(input()), int(input())]
+    average = (scores[0] + scores[1] + scores[2]) / 3
+    if average >= thresholds:
+        print(f"平均{round(average, 1)}点 合格")
+    else:
+        print(f"平均{round(average, 1)}点 不合格")`}
+  stdin={`1
+60
+60
+60`}
+  error={`NameError: name 'thresholds' is not defined`}
+>
+`threshold` と `thresholds` は別の名前です。定義した名前とそろえてください。
+</Mistake>
+
+{/* 課題 */}
+
+<Exercise
+  id="python-04-scores-b1"
+  kind="build"
+  stdin={`2
+40
+55
+50
+65
+82
+70`}
+  tests={[
+    { kind: 'stdout', stdin: `2\n40\n55\n50\n65\n82\n70\n` },
+    { kind: 'stdout', stdin: `1\n60\n60\n60\n` },
+    { kind: 'stdout', stdin: `0\n` },
+    { kind: 'stdout', stdin: `1\n0\n0\n0\n` },
+  ]}
+  hints={[
+    '先に人数を読み取り、`range()` にその人数を渡します。',
+    '1人ぶんの3教科は、前の節までのリストと添字を使ってまとめます。',
+  ]}
+  mistakes={['scores-loop-count-no-int', 'scores-loop-threshold-name']}
+>
+入力欄の1行目を人数として読み取ってください。続けて、人数ぶん3教科の点数を読み取り、1人ずつ平均と合否を表示するプログラムを書いてください。基準点は `60` とし、変数にしてください。
+</Exercise>
+
+{/* つながり */}
+
+点数表が人数ぶん動くようになりました。次の章では、合計と平均を出す部分を関数にします。
