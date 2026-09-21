@@ -16,7 +16,7 @@ export const SECTION_ORDER = ['困る例', 'やってみる', '説明', 'よく�
  * 任意の要素（無くてよい）。
  * 「課題」が任意なのは、課題を1問も置かない節を認めたため（第3.8節）。
  */
-export const SECTION_OPTIONAL = new Set(['課題', 'つながり']);
+export const SECTION_OPTIONAL = new Set(['よくある間違い', '課題', 'つながり']);
 
 /**
  * 第0章「パソコンの操作」だけの例外（20-platform.md 第11.5節）。
@@ -32,16 +32,16 @@ export const START_CHAPTER = '00-start';
 export const START_SECTION_ORDER = ['困る例', 'やってみる', '説明', '課題', 'つながり'];
 
 /** 課題の型。type と choose は第0章だけで使える（第11.4節） */
-export const EXERCISE_KINDS = ['trace', 'modify', 'build'];
+/* 「例題」（trace）は2026-09-21に廃止した。示された通りに打たせるだけで、
+   すぐ上の <Run> と同じコードを書き写させる課題になっていた（第3章）。例は <Run> である。 */
+export const EXERCISE_KINDS = ['modify', 'build'];
 export const START_EXERCISE_KINDS = [...EXERCISE_KINDS, 'type', 'choose'];
 
 /**
  * 第3.8節 章の合計で保つぶん。節ごとの下限を外した代わりに、ここで総量を担保する。
- *   課題      … その章の節数 × 3 問以上
  *   「組む」  … その章の節数 以上（第0章は「打つ」と「選ぶ」の合計で数える）
  */
 export const CHAPTER_LIMITS = {
-  exercisesPerSection: 3,
   buildsPerSection: 1,
 };
 
@@ -61,8 +61,7 @@ export const LIMITS = {
   /** 第4.1節 「説明」の要素 */
   explainMin: 250,
   explainMax: 600,
-  /** 第2章 よくある間違い 1〜3個 */
-  mistakeMin: 1,
+  /** 第2章 よくある間違い 0〜3個。**下限は置かない**（躓く先が見えているときだけ置く。第6章） */
   mistakeMax: 3,
   /** 第3.8節 1つの節の課題。**下限は置かない**（下限が目標になり水増しを招くため） */
   exerciseMax: 7,

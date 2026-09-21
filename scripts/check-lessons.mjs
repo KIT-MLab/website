@@ -195,13 +195,13 @@ for (const file of files) {
     if (run.out === undefined) add(2, run.line, '<Run> に out（実行結果）がありません');
   }
 
-  // --- 検査3 <Mistake> が1〜3個 ---
+  // --- 検査3 <Mistake> が0〜3個 ---
   // 第0章には置かない（第11.7節）。実際のエラーメッセージを見せる要素なので、
   // パソコンの操作を習いに来た人に出す相手がいない
   if (isStart) {
     for (const m of lesson.mistakes) add(3, m.line, '第0章に <Mistake> は置きません');
-  } else if (lesson.mistakes.length < LIMITS.mistakeMin || lesson.mistakes.length > LIMITS.mistakeMax) {
-    add(3, 1, `<Mistake> は${LIMITS.mistakeMin}〜${LIMITS.mistakeMax}個です。いまは${lesson.mistakes.length}個`);
+  } else if (lesson.mistakes.length > LIMITS.mistakeMax) {
+    add(3, 1, `<Mistake> は${LIMITS.mistakeMax}個までです。いまは${lesson.mistakes.length}個`);
   }
   for (const m of lesson.mistakes) {
     if (!m.id) add(3, m.line, '<Mistake> に id がありません');
@@ -468,19 +468,16 @@ for (const file of files) {
   }
 }
 
-// --- 検査15 章の合計（第3.8節） ---
-// 節ごとの下限を外した代わりに、練習の総量はここで担保する。薄い節は0問、
-// 厚い節は6問と配分できるが、章として痩せることは認めない。
+/* --- 検査15 章の「組む」の数（第3.8節） ---
+   課題の総数に下限は置かない。数は「その節を理解したか確かめるのに要る最小限」で
+   決める（第3.8節）。下限を置くと、足りない節を厚くするようには働かず、要らない
+   ものを足すように働く。この教材で4回確かめた。
+
+   「組む」の下限だけは残す。量の目標ではなく、**自分の頭で書く場が節ごとに
+   消えないための歯止め**である。 */
 for (const [chapter, t] of chapters) {
-  const wantEx = t.sections * CHAPTER_LIMITS.exercisesPerSection;
   const wantBuild = t.sections * CHAPTER_LIMITS.buildsPerSection;
   const name = t.isStart ? '「打つ」「選ぶ」' : '「組む」';
-  if (t.exercises < wantEx) {
-    problems.push({
-      file: t.file, check: 15, line: 1,
-      message: `章 ${chapter} の課題が合計${t.exercises}問です。${t.sections}節あるので${wantEx}問以上要ります`,
-    });
-  }
   if (t.builds < wantBuild) {
     problems.push({
       file: t.file, check: 15, line: 1,

@@ -22,12 +22,20 @@ interface Props {
 
 const { id, code, error, stdin } = Astro.props;
 const key = nextId('mistake');
+/* エラーの種類（`SyntaxError: ...` の先頭）。閉じたままでも何の失敗かが分かるように、
+   札の横に添える。書き手に書かせない（error から取れるものを二度書かせない）。 */
+const kind = (error.match(/^[A-Za-z]+Error/) ?? [])[0] ?? '';
 ---
 
-<aside class="kit-mistake" id={id}>
-  <p class="kit-mistake__label">よくある間違い</p>
+<details class="kit-mistake" id={id}>
+  {/* 既定では閉じる（10-lesson-and-writing.md 第6章）。本文を読み進める途中で、
+      まだ起きていない失敗を広げて見せる理由がない。開きたい人だけが開く。
+      閉じていても採点からは参照され、同じエラーを出した人にはその場で出る。 */}
+  <summary class="kit-mistake__label">
+    よくある間違い{kind && <span class="kit-mistake__kind">{kind}</span>}
+  </summary>
   <div class="kit-mistake__in">
     <RunBox client:load code={code} expected={error} stdin={stdin} broken editorId={key} />
     <div class="kit-mistake__fix"><slot /></div>
   </div>
-</aside>
+</details>
