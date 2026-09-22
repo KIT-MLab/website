@@ -57,6 +57,10 @@ export const PYTHON_TOOLS = [
   { name: 'def',            in: 'python-05-def',      re: /^[ \t]*def\s/m },
   { name: 'return',         in: 'python-05-return',   re: /^[ \t]*return\b/m },
   { name: '既定値のある引数',  in: 'python-05-args',     re: /def\s+\w+\s*\([^)]*=[^)]*\)/ },
+  /* 呼び出す側の = 。定義側（既定値）とは別の道具である（第5.4節）。
+     第7.2節の np.mean(scores, axis=0) がこれに当たる。def の行は数えない。
+     数えると、既定値を定義している行そのものに当たってしまう */
+  { name: '名前を書いて渡す引数', in: 'python-05-keyword',  re: /^(?!\s*def\b).*\b\w+\([^)]*\b[A-Za-z_]\w*\s*=[^=)]/m },
 
   // 第7章 数をまとめて扱う（numpy）。第6章は新しい道具を増やさない
   { name: 'numpy',          in: 'python-07-array',    re: /\bnumpy\b|\bnp\./ },
