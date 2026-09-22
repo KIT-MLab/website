@@ -1,0 +1,103 @@
+---
+id: python-07-select
+chapter: 07-array
+title: 条件やスライスで取り出す
+minutes: 16
+terms: [条件での取り出し, スライス]
+---
+
+{/* 困る例 */}
+
+配列の中から条件に合う値だけを集めたいとき、for文で1つずつ確かめて、リストに集めることになります。
+
+{/* やってみる */}
+
+次のコードの ▶ を押してください。
+
+<Run
+  code={`import numpy as np
+
+scores = np.array([40, 90, 55, 70, 30])
+print(scores[scores >= 60])
+print(scores[1:3])`}
+  out={`[90 70]
+[90 55]`}
+/>
+
+{/* 説明 */}
+
+4行目の `scores >= 60` は、各要素が条件を満たすかを `True` `False` で表した配列です。`scores[scores >= 60]` は、その配列を添字にして `True` の位置の値だけを取り出します。これを条件での取り出し（boolean index）と呼びます。
+
+5行目の `scores[1:3]` はスライス（slice）です。`[開始:終了]` の形で、添字1から2までの範囲を取り出します。終了の添字3は含まれません。
+
+条件での取り出しは、条件を満たす値の数によって、結果の個数が変わります。スライスは、指定した範囲の個数がそのまま返ります。
+
+どちらも、for文を書かずに一部の値だけを取り出せます。元の並び順は変わりません。
+
+{/* よくある間違い */}
+
+<Mistake
+  id="select-truth-value"
+  code={`import numpy as np
+scores = np.array([40, 90, 55, 70, 30])
+if scores >= 60:
+    print(scores)`}
+  error={`ValueError: The truth value of an array with more than one element is ambiguous. Use a.any() or a.all()`}
+>
+`scores >= 60` は複数の値からなる配列です。if文の条件には使えません。`scores[scores >= 60]` のように添字として使ってください。
+</Mistake>
+
+{/* 課題 */}
+
+<Exercise
+  id="python-07-select-m1"
+  kind="modify"
+  starter={`import numpy as np
+scores = np.array([40, 90, 55, 70, 30])
+print(scores[scores >= 60])`}
+  tests={[{ kind: 'stdout' }]}
+  hints={['3行目の比較の向きを見直してください。']}
+  mistakes={['select-truth-value']}
+>
+`[40 55 30]` と表示されるように、3行目を書き換えてください。
+</Exercise>
+
+<Exercise
+  id="python-07-select-m2"
+  kind="modify"
+  starter={`import numpy as np
+scores = np.array([40, 90, 55, 70, 30])
+print(scores[1:3])`}
+  tests={[{ kind: 'stdout' }]}
+  hints={['開始と終了の添字を、上の「説明」で確認してください。']}
+  mistakes={[]}
+>
+`[55 70 30]` と表示されるように、3行目の範囲を書き換えてください。
+</Exercise>
+
+<Exercise
+  id="python-07-select-b1"
+  kind="build"
+  stdin={`40
+90
+55
+70
+30`}
+  forbid={['for ']}
+  tests={[
+    { kind: 'stdout', stdin: `40\n90\n55\n70\n30\n` },
+    { kind: 'stdout', stdin: `5\n5\n5\n5\n5\n` },
+    { kind: 'stdout', stdin: `-5\n-2\n-8\n-1\n-9\n` },
+  ]}
+  hints={[
+    '5つの値を配列にしてから、`mean()` で平均を求めます。',
+    '平均との比較を、そのまま添字にしてください。',
+  ]}
+  mistakes={['select-truth-value']}
+>
+入力欄から5つの数を読み取ってください。読み取った値の平均を求め、平均を超えた値だけを、この順のまま表示してください。for文は使わないでください。
+</Exercise>
+
+{/* つながり */}
+
+条件やスライスで、必要な値だけを取り出せるようになりました。次の節では、第6章までの点数表を配列で書き直します。

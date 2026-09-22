@@ -1,0 +1,94 @@
+---
+id: python-07-shape
+chapter: 07-array
+title: 形と2次元配列
+minutes: 16
+terms: [2次元配列]
+---
+
+{/* 困る例 */}
+
+点数表は人と科目の2方向に値が並びます。1つの配列にそのまま並べると、どこからどこまでが1人分か分からなくなります。
+
+{/* やってみる */}
+
+次のコードの ▶ を押してください。
+
+<Run
+  code={`import numpy as np
+
+scores = np.array([[80, 70, 90], [60, 50, 40]])
+print(scores.shape)
+print(scores[0])
+print(scores[1][2])`}
+  out={`(2, 3)
+[80 70 90]
+40`}
+/>
+
+{/* 説明 */}
+
+3行目のように、`[` `]` の中にさらにリストを並べると、2次元配列（2D array）になります。行が人、列が科目にあたります。
+
+4行目の `scores.shape` は、配列の行数と列数を調べます。`(2, 3)` は2行3列という意味です。
+
+5行目の `scores[0]` は、0番目の行をそのまま取り出します。1人分の3科目が配列で返ります。
+
+6行目の `scores[1][2]` は、1番目の行の2番目の値です。`[行][列]` の順に添字を重ねます。1次元の配列に添字を1つ書いたときと同じ考え方です。
+
+`scores[1]` だけなら1行ぶんの配列、`scores[1][2]` まで書くとその中の1つの値になります。
+
+{/* よくある間違い */}
+
+<Mistake
+  id="shape-inhomogeneous"
+  code={`import numpy as np
+table = np.array([[1, 2, 3], [4, 5]])
+print(table)`}
+  error={`ValueError: setting an array element with a sequence. The requested array has an inhomogeneous shape after 1 dimensions. The detected shape was (2,) + inhomogeneous part.`}
+>
+行ごとの要素数がそろっていません。2次元配列にするには、すべての行を同じ長さにしてください。
+</Mistake>
+
+{/* 課題 */}
+
+<Exercise
+  id="python-07-shape-m1"
+  kind="modify"
+  starter={`import numpy as np
+table = np.array([[1, 2, 3], [4, 5, 6]])
+print(table[0][1])`}
+  tests={[{ kind: 'stdout' }]}
+  hints={['行と列のどちらの添字を変えれば、その値にたどり着くかを考えてください。']}
+  mistakes={['shape-inhomogeneous']}
+>
+`6` と表示されるように、3行目を書き換えてください。
+</Exercise>
+
+<Exercise
+  id="python-07-shape-b1"
+  kind="build"
+  stdin={`1
+2
+3
+4
+5
+6`}
+  forbid={['.T']}
+  tests={[
+    { kind: 'stdout', stdin: `1\n2\n3\n4\n5\n6\n` },
+    { kind: 'stdout', stdin: `0\n0\n0\n1\n1\n1\n` },
+    { kind: 'stdout', stdin: `-1\n-2\n-3\n4\n5\n6\n` },
+  ]}
+  hints={[
+    '先に2行3列の配列を作ります。第4章のfor文と添字で、値を1つずつ取り出せます。',
+    '新しい配列は、3行2列になります。行と列を入れ替えて集めてください。',
+  ]}
+  mistakes={['shape-inhomogeneous']}
+>
+入力欄から2人分、3科目の点数を読み取り、2次元配列にしてください（1行に1つの数、1人ずつ3つ）。行と列を入れ替え、科目が行、人が列になった配列を表示してください。`.T` は使わないでください。
+</Exercise>
+
+{/* つながり */}
+
+配列の形と、2次元の添字が分かりました。次の節では、平均や合計を方向ごとにまとめて出す書き方を扱います。

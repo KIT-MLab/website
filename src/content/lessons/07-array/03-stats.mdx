@@ -1,0 +1,92 @@
+---
+id: python-07-stats
+chapter: 07-array
+title: 平均・合計・最大と軸
+minutes: 16
+terms: [軸, mean]
+---
+
+{/* 困る例 */}
+
+点数の平均や最大を出すには、for文で合計してから割ったり、大きい値を探したりすることになります。人ごと・科目ごとに出したいと、同じ形の計算を何度も書きます。
+
+{/* やってみる */}
+
+次のコードの ▶ を押してください。
+
+<Run
+  code={`import numpy as np
+
+scores = np.array([[80, 70, 90], [60, 50, 40]])
+print(scores.mean())
+print(scores.mean(axis=0))
+print(scores.mean(axis=1))`}
+  out={`65.0
+[70. 60. 65.]
+[80. 50.]`}
+/>
+
+{/* 説明 */}
+
+3行目の `scores` は、前の節で作った2次元配列です。4行目の `scores.mean()` は、6つの値すべての平均です。
+
+5行目の `axis=0` は、5.4節で見た名前を書いて渡す引数です。人をまたいで計算し、科目ごとの平均 `[70. 60. 65.]` になります。結果の個数は科目の数と同じです。
+
+6行目の `axis=1` は科目をまたいで計算し、人ごとの平均 `[80. 50.]` になります。結果の個数は人数と同じです。
+
+`sum()` と `max()` も同じ形で、合計といちばん大きい値を求められます。`axis=` を付けなければ、配列全体でまとめます。
+
+{/* よくある間違い */}
+
+<Mistake
+  id="axis-out-of-bounds"
+  code={`import numpy as np
+scores = np.array([[80, 70, 90], [60, 50, 40]])
+print(scores.mean(axis=2))`}
+  error={`AxisError: axis 2 is out of bounds for array of dimension 2`}
+>
+この配列には軸が `0` と `1` の2つしかありません。`axis=2` は存在しない軸です。
+</Mistake>
+
+{/* 課題 */}
+
+<Exercise
+  id="python-07-stats-m1"
+  kind="modify"
+  starter={`import numpy as np
+scores = np.array([[80, 70, 90], [60, 50, 40]])
+print(scores.mean(axis=0))`}
+  tests={[{ kind: 'stdout' }]}
+  hints={['axisの値を、上の「やってみる」のコードと見比べてください。']}
+  mistakes={['axis-out-of-bounds']}
+>
+`[80. 50.]` と表示されるように、3行目を書き換えてください。
+</Exercise>
+
+<Exercise
+  id="python-07-stats-b1"
+  kind="build"
+  stdin={`80
+70
+90
+60
+50
+40`}
+  forbid={['for ']}
+  tests={[
+    { kind: 'stdout', stdin: `80\n70\n90\n60\n50\n40\n` },
+    { kind: 'stdout', stdin: `0\n0\n0\n-5\n5\n5\n` },
+    { kind: 'stdout', stdin: `60\n60\n60\n60\n60\n60\n` },
+  ]}
+  hints={[
+    '2人分、3科目ぶんの点数を、1つの2次元配列にまとめてください。',
+    '科目ごとの平均と人ごとの平均は、axisの値だけが違います。',
+  ]}
+  mistakes={['axis-out-of-bounds']}
+>
+入力欄から2人分、3科目の点数を読み取ってください（1行に1つの数、1人ずつ3つ）。1行目に科目ごとの平均を、2行目に人ごとの平均を、「やってみる」と同じ配列の形式で、小数第1位まで丸めて表示してください。
+</Exercise>
+
+{/* つながり */}
+
+配列全体や、軸ごとの計算ができるようになりました。次の節では、条件に合う値だけを取り出す書き方を扱います。

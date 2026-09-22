@@ -1,0 +1,88 @@
+---
+id: python-07-array
+chapter: 07-array
+title: numpyの配列と要素ごとの計算
+minutes: 16
+terms: [numpy, 配列]
+---
+
+{/* 困る例 */}
+
+点数のリストの全員に10点を足したいとき、for文で1人ずつ取り出して計算することになります。人数が増えるほど、同じ形の行を書くことになります。
+
+{/* やってみる */}
+
+次のコードの ▶ を押してください。
+
+<Run
+  code={`import numpy as np
+
+scores = np.array([40, 55, 50])
+print(scores + 10)`}
+  out={`[50 65 60]`}
+/>
+
+{/* 説明 */}
+
+1行目の `import numpy as np` は、numpyというモジュールを読み込みます。`np` という短い名前で使えるようにします。
+
+3行目の `np.array([40, 55, 50])` で配列（array）を作ります。配列はリストに似ていますが、要素ごとの計算をまとめて行えます。
+
+4行目の `scores + 10` は、3つの値それぞれに10を足します。for文を書かずに、全員分の計算が1行で終わります。
+
+表示される `[50 65 60]` は、値の間をコンマなしで区切った形です。リストの `[50, 65, 60]` とは表示のされ方が違います。
+
+{/* よくある間違い */}
+
+<Mistake
+  id="array-no-as-np"
+  code={`import numpy
+scores = np.array([40, 55, 50])
+print(scores)`}
+  error={`NameError: name 'np' is not defined`}
+>
+`import numpy` だけでは `np` という名前は使えません。`import numpy as np` と書いてください。
+</Mistake>
+
+{/* 課題 */}
+
+<Exercise
+  id="python-07-array-m1"
+  kind="modify"
+  starter={`import numpy as np
+prices = np.array([100, 200, 300])
+print(prices * 2)`}
+  tests={[{ kind: 'stdout' }]}
+  hints={['3行目の書き方を、上の「やってみる」のコードと見比べてください。']}
+  mistakes={['array-no-as-np']}
+>
+`[110 210 310]` と表示されるように、3行目を書き換えてください。
+</Exercise>
+
+<Exercise
+  id="python-07-array-b1"
+  kind="build"
+  stdin={`70
+80
+90
+60
+80
+95`}
+  forbid={['for ']}
+  tests={[
+    { kind: 'stdout', stdin: `70\n80\n90\n60\n80\n95\n` },
+    { kind: 'stdout', stdin: `50\n50\n50\n50\n50\n50\n` },
+    { kind: 'stdout', stdin: `0\n0\n0\n10\n-5\n0\n` },
+  ]}
+  hints={[
+    '予測した3つの値と、実際の3つの値を、それぞれ配列にしてください。',
+    '配列どうしを引き算すると、要素ごとの差の配列になります。',
+  ]}
+  mistakes={['array-no-as-np']}
+>
+予測した3つの値と、実際の3つの値を、この順で入力欄から読み取ってください。対応する差を2乗して、合計した1つの数を表示してください。for文は使わないでください。
+</Exercise>
+
+{/* つながり */}
+
+配列で要素ごとの計算ができるようになりました。次の節では、人と科目のように2方向へ並んだ表を持つ書き方を扱います。
