@@ -41,6 +41,15 @@ export async function getPython() {
  */
 export async function execPython(request) {
   const py = await getPython();
+  /* numpy のような外部のパッケージは、コードの import を見て、要るときだけ読む
+     （20-platform.md 第3.3節）。numpy を使うのは第7章だけなので、ほかの章の
+     読み込みを重くしない。読めなかったときは黙って進め、Python 側の
+     ModuleNotFoundError として読み手に見せる。 */
+  try {
+    await py.loadPackagesFromImports(request.code);
+  } catch {
+    /* 握りつぶす */
+  }
   const run = py.globals.get('_kit_run');
   const json = run(
     request.code,

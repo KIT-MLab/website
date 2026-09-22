@@ -7,7 +7,12 @@ import { PYTHON_HARNESS } from './harness';
 import { PYODIDE_BASE, PYODIDE_PRELOAD } from './pyodide-source';
 import { TIME_LIMIT_SECONDS } from './types';
 
-type Pyodide = { runPython: (code: string) => unknown; globals: { get: (name: string) => unknown } };
+type Pyodide = {
+  runPython: (code: string) => unknown;
+  globals: { get: (name: string) => unknown };
+  /** コードの import を見て、要る外部パッケージだけ読む（第7章の numpy） */
+  loadPackagesFromImports: (code: string) => Promise<unknown>;
+};
 
 let pyodide: Pyodide | null = null;
 
@@ -62,6 +67,13 @@ self.onmessage = async (event: MessageEvent) => {
   if (msg.type === 'exec') {
     try {
       const py = await load();
+      /* numpy は第7章だけが使う。全員に先に配ると初回の読み込みが重くなるので、
+         コードが import したときにだけ読む。 */
+      try {
+        await py.loadPackagesFromImports(msg.code);
+      } catch {
+        /* 握りつぶす。Python 側のエラーとして読み手に見せる */
+      }
       const run = py.globals.get('_kit_run') as (
         code: string,
         stdin: string,
