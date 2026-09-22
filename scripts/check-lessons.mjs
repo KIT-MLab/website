@@ -189,7 +189,8 @@ for (const file of files) {
     add(2, runTags[0].line, '<Run> が「説明」より後ろにあります');
   }
   for (const run of lesson.runs) {
-    if (run.out === undefined) add(2, run.line, '<Run> に out（実行結果）がありません');
+    if (run.out === undefined && run.error === undefined)
+      add(2, run.line, '<Run> に out（実行結果）がありません。エラーが題材の節では error を書きます');
   }
 
   // --- 検査3 <Mistake> が0〜3個 ---

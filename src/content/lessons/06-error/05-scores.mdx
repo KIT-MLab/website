@@ -1,0 +1,89 @@
+---
+id: python-06-scores
+chapter: 06-error
+title: 壊れた点数表を直す
+minutes: 20
+terms: []
+nobuild: この節の仕事は第5章の完成形を8か所の壊れから復元することで、それが自分の頭で書く場になっている
+---
+
+{/* 困る例 */}
+
+前の章で作った点数表のプログラムが、あちこち動かなくなっています。直したいのに、どこから手を付ければいいのか分かりません。
+
+{/* やってみる */}
+
+次のコードの ▶ を押してください。
+
+<Run
+  code={`def total_score(scores):
+    total = 0
+    for value in scores:
+        total = total + value
+    return total
+
+def average_score(scores):
+    return round(total_score(scores) / len(scores), 1)
+
+scores = [40, 55, 50]
+print(total_score(scores))
+print(average_score(scores))`}
+  out={`145
+48.3`}
+/>
+
+{/* 説明 */}
+
+下の課題は、第5章で完成させたこの点数表を壊したものです。動かしてエラーが出たら、いちばん下の行と行番号を読んで、1か所ずつ直します。
+
+この課題には、これまでの節で見た壊れ方がいくつも混ざっています。1つ直すたびに実行し直し、次に出るエラーを読んでください。
+
+エラーが消えたあとも、油断はできません。人数ぶんの結果と、合否の言葉が直す前と同じように出るかを、目で確かめてください。
+
+直った形でも、`total_score` と `average_score` の2つの関数が、人数ぶん呼び出される形のままです。関数や繰り返しを消して短くする必要はありません。
+
+{/* 課題 */}
+
+<Exercise
+  id="python-06-scores-m1"
+  kind="modify"
+  starter={`def total_score(scores)
+    total = 0
+    for value in scores:
+    total = total + value
+    return totla
+
+
+def average_score(scores):
+    return round(total_score(scores) / len(scores)，1)
+
+
+threshold = 60
+count = int(input())
+for i in range(1):
+    scores = [input(), int(input()), int(input())]
+    average = average_score(scores)
+    if average <= threshold:
+        print(f"平均{average}点 合格")
+    else:
+        print(f"平均{average}点 不合格")`}
+  stdin={`2
+40
+55
+50
+65
+82
+70`}
+  tests={[{ kind: 'stdout', stdin: `2\n40\n55\n50\n65\n82\n70\n` }]}
+  hints={[
+    'エラーが出るたびに、いちばん下の行を読んで直し、もう一度実行してください。1回では全部直りません。',
+    'エラーが出なくなっても、人数ぶん結果が出ているか、合否の言葉が正しい向きかを確かめてください。',
+  ]}
+  mistakes={[]}
+>
+`平均48.3点 不合格` と `平均72.3点 合格` がこの順で表示されるように、直してください。人数ぶんの繰り返しも、合否の判定も、元のとおりに動くようにしてください。
+</Exercise>
+
+{/* つながり */}
+
+次の章では、numpyを使って点数をまとめて扱います。

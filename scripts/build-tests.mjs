@@ -98,8 +98,31 @@ for (const file of files) {
 
   // <Run> の out の照合
   for (const run of lesson.runs) {
-    if (run.out === undefined) continue;
+    if (run.out === undefined && run.error === undefined) continue;
+    if (run.out !== undefined && run.error !== undefined) {
+      fail(`${rel}:${run.line}`, '<Run> に out と error の両方があります。どちらか一方です');
+      continue;
+    }
     const result = await execPython({ code: run.code, stdin: run.stdin });
+    /* エラーそのものが題材の節がある（第6.1節 エラーメッセージの読み方）。
+       そこでは <Run> が失敗するのが正しい。読み手は ▶ を押して、説明が指している
+       メッセージを自分の目で見る。<Mistake> に逃がすと既定で閉じているので、
+       **その節の題材が最初から見えない。** */
+    if (run.error !== undefined) {
+      const e = result.error;
+      if (!e || e.kind !== 'python') {
+        fail(`${rel}:${run.line}`, '<Run> に error がありますが、このコードはエラーになりません');
+        continue;
+      }
+      const head = run.error.split('\n').map((l) => l.trim()).filter((l) => l.length > 0).pop() ?? '';
+      if (!e.display.startsWith(head)) {
+        fail(
+          `${rel}:${run.line}`,
+          `<Run> の error が実際と違います。error=${JSON.stringify(head)} 実際=${JSON.stringify(e.display)}`,
+        );
+      }
+      continue;
+    }
     const err = describeError(result);
     if (err) {
       fail(`${rel}:${run.line}`, `<Run> のコードが動きません: ${err}`);

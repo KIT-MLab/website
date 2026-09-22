@@ -17,6 +17,9 @@ interface Props {
   /** 期待する実行結果。表示には使わない。scripts/build-tests.mjs が MDX を読み、
       実際に動かした結果と一致するかをビルド時に検査する */
   out?: string;
+  /** 期待するエラー。out の代わりに書く。エラーそのものが題材の節で使う（第6.1節）。
+      ビルド時に、本当にそのエラーで止まるかを確かめる */
+  error?: string;
   /** input() を使うときの入力欄の初期値 */
   stdin?: string;
 }

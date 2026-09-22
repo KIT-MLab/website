@@ -1,0 +1,71 @@
+---
+id: python-06-read
+chapter: 06-error
+title: エラーメッセージの読み方
+minutes: 12
+terms: []
+nobuild: エラーの読み方は書く道具ではなく読み方なので、確かめは「変える」で足りる。最終行と行番号を答えさせる形は「変える」にも「組む」にも当たらない
+---
+
+{/* 困る例 */}
+
+エラーが出ると、画面に英語の文が何行も並びます。すべて読もうとすると、どこが自分のミスなのか探すだけで時間がかかります。
+
+{/* やってみる */}
+
+次のコードの ▶ を押してください。**このコードは止まります。**
+
+<Run
+  code={`total = 40 + 55 + 50
+avarage = total / 3
+print(f"平均{round(average, 1)}点")`}
+  error={`NameError: name 'average' is not defined`}
+/>
+
+{/* 説明 */}
+
+何行もの英語が出ましたが、読む場所は2つだけです。**いちばん下の1行**と、**そこに書かれた行番号**です。
+
+いちばん下の行を見てください。`NameError: name 'average' is not defined` と出ています。`:` の前がエラーの種類の名前、後ろが詳しい内容です。
+
+その少し上に `line 3` とあります。3行目で止まったという意味です。3行目は `average` を使っていて、その名前が見つからないと言われています。
+
+見つからないのは、2行目で `avarage` と綴ったからです。**止まった行と、間違えた行は違うことがあります。** 行番号は、探しはじめる場所です。
+{/* よくある間違い */}
+
+<Mistake
+  id="read-name-typo"
+  code={`scores = [40, 55, 50]
+print(totals)`}
+  error={`NameError: name 'totals' is not defined`}
+>
+いちばん下の行に `totals` が見つからないと書かれています。作った名前は `scores`、使った名前は `totals` です。名前がそろっていません。
+</Mistake>
+
+<Mistake
+  id="read-index-boundary"
+  code={`scores = [40, 55, 50]
+print(scores[3])`}
+  error={`IndexError: list index out of range`}
+>
+いちばん下の行に、指定した位置が範囲の外だと書かれています。`scores` には3つしか値が無いので、添字は `0` から `2` までしか使えません。
+</Mistake>
+
+{/* 課題 */}
+
+<Exercise
+  id="python-06-read-m1"
+  kind="modify"
+  starter={`name = "はじめ"
+mesage = f"ようこそ、{name}さん"
+print(message)`}
+  tests={[{ kind: 'stdout' }]}
+  hints={['実行して止まったら、いちばん下の行に書かれた名前を確かめてください。']}
+  mistakes={['read-name-typo']}
+>
+`ようこそ、はじめさん` と表示されるように、直してください。
+</Exercise>
+
+{/* つながり */}
+
+次の節では、SyntaxErrorとNameErrorを詳しく見ます。

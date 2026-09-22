@@ -266,6 +266,8 @@ export function parseLesson(source, file) {
         code: evalAttribute(c.attrs.code) ?? '',
         stdin: evalAttribute(c.attrs.stdin) ?? '',
         out: evalAttribute(c.attrs.out),
+        /* エラーが題材の節では <Run> が失敗するのが正しい（第6.1節） */
+        error: evalAttribute(c.attrs.error),
         rawAttrs: c.attrs,
       });
     } else if (c.name === 'Mistake') {

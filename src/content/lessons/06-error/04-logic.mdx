@@ -1,0 +1,88 @@
+---
+id: python-06-logic
+chapter: 06-error
+title: エラーは出ないが答えが違う
+minutes: 16
+terms: []
+---
+
+{/* 困る例 */}
+
+プログラムが最後まで動いて、エラーも出ないのに、答えが違うことがあります。行番号という手がかりが無く、どこを見ればいいのか分かりません。
+
+{/* やってみる */}
+
+次のコードの ▶ を押してください。
+
+<Run
+  code={`scores = [40, 65, 82]
+count = 0
+for value in scores:
+    if value >= 60:
+        count = count + 1
+print(count)`}
+  out={`2`}
+/>
+
+{/* 説明 */}
+
+エラーが出ないときは、値を目で追うしかありません。確かめたい行の近くに `print(値)` をもう1行足すと、その時点で何が入っているかが分かります。
+
+条件の向きが逆、繰り返しの中で添字を固定したまま、`return` を書き忘れて `None` が返る、はよくある形です。これらを手がかりに、出力を1つずつ期待する値と見比べてください。
+
+たとえば `value >= 60` を `value <= 60` と書いても、動きはします。数え方だけが変わるので、実行結果と自分が期待する値を並べて見比べてください。
+
+確かめ終えたら、途中で足したprintは消してから提出してください。
+
+{/* 課題 */}
+
+<Exercise
+  id="python-06-logic-m1"
+  kind="modify"
+  starter={`scores = [40, 65, 82]
+count = 0
+for value in scores:
+    if value < 60:
+        count = count + 1
+print(count)`}
+  tests={[{ kind: 'stdout' }]}
+  hints={['上から順に、条件が成り立つたびにcountが増えるかどうかを目で追ってください。']}
+  mistakes={[]}
+>
+`2` と表示されるように、直してください。
+</Exercise>
+
+<Exercise
+  id="python-06-logic-m2"
+  kind="modify"
+  starter={`scores = [40, 65, 82]
+for i in range(len(scores)):
+    print(scores[0])`}
+  tests={[{ kind: 'stdout' }]}
+  hints={['添字を使うと、繰り返しのたびに取り出す位置を変えられます。第4章のrange(len(...))の書き方を見てください。']}
+  mistakes={[]}
+>
+`40` `65` `82` がこの順で表示されるように、直してください。
+</Exercise>
+
+<Exercise
+  id="python-06-logic-b1"
+  kind="build"
+  stdin={`80
+50
+60`}
+  tests={[
+    { kind: 'stdout', stdin: `80\n50\n60\n` },
+    { kind: 'stdout', stdin: `50\n50\n50\n` },
+    { kind: 'stdout', stdin: `60\n60\n60\n` },
+    { kind: 'stdout', stdin: `-5\n70\n60\n` },
+  ]}
+  hints={['3教科ぶん読み取りながら、60点以上のときだけ数を1増やします。']}
+  mistakes={[]}
+>
+3教科の点数を読み取り、そのうち60点以上の教科数を表示するプログラムを書いてください。
+</Exercise>
+
+{/* つながり */}
+
+次の節では、ここまでの内容を使って、壊れた点数表を直します。

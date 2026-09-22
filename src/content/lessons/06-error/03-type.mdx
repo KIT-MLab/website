@@ -1,0 +1,94 @@
+---
+id: python-06-type
+chapter: 06-error
+title: TypeErrorとValueError
+minutes: 16
+terms: [TypeError, ValueError]
+---
+
+{/* 困る例 */}
+
+`input()` で読み取った値を、そのまま数として計算しようとするとエラーが出ます。文字だけを見ても、何がいけないのか分かりません。
+
+{/* やってみる */}
+
+入力欄に `10` と書いてある状態で ▶ を押してください。
+
+<Run
+  code={`age = int(input())
+print(f"来年は{age + 1}歳です")`}
+  stdin={`10`}
+  out={`来年は11歳です`}
+/>
+
+{/* 説明 */}
+
+TypeErrorは、型が合わない操作をしようとしたときに出ます。文字列と整数をそのまま `+` でつなごうとすると起こります。`int()` で数に変える前の値を計算に使うと、よく出ます。
+
+ValueErrorは、`int()` に渡した文字列が数として読み取れないときに出ます。型は文字列のままで正しいのに、中身が数字でない文字だと変換できません。
+
+見分け方は、型そのものが違うか、型は合っているが値がおかしいかです。文字列のまま計算すればTypeError、数字でない文字列をint()に渡せばValueErrorです。
+
+どちらも、いちばん下の行に型の名前と詳しい値が書かれています。
+
+{/* よくある間違い */}
+
+<Mistake
+  id="type-input-str"
+  code={`age = input()
+print(f"来年は{age + 1}歳です")`}
+  stdin={`10`}
+  error={`TypeError: can only concatenate str (not "int") to str`}
+>
+`age` が文字列のままです。`int(input())` のように整数へ変えてから、足し算に使ってください。
+</Mistake>
+
+<Mistake
+  id="type-int-nonnumeric"
+  code={`age = int(input())
+print(f"来年は{age + 1}歳です")`}
+  stdin={`じゅう`}
+  error={`ValueError: invalid literal for int() with base 10: 'じゅう'`}
+>
+`int()` に渡した `じゅう` は数字ではありません。入力欄には半角の数字を書いてください。
+</Mistake>
+
+{/* 課題 */}
+
+<Exercise
+  id="python-06-type-m1"
+  kind="modify"
+  starter={`score = input()
+bonus = 5
+print(f"合計{score + bonus}点")`}
+  stdin={`70`}
+  tests={[{ kind: 'stdout', stdin: `70\n` }]}
+  hints={['第1章でint()を使ったときの説明を見てください。']}
+  mistakes={['type-input-str']}
+>
+`合計75点` と表示されるように、直してください。
+</Exercise>
+
+<Exercise
+  id="python-06-type-b1"
+  kind="build"
+  stdin={`10
+2`}
+  tests={[
+    { kind: 'stdout', stdin: `10\n2\n` },
+    { kind: 'stdout', stdin: `10\n0\n` },
+    { kind: 'stdout', stdin: `-10\n-2\n` },
+    { kind: 'stdout', stdin: `5\n5\n` },
+  ]}
+  hints={[
+    '先に2つの数を読み取り、2つ目が0かどうかを第3章のif文で確かめます。',
+    '0でなければ、1つ目を2つ目で割った値をそのまま表示します。',
+  ]}
+  mistakes={[]}
+>
+2つの数を読み取り、1つ目を2つ目で割った結果を表示するプログラムを書いてください。2つ目が `0` のときは `計算できません` と表示してください。
+</Exercise>
+
+{/* つながり */}
+
+次の節では、エラーが出ないのに結果が違うときの調べ方を扱います。
