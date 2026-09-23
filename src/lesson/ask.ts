@@ -1,3 +1,4 @@
+import { getLessonData } from './data';
 import { STAGE } from './exercise-place';
 
 /** POST には必ず付ける（第7.1節）。付けないと Astro が 403 を返す。 */
