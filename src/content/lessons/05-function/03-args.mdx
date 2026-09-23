@@ -51,18 +51,21 @@ print(price_with_tax(1000, 0.2))`}
   id="python-05-args-b1"
   kind="build"
   tests={[
-    { kind: 'call', fn: 'price_with_tax', args: [1000] },
-    { kind: 'call', fn: 'price_with_tax', args: [2000, 0.2] },
-    { kind: 'call', fn: 'price_with_tax', args: [0, 0.1] },
-    { kind: 'call', fn: 'price_with_tax', args: [1000, 0] },
+    { kind: 'call', fn: 'judge', args: [75] },
+    { kind: 'call', fn: 'judge', args: [60] },
+    { kind: 'call', fn: 'judge', args: [59] },
+    { kind: 'call', fn: 'judge', args: [75, 80] },
+    { kind: 'call', fn: 'judge', args: [80, 80] },
   ]}
   hints={[
     '既定値の書き方は、この節の `rate=0.1` の説明を見てください。',
-    '`price_with_tax(1000)` のように呼び出すと、`rate` に既定値が使われます。',
+    '関数の中で if文を使い、条件に合うときと合わないときで別の文字列を `return` します。',
   ]}
   mistakes={['args-default-order']}
 >
-税込み価格を返す関数 `price_with_tax(amount, rate)` を書いてください。`rate` の既定値を `0.1` にし、渡さなかったときは10%として計算してください。渡したときは、その税率を使ってください。
+関数 `judge(score, border)` を書いてください。`score` は点数、`border` は合格の基準点です。`score` が `border` 以上なら `"合格"`、そうでなければ `"不合格"` を返します。
+
+`border` の既定値を `60` にしてください。
 </Exercise>
 
 {/* つながり */}

@@ -291,6 +291,33 @@ for (const file of files) {
     }
   }
 
+  /* 文字が違っても、<Run> を貼って通るなら書き写しである。第5.3節の課題が
+     <Run> と関数名・引数・既定値まで同じで、後ろの print 2行のぶんだけ上の照合をすり抜けた。 */
+  for (const e of lesson.exercises.filter((x) => x.kind === 'build')) {
+    const tests = exercises[e.id]?.tests ?? [];
+    if (tests.length === 0) continue;
+    for (const run of lesson.runs) {
+      if (run.error !== undefined) continue;
+      let passes = true;
+      for (const t of tests) {
+        const r = await execPython(
+          t.kind === 'call'
+            ? { code: run.code, stdin: t.stdin, call: { fn: t.fn, args: t.args } }
+            : { code: run.code, stdin: t.stdin },
+        );
+        const ok = !describeError(r) &&
+          (t.kind === 'call' ? JSON.stringify(r.value) === JSON.stringify(t.expect) : normalize(r.stdout) === normalize(t.expect));
+        if (!ok) {
+          passes = false;
+          break;
+        }
+      }
+      if (passes) {
+        fail(`${rel}:${run.line}`, `演習問題 ${e.id} が、この <Run> のコードをそのまま出すと通ります（第3.5節）`);
+      }
+    }
+  }
+
   lessons[lessonId] = {
     lessonId,
     title: lesson.data.title ?? '',

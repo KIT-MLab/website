@@ -1,2 +1,5 @@
-def price_with_tax(amount, rate=0.1):
-    return amount * (1 + rate)
+def judge(score, border=60):
+    if score >= border:
+        return "合格"
+    else:
+        return "不合格"
