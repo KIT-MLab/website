@@ -27,8 +27,11 @@
 ## 2. 残っている作業
 
 - **振り分けテスト**（`spec/20-platform.md` 第12.4節）。第0章の前に約50問。まだ1問も無い
-- **第2部（道具: numpy・ベクトルと行列・変化率と傾き・確率の初歩）**。機械学習そのものは第3部から。
-  numpy の章が第7章と重なるので組み直す。利用者が全体を見てから決める（課程の地図: https://claude.ai/artifact/Fut5tVCzCyBRgCGUyocAiU ）
+- **第1部の第8章（numpy の続き）と第2部（ベクトルと行列・変化率と傾き・確率の初歩）**。
+  決まったことは `00-overview.md` 第2.2節と `DECISIONS.md`。**組む前に `spec/35-learner-after-ch7.md`
+  （第7章を終えた学習者の像）を利用者に確かめてもらっている途中。**その次が第8章で扱う numpy の範囲、
+  外積（直積）の置き場所。課程の地図: https://claude.ai/artifact/Fut5tVCzCyBRgCGUyocAiU
+  （作り方は、教材から JSON を抜き出して HTML に差し込む一度きりのスクリプト。リポジトリには置いていない）
 
 numpy はブラウザの ▶ でも動くことを確かめた（2026-09-23）。viewport 0x0 のままでも、
 `javascript_tool` からボタンを押し、コンソールの `Loaded numpy` と、`out` に書いていない出力
