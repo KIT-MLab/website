@@ -1,0 +1,86 @@
+---
+id: python-04p-choose
+chapter: 04p-practice1
+title: 手を選ぶ
+minutes: 35
+terms: []
+---
+
+{/* はじめに */}
+
+ここまでに習った道具だけで解けます。解き方は1つではないので、自分で選んだ道具で書いてください。困ったら、下のヒントを開いてください。
+
+{/* 課題 */}
+
+<Exercise
+  id="python-04p-choose-b1"
+  kind="build"
+  stdin={`50
+70
+30
+50`}
+  tests={[
+    { kind: 'stdout', stdin: `50\n70\n30\n50\n` },
+    { kind: 'stdout', stdin: `15\n15\n` },
+    { kind: 'stdout', stdin: `8\n1\n2\n3\n4\n5\n6\n7\n8\n` },
+    { kind: 'stdout', stdin: `-5\n0\n-10\n-5\n` },
+  ]}
+  hints={[
+    '何回目かを数える変数を、予想を1つ読み取るたびに1ずつ増やします。',
+    '[第4.5節 while文](04-loop/05-while) を参考にしてください。',
+  ]}
+>
+入力欄の1行目を正解の数として読み取ってください。続けて、予想の数を1行ずつ読み取ってください。
+
+予想が正解より大きければ `大きい`、小さければ `小さい` と表示してください。正解と同じ予想が来たら、`当たり 3回目` のように何回目で当てたかを表示して終わります。
+</Exercise>
+
+<Exercise
+  id="python-04p-choose-b2"
+  kind="build"
+  stdin={`3
+40
+90
+65`}
+  tests={[
+    { kind: 'stdout', stdin: `3\n40\n90\n65\n` },
+    { kind: 'stdout', stdin: `1\n45\n` },
+    { kind: 'stdout', stdin: `2\n60\n60\n` },
+    { kind: 'stdout', stdin: `3\n0\n15\n10\n` },
+  ]}
+  hints={[
+    'いちばん長い作業時間は、それまでに見た中でいちばん長い値を覚えておく変数を1つ用意して、1件ずつ比べて探します。',
+    '[第2.3節 べき乗と余りを求める](02-numbers/03-operators) と [第4.2節 リストで値をまとめて持つ](04-loop/02-list) を参考にしてください。',
+  ]}
+>
+入力欄の1行目を件数として読み取ってください。続けて、件数ぶんの作業時間（分）を1行ずつ読み取ってください。
+
+合計の時間を `合計 3時間15分` の形で表示してください。続けて、いちばん長かった作業を `最長 90分` の形で表示してください。
+</Exercise>
+
+<Exercise
+  id="python-04p-choose-b3"
+  kind="build"
+  forbid={['reversed', '[::']}
+  stdin={`5
+1
+2
+3
+2
+1`}
+  tests={[
+    { kind: 'stdout', stdin: `5\n1\n2\n3\n2\n1\n` },
+    { kind: 'stdout', stdin: `5\n1\n2\n3\n4\n5\n` },
+    { kind: 'stdout', stdin: `1\n7\n` },
+    { kind: 'stdout', stdin: `3\n-1\n0\n-1\n` },
+    { kind: 'stdout', stdin: `4\n1\n2\n3\n1\n` },
+  ]}
+  hints={[
+    '前から数えた位置と、後ろから数えた位置を、それぞれ添字の式で表します。',
+    '[第4.3節 添字とlen()](04-loop/03-index) を参考にしてください。',
+  ]}
+>
+入力欄の1行目を個数として読み取ってください。続けて、個数ぶんの数を1行ずつ読み取ってください。
+
+前から読んでも後ろから読んでも同じ並びなら `同じ`、違えば `違う` と表示するプログラムを書いてください。`reversed` のような書き方は使わないでください。
+</Exercise>
