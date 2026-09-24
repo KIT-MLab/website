@@ -1,0 +1,100 @@
+---
+id: python-10-partial
+chapter: 10-slope
+title: 偏微分
+minutes: 18
+terms: [偏微分]
+---
+
+{/* 困る例 */}
+
+直線 `y = a*x + b` で点数を予測しています。7.1節のずれ(差の2乗の和)を小さくしたいのですが、`a` と `b` のどちらを動かせばよいか分かりません。
+
+{/* やってみる */}
+
+次のコードの ▶ を押してください。
+
+<Run
+  code={`import numpy as np
+
+hours = np.array([2, 3, 5, 6, 8])
+scores = np.array([45, 52, 65, 70, 82])
+
+def loss(a, b):
+    pred = a * hours + b
+    return np.sum((pred - scores) ** 2)
+
+a = 7
+b = 30
+h = 0.0001
+slope_a = (loss(a + h, b) - loss(a, b)) / h
+slope_b = (loss(a, b + h) - loss(a, b)) / h
+print(round(slope_a, 1))
+print(round(slope_b, 1))`}
+  out={`78.0
+8.0`}
+/>
+
+{/* 説明 */}
+
+6〜8行目の `loss` は、7.1節と同じ「予測と実際の差の2乗の和」を、`a` と `b` の関数として書いたものです。ずれは `a` と `b` の2つで決まります。
+
+13行目の `slope_a` は、`b` を固定したまま `a` だけを `h` だけ増やし、ずれの変化を `h` で割っています。`a` の向きだけを見た傾きです。14行目の `slope_b` は、逆に `a` を固定して `b` の向きを見ています。
+
+このように、動かす変数を1つだけ選んで求める傾きを偏微分と呼びます。動かさなかった変数は、そのときだけ定数として扱います。
+
+{/* 課題 */}
+
+<Exercise
+  id="python-10-partial-m1"
+  kind="modify"
+  starter={`import numpy as np
+
+hours = np.array([2, 3, 5, 6, 8])
+scores = np.array([45, 52, 65, 70, 82])
+
+def loss(a, b):
+    pred = a * hours + b
+    return np.sum((pred - scores) ** 2)
+
+a = 5
+b = 20
+h = 0.0001
+slope_a = (loss(a + h, b) - loss(a, b)) / h
+slope_b = (loss(a, b + h) - loss(a, b)) / h
+print(round(slope_a, 1))
+print(round(slope_b, 1))`}
+  tests={[{ kind: 'stdout' }]}
+  hints={[
+    '`b` はそのままに、10行目の `a` だけを書き換えます。',
+  ]}
+  mistakes={[]}
+>
+`426.0` と `52.0` が表示されるように、10行目の `a` を書き換えてください。
+</Exercise>
+
+<Exercise
+  id="python-10-partial-b1"
+  kind="build"
+  stdin={`7
+30`}
+  forbid={['for ']}
+  tests={[
+    { kind: 'stdout', stdin: `7\n30\n` },
+    { kind: 'stdout', stdin: `0\n0\n` },
+    { kind: 'stdout', stdin: `-2\n10\n` },
+  ]}
+  hints={[
+    '勉強時間と点数は、上の「やってみる」と同じ配列を使います。',
+    '`a` の向きの傾きと `b` の向きの傾きは、上の slope_a・slope_b と同じ式で求められます。',
+  ]}
+  mistakes={[]}
+>
+勉強時間 2, 3, 5, 6, 8 時間、点数 45, 52, 65, 70, 82 点の配列を作ってください。入力欄から `a` と `b` をこの順に読み取ってください。
+
+予測 `a * hours + b` と実際の差の2乗の和(ずれ)を求める関数 `loss(a, b)` を定義してください。`h = 0.0001` として、`a` の向きの傾きと `b` の向きの傾きを、この順に小数第1位まで丸めて表示してください。for文は使わないでください。
+</Exercise>
+
+{/* つながり */}
+
+2つの変数それぞれの向きの傾きを、偏微分として数値で出せるようになりました。次の節では、この章のまとめとして、ずれを減らす向きまで出します。
