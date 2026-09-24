@@ -2,9 +2,9 @@
 /**
  * 節の画面（10-lesson-and-writing.md 第9章）。
  *
- * ・本文は1カラム最大720px、右レール240px
+ * ・本文は1カラム最大720px。上に細い帯、左に節の欄を固定する（20-platform.md 第14.2節）
  * ・コード例と演習は本文中のその場で実行・採点する。別画面に飛ばさない
- * ・右レールは章の中の位置を示す。章をまたぐ移動はここからはしない
+ * ・左の欄は章の中の位置を示す。章をまたぐ移動はここからはしない
  */
 import { getCollection, render, type CollectionEntry } from 'astro:content';
 import Base from '../../../layouts/Base.astro';
@@ -14,7 +14,6 @@ import Exercise from '../../../components/lesson/Exercise.astro';
 import Level0 from '../../../components/lesson/Level0.astro';
 import Figure from '../../../components/lesson/Figure.astro';
 import Keys from '../../../components/lesson/Keys.astro';
-import AccountRail from '../../../components/lesson/AccountRail.astro';
 import AskRail from '../../../components/lesson/AskRail.astro';
 import { chapterTitle, lessonHref } from '../../../lesson/chapters';
 import generated from '../../../generated/lesson-data.json';
@@ -55,29 +54,18 @@ const next = at < siblings.length - 1 ? siblings[at + 1] : null;
 const oneAtATime = entry.data.chapter === '00-start' ? '' : undefined;
 ---
 
-<Base title={entry.data.title}>
+<Base title={entry.data.title} bar>
   <div class="lesson-page">
-    <div class="lesson-top">
-      <p class="lesson-top__chapter">{chapterTitle(entry.data.chapter)}</p>
-      <h1 class="lesson-title">{entry.data.title}</h1>
-      <p class="lesson-top__meta">
-        この章の {at + 1} / {siblings.length} 節 ・ 目安 {entry.data.minutes} 分
-      </p>
-    </div>
-
-    <div class="lesson-grid">
-      <article class="lesson-body" data-exq={oneAtATime}>
-        <Content components={{ Run, Mistake, Exercise, Level0, Keys, Figure }} />
-
-        <nav class="lesson-nav" aria-label="節の移動">
-          {prev ? <a href={lessonHref(prev.id)}>← 前の節へ　{prev.data.title}</a> : <span class="lesson-nav__spacer" />}
-          {next ? <a href={lessonHref(next.id)}>次の節へ　{next.data.title} →</a> : <span class="lesson-nav__spacer" />}
-        </nav>
-      </article>
-
-      <aside class="lesson-rail">
+    {/* 左の欄（第14.2節）。広い画面では帯の下に固定し、中身が長ければ欄の中だけでスクロールする。
+        幅860px以下では、帯のすぐ下に固定した1行のボタンに畳む */}
+    <aside class="lesson-rail" id="kit-side">
+      <button class="rail__toggle" type="button" aria-expanded="false" aria-controls="kit-side-in">
+        <span>この章の節（{at + 1} / {siblings.length}）</span>
+        <span data-side-word>開く</span>
+      </button>
+      <div class="rail__in" id="kit-side-in">
         <div class="rail__block">
-          <p class="rail__label">この章の節</p>
+          <p class="rail__label">{chapterTitle(entry.data.chapter)}</p>
           <ol class="rail__list">
             {siblings.map((s) => (
               <li data-lesson-id={s.data.id} class={s.id === entry.id ? 'is-now' : ''}>
@@ -93,14 +81,28 @@ const oneAtATime = entry.data.chapter === '00-start' ? '' : undefined;
           <a class="rail__link" href="/learn/glossary/">この教材で使う言葉</a>
         </div>
 
-        <AccountRail />
-
-        {/* 入っている人にだけ出す（20-platform.md 第10.1節）。
-            入らずに読んでいる人に、押せない欄を見せる意味がない。
+        {/* ログインしている人にだけ出す（20-platform.md 第10.1節）。
             出し入れは src/lesson/account.ts の paint() が /api/me の結果で行う。 */}
         <AskRail />
-      </aside>
+      </div>
+    </aside>
+
+    <div class="lesson-top">
+      <p class="lesson-top__chapter">{chapterTitle(entry.data.chapter)}</p>
+      <h1 class="lesson-title">{entry.data.title}</h1>
+      <p class="lesson-top__meta">
+        この章の {at + 1} / {siblings.length} 節 ・ 目安 {entry.data.minutes} 分
+      </p>
     </div>
+
+    <article class="lesson-body" data-exq={oneAtATime}>
+      <Content components={{ Run, Mistake, Exercise, Level0, Keys, Figure }} />
+
+      <nav class="lesson-nav" aria-label="節の移動">
+        {prev ? <a href={lessonHref(prev.id)}>← 前の節へ　{prev.data.title}</a> : <span class="lesson-nav__spacer" />}
+        {next ? <a href={lessonHref(next.id)}>次の節へ　{next.data.title} →</a> : <span class="lesson-nav__spacer" />}
+      </nav>
+    </article>
   </div>
 
   <script type="application/json" id="kit-lesson-data" set:html={dataJson} is:inline />
@@ -121,6 +123,16 @@ const oneAtATime = entry.data.chapter === '00-start' ? '' : undefined;
 
     // 第0章だけ、課題を1問ずつ出す（第11.7節）。ほかの章では何もせずに戻る
     setupExerciseQueue();
+
+    // 狭い画面で左の欄を畳む1行のボタン（第14.2節）。広い画面ではボタンごと隠れている
+    const side = document.getElementById('kit-side');
+    const sideToggle = side?.querySelector<HTMLButtonElement>('.rail__toggle');
+    sideToggle?.addEventListener('click', () => {
+      const open = side!.classList.toggle('is-open');
+      sideToggle.setAttribute('aria-expanded', String(open));
+      const word = sideToggle.querySelector('[data-side-word]');
+      if (word) word.textContent = open ? '閉じる' : '開く';
+    });
 
     const items = Array.from(document.querySelectorAll<HTMLLIElement>('.rail__list li[data-lesson-id]'));
 
@@ -218,15 +230,33 @@ const oneAtATime = entry.data.chapter === '00-start' ? '' : undefined;
   </script>
 
   <style is:global>
-    /* 本文720px + 右レール240px が収まる幅にする */
+    /* 帯（高さ48px＋二重罫3px、Base.astro の .topbar）と左の欄（232px）を避けて本文を置く（第14.2節）。
+       本文の幅は .lesson-page で720pxまでに抑える */
     main.wrap {
-      max-width: 1080px;
+      max-width: none;
+      margin: 0 0 0 232px;
+      padding: calc(51px + 30px) 32px 120px;
     }
 
-    /* 節の紙は教材の決定（第10.9節）の #f6f2e9。端まで敷くため body に置く。
-       マストヘッドとナビの組み方（tokens.css）は変えない */
+    /* 足もとの行も左の欄の下に潜らないようにする */
+    .foot {
+      margin-left: 232px;
+    }
+
+    /* 節の紙は教材の決定（第10.9節）の #f6f2e9。端まで敷くため body に置く */
     body {
       background: var(--l-paper);
+    }
+
+    @media (max-width: 860px) {
+      main.wrap {
+        margin: 0;
+        padding: 51px 16px 120px;
+      }
+
+      .foot {
+        margin-left: 0;
+      }
     }
   </style>
 </Base>

@@ -287,6 +287,12 @@ main.wrap {
   color: var(--l-ink-2);
 }
 
+/* 押せることを見せる（20-platform.md 第14.6節） */
+.m-past summary:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
 .m-past .m-table {
   margin-top: 6px;
 }

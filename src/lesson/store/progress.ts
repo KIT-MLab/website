@@ -68,12 +68,8 @@ export interface ProgressStore {
   recordSubmission(submission: Submission): Promise<void>;
   exerciseResult(exerciseId: string): Promise<ExerciseResult>;
 
-  /** 手元にある進度の節数。0 なら引き継ぎを尋ねない（第6.2節） */
-  countLessons(): Promise<number>;
   owner(): Promise<string | null>;
-  /** 手元のものを全部「未送信」にして owner を立てる（引き継ぐとき） */
-  claim(userId: string): Promise<void>;
-  /** 手元を空にして owner を立てる（捨てるとき・別の人のとき） */
+  /** 手元を空にして owner を立てる（ログインする前の記録のとき・別の人のとき。第14.5節） */
   reset(userId: string | null): Promise<void>;
   /** サーバから引き写して合わせる（合わせ方は第6.1節の表） */
   merge(remote: { progress: RemoteLesson[]; exercises: RemoteExercise[] }): Promise<void>;
@@ -280,20 +276,8 @@ class LocalProgressStore implements ProgressStore {
     return saved.exercises[exerciseId] ?? { passed: false, fails: 0 };
   }
 
-  async countLessons(): Promise<number> {
-    return Object.keys(read().lessons).length;
-  }
-
   async owner(): Promise<string | null> {
     return read().owner;
-  }
-
-  async claim(userId: string): Promise<void> {
-    const saved = read();
-    saved.owner = userId;
-    for (const id of Object.keys(saved.lessons)) saved.lessons[id].sent = false;
-    for (const row of saved.submissions) row.sent = false;
-    write(saved);
   }
 
   async reset(userId: string | null): Promise<void> {

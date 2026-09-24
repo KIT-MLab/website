@@ -72,7 +72,7 @@ const MARKS: Record<string, string> = { none: '未', open: '開', done: '済' };
 const submissions = detail?.submissions ?? [];
 ---
 
-<Base title={detail ? detail.user.displayName : '運営'}>
+<Base title={detail ? detail.user.displayName : '管理画面'}>
   {
     !me ? (
       <p class="staff-deny">この画面は開けません。</p>
@@ -85,7 +85,7 @@ const submissions = detail?.submissions ?? [];
           <p class="staff__meta">
             <span class="staff__id">{detail.user.id}</span>
           </p>
-          <a class="staff__back" href="/staff/">運営の画面へ戻る</a>
+          <a class="staff__back" href="/staff/">管理画面へ戻る</a>
         </div>
 
         <p class="detail__facts">

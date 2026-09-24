@@ -17,6 +17,7 @@ import {
   json,
   newPasscode,
   newUserId,
+  normalizeDisplayName,
   readJsonObject,
   serverConfig,
   startSession,
@@ -26,6 +27,9 @@ export const prerender = false;
 
 /** 表示名の長さの上限。画面の一覧に並べたときに崩れない程度、という以上の意味はない。 */
 const NAME_MAX = 40;
+
+/** 表示名が重なったときの断り（第14.4節）。 */
+const NAME_TAKEN = 'この表示名はすでに使われています。別の表示名にしてください。';
 
 /** 利用者IDを作り直す回数。字母32文字の6桁で約10億通りなので、2回目でぶつかることはまず無い。 */
 const ID_TRIES = 5;
@@ -99,12 +103,22 @@ export const POST: APIRoute = async ({ request }) => {
     }
   }
 
-  const displayName = String(body.displayName ?? '').trim();
+  // しまう表示名は NFKC で正規化して前後の空白を落としたもの（第14.4節）
+  const displayName = normalizeDisplayName(String(body.displayName ?? ''));
   const nameLength = [...displayName].length;
   if (nameLength === 0) return json({ error: '表示名を入れてください。', field: 'displayName' }, 400);
   if (nameLength > NAME_MAX) {
     return json({ error: `表示名は${NAME_MAX}文字までです。`, field: 'displayName' }, 400);
   }
+
+  // 表示名は重複させない（第14.4節）。ログインに使うため。大文字小文字は区別しない。
+  // 先に確かめるのは断りの文を欄の下に出すため。確かめてから INSERT するまでの間に
+  // 同じ名前が入った場合は、下の INSERT が一意の索引（migration 0006）で断られる
+  const taken = await db
+    .prepare('SELECT 1 AS hit FROM users WHERE display_name = ? COLLATE NOCASE')
+    .bind(displayName)
+    .first<{ hit: number }>();
+  if (taken) return json({ error: NAME_TAKEN, field: 'displayName' }, 400);
 
   const passcode = newPasscode();
   const passHash = await hashPasscode(passcode);
@@ -129,6 +143,10 @@ export const POST: APIRoute = async ({ request }) => {
       break;
     } catch (e) {
       if (!isUniqueViolation(e)) throw e;
+      // 表示名の索引で断られたら、引き直しても通らない
+      if (String(e instanceof Error ? `${e.message} ${e.cause ?? ''}` : e).includes('display_name')) {
+        return json({ error: NAME_TAKEN, field: 'displayName' }, 400);
+      }
     }
   }
   if (id === '') return json({ error: '登録できませんでした。もう一度お試しください。' }, 500);

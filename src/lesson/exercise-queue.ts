@@ -4,8 +4,10 @@
  * 本文（.mdx）には <Exercise> が縦に並んだまま書かれる。書き手は特別な書き方をしない。
  * 包む側で、続けて並んだ課題を1つの束にして、通っていない最初の1問だけを見せる。
  *
- *   ・1問通ると、その場が次の問題に入れ替わる。通った問題は消す。戻る道は作らない
+ *   ・1問通ると、その場が次の問題に入れ替わる
  *     （入れ替えは ExerciseBox が覆いを出してから合図を投げる。第12.1節）
+ *   ・「← 前の問題」「次の問題 →」で行き来できる（2026-09-24、利用者の指示）。
+ *     先へは、いま解いている問題までしか進めない。飛ばして先へ行けると1問ずつ出す意味が無くなる
  *   ・いま何問目か・全部で何問かを、その場に出す。札は増やさない（第10.6節）ので
  *     コードのキャプションと同じ素地の小さな文字にする
  *   ・全部通ったら、最後の問題の箱を覆ったまま残し、その下に
@@ -32,6 +34,13 @@ type Queue = {
   /** 1問きりの束（「やってみる」の1問）には付けない。入れ替える相手がいないため */
   count: HTMLParagraphElement | null;
   done: HTMLParagraphElement | null;
+  /** 行き来の2つのボタン。1問きりの束には付けない */
+  prev: HTMLButtonElement | null;
+  next: HTMLButtonElement | null;
+  /** いま見せている問題。進んだ先（front）より先には行かない */
+  view: number;
+  /** 通っていない最初の問題。全部通ったら最後の問題 */
+  front: number;
 };
 
 function countText(total: number, at: number): string {
@@ -54,7 +63,7 @@ export function setupExerciseQueue(): void {
   for (const items of groups) {
     if (items.length < 2) {
       // 「やってみる」に置く1問（第11.6節）。表示は何も足さず、通ったら隠すだけ
-      queues.push({ items, count: null, done: null });
+      queues.push({ items, count: null, done: null, prev: null, next: null, view: 0, front: 0 });
       continue;
     }
     const count = document.createElement('p');
@@ -69,7 +78,23 @@ export function setupExerciseQueue(): void {
     done.hidden = true;
     items[items.length - 1].after(done);
 
-    queues.push({ items, count, done });
+    const nav = document.createElement('p');
+    nav.className = 'kit-exq__nav';
+    const prev = document.createElement('button');
+    prev.type = 'button';
+    prev.className = 'kit-btn';
+    prev.textContent = '← 前の問題';
+    const next = document.createElement('button');
+    next.type = 'button';
+    next.className = 'kit-btn';
+    next.textContent = '次の問題 →';
+    nav.append(prev, next);
+    done.before(nav);
+
+    const q: Queue = { items, count, done, prev, next, view: 0, front: 0 };
+    prev.addEventListener('click', () => show(q, q.view - 1));
+    next.addEventListener('click', () => show(q, q.view + 1));
+    queues.push(q);
   }
 
   if (queues.length === 0) {
@@ -93,17 +118,27 @@ export function setupExerciseQueue(): void {
       }
       // 全部通しても箱は消さない。最後の問題を覆ったまま残す（第12.1節）。
       // 急に箱が消えて文字だけが出ると、何が起きたのか分からないため
-      const at = miss < 0 ? q.items.length - 1 : miss;
-      q.items.forEach((el, i) => {
-        el.hidden = i !== at;
-      });
+      q.front = miss < 0 ? q.items.length - 1 : miss;
       q.done.hidden = miss >= 0;
-      q.count.textContent = countText(q.items.length, at);
-      const home = q.items[at].querySelector('.kit-ex__in');
-      if (home && q.count.parentElement !== home) home.prepend(q.count);
+      // 塗り直すのは、はじめと1問通ったとき。どちらも進んだ先の問題を見せる
+      show(q, q.front);
     }
     body.dataset.exq = 'on';
     first = false;
+  }
+
+  /** 束の中の i 問目を見せる。進んだ先より先と、0より前には行かない */
+  function show(q: Queue, i: number): void {
+    if (!q.count) return;
+    q.view = Math.max(0, Math.min(i, q.front));
+    q.items.forEach((el, k) => {
+      el.hidden = k !== q.view;
+    });
+    q.count.textContent = countText(q.items.length, q.view);
+    const home = q.items[q.view].querySelector('.kit-ex__in');
+    if (home && q.count.parentElement !== home) home.prepend(q.count);
+    if (q.prev) q.prev.hidden = q.view === 0;
+    if (q.next) q.next.hidden = q.view >= q.front;
   }
 
   void paint();

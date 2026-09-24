@@ -20,7 +20,7 @@ export const GET: APIRoute = async ({ request }) => {
   if (!config) return json({ error: 'サーバの設定が足りません。' }, 500);
 
   const me = await requireStaff(request);
-  if (!me) return json({ error: '運営の画面です。' }, 403);
+  if (!me) return json({ error: '管理画面です。' }, 403);
 
   const minutes = new Map<string, number>();
   for (const lesson of await getCollection('lessons')) minutes.set(lesson.data.id, lesson.data.minutes);

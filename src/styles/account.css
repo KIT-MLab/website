@@ -1,0 +1,319 @@
+/* ============================================================
+ * 右上のアカウントと、アカウントの小窓 — 20-platform.md 第5.6節・第14.1節
+ *
+ * Base.astro が全ページで読み込む。小窓（.kit-acct）とその中のボタン（.kit-btn）は
+ * もとは lesson.css にあったが、小窓が全ページに出るようになったのでここへ移した。
+ * 節のページの課題のボタンも同じ .kit-btn を使う（Base.astro 経由でここから届く）。
+ *
+ * 色は tokens.css と lesson-tokens.css のトークンだけを使う。**新しい色を足さない。**
+ * 右上のボタン（.site-btn）は tokens.css の末尾のメモのとおり:
+ *   1.5px枠 + 3px 3px のベタ影、hover でアクセント反転、active で沈む。角丸 6px
+ * 表示名の下線だけ緑（--l-midori。第14.1節の決定）。
+ * ============================================================ */
+
+/* --- アカウントの小窓（第5.6節） ----------------------------- */
+.kit-acct {
+  /* もとは節の本文（.lesson-page）の中にあって書体と行間を受け継いでいた。
+     全ページに置くようになったので、同じ見た目になるよう自分で持つ */
+  font-family: "Noto Serif JP", "Zen Old Mincho", serif;
+  line-height: 2.05;
+  width: min(430px, calc(100vw - 32px));
+  max-height: calc(100vh - 40px);
+  overflow: auto;
+  padding: 0;
+  border: 1px solid var(--l-strong);
+  border-radius: 0;
+  background: var(--l-card);
+  color: var(--l-ink);
+}
+
+.kit-acct::backdrop {
+  background: var(--l-ink);
+  opacity: 0.5;
+}
+
+.kit-acct__panel {
+  padding: 20px 24px 22px;
+}
+
+.kit-acct__title {
+  margin: 0 0 10px;
+  font-family: "Zen Old Mincho", serif;
+  font-weight: 700;
+  font-size: 18px;
+  letter-spacing: 0.08em;
+  border-bottom: 1px solid var(--l-rule);
+  padding-bottom: 6px;
+}
+
+.kit-acct__note {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.8;
+  color: var(--l-ink-2);
+}
+
+/* 段4の問いかけ。上の説明との間を空けるだけ（第6.1節） */
+.kit-acct__ask {
+  margin-top: 12px;
+}
+
+.kit-acct__field {
+  margin-top: 14px;
+}
+
+.kit-acct__lab {
+  display: block;
+  margin: 0 0 5px;
+  font-family: "Zen Old Mincho", serif;
+  font-size: 13.5px;
+  letter-spacing: 0.1em;
+  color: var(--l-ink-2);
+}
+
+.kit-acct__in {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 7px 9px;
+  border: 1px solid var(--l-rule);
+  border-radius: 0;
+  background: var(--l-paper);
+  color: var(--l-ink);
+  font-size: 15px;
+}
+
+.kit-acct__in--mono {
+  font-family: var(--font-mono);
+  letter-spacing: 0.1em;
+}
+
+.kit-acct__in:focus {
+  outline: 2px solid var(--l-strong);
+  outline-offset: 1px;
+}
+
+/* 紙に書き写す前提なので、等幅で大きく出す（第5.6節） */
+.kit-acct__uid {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 21px;
+  letter-spacing: 0.12em;
+  color: var(--l-strong);
+}
+
+.kit-acct__pass {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 30px;
+  line-height: 1.3;
+  letter-spacing: 0.14em;
+  color: var(--l-strong);
+}
+
+/* 断りの文。欄の下に、琥珀で出す */
+.kit-acct__deny {
+  margin: 6px 0 0;
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--l-kohaku);
+}
+
+.kit-acct__deny:empty {
+  display: none;
+}
+
+/* --- ボタン ------------------------------------------------- */
+.kit-btn {
+  font-family: "Zen Old Mincho", serif;
+  font-size: 15px;
+  letter-spacing: 0.08em;
+  padding: 6px 18px;
+  border: 1px solid var(--l-strong);
+  border-radius: 0;
+  background: var(--l-card);
+  color: var(--l-ink);
+  cursor: pointer;
+}
+
+.kit-btn:hover:not(:disabled) {
+  background: var(--l-lv1);
+}
+
+.kit-btn:active:not(:disabled) {
+  background: var(--l-lv2);
+}
+
+.kit-btn:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.kit-btn--strong {
+  font-weight: 700;
+  background: var(--l-strong);
+  border-color: var(--l-strong);
+  color: var(--l-card);
+}
+
+.kit-btn--strong:hover:not(:disabled) {
+  background: #000;
+}
+
+.kit-btn--quiet {
+  border-style: dotted;
+  color: var(--l-ink-2);
+}
+
+.kit-ex__bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 14px 0 0;
+}
+
+/* --- 決まりのボタン（tokens.css の末尾のメモ） --------------- */
+.site-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 14px;
+  font: inherit;
+  font-weight: 700;
+  white-space: nowrap;
+  color: var(--l-ink);
+  text-decoration: none;
+  background: var(--l-card);
+  border: 1.5px solid var(--color-line);
+  border-radius: var(--radius);
+  box-shadow: 3px 3px 0 var(--color-line);
+  cursor: pointer;
+  transition:
+    background-color 120ms var(--ease-out),
+    color 120ms var(--ease-out);
+}
+
+.site-btn--small {
+  padding: 3px 10px;
+  font-size: 13px;
+  line-height: 1.6;
+  box-shadow: 2px 2px 0 var(--color-line);
+}
+
+.site-btn:hover:not(:disabled) {
+  background: var(--color-accent);
+  color: var(--l-card);
+}
+
+.site-btn:active:not(:disabled) {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0 var(--color-line);
+}
+
+.site-btn:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 3px;
+}
+
+/* --- 右上のアカウント（第14.1節） --------------------------- */
+.acct {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  font-family: var(--font-body);
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--l-ink);
+}
+
+.acct__who {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 16em;
+  padding: 4px 6px;
+  font: inherit;
+  color: var(--l-ink);
+  background: transparent;
+  border: 0;
+  border-radius: 4px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.acct__who b {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  border-bottom: 3px solid var(--l-midori);
+}
+
+.acct__who:hover {
+  background: var(--l-chip);
+}
+
+.acct__who:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.acct__menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 30;
+  min-width: 12em;
+  margin: 0;
+  padding: 6px 0;
+  background: var(--l-card);
+  border: 1.5px solid var(--color-line);
+  border-radius: var(--radius);
+  box-shadow: 3px 3px 0 var(--color-line);
+  text-align: left;
+}
+
+.acct__menu[hidden] {
+  display: none;
+}
+
+.acct__meta {
+  margin: 0 0 4px;
+  padding: 2px 14px 6px;
+  font-size: 12px;
+  color: var(--l-ink-2);
+  border-bottom: 1px solid var(--l-rule);
+}
+
+.acct__item {
+  display: block;
+  width: 100%;
+  padding: 5px 14px;
+  font: inherit;
+  text-align: left;
+  white-space: nowrap;
+  color: var(--l-ink);
+  text-decoration: none;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+}
+
+.acct__item:hover:not(:disabled) {
+  background: var(--l-chip);
+}
+
+.acct__item:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: -2px;
+}
+
+/* ログアウトのとき送りきれなかったことを伝える1行（第6.2節）。メニューと同じ形で下に出す */
+.acct__kept {
+  width: min(20em, calc(100vw - 32px));
+  padding: 8px 14px;
+  font-size: 12.5px;
+  white-space: normal;
+  color: var(--l-ink-2);
+}

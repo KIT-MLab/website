@@ -125,21 +125,21 @@ const rows = students.map((student) => ({
 }));
 ---
 
-<Base title="運営">
+<Base title="管理画面">
   {
     !me ? (
       <p class="staff-deny">この画面は開けません。</p>
     ) : (
       <div class="staff">
         <div class="staff__top">
-          <h1 class="staff__title">運営の画面</h1>
+          <h1 class="staff__title">管理画面</h1>
           <p class="staff__meta">
             {me.displayName}（{me.cohort.name}）・
             {me.role === 'admin' ? 'すべての所属が見えています' : 'この所属だけが見えています'}・{ymd(now)}
           </p>
         </div>
 
-        <nav class="staff-nav" aria-label="運営の画面">
+        <nav class="staff-nav" aria-label="管理画面">
           <a href="/staff/" aria-current="page">詰まっているところ</a>
           <a href="/staff/questions">質問</a>
           <a href="/staff/meetings/">集まり</a>

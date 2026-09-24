@@ -18,7 +18,7 @@ export const GET: APIRoute = async ({ params, request }) => {
   if (!config) return json({ error: 'サーバの設定が足りません。' }, 500);
 
   const me = await requireStaff(request);
-  if (!me) return json({ error: '運営の画面です。' }, 403);
+  if (!me) return json({ error: '管理画面です。' }, 403);
 
   // 紙を見て打ち直す場面があるので、ログインと同じ揺れを吸う
   const detail = await userDetail(config.db, me, normalizeUserId(params.id ?? ''));

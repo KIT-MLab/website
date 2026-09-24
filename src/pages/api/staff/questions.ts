@@ -17,7 +17,7 @@ export const GET: APIRoute = async ({ request }) => {
   if (!config) return json({ error: 'サーバの設定が足りません。' }, 500);
 
   const me = await requireStaff(request);
-  if (!me) return json({ error: '運営の画面です。' }, 403);
+  if (!me) return json({ error: '管理画面です。' }, 403);
 
   return json({ items: await staffQuestions(config.db, me) }, 200);
 };

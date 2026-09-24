@@ -48,7 +48,7 @@ export function setupAsk(): void {
    * 数は節ごとではなく全体（第8.5節）なので、この節に返事が無くても出る。
    */
   function paintButton(unread: number): void {
-    button!.textContent = unread > 0 ? `質問（${unread}）` : '質問する';
+    button!.textContent = unread > 0 ? `この節について質問する（${unread}）` : 'この節について質問する';
   }
 
   async function refreshUnread(): Promise<void> {

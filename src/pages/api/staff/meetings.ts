@@ -28,7 +28,7 @@ export const POST: APIRoute = async ({ request }) => {
   const { db } = config;
 
   const me = await requireStaff(request);
-  if (!me) return json({ error: '運営の画面です。' }, 403);
+  if (!me) return json({ error: '管理画面です。' }, 403);
 
   const body = await readJsonObject(request);
   if (!body) return json({ error: '送信された内容を読み取れませんでした。' }, 400);

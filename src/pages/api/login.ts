@@ -1,15 +1,16 @@
 /**
  * ログイン（20-platform.md 第5.3節・第7章）。
  *
- * 別の端末から利用者IDとパスワードで入る口。登録した端末は Cookie で入るので、ここは通らない。
+ * 別の端末から表示名とパスワードで入る口（第14.4節）。`u_` で始まる入力は、これまでどおり
+ * 利用者IDとして引く。登録した端末は Cookie で入るので、ここは通らない。
  *
- * パスワードは6桁の数字で100万通りしかない。利用者IDを知っている人が機械で片端から試せば
+ * パスワードは6桁の数字で100万通りしかない。表示名を知っている人が機械で片端から試せば
  * 1日ほどで当たる。だから**続けて外すほど待たせる**（第5.3節の表）。待たせ方は
  * `users.retry_after` に「この時刻まで試せない」を書いて即座に断るやり方で、
  * サーバを眠らせて待たせない（Worker の実行時間を食わないため）。
  *
  * 返す文面の決まりが2つある。どちらも**どこまで当たっているかを教えないため**。
- *   - 利用者IDが無いときと、パスワードが違うときは、同じ文面を返す
+ *   - 表示名（利用者ID）が無いときと、パスワードが違うときは、同じ文面を返す
  *   - 待っている間は、入れたパスワードが合っていたかどうかを出さない（確かめもしない）
  */
 import type { APIRoute } from 'astro';
@@ -17,6 +18,8 @@ import type { UserRow } from '../../server/auth';
 import {
   formatWait,
   json,
+  looksLikeUserId,
+  normalizeDisplayName,
   normalizeUserId,
   readJsonObject,
   serverConfig,
@@ -28,8 +31,8 @@ import {
 
 export const prerender = false;
 
-/** 利用者IDが無いときとパスワードが違うときで、必ずこの1つを返す（第5.3節）。 */
-const WRONG = '利用者IDかパスワードが違います。';
+/** 表示名が無いときとパスワードが違うときで、必ずこの1つを返す（第5.3節・第14.4節）。 */
+const WRONG = '表示名かパスワードが違います。';
 
 /** どの欄の下に断りを出すか（第5.6節）。画面に文面を読ませて振り分けさせないため */
 const WRONG_FIELD = 'passcode';
@@ -44,23 +47,31 @@ export const POST: APIRoute = async ({ request }) => {
   const body = await readJsonObject(request);
   if (!body) return json({ error: '送信された内容を読み取れませんでした。' }, 400);
 
-  const id = normalizeUserId(String(body.id ?? ''));
+  // `id` の中身は表示名。`u_` で始まるときだけ利用者IDとして引く（第14.4節）
+  const given = String(body.id ?? '');
   // 画面には 690 399 と3桁ずつ空けて出すので、そのまま写した人の空白を落とす（第5.6節）。
   // 画面側でも落としているが、口はここ1つとは限らないのでサーバでも受ける
-  const passcode = String(body.passcode ?? '').replace(/s/g, '');
+  const passcode = String(body.passcode ?? '').replace(/\s/g, '');
   const now = Date.now();
 
   // 1. 利用者を引く。無ければパスワード違いと同じ文面で断る。
-  //    「そのIDは存在しない」と返すと、まずIDだけを総当たりで絞り込めてしまう。
-  const user = await db
-    .prepare(
-      `SELECT u.id, u.display_name, u.role, u.level, u.pass_hash, u.fail_count, u.retry_after,
-              c.code AS cohort_code, c.name AS cohort_name, c.kind AS cohort_kind
-         FROM users u JOIN cohorts c ON c.code = u.cohort_code
-        WHERE u.id = ?`,
-    )
-    .bind(id)
-    .first<LoginRow>();
+  //    「その表示名は存在しない」と返すと、まず表示名だけを総当たりで絞り込めてしまう。
+  //    `u_` で始まる入力は利用者IDとして引き、無ければ表示名としても引く
+  //    （`u_` で始まる表示名で登録した人が入れなくならないように）。
+  const find = (where: string, value: string) =>
+    db
+      .prepare(
+        `SELECT u.id, u.display_name, u.role, u.level, u.pass_hash, u.fail_count, u.retry_after,
+                c.code AS cohort_code, c.name AS cohort_name, c.kind AS cohort_kind
+           FROM users u JOIN cohorts c ON c.code = u.cohort_code
+          WHERE ${where}`,
+      )
+      .bind(value)
+      .first<LoginRow>();
+  const byName = () => find('u.display_name = ? COLLATE NOCASE', normalizeDisplayName(given));
+  const user = looksLikeUserId(given)
+    ? ((await find('u.id = ?', normalizeUserId(given))) ?? (await byName()))
+    : await byName();
   //    文面は揃うが、**応答の速さは揃わない。**パスワードの照合は PBKDF2 を10万回まわすので
   //    100ミリ秒ほどかかり、IDが無いときは数ミリ秒で返る。速さを測れば、IDが在ることだけは
   //    分かってしまう。揃えるには無いときにも同じだけ計算を空回しすればよいが、そうすると
@@ -68,6 +79,9 @@ export const POST: APIRoute = async ({ request }) => {
   //    在るIDへの総当たりは待ち時間で頭打ちになるのに、こちらは頭打ちが無い。
   //    IDは32文字の字母の6桁で約10億通りあり、当てずっぽうで引ける数ではないので、
   //    速さの差は残し、計算の空回しはしない。
+  //    表示名で引くようになって（第14.4節）、この理由は表示名には当てはまらない。ただ表示名が
+  //    在るかどうかは、登録で「すでに使われています」と断られることからも分かるので、
+  //    ここで揃えても隠せない。同じく空回しはしない。
   if (!user) return json({ error: WRONG, field: WRONG_FIELD }, 401);
 
   // 2. まだ待ち時間の中なら、パスワードを確かめずに断る。

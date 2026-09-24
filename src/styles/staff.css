@@ -408,7 +408,8 @@ main.wrap {
   cursor: pointer;
 }
 
-.role button:hover {
+/* 押せないときは変えない（20-platform.md 第14.6節） */
+.role button:hover:not([disabled]) {
   background: var(--l-lv2);
 }
 
@@ -592,7 +593,8 @@ main.wrap {
   cursor: pointer;
 }
 
-.qa__bar button:hover {
+/* 押せないときは変えない（第14.6節） */
+.qa__bar button:hover:not([disabled]) {
   background: var(--l-lv2);
 }
 
@@ -719,7 +721,8 @@ textarea.mt-in {
   cursor: pointer;
 }
 
-.mt-bar button:hover {
+/* 押せないときは変えない（第14.6節） */
+.mt-bar button:hover:not([disabled]) {
   background: var(--l-lv2);
 }
 

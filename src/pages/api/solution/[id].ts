@@ -59,7 +59,7 @@ export const GET: APIRoute = async ({ params, request }) => {
 
   const user = await currentUser(request);
   if (!user) {
-    return json({ message: '模範解答は、登録して入ると読めます。' }, 403);
+    return json({ message: '模範解答は、登録してログインすると読めます。' }, 403);
   }
 
   // 通した提出が1行でもあるか。無ければ返さない（第4.3.1節）

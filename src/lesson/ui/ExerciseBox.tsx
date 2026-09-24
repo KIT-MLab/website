@@ -273,6 +273,8 @@ export default function ExerciseBox({ id, kind, starter, stdin, choices }: Props
                   name={`${id}-choice`}
                   value={i + 1}
                   checked={picked === i + 1}
+                  /* 通ったあとは選び直せない。覆いの下で別の選択肢を押せていた */
+                  disabled={passed}
                   onChange={() => setPicked(i + 1)}
                 />
                 <span className="kit-choices__no">{i + 1}</span>

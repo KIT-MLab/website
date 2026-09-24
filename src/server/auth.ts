@@ -156,6 +156,19 @@ export function normalizeUserId(raw: string): string {
 }
 
 /**
+ * 表示名の揺れを吸う（第14.4節）。NFKC で正規化して（全角の英数字を半角に）前後の空白を落とす。
+ * 登録でしまう値も、ログインで引く値もこれを通す。大文字小文字は D1 の `COLLATE NOCASE` で揃える。
+ */
+export function normalizeDisplayName(raw: string): string {
+  return raw.normalize('NFKC').trim();
+}
+
+/** `u_` で始まる入力（大文字小文字を問わない）は利用者IDとして受ける（第14.4節）。 */
+export function looksLikeUserId(raw: string): boolean {
+  return /^u_/i.test(raw.trim());
+}
+
+/**
  * パスワード。6桁の数字（`000000`〜`999999`）。
  *
  * 数ではなく文字列で組み立てる。**数にすると先頭の0が落ちて5桁になり、打ち直せなくなる。**

@@ -1,23 +1,20 @@
 /**
  * 登録とログインの画面（20-platform.md 第5.6節）と、入った／出たときの進度の始末（第6.2節）。
  *
- * 置き場所は節の右レール。ボタンを押すと本文の上にかぶせる小窓（`<dialog>` の
- * `showModal()`）が開く。**別のページに移らない。**読んでいた場所を失わないため。
- * 通ったあともページを読み込み直さず、右レールのブロックだけ塗り替える。
+ * 置き場所は全ページの右上（第14.1節。枠は Base.astro の `#kit-acct-head`）。ボタンを押すと
+ * 本文の上にかぶせる小窓（`<dialog>` の `showModal()`）が開く。**別のページに移らない。**
+ * 読んでいた場所を失わないため。通ったあともページを読み込み直さず、右上だけ塗り替える。
  *
- * 閉じる道を塞ぐ段が2つある。
+ * 閉じる道を塞ぐ段が1つある。
  *
  *   段2（控える） … パスワードの平文が出るのは登録の応答の1回だけで、しまってあるのは
  *                   ハッシュなので、見落として閉じた人は運営が作り直すまで別の端末から
  *                   入れない（第5.2節）
- *   段4（この端末に残っている記録） … 途中で閉じられると、手元の記録が「誰のものか
- *                   決まらないまま」残る。次に入ったときにまた同じことを聞かれ、
- *                   その間ずっとサーバへ行かない（第6.1節）
  *
- * どちらも × を出さず、`Esc`（`cancel`）を止め、背景を押しても閉じない。
+ * × を出さず、`Esc`（`cancel`）を止め、背景を押しても閉じない。
  *
- * 島にしていないのは、この画面が右レールの1ブロックの塗り替えしかしないためである。
- * 同じ節の右レール（節の一覧）も素の DOM で塗っている。新しい依存は足さない。
+ * 島にしていないのは、この画面が右上の小さな塗り替えしかしないためである。
+ * 節の左の欄（節の一覧）も素の DOM で塗っている。新しい依存は足さない。
  */
 import { getLessonData } from './data';
 import { getProgressStore, type RemoteExercise, type RemoteLesson } from './store/progress';
@@ -33,10 +30,10 @@ type User = {
   member?: boolean;
 };
 
-type Stage = 'register' | 'save' | 'login' | 'carry';
+type Stage = 'register' | 'save' | 'login';
 
 /** 閉じる道を塞ぐ段。 */
-const SEALED: Stage[] = ['save', 'carry'];
+const SEALED: Stage[] = ['save'];
 
 /**
  * POST には必ず付ける（第7.1節）。付けずに POST すると Astro が「他所からのフォーム送信」
@@ -70,17 +67,16 @@ function groupPasscode(code: string): string {
 }
 
 export function setupAccount(): void {
-  const rail = document.getElementById('kit-acct-rail');
+  const head = document.getElementById('kit-acct-head');
   const dialog = document.getElementById('kit-acct') as HTMLDialogElement | null;
-  if (!rail || !dialog || typeof dialog.showModal !== 'function') return;
+  if (!head || !dialog || typeof dialog.showModal !== 'function') return;
 
   const stages: Record<Stage, HTMLElement> = {
     register: dialog.querySelector('[data-acct-stage="register"]') as HTMLElement,
     save: dialog.querySelector('[data-acct-stage="save"]') as HTMLElement,
     login: dialog.querySelector('[data-acct-stage="login"]') as HTMLElement,
-    carry: dialog.querySelector('[data-acct-stage="carry"]') as HTMLElement,
   };
-  if (!stages.register || !stages.save || !stages.login || !stages.carry) return;
+  if (!stages.register || !stages.save || !stages.login) return;
 
   const q = <T extends HTMLElement>(sel: string) => dialog.querySelector(sel) as T;
   const regForm = q<HTMLFormElement>('#kit-acct-reg-form');
@@ -94,18 +90,13 @@ export function setupAccount(): void {
   const saveId = q<HTMLElement>('#kit-acct-made-id');
   const savePass = q<HTMLElement>('#kit-acct-made-pass');
   const saveDone = q<HTMLButtonElement>('#kit-acct-saved');
-  const carryCount = q<HTMLElement>('#kit-acct-carry-n');
-  const carryYes = q<HTMLButtonElement>('#kit-acct-carry-yes');
-  const carryNo = q<HTMLButtonElement>('#kit-acct-carry-no');
 
   const store = getProgressStore();
 
-  /** いま出している段。段2と段4のときだけ閉じる道を塞ぐ。 */
+  /** いま出している段。段2のときだけ閉じる道を塞ぐ。 */
   let stage: Stage = 'register';
   /** 登録が通ったあと「控えました」を押すまで抱えておく利用者。 */
   let pending: User | null = null;
-  /** 段4を出している間、どちらかが押されるまで抱えておく利用者。 */
-  let carrying: User | null = null;
 
   function deny(name: string, message: string): void {
     const slot = dialog!.querySelector(`[data-acct-deny="${name}"]`);
@@ -125,20 +116,49 @@ export function setupAccount(): void {
   function open(next: Stage): void {
     show(next);
     if (!dialog!.open) dialog!.showModal();
-    const first =
-      next === 'register' ? regCode : next === 'login' ? loginId : next === 'carry' ? carryYes : saveDone;
+    const first = next === 'register' ? regCode : next === 'login' ? loginId : saveDone;
     first.focus();
   }
 
-  /* --- 右レールのブロックを塗る ------------------------------------ */
+  /* --- 右上のアカウントを塗る（第14.1節） -------------------------- */
 
-  function railButton(label: string): HTMLButtonElement {
+  function headButton(label: string): HTMLButtonElement {
     const btn = document.createElement('button');
     btn.type = 'button';
-    btn.className = 'rail__ask';
+    btn.className = 'site-btn site-btn--small';
     btn.textContent = label;
     return btn;
   }
+
+  function menuLink(label: string, href: string): HTMLAnchorElement {
+    const link = document.createElement('a');
+    link.className = 'acct__item';
+    link.href = href;
+    link.textContent = label;
+    return link;
+  }
+
+  /** 開いているメニュー（またはログアウトのときの1行）。閉じる手は外側を押すか Esc */
+  let popup: { panel: HTMLElement; opener: HTMLElement | null } | null = null;
+
+  function closePopup(returnFocus: boolean): void {
+    if (!popup) return;
+    const { panel, opener } = popup;
+    popup = null;
+    panel.hidden = true;
+    if (opener) {
+      opener.setAttribute('aria-expanded', 'false');
+      if (returnFocus) opener.focus();
+    }
+  }
+
+  document.addEventListener('click', (e) => {
+    if (popup && !head!.contains(e.target as Node)) closePopup(false);
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && popup) closePopup(true);
+  });
 
   /** `note` は出るときに送りきれなかったことを伝える1行（第6.2節）。ふだんは null。 */
   function paint(user: User | null, note: string | null = null): void {
@@ -147,46 +167,70 @@ export function setupAccount(): void {
     const ask = document.querySelector<HTMLElement>('[data-rail-ask]');
     if (ask) ask.hidden = !user;
 
-    rail!.replaceChildren();
+    popup = null;
+    head!.replaceChildren();
     if (!user) {
-      const row = document.createElement('div');
-      row.className = 'rail__acct-row';
-      const register = railButton('登録する');
+      const register = headButton('新規登録');
       register.addEventListener('click', () => open('register'));
-      const login = railButton('入る');
+      const login = headButton('ログイン');
       login.addEventListener('click', () => open('login'));
-      row.append(register, login);
-      rail!.append(row);
+      head!.append(register, login);
       if (note) {
+        // 右上には1行を置く場所が無いので、メニューと同じ形で下に出し、同じ手で閉じる
         const kept = document.createElement('p');
-        kept.className = 'rail__note';
+        kept.className = 'acct__menu acct__kept';
+        kept.setAttribute('role', 'status');
         kept.textContent = note;
-        rail!.append(kept);
+        head!.append(kept);
+        popup = { panel: kept, opener: null };
       }
       return;
     }
 
-    const name = document.createElement('p');
-    name.className = 'rail__acct-name';
+    const who = document.createElement('button');
+    who.type = 'button';
+    who.className = 'acct__who';
+    who.setAttribute('aria-expanded', 'false');
+    who.setAttribute('aria-controls', 'kit-acct-menu');
+    const name = document.createElement('b');
     name.textContent = user.displayName;
+    const mark = document.createElement('span');
+    mark.setAttribute('aria-hidden', 'true');
+    mark.textContent = '▾';
+    who.append(name, mark);
+
+    const menu = document.createElement('div');
+    menu.className = 'acct__menu';
+    menu.id = 'kit-acct-menu';
+    menu.hidden = true;
     const cohort = document.createElement('p');
-    cohort.className = 'rail__note';
+    cohort.className = 'acct__meta';
     cohort.textContent = user.cohort.name;
-    const out = railButton('出る');
-    out.addEventListener('click', () => void leave(out));
-    rail!.append(name, cohort);
-    // メンバーの画面への入口（第13.2節）。メンバーにだけ出す
-    if (user.member) {
-      const home = document.createElement('p');
-      home.className = 'rail__note';
-      const link = document.createElement('a');
-      link.className = 'rail__link';
-      link.href = '/learn/home/';
-      link.textContent = 'マイページ';
-      home.append(link);
-      rail!.append(home);
-    }
-    rail!.append(out);
+    menu.append(cohort);
+    // マイページへの入口（第13.2節）。メンバーにだけ出す
+    if (user.member) menu.append(menuLink('マイページ', '/learn/home/'));
+    if (user.role === 'staff' || user.role === 'admin') menu.append(menuLink('管理画面', '/staff/'));
+    const out = document.createElement('button');
+    out.type = 'button';
+    out.className = 'acct__item';
+    out.textContent = 'ログアウト';
+    out.addEventListener('click', () => {
+      closePopup(false);
+      void leave(out);
+    });
+    menu.append(out);
+
+    who.addEventListener('click', () => {
+      if (popup) {
+        closePopup(false);
+        return;
+      }
+      menu.hidden = false;
+      who.setAttribute('aria-expanded', 'true');
+      popup = { panel: menu, opener: who };
+    });
+
+    head!.append(who, menu);
   }
 
   /* --- 進度の始末（第6.2節） --------------------------------------- */
@@ -195,7 +239,7 @@ export function setupAccount(): void {
    * サーバの記録を引き写す。
    *
    * 引き写したあとに、いま開いている節をもう一度「開いた」ことにする。手元を空にした道
-   * （捨てる・別の人・出る）では、いま読んでいる節の記録まで消えてしまうためである。
+   * （ログインする前の記録・別の人・出る）では、いま読んでいる節の記録まで消えてしまうためである。
    * 読んでいる途中でその節が進度から抜けると、この節だけ滞在も「済」も付かなくなる。
    */
   async function pull(): Promise<void> {
@@ -215,31 +259,19 @@ export function setupAccount(): void {
   }
 
   /**
-   * 入った直後の分岐（第6.2節の表）。
+   * 入った直後の分岐（第6.2節の表。owner が null の行は第14.5節で改めた）。
    *
-   * | owner        | 手元の進度 | すること                          |
-   * | 入った人と同じ | —        | 何も聞かず、未送信を送って引き写す   |
-   * | null         | ある      | 段4を出して尋ねる                  |
-   * | null         | ない      | owner を立てて引き写す             |
-   * | 別の人        | —        | 何も聞かず手元を空にして引き写す     |
+   * | owner        | すること                                  |
+   * | 入った人と同じ | 何も聞かず、未送信を送って引き写す           |
+   * | null         | 何も聞かず手元を空にして引き写す（第14.5節） |
+   * | 別の人        | 何も聞かず手元を空にして引き写す             |
    *
    * 別の人の分を黙って捨ててよいのは、その人のぶんは既にサーバに入っているためである
-   * （入っている間は送られている）。逆に owner が null のものはどこにも無いので、
-   * 捨てる前に必ず尋ねる。
+   * （入っている間は送られている）。owner が null のもの（ログインする前の記録）は
+   * 尋ねずに捨てる。1台を複数人で使うことはまず無く、尋ねる段は邪魔になるだけだった。
    */
   async function entered(user: User): Promise<void> {
     const owner = await store.owner();
-    const kept = await store.countLessons();
-
-    if (owner === null && kept > 0) {
-      carrying = user;
-      carryCount.textContent = String(kept);
-      carryYes.disabled = false;
-      carryNo.disabled = false;
-      open('carry');
-      return;
-    }
-
     if (dialog!.open) dialog!.close();
     if (owner === user.id) await store.flush();
     else await store.reset(user.id);
@@ -253,9 +285,9 @@ export function setupAccount(): void {
    * 送れるはずのものまで 401 で落ちる。手元を空にするかどうかは、その送信が
    * 通ったかどうかで決める（第6.2節「送りきれなかったら空にしない」）。
    *
-   * 空にしたあと、いま読んでいる節を開き直さない。出た人の手元は空のままにしておく
-   * （入り直したときに「入る前に進めた記録」を聞き返さないため）。読み続けたぶんは
-   * 滞在の秒数が次に足された時点で改めて手元に積まれ、入り直せばそこで尋ねられる。
+   * 空にしたあと、いま読んでいる節を開き直さない。出た人の手元は空のままにしておく。
+   * 読み続けたぶんは滞在の秒数が次に足された時点で改めて手元に積まれ、
+   * 入り直すとそこで捨てられる（第14.5節）。
    */
   async function leave(button: HTMLButtonElement): Promise<void> {
     button.disabled = true;
@@ -266,7 +298,7 @@ export function setupAccount(): void {
     window.dispatchEvent(new CustomEvent('kit:progress'));
   }
 
-  /* --- 閉じる道（段2と段4だけ塞ぐ。第5.6節・第6.1節） -------------- */
+  /* --- 閉じる道（段2だけ塞ぐ。第5.6節） ---------------------------- */
 
   // Esc。塞ぐ段では止める
   dialog.addEventListener('cancel', (e) => {
@@ -311,7 +343,8 @@ export function setupAccount(): void {
       level: Number(data.level ?? 0),
       cohort: (data.cohort as User['cohort']) ?? { code, name: '', kind: '' },
     };
-    saveId.textContent = pending.id;
+    // 控えるのは表示名とパスワード。ログインはこの2つで行う（第14.4節）
+    saveId.textContent = pending.displayName;
     savePass.textContent = groupPasscode(String(data.passcode ?? ''));
     regCode.value = '';
     regName.value = '';
@@ -329,20 +362,20 @@ export function setupAccount(): void {
       dialog.close();
       return;
     }
-    // 小窓を閉じるかどうかは entered が決める。段4を出すなら開けたままにする
     paint(user);
     void entered(user);
   });
 
-  /* --- 段3: 入る --------------------------------------------------- */
+  /* --- 段3: ログイン ---------------------------------------------- */
 
   loginForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     clearDeny();
-    // 紙から打ち直すので、空白は落としてから送る
+    // 紙から打ち直すので、空白は落としてから送る。`id` の中身は表示名（u_ で始まれば
+    // 利用者ID）。どちらとして引くかはサーバが決める（第14.4節）
     const id = loginId.value.trim();
     const passcode = loginPass.value.replace(/\s/g, '');
-    if (id === '') return deny('uid', '利用者IDを入れてください。');
+    if (id === '') return deny('uid', '表示名を入れてください。');
     if (passcode === '') return deny('pass', 'パスワードを入れてください。');
 
     loginSubmit.disabled = true;
@@ -361,34 +394,7 @@ export function setupAccount(): void {
     void entered(user);
   });
 
-  /* --- 段4: この端末に残っている記録（第6.1節） -------------------- */
-
-  carryYes.addEventListener('click', async () => {
-    const user = carrying;
-    carrying = null;
-    if (!user) return dialog.close();
-    carryYes.disabled = true;
-    carryNo.disabled = true;
-    // 手元のものを全部「未送信」に戻してから送る。印の付いたまま引き継ぐと、
-    // 入る前に貯めた分が一度もサーバへ行かない
-    await store.claim(user.id);
-    await store.flush();
-    dialog.close();
-    await pull();
-  });
-
-  carryNo.addEventListener('click', async () => {
-    const user = carrying;
-    carrying = null;
-    if (!user) return dialog.close();
-    carryYes.disabled = true;
-    carryNo.disabled = true;
-    await store.reset(user.id);
-    dialog.close();
-    await pull();
-  });
-
-  /* --- 節を開いたときに1回だけ引く（第5.6節） ---------------------- */
+  /* --- ページを開いたときに1回だけ引く（第5.6節・第14.1節） ------- */
 
   void fetch('/api/me')
     .then((res) => res.json())

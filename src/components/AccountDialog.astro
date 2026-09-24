@@ -1,0 +1,117 @@
+---
+/**
+ * アカウントの小窓（20-platform.md 第5.6節・第14.1節）。
+ *
+ * Base.astro が全ページに置く。右上のアカウント（`#kit-acct-head`、置き場所は Base.astro）の
+ * 塗り替えと小窓の開け閉めは src/lesson/account.ts が受け持つ。
+ *
+ * 小窓は3つの段を1つの `<dialog>` に入れ、`hidden` で出し入れする。
+ * （4つ目の段「この端末に残っている記録」は第14.5節で取り除いた。）
+ * **段2（控える）は閉じる道を塞いである。**パスワードがこの一度しか出ないため。
+ * × を置かず、`Esc` と背景も account.ts で止める。
+ */
+---
+
+<dialog class="kit-acct" id="kit-acct" aria-label="アカウント">
+  <div class="kit-acct__panel">
+    <!-- 段1: 登録 -->
+    <section data-acct-stage="register">
+      <h2 class="kit-acct__title">新規登録</h2>
+      <p class="kit-acct__note">
+        招待コードと表示名だけで登録できます。表示名はログインに使うので、ほかの人と同じ名前は使えません。学籍番号を入れてください。表示名は他の学習者には見えず、運営にだけ見えます。
+      </p>
+      <form id="kit-acct-reg-form" novalidate>
+        <div class="kit-acct__field">
+          <label class="kit-acct__lab" for="kit-acct-code">招待コード</label>
+          <input
+            class="kit-acct__in kit-acct__in--mono"
+            id="kit-acct-code"
+            type="text"
+            autocapitalize="characters"
+            autocomplete="off"
+            autocorrect="off"
+            spellcheck="false"
+          />
+          <p class="kit-acct__deny" data-acct-deny="code"></p>
+        </div>
+        <div class="kit-acct__field">
+          <label class="kit-acct__lab" for="kit-acct-name">表示名</label>
+          <input
+            class="kit-acct__in"
+            id="kit-acct-name"
+            type="text"
+            maxlength="40"
+            autocomplete="off"
+          />
+          <p class="kit-acct__deny" data-acct-deny="name"></p>
+        </div>
+        <div class="kit-ex__bar">
+          <button class="kit-btn kit-btn--strong" id="kit-acct-reg-go" type="submit">登録する</button>
+          <button class="kit-btn" type="button" data-acct-cancel>やめる</button>
+        </div>
+      </form>
+    </section>
+
+    <!-- 段2: 控える。閉じる手は「控えました」だけ -->
+    <section data-acct-stage="save" hidden>
+      <h2 class="kit-acct__title">控えてください</h2>
+      <p class="kit-acct__note">
+        パスワードが出るのはこの一度だけです。別の端末でログインするときに使いますので、紙に書き写してください。忘れたときは運営が作り直します。
+      </p>
+      <div class="kit-acct__field">
+        <p class="kit-acct__lab">表示名</p>
+        <p class="kit-acct__uid" id="kit-acct-made-id"></p>
+      </div>
+      <div class="kit-acct__field">
+        <p class="kit-acct__lab">パスワード</p>
+        <p class="kit-acct__pass" id="kit-acct-made-pass"></p>
+      </div>
+      <div class="kit-ex__bar">
+        <button class="kit-btn kit-btn--strong" id="kit-acct-saved" type="button">控えました</button>
+      </div>
+    </section>
+
+    <!-- 段3: ログイン。欄は表示名とパスワード（第14.4節）。u_ で始まる入力は利用者IDとして受ける -->
+    <section data-acct-stage="login" hidden>
+      <h2 class="kit-acct__title">ログイン</h2>
+      <p class="kit-acct__note">登録したときに控えた表示名とパスワードを入れてください。</p>
+      <form id="kit-acct-login-form" novalidate>
+        <div class="kit-acct__field">
+          <label class="kit-acct__lab" for="kit-acct-uid">表示名</label>
+          <input
+            class="kit-acct__in"
+            id="kit-acct-uid"
+            type="text"
+            maxlength="40"
+            autocapitalize="off"
+            autocomplete="off"
+            autocorrect="off"
+            spellcheck="false"
+          />
+          <p class="kit-acct__deny" data-acct-deny="uid"></p>
+        </div>
+        <div class="kit-acct__field">
+          <label class="kit-acct__lab" for="kit-acct-pass">パスワード</label>
+          <input
+            class="kit-acct__in kit-acct__in--mono"
+            id="kit-acct-pass"
+            type="text"
+            inputmode="numeric"
+            autocomplete="off"
+            spellcheck="false"
+          />
+          <p class="kit-acct__deny" data-acct-deny="pass"></p>
+        </div>
+        <div class="kit-ex__bar">
+          <button class="kit-btn kit-btn--strong" id="kit-acct-login-go" type="submit">ログイン</button>
+          <button class="kit-btn" type="button" data-acct-cancel>やめる</button>
+        </div>
+      </form>
+    </section>
+  </div>
+</dialog>
+
+<script>
+  import { setupAccount } from '../lesson/account';
+  setupAccount();
+</script>

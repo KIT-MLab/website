@@ -1,10 +1,15 @@
 ---
 import '../styles/tokens.css';
+import '../styles/lesson-tokens.css';
+import '../styles/account.css';
+import AccountDialog from '../components/AccountDialog.astro';
 
 interface Props {
   title: string;
+  /** 節のページだけ、マストヘッドの代わりに細い帯を上に固定する（20-platform.md 第14.2節） */
+  bar?: boolean;
 }
-const { title } = Astro.props;
+const { title, bar = false } = Astro.props;
 
 const NAV = [
   { href: '/', label: 'ホーム' },
@@ -32,19 +37,38 @@ const here = Astro.url.pathname.replace(/\/?$/, '/');
     />
   </head>
   <body>
-    <header class="masthead">
-      <div class="wrap">
-        <a class="masthead__name" href="/">KIT 機械学習プロジェクト</a>
-        <p class="masthead__full">AI・機械学習を全課程で0から学べるプロジェクト</p>
-        <nav class="masthead__links" aria-label="サイト内メニュー">
-          {NAV.map((item) => (
-            <a href={item.href} aria-current={here === item.href ? 'page' : undefined}>
-              {item.label}
-            </a>
-          ))}
-        </nav>
-      </div>
-    </header>
+    {/* 右上のアカウント（第14.1節）。中身は src/lesson/account.ts が /api/me の答えを見てから塗る。
+        それまでは空のまま置く（ログインしている人に「新規登録」を一瞬見せないため） */}
+    {
+      bar ? (
+        <header class="topbar">
+          <a class="topbar__name" href="/">KIT 機械学習プロジェクト</a>
+          <nav class="topbar__links" aria-label="サイト内メニュー">
+            {NAV.map((item) => (
+              <a href={item.href} aria-current={item.href !== '/' && here.startsWith(item.href) ? 'true' : undefined}>
+                {item.label}
+              </a>
+            ))}
+          </nav>
+          <div class="acct" id="kit-acct-head" />
+        </header>
+      ) : (
+        <header class="masthead">
+          <div class="acct masthead__acct" id="kit-acct-head" />
+          <div class="wrap">
+            <a class="masthead__name" href="/">KIT 機械学習プロジェクト</a>
+            <p class="masthead__full">AI・機械学習を全課程で0から学べるプロジェクト</p>
+            <nav class="masthead__links" aria-label="サイト内メニュー">
+              {NAV.map((item) => (
+                <a href={item.href} aria-current={here === item.href ? 'page' : undefined}>
+                  {item.label}
+                </a>
+              ))}
+            </nav>
+          </div>
+        </header>
+      )
+    }
 
     <main class="wrap">
       <slot />
@@ -53,6 +77,8 @@ const here = Astro.url.pathname.replace(/\/?$/, '/');
     <footer class="foot">
       <div class="wrap">京都工芸繊維大学 KIT 機械学習プロジェクト</div>
     </footer>
+
+    <AccountDialog />
   </body>
 </html>
 
@@ -83,10 +109,111 @@ const here = Astro.url.pathname.replace(/\/?$/, '/');
     outline-offset: 3px;
   }
 
+  /* 押せるものはマウスを乗せたら見た目を変える（20-platform.md 第14.6節）。
+     文字のリンクは地を --l-chip にする。:where で詳しさを0にしてあるので、
+     自分の hover を持つ部品（ボタンの形のリンクなど）はそちらが勝つ */
+  :where(a[href]):hover {
+    background-color: var(--l-chip);
+  }
+
   /* マストヘッド中央（DECISIONS.md 第1次トークン: ナビ形式） */
   .masthead {
+    position: relative;
     border-bottom: var(--rule);
     padding-top: calc(22px * var(--sp));
+  }
+
+  /* 右上のアカウント（第14.1節）。見出しの組み方は変えず、右上の角に重ねるだけ */
+  .masthead__acct {
+    position: absolute;
+    top: 12px;
+    right: 18px;
+    z-index: 20;
+  }
+
+  @media (max-width: 860px) {
+    /* 狭い画面ではサイト名と重なるので、名前の上に右寄せで1行置く。
+       /api/me の答えを待つ間も高さを取っておき、塗ったときに見出しが下にずれないようにする */
+    .masthead__acct {
+      position: relative;
+      top: auto;
+      right: auto;
+      min-height: 30px;
+      margin: 0 16px 6px;
+    }
+  }
+
+  /* --- 節のページの帯（第14.2節。試作の案A「帯を固定」） --------- */
+  .topbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 20;
+    box-sizing: content-box;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    padding: 0 18px;
+    background: var(--l-paper);
+    border-bottom: 3px double var(--l-strong);
+  }
+
+  .topbar__name {
+    flex: 0 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-family: var(--font-head);
+    font-weight: 900;
+    font-size: 16px;
+    color: var(--l-ink);
+    text-decoration: none;
+  }
+
+  .topbar__links {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 14px;
+    overflow: hidden;
+    font-size: 13px;
+  }
+
+  .topbar__links a {
+    color: var(--l-ink);
+    text-decoration: none;
+    white-space: nowrap;
+  }
+
+  .topbar__links a[aria-current] {
+    border-bottom: 3px solid var(--color-accent);
+  }
+
+  .topbar .acct {
+    flex: 0 0 auto;
+    margin-left: auto;
+  }
+
+  @media (max-width: 860px) {
+    .topbar {
+      gap: 10px;
+      padding: 0 12px;
+    }
+
+    .topbar__links {
+      display: none;
+    }
+
+    /* 幅375pxでサイト名とボタン2つが1行に収まるように、ボタンの横の余白だけ詰める */
+    .topbar .acct {
+      gap: 6px;
+    }
+
+    .topbar .site-btn--small {
+      padding-inline: 8px;
+    }
   }
 
   .masthead__name {
