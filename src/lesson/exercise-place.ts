@@ -18,7 +18,7 @@ export const STAGE: Record<string, string> = {
   modify: '練習問題',
   build: '演習問題',
   type: '練習問題',
-  choose: '練習問題',
+  choose: '確認問題',
 };
 
 type GenLesson = { title?: string; exerciseIds?: string[]; exercises?: Record<string, { kind?: string }> };

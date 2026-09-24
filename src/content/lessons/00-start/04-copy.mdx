@@ -40,28 +40,13 @@ terms: [ドラッグ]
 
 ドラッグは、マウスのボタンを押したまま動かして離す操作です。この動きでも、好きな範囲を選べます。
 
-打ち直す前に、まず `Ctrl+Z` を押すと安心です。
+打ち直す前に、まず `Ctrl+Z` を押すと安心です。下の入力欄に試しに1文字打ってから `Ctrl+Z` を押すと、その文字が消えて元に戻ります。
 
 <Level0 title="行をまとめて選ぶ">
 行の左はしをクリックしてから、下にドラッグすると、複数の行を選べます。行の途中を3回続けてクリックしても、その行を選べます。
 </Level0>
 
 {/* 課題 */}
-
-<Exercise
-  id="start-04-copy-2"
-  kind="type"
-  requirePaste
-  tests={[{ kind: 'text', expect: `2026年度前期案内資料.pdf` }]}
-  hints={['コピーと貼り付けを使わないと、この問題は通りません。']}
-  mistakes={[]}
->
-次の1行を、コピーと貼り付けで入力欄に入れてください。
-
-```text
-2026年度前期案内資料.pdf
-```
-</Exercise>
 
 <Exercise
   id="start-04-copy-3"
@@ -91,21 +76,6 @@ https://example.com/data.csv
 ```text
 月 水 金
 ```
-</Exercise>
-
-<Exercise
-  id="start-04-copy-5"
-  kind="choose"
-  tests={[{ kind: 'choice', correct: 1 }]}
-  hints={[]}
-  mistakes={[]}
->
-書き間違えた直後に `Ctrl+Z` を押すと、何が起きますか。
-
-- 直前の操作が1つ戻る
-- すべての入力が消える
-- 選んだ範囲がコピーされる
-- 何も起きない
 </Exercise>
 
 {/* つながり */}

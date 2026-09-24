@@ -41,7 +41,7 @@ function fail(where, message) {
 }
 
 /** 画面に出す名前。落ちたときのメッセージを読む人向け（10-lesson-and-writing.md 第3章） */
-const STAGE = { trace: '例題', modify: '練習問題', build: '演習問題', type: '練習問題', choose: '練習問題' };
+const STAGE = { trace: '例題', modify: '練習問題', build: '演習問題', type: '練習問題', choose: '確認問題' };
 
 /**
  * 模範解答の .py が要る型。
