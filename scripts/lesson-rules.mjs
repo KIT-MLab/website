@@ -47,11 +47,14 @@ export const PRACTICE_EXERCISE_KINDS = ['build'];
  */
 export const LESSON_LINK_PATH = /^\d\d[a-z0-9-]*\/\d\d-[a-z0-9-]+$/;
 
-/** 課題の型。type と choose は第0章だけで使える（第11.4節） */
+/** 課題の型（第11.4節） */
 /* 「例題」（trace）は2026-09-21に廃止した。示された通りに打たせるだけで、
-   すぐ上の <Run> と同じコードを書き写させる課題になっていた（第3章）。例は <Run> である。 */
-export const EXERCISE_KINDS = ['modify', 'build'];
-export const START_EXERCISE_KINDS = [...EXERCISE_KINDS, 'type', 'choose'];
+   すぐ上の <Run> と同じコードを書き写させる課題になっていた（第3章）。例は <Run> である。
+   type と choose はもと第0章だけだった。2026-09-24 に第1章以降でも使えるようにした。
+   理解を確かめる問い（確認問題）と、手で計算した数を打たせる問い（第9.4節の行列の積の1マス）のため。
+   「組む」が節ごとに1問以上という決まり（検査15）は変えない */
+export const EXERCISE_KINDS = ['modify', 'build', 'type', 'choose'];
+export const START_EXERCISE_KINDS = EXERCISE_KINDS;
 
 /**
  * 第3.8節 章の合計で保つぶん。節ごとの下限を外した代わりに、ここで総量を担保する。

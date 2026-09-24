@@ -77,4 +77,7 @@ export const PYTHON_TOOLS = [
   { name: '転置 .T',        in: 'python-08-transpose', re: /\.T\b/ },
   { name: 'arange / linspace / zeros', in: 'python-08-range', re: /np\.(arange|linspace|zeros)\s*\(/ },
   { name: 'reshape',        in: 'python-08-reshape',  re: /\.reshape\s*\(/ },
+
+  // 第9章 ベクトルと行列（40-part2-curriculum.md 第2節）。内積も行列の積も同じ @ で書く
+  { name: '内積・行列の積 @', in: 'python-09-dot',     re: /[\w)\]]\s*@\s*[\w([]/ },
 ];
