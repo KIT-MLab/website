@@ -96,6 +96,22 @@ const bySize = {};
 for (const r of rows) bySize[r.groups.length] = (bySize[r.groups.length] ?? 0) + 1;
 console.log(`道具の数ごとの問数: ${Object.entries(bySize).map(([n, c]) => `${n}個 ${c}問`).join(' / ')}`);
 
+/* 主な道具を3つ以上組み合わせているか（20-platform.md 第15.1節、2026-09-24）。
+   input・print・f文字列はほぼ全問で使うので数えない */
+const NOT_MAIN = new Set(['input', 'print', 'f文字列']);
+const mainCount = (r) => r.groups.filter((g) => !NOT_MAIN.has(g)).length;
+console.log('\n■ 主な道具を3つ以上組み合わせている課題（input・print・f文字列は数えない）');
+const chapters = [...new Set(rows.map((r) => r.chapter))];
+for (const ch of chapters) {
+  const inCh = rows.filter((r) => r.chapter === ch);
+  console.log(`  ${ch.padEnd(5, '　')} ${inCh.filter((r) => mainCount(r) >= 3).length} / ${inCh.length}問`);
+}
+const shortPractice = rows.filter((r) => r.chapter.startsWith('練習編') && mainCount(r) < 3);
+if (shortPractice.length > 0) {
+  console.log('  練習編で、主な道具が3つに届かない問題:');
+  for (const r of shortPractice) console.log(`    ${r.id}  ${r.groups.filter((g) => !NOT_MAIN.has(g)).join(', ')}`);
+}
+
 console.log('\n■ 課題ごとの道具');
 const idWidth = Math.max(...rows.map((r) => r.id.length));
 for (const r of rows) console.log(`  ${r.chapter.padEnd(5, '　')} ${r.id.padEnd(idWidth)}  ${r.groups.join(', ')}`);
