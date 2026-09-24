@@ -1,0 +1,86 @@
+---
+id: python-11-frequency
+chapter: 11-probability
+title: 記録の割合を確率とみなす
+minutes: 15
+terms: [確率]
+---
+
+{/* 困る例 */}
+
+過去30日の天気の記録があります。「雨の日が多かった」とは言えても、次に雨になりやすいかを数で比べられません。
+
+{/* やってみる */}
+
+次のコードの ▶ を押してください。
+
+<Run
+  code={`records = ["晴れ", "晴れ", "雨", "曇り", "雨", "晴れ", "雨", "晴れ", "雨", "曇り"]
+
+count = 0
+for day in records:
+    if day == "雨":
+        count = count + 1
+
+print(count / len(records))`}
+  out={`0.4`}
+/>
+
+{/* 説明 */}
+
+4〜6行目は、`records` を1つずつ調べ、`"雨"` と等しい要素の数を `count` に数えています。8行目で、その数を記録の総数で割っています。この割合を相対度数と呼び、確率とみなします。
+
+`count` は0以上 `len(records)` 以下なので、割った値は必ず0以上1以下になります。確率がこの範囲に収まることは、この先の節でも使う性質です。
+
+{/* 課題 */}
+
+<Exercise
+  id="python-11-frequency-m1"
+  kind="modify"
+  starter={`records = ["晴れ", "晴れ", "雨", "曇り", "雨", "晴れ", "雨", "晴れ", "雨", "曇り"]
+
+count = 0
+for day in records:
+    if day == "雨":
+        count = count + 1
+
+print(count / len(records))`}
+  tests={[{ kind: 'stdout' }]}
+  hints={[
+    '"雨"の個数を10で割った値が0.7になる並びを考えてください。',
+  ]}
+  mistakes={[]}
+>
+`0.7` と表示されるように、1行目の `records` を書き換えてください。
+</Exercise>
+
+<Exercise
+  id="python-11-frequency-b1"
+  kind="build"
+  stdin={`6
+晴れ
+晴れ
+雨
+雨
+雨
+曇り`}
+  forbid={['for value']}
+  tests={[
+    { kind: 'stdout', stdin: `6\n晴れ\n晴れ\n雨\n雨\n雨\n曇り\n` },
+    { kind: 'stdout', stdin: `3\n雨\n雨\n雨\n` },
+    { kind: 'stdout', stdin: `4\n晴れ\n曇り\n晴れ\n曇り\n` },
+  ]}
+  hints={[
+    '記録の数だけ input() を繰り返し読み、天気ごとに数えるcountを3つ用意します。',
+    '割合は、それぞれの数を記録の総数で割った値です。',
+  ]}
+  mistakes={[]}
+>
+入力欄の1行目を記録の日数として読み取ってください。続けてその日数ぶん、天気(`晴れ`・`雨`・`曇り`のいずれか)を1行ずつ読み取ります。
+
+それぞれの天気の割合を、小数第2位まで丸めて `晴れの確率0.33` の形で1行ずつ表示してください。順番は晴れ・雨・曇りとします。
+</Exercise>
+
+{/* つながり */}
+
+割合として確率を出せるようになりました。次の節では、正の数の並びを合計が1になる分布に直します。

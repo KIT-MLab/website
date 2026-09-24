@@ -96,3 +96,4 @@
 | 分散 | variance | 値が平均からどれだけ散らばっているかを表す数。平均との差の2乗の平均。 | 11-probability |
 | 標準偏差 | standard deviation | 分散の平方根。もとの値と同じ単位で散らばりを表す。 | 11-probability |
 | 標準化 | standardization | 平均との差を標準偏差で割って、平均0・標準偏差1の値に直すこと。 | 11-probability |
+| 偏差値 | standard score | 標準化した値を10倍して50を足したもの。平均が50、標準偏差が10になる。 | 11-probability |

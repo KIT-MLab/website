@@ -1,0 +1,82 @@
+---
+id: python-11-distribution
+chapter: 11-probability
+title: 分布に直す
+minutes: 15
+terms: [分布]
+---
+
+{/* 困る例 */}
+
+3人の候補に付けた点数が7, 2, 1のとき、それぞれの信頼度を比べたいですが、点数のままでは合計が1になりません。
+
+{/* やってみる */}
+
+次のコードの ▶ を押してください。
+
+<Run
+  code={`import numpy as np
+
+scores = np.array([7, 2, 1])
+total = np.sum(scores)
+dist = scores / total
+print(dist)
+print(round(np.sum(dist), 1))`}
+  out={`[0.7 0.2 0.1]
+1.0`}
+/>
+
+{/* 説明 */}
+
+3行目で `total` に点数の合計を求め、4行目でそれぞれの点数を `total` で割っています。分けた値はすべて0以上1以下になり、合計すると1になります。合計が1になるこの並びを分布と呼びます。
+
+点数がすべて正の数なら、合計で割れば分布になります。負の数を含む並びでは、この方法は使えません。
+
+{/* 課題 */}
+
+<Exercise
+  id="python-11-distribution-m1"
+  kind="modify"
+  starter={`import numpy as np
+
+scores = np.array([7, 2, 1])
+total = np.sum(scores)
+dist = scores / total
+print(dist)
+print(round(np.sum(dist), 1))`}
+  tests={[{ kind: 'stdout' }]}
+  hints={[
+    '合計が10になる3つの正の整数を探してください。',
+  ]}
+  mistakes={[]}
+>
+`[0.5 0.3 0.2]` と `1.0` が表示されるように、3行目の `scores` を書き換えてください。
+</Exercise>
+
+<Exercise
+  id="python-11-distribution-b1"
+  kind="build"
+  stdin={`3
+5
+3
+2`}
+  forbid={[]}
+  tests={[
+    { kind: 'stdout', stdin: `3\n5\n3\n2\n` },
+    { kind: 'stdout', stdin: `2\n4\n4\n` },
+    { kind: 'stdout', stdin: `4\n1\n1\n1\n1\n` },
+  ]}
+  hints={[
+    '正の数の並びを受け取り、合計で割った配列を返す関数を定義します。',
+    '入力欄の1行目を個数として読み取り、その個数ぶん整数を読み取って配列にします。',
+  ]}
+  mistakes={[]}
+>
+正の数の並びを受け取り、分布に直して返す関数 `distribution` を定義してください。
+
+入力欄の1行目を並びの個数として読み取り、続けてその個数ぶんの正の整数を読み取って配列にしてください。`distribution` を呼び出した結果を、小数第2位まで丸めて配列のまま1行目に表示してください。続けて、その合計を小数第1位まで丸めて2行目に表示してください。
+</Exercise>
+
+{/* つながり */}
+
+正の数の並びを分布に直せるようになりました。次の節では、負の数を含む並びを分布に直す方法を扱います。

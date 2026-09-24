@@ -1,0 +1,111 @@
+---
+id: python-11-spread
+chapter: 11-probability
+title: 散らばりを数で表す
+minutes: 18
+terms: [分散, 標準偏差]
+---
+
+{/* 困る例 */}
+
+平均が同じ70点の2クラスでも、点数の散らばり方は違います。全員70点のクラスと、40点から100点まで散らばるクラスを、平均だけでは区別できません。
+
+{/* やってみる */}
+
+次のコードの ▶ を押してください。
+
+<Run
+  code={`import numpy as np
+
+class_a = np.array([70, 70, 70, 70])
+class_b = np.array([40, 70, 70, 100])
+print(class_a.mean(), class_b.mean())
+
+variance = np.mean((class_b - class_b.mean()) ** 2)
+print(round(variance, 1))
+print(round(np.var(class_b), 1))
+print(round(np.std(class_b), 1))`}
+  out={`70.0 70.0
+450.0
+450.0
+21.2`}
+/>
+
+{/* 説明 */}
+
+5行目で、2つのクラスの平均が同じ70.0だと分かります。点数の並び方は違うのに、平均だけでは区別できません。
+
+7行目は、平均との差を2乗して平均した値です。これを分散(variance)と呼びます。9行目の `np.var` も同じ値になります。
+
+10行目の `np.std` は分散の平方根で、標準偏差(standard deviation)と呼びます。`np.var` と `np.std` は、数Iと同じくデータの個数で割った値です。
+
+{/* よくある間違い */}
+
+<Mistake
+  id="spread-mean-no-call"
+  code={`import numpy as np
+class_b = np.array([40, 70, 70, 100])
+diff = class_b - class_b.mean ** 2
+print(diff)`}
+  error={`TypeError: unsupported operand type(s) for ** or pow(): 'builtin_function_or_method' and 'int'`}
+>
+`class_b.mean` はかっこを付けないと呼び出されず、関数そのものを指します。`class_b.mean() ** 2` のように、かっこを先に付けてください。
+</Mistake>
+
+{/* 課題 */}
+
+<Exercise
+  id="python-11-spread-m1"
+  kind="modify"
+  starter={`import numpy as np
+
+class_a = np.array([70, 70, 70, 70])
+class_b = np.array([40, 70, 70, 100])
+print(class_a.mean(), class_b.mean())
+
+variance = np.mean((class_b - class_b.mean()) ** 2)
+print(round(variance, 1))
+print(round(np.var(class_b), 1))
+print(round(np.std(class_b), 1))`}
+  tests={[{ kind: 'stdout' }]}
+  hints={[
+    '平均が70のまま、散らばりだけを小さくする4つの数を探してください。',
+  ]}
+  mistakes={['spread-mean-no-call']}
+>
+`70.0 70.0`、`50.0`、`50.0`、`7.1` の順に表示されるように、4行目の `class_b` を書き換えてください。
+</Exercise>
+
+<Exercise
+  id="python-11-spread-b1"
+  kind="build"
+  stdin={`3
+80
+70
+90
+60
+50
+40
+70
+60
+80`}
+  forbid={['for value']}
+  tests={[
+    { kind: 'stdout', stdin: `3\n80\n70\n90\n60\n50\n40\n70\n60\n80\n` },
+    { kind: 'stdout', stdin: `1\n50\n60\n70\n` },
+    { kind: 'stdout', stdin: `2\n0\n0\n0\n100\n100\n100\n` },
+  ]}
+  hints={[
+    '入力はreshapeで人数行3列の表にします(8.5節)。',
+    '科目ごとの標準偏差は、std(axis=0)で一度に出せます(7.2節・11.5節)。',
+  ]}
+  mistakes={['spread-mean-no-call']}
+>
+入力欄の1行目を人数として読み取り、続けて人数×3科目の点数を読み取ってください。読み取った値はreshapeで人数行3列の表にしてください。
+
+3科目それぞれの標準偏差を、小数第1位まで丸めて配列のまま表示してください。
+</Exercise>
+
+{/* つながり */}
+
+散らばりを分散と標準偏差で表せるようになりました。次の節では、点数表に戻って標準化を扱います。
