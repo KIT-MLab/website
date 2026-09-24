@@ -13,6 +13,7 @@ export const CHAPTER_TITLES: Record<string, string> = {
   '05-function': '第5章 まとめて名前を付ける',
   '06-error': '第6章 エラーを読む',
   '07-array': '第7章 数をまとめて扱う',
+  '08-table': '第8章 表の形を扱う',
 };
 
 export function chapterTitle(chapter: string): string {

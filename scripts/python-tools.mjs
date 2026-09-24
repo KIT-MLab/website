@@ -69,4 +69,12 @@ export const PYTHON_TOOLS = [
      用語集の検査18 は章の単位でしか見ないので、章の中の順番は台帳でしか見られない */
   { name: '2次元配列',       in: 'python-07-shape',    re: /\[\s*\[/ },
   { name: 'スライス',        in: 'python-07-select',   re: /\[[^\]]*:[^\]]*\]/ },
+
+  // 第8章 表の形を扱う（numpy）。形の違う配列どうしの計算（8.3）は見分けが付かないので載せない
+  /* 名前の直後の [ ] の中にコンマがあるもの。a[1, 2] や a[:, 0]。
+     np.array([[1, 2], [3, 4]]) は [ の直前が ( か空白なので当たらない */
+  { name: '行と列の添字 [i, j]', in: 'python-08-index',  re: /\w\[[^\[\]]*,[^\[\]]*\]/ },
+  { name: '転置 .T',        in: 'python-08-transpose', re: /\.T\b/ },
+  { name: 'arange / linspace / zeros', in: 'python-08-range', re: /np\.(arange|linspace|zeros)\s*\(/ },
+  { name: 'reshape',        in: 'python-08-reshape',  re: /\.reshape\s*\(/ },
 ];
