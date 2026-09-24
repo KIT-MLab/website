@@ -17,7 +17,12 @@ import {
   BANNED,
   BANNED_CHARS,
   EXERCISE_KINDS,
+  LESSON_LINK_PATH,
   LIMITS,
+  PRACTICE_CHAPTER,
+  PRACTICE_EXERCISE_KINDS,
+  PRACTICE_SECTION_OPTIONAL,
+  PRACTICE_SECTION_ORDER,
   SECTION_OPTIONAL,
   SECTION_ORDER,
   START_CHAPTER,
@@ -102,6 +107,10 @@ for (const file of files) {
   /* 第0章だけの例外（20-platform.md 第11.5節）。chapter がちょうど 00-start のときだけ。
      ほかの章の検査は1つも緩めない。 */
   const isStart = fm.chapter === START_CHAPTER;
+  /* 練習編だけの例外（20-platform.md 第15.1節）。chapter が 04p-practice1 の形のときだけ。
+     新しいことを教えないので、「はじめに」の1段落と「組む」課題だけを置く。
+     緩めるのは節の形（検査1・2・3・4・8）だけで、文の長さ・禁止表現・道具の台帳などはそのまま見る */
+  const isPractice = PRACTICE_CHAPTER.test(String(fm.chapter ?? ''));
   for (const key of ['id', 'chapter', 'title', 'minutes']) {
     if (fm[key] === undefined || fm[key] === '') add('frontmatter', 1, `frontmatter に ${key} がありません`);
   }
@@ -157,17 +166,27 @@ for (const file of files) {
 
   // --- 検査1 要素の順序 ---
   // 第0章だけ「よくある間違い」を抜いた並びで見る（第11.7節）。ほかの章は SECTION_ORDER のまま
-  const order = isStart ? START_SECTION_ORDER : SECTION_ORDER;
+  // 練習編は「はじめに」「課題」「つながり」の並びで見る（第15.1節）。「課題」は無くてはならない
+  const order = isStart ? START_SECTION_ORDER : isPractice ? PRACTICE_SECTION_ORDER : SECTION_ORDER;
+  const optional = isPractice ? PRACTICE_SECTION_OPTIONAL : SECTION_OPTIONAL;
   const names = lesson.markers.map((m) => m.name);
   const known = names.filter((n) => order.includes(n));
   for (const n of names) {
     if (order.includes(n)) continue;
     const line = lesson.markers.find((m) => m.name === n).line;
     if (isStart && SECTION_ORDER.includes(n)) add(1, line, `第0章に「${n}」は置きません`);
+    else if (isPractice && SECTION_ORDER.includes(n)) add(1, line, `練習編に「${n}」は置きません。「はじめに」と「課題」だけです（第15.1節）`);
     else add(1, line, `知らない要素のマーカーです: ${n}`);
   }
+  // 練習編の「はじめに」は1段落（第15.1節）。ここに説明を足し始めると、教えない章でなくなる
+  if (isPractice && known.includes('はじめに')) {
+    const intro = lesson.bodyParagraphs.filter((p) => p.section === 'はじめに').length;
+    if (intro !== 1) {
+      add(1, lesson.markers.find((m) => m.name === 'はじめに').line, `練習編の「はじめに」は1段落です。いまは${intro}段落（第15.1節）`);
+    }
+  }
   for (const required of order) {
-    if (SECTION_OPTIONAL.has(required)) continue;
+    if (optional.has(required)) continue;
     if (!known.includes(required)) add(1, 1, `要素「${required}」のマーカーがありません`);
   }
   const dup = known.filter((n, i) => known.indexOf(n) !== i);
@@ -183,7 +202,10 @@ for (const file of files) {
   // 第0章は Python を動かさないので <Run> を置かない（第11.5節）
   const runTags = lesson.components.filter((c) => c.name === 'Run');
   const explain = lesson.sections.find((s) => s.name === '説明');
-  if (runTags.length === 0) {
+  // 練習編は「やってみる」を置かないので <Run> も置かない（第15.1節）。動かすのは読み手の手である
+  if (isPractice) {
+    for (const run of runTags) add(2, run.line, '練習編に <Run> は置きません（第15.1節）');
+  } else if (runTags.length === 0) {
     if (!isStart) add(2, 1, '<Run> がありません。実行できるコードと実行結果を「やってみる」に置いてください');
   } else if (explain && runTags[0].start > explain.start) {
     add(2, runTags[0].line, '<Run> が「説明」より後ろにあります');
@@ -198,6 +220,9 @@ for (const file of files) {
   // パソコンの操作を習いに来た人に出す相手がいない
   if (isStart) {
     for (const m of lesson.mistakes) add(3, m.line, '第0章に <Mistake> は置きません');
+  } else if (isPractice) {
+    // 練習編は「よくある間違い」を置かない（第15.1節）。参照する節へはヒントのリンクで戻す
+    for (const m of lesson.mistakes) add(3, m.line, '練習編に <Mistake> は置きません（第15.1節）');
   } else if (lesson.mistakes.length > LIMITS.mistakeMax) {
     add(3, 1, `<Mistake> は${LIMITS.mistakeMax}個までです。いまは${lesson.mistakes.length}個`);
   }
@@ -237,18 +262,24 @@ for (const file of files) {
   const hands = isStart ? directs : builds;
   const nobuild = typeof fm.nobuild === 'string' ? fm.nobuild.trim() : '';
   const handName = isStart ? '「打つ」「選ぶ」' : '「組む」';
-  if (hands.length === 0 && !nobuild) {
+  if (isPractice && hands.length === 0) {
+    add(15, 1, '練習編には「組む」課題を1問以上置きます（第15.1節）');
+  } else if (hands.length === 0 && !nobuild) {
     add(15, 1, `${handName}課題がありません。置くか、置かない理由を frontmatter の nobuild に書いてください（第3.8節）`);
   }
   if (hands.length > 0 && nobuild) {
     add(15, 1, `nobuild に理由がありますが、${handName}課題が${hands.length}問あります。どちらかが古いままです`);
   }
+  // 練習編は課題そのものが中身なので、「組む」を置かない理由は立たない（第15.1節）
+  if (isPractice && nobuild) add(15, 1, '練習編に nobuild は置けません。「組む」課題を1問以上置いてください（第15.1節）');
   const allowedKinds = isStart ? START_EXERCISE_KINDS : EXERCISE_KINDS;
   for (const e of ex) {
     if (!e.id) add(4, e.line, '<Exercise> に id がありません');
     else if (seenExerciseIds.has(e.id)) add(4, e.line, `課題の id が重複しています: ${e.id}`);
     else seenExerciseIds.set(e.id, rel);
-    if (!allowedKinds.includes(e.kind)) add(4, e.line, `kind は ${allowedKinds.join(' / ')} のどれかです: ${e.kind}`);
+    // 練習編の課題はすべて「組む」（第15.1節）。直す場所を渡すと、どの道具を使うかを教えてしまう
+    if (isPractice && !PRACTICE_EXERCISE_KINDS.includes(e.kind)) add(4, e.line, `練習編の課題はすべて「組む」（kind="build"）です: ${e.kind}（第15.1節）`);
+    else if (!allowedKinds.includes(e.kind)) add(4, e.line, `kind は ${allowedKinds.join(' / ')} のどれかです: ${e.kind}`);
     if (e.kind === 'modify' && !e.starter) add(4, e.line, '「変える」課題には starter（動くコード）が要ります');
     if (e.kind === 'build' && e.starter) add(4, e.line, '「組む」課題にコードを渡してはいけません（starter を消してください）');
     if ((e.kind === 'type' || e.kind === 'choose') && e.starter) {
@@ -420,7 +451,8 @@ for (const file of files) {
   // 第0章は「説明より練習を主にする」ので 100〜400字に読み替える（第11.5節）
   const explainMin = isStart ? START_LIMITS.explainMin : LIMITS.explainMin;
   const explainMax = isStart ? START_LIMITS.explainMax : LIMITS.explainMax;
-  if (explainChars < explainMin || explainChars > explainMax) {
+  // 練習編は「説明」を置かない（第15.1節）。本文の上限（800字）はそのまま見る
+  if (!isPractice && (explainChars < explainMin || explainChars > explainMax)) {
     add(8, 1, `「説明」が${explainChars}字です（${explainMin}〜${explainMax}字）`);
   }
 
@@ -485,6 +517,26 @@ for (const file of files) {
     for (const w of DEFINING) {
       if (text.includes(w)) {
         add(13, l.line, `<Level0> に「${w}」があります。概念の説明は本文に書いてください。補足に書けるのは操作だけです`);
+      }
+    }
+  }
+
+  /* --- 検査20 ヒントと <Mistake> の本文の、節へのリンクの行き先が実在すること（20-platform.md 第15.2節） ---
+     `[第4.5節 while文](04-loop/05-while)` と書くと、その節へのリンクになる。無い節へのリンクを出荷しない。
+     ( ) の中が節の場所の形でないものは、リンクにならず文字のまま画面に出るので、それも落とす。 */
+  {
+    const places = [
+      ...ex.flatMap((e) => (Array.isArray(e.hints) ? e.hints : []).map((h) => [e.line, `${e.id} のヒント`, String(h)])),
+      ...lesson.mistakes.map((m) => [m.line, `<Mistake id="${m.id}">`, m.fix]),
+    ];
+    for (const [line, where, text] of places) {
+      for (const m of text.matchAll(/(?<!!)\[([^\]\n]+)\]\(([^)\n]*)\)/g)) {
+        const target = m[2];
+        if (!LESSON_LINK_PATH.test(target)) {
+          add(20, line, `${where}: リンクの行き先「${target}」が節の場所の形（04-loop/05-while）ではありません。リンクにならず文字のまま出ます`);
+        } else if (!existsSync(join(LESSONS_DIR, ...target.split('/')) + '.mdx')) {
+          add(20, line, `${where}: リンクの行き先の節がありません: ${target}`);
+        }
       }
     }
   }

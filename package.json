@@ -9,6 +9,7 @@
     "dev": "npm run build:tests && astro dev",
     "check:lessons": "node scripts/check-lessons.mjs",
     "build:tests": "node scripts/build-tests.mjs",
+    "report:combos": "node scripts/combos.mjs",
     "build": "npm run check:lessons && npm run build:tests && astro build",
     "preview": "astro preview",
     "astro": "astro",

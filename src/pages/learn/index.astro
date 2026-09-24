@@ -1,7 +1,7 @@
 ---
 import { getCollection } from 'astro:content';
 import Base from '../../layouts/Base.astro';
-import { chapterTitle, lessonHref } from '../../lesson/chapters';
+import { chapterTitle, lessonHref, practiceSectionLabel } from '../../lesson/chapters';
 
 const lessons = (await getCollection('lessons')).sort((a, b) => a.id.localeCompare(b.id));
 const chapters = [...new Set(lessons.map((l) => l.data.chapter))];
@@ -20,12 +20,14 @@ const chapters = [...new Set(lessons.map((l) => l.data.chapter))];
       chapters.map((ch) => (
         <div class="lesson-chapter">
           <h3>{chapterTitle(ch)}</h3>
-          <ol>
+          {/* 練習編は節を「練習1-2」と呼ぶ（20-platform.md 第15.1節）。番号を振るのは呼び方の側なので、
+              リストの 1. 2. は消す */}
+          <ol class={practiceSectionLabel(ch, 1) ? "is-practice" : undefined}>
             {lessons
               .filter((l) => l.data.chapter === ch)
-              .map((l) => (
+              .map((l, i) => (
                 <li>
-                  <a href={lessonHref(l.id)}>{l.data.title}</a>
+                  <a href={lessonHref(l.id)}>{[practiceSectionLabel(ch, i + 1), l.data.title].filter(Boolean).join(' ')}</a>
                   <span class="lesson-minutes">目安 {l.data.minutes} 分</span>
                 </li>
               ))}
@@ -73,6 +75,7 @@ const chapters = [...new Set(lessons.map((l) => l.data.chapter))];
   .lesson-chapter { margin: 16px 0; }
   .lesson-chapter h3 { font-size: 17px; border-bottom: var(--rule-thin); padding-bottom: 6px; margin-bottom: 8px; }
   .lesson-chapter ol { padding-left: 28px; margin: 0; }
+  .lesson-chapter ol.is-practice { list-style: none; }
   .lesson-chapter li { padding-bottom: 4px; }
   .lesson-chapter a { color: var(--color-ink); text-underline-offset: 4px; }
   .lesson-minutes { margin-left: 12px; font-size: 13px; color: var(--color-ink-2); }

@@ -31,6 +31,22 @@ export const START_CHAPTER = '00-start';
  */
 export const START_SECTION_ORDER = ['困る例', 'やってみる', '説明', '課題', 'つながり'];
 
+/**
+ * 練習編だけの例外（20-platform.md 第15.1節）。chapter が `04p-practice1` の形のときだけ。
+ * 新しいことを教えない章なので、「はじめに」の1段落と課題（すべて「組む」）だけを置く。
+ * 同じ形を src/lesson/chapters.ts の practiceNo も見ている。
+ */
+export const PRACTICE_CHAPTER = /^\d\dp-practice\d+$/;
+export const PRACTICE_SECTION_ORDER = ['はじめに', '課題', 'つながり'];
+export const PRACTICE_SECTION_OPTIONAL = new Set(['つながり']);
+export const PRACTICE_EXERCISE_KINDS = ['build'];
+
+/**
+ * ヒントなどに書く、節へのリンクの行き先（20-platform.md 第15.2節）。`04-loop/05-while`。
+ * この形だけが src/lesson/ui/shared.tsx の Inline でリンクになる。ほかは文字のまま出る。
+ */
+export const LESSON_LINK_PATH = /^\d\d[a-z0-9-]*\/\d\d-[a-z0-9-]+$/;
+
 /** 課題の型。type と choose は第0章だけで使える（第11.4節） */
 /* 「例題」（trace）は2026-09-21に廃止した。示された通りに打たせるだけで、
    すぐ上の <Run> と同じコードを書き写させる課題になっていた（第3章）。例は <Run> である。 */

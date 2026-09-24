@@ -9,7 +9,7 @@
  * 朝9時より前の予定が前の日の日付で出る。ここを通さずに日時を文字にしないこと。
  */
 import type { CurrentUser } from './auth';
-import { lessonHref } from '../lesson/chapters';
+import { lessonHref, practiceSectionLabel } from '../lesson/chapters';
 
 // ---------------------------------------------------------------- メンバー
 
@@ -124,6 +124,7 @@ export type LessonRef = { no: string; title: string; href: string };
  *
  * 渡す一覧は節の並び順（ファイル名の順）であること。節の番号は章ごとに1から数える
  * （運営の画面の sectionNumbers と同じ数え方）。章の番号はディレクトリ名の頭の数字。
+ * 練習編（04p-practice1 など）は `練習1-2` になる（20-platform.md 第15.1節）。
  */
 export function lessonIndex(
   ordered: { entryId: string; lessonId: string; chapter: string; title: string }[],
@@ -134,8 +135,10 @@ export function lessonIndex(
     const n = (count.get(lesson.chapter) ?? 0) + 1;
     count.set(lesson.chapter, n);
     const chapterNo = Number.parseInt(lesson.chapter, 10);
+    // 練習編は「練習1-2」と呼ぶ（第15.1節）。頭の数字（04p の 4）で「4.2」にしない
+    const practice = practiceSectionLabel(lesson.chapter, n);
     out.set(lesson.lessonId, {
-      no: Number.isNaN(chapterNo) ? String(n) : `${chapterNo}.${n}`,
+      no: practice ?? (Number.isNaN(chapterNo) ? String(n) : `${chapterNo}.${n}`),
       title: lesson.title,
       href: lessonHref(lesson.entryId),
     });

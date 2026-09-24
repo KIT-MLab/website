@@ -23,7 +23,7 @@ import { serverConfig } from '../../server/auth';
 import { requireStaff } from '../../server/staff';
 import { staffQuestions } from '../../server/questions';
 import { exerciseLabel, exercisePlaces, sectionNumbers, ymd } from '../../server/staff-data';
-import { chapterTitle } from '../../lesson/chapters';
+import { chapterTitle, practiceSectionLabel } from '../../lesson/chapters';
 import generated from '../../generated/lesson-data.json';
 import '../../styles/lesson-tokens.css';
 import '../../styles/staff.css';
@@ -47,6 +47,9 @@ function place(lessonId: string): string {
   const chapter = chapterOfLesson.get(lessonId);
   const n = sectionNo.get(lessonId);
   if (!chapter || !n) return '';
+  // 練習編は「練習1-2」と呼ぶ（第15.1節）
+  const practice = practiceSectionLabel(chapter, n);
+  if (practice) return practice;
   const full = chapterTitle(chapter);
   const at = full.search(/[ 　]/);
   return `${at > 0 ? full.slice(0, at) : full}${n}節`;

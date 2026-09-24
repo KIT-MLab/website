@@ -20,7 +20,7 @@ import Base from '../../layouts/Base.astro';
 import { serverConfig } from '../../server/auth';
 import { requireStaff } from '../../server/staff';
 import { daysAgo, exercisePlaces, minutesLabel, rosterStudents, sectionNumbers, stuckItems, ymd } from '../../server/staff-data';
-import { chapterTitle } from '../../lesson/chapters';
+import { chapterTitle, practiceSectionLabel } from '../../lesson/chapters';
 import generated from '../../generated/lesson-data.json';
 import '../../styles/lesson-tokens.css';
 import '../../styles/staff.css';
@@ -75,7 +75,8 @@ function place(lessonId: string): string {
   const chapter = chapters.find((c) => c.key === chapterOfLesson.get(lessonId));
   const n = sectionNo.get(lessonId);
   if (!chapter || !n) return '';
-  return `${chapter.num}${n}節`;
+  // 練習編は「練習1-2」と呼ぶ（第15.1節）
+  return practiceSectionLabel(chapter.key, n) ?? `${chapter.num}${n}節`;
 }
 
 const students = config && me ? await rosterStudents(config.db, me) : [];

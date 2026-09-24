@@ -15,7 +15,7 @@ import Level0 from '../../../components/lesson/Level0.astro';
 import Figure from '../../../components/lesson/Figure.astro';
 import Keys from '../../../components/lesson/Keys.astro';
 import AskRail from '../../../components/lesson/AskRail.astro';
-import { chapterTitle, lessonHref } from '../../../lesson/chapters';
+import { chapterTitle, lessonHref, practiceSectionLabel } from '../../../lesson/chapters';
 import generated from '../../../generated/lesson-data.json';
 import '../../../styles/lesson.css';
 
@@ -52,6 +52,11 @@ const next = at < siblings.length - 1 ? siblings[at + 1] : null;
    目印を1つ置くだけで、本文の書き方は変えない。第1章以降は属性が付かないので
    CSS も JS も当たらず、縦に並んだままになる。 */
 const oneAtATime = entry.data.chapter === '00-start' ? '' : undefined;
+
+/* 練習編（20-platform.md 第15.1節）。章は「練習編1」、節は「練習1-2」と呼ぶ。
+   章の番号と節の番号（◯.◯）は付けない。ほかの章では null で、見え方は変わらない */
+const practiceLabel = (n: number) => practiceSectionLabel(entry.data.chapter, n);
+const isPractice = practiceLabel(1) !== null;
 ---
 
 <Base title={entry.data.title} bar>
@@ -60,17 +65,17 @@ const oneAtATime = entry.data.chapter === '00-start' ? '' : undefined;
         幅860px以下では、帯のすぐ下に固定した1行のボタンに畳む */}
     <aside class="lesson-rail" id="kit-side">
       <button class="rail__toggle" type="button" aria-expanded="false" aria-controls="kit-side-in">
-        <span>この章の節（{at + 1} / {siblings.length}）</span>
+        <span>{isPractice ? 'この練習編の節' : 'この章の節'}（{at + 1} / {siblings.length}）</span>
         <span data-side-word>開く</span>
       </button>
       <div class="rail__in" id="kit-side-in">
         <div class="rail__block">
           <p class="rail__label">{chapterTitle(entry.data.chapter)}</p>
           <ol class="rail__list">
-            {siblings.map((s) => (
+            {siblings.map((s, i) => (
               <li data-lesson-id={s.data.id} class={s.id === entry.id ? 'is-now' : ''}>
                 <span class="rail__state">{s.id === entry.id ? 'いま' : '未'}</span>
-                <a href={lessonHref(s.id)}>{s.data.title}</a>
+                <a href={lessonHref(s.id)}>{isPractice ? `${practiceLabel(i + 1)} ${s.data.title}` : s.data.title}</a>
               </li>
             ))}
           </ol>
@@ -91,7 +96,9 @@ const oneAtATime = entry.data.chapter === '00-start' ? '' : undefined;
       <p class="lesson-top__chapter">{chapterTitle(entry.data.chapter)}</p>
       <h1 class="lesson-title">{entry.data.title}</h1>
       <p class="lesson-top__meta">
-        この章の {at + 1} / {siblings.length} 節 ・ 目安 {entry.data.minutes} 分
+        {isPractice
+          ? `${practiceLabel(at + 1)} ・ この練習編の ${at + 1} / ${siblings.length} 節`
+          : `この章の ${at + 1} / ${siblings.length} 節`} ・ 目安 {entry.data.minutes} 分
       </p>
     </div>
 

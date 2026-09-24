@@ -1109,6 +1109,17 @@
   padding-left: 1.4em;
 }
 
+/* ヒントなどに書いた、参照する節へのリンク（20-platform.md 第15.2節）。src/lesson/ui/shared.tsx の Inline */
+.kit-lessonlink {
+  color: var(--l-ink);
+  text-underline-offset: 3px;
+}
+
+/* 押せることを見せる（第14.6節）。文字のリンクは地を --l-chip にする */
+.kit-lessonlink:hover {
+  background: var(--l-chip);
+}
+
 .kit-solution {
   margin-top: 14px;
 }

@@ -20,7 +20,7 @@ import { serverConfig } from '../../../server/auth';
 import { requireAdmin, requireStaff } from '../../../server/staff';
 import { exerciseLabel, exercisePlaces, MAX_SUBMISSIONS, minutesLabel, sectionNumbers, userDetail, ymd } from '../../../server/staff-data';
 import generated from '../../../generated/lesson-data.json';
-import { chapterTitle } from '../../../lesson/chapters';
+import { chapterTitle, practiceSectionLabel } from '../../../lesson/chapters';
 import '../../../styles/lesson-tokens.css';
 import '../../../styles/staff.css';
 
@@ -49,7 +49,7 @@ const byLesson = new Map((detail?.progress ?? []).map((row) => [row.lessonId, ro
 
 const sectionNo = sectionNumbers(lessons.map((l) => ({ lessonId: l.data.id, chapter: l.data.chapter })));
 
-type Row = { id: string; no: number; title: string; state: 'none' | 'open' | 'done'; seconds: number };
+type Row = { id: string; no: string; title: string; state: 'none' | 'open' | 'done'; seconds: number };
 const chapters: { title: string; rows: Row[] }[] = [];
 for (const lesson of lessons) {
   const title = chapterTitle(lesson.data.chapter);
@@ -59,9 +59,11 @@ for (const lesson of lessons) {
     chapters.push(chapter);
   }
   const row = byLesson.get(lesson.data.id);
+  const n = sectionNo.get(lesson.data.id) ?? 0;
   chapter.rows.push({
     id: lesson.data.id,
-    no: sectionNo.get(lesson.data.id) ?? 0,
+    // 練習編は「練習1-2」と呼ぶ（第15.1節）。ほかの章は「2節」
+    no: practiceSectionLabel(lesson.data.chapter, n) ?? `${n}節`,
     title: lesson.data.title,
     state: row === undefined ? 'none' : row.state === 'done' ? 'done' : 'open',
     seconds: row?.seconds ?? 0,
@@ -131,7 +133,7 @@ const submissions = detail?.submissions ?? [];
                     <tr>
                       <td class={`prog__mark cell cell--${row.state}`}>{MARKS[row.state]}</td>
                       {/* 題だけだと何番目の節か分からない。教材と照らすための番号（第8.6節） */}
-                      <td class="prog__no">{row.no}節</td>
+                      <td class="prog__no">{row.no}</td>
                       <td>{row.title}</td>
                       <td class="prog__num">{row.seconds > 0 ? minutesLabel(row.seconds) : ''}</td>
                     </tr>

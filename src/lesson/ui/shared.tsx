@@ -1,5 +1,6 @@
 /** <Run> と <Exercise> が共に使う小さな部品。 */
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
+import { lessonHref } from '../chapters';
 import { onLoadProgress, pythonStatus } from '../runtime/runner';
 import type { ExecResult, LoadProgress } from '../runtime/types';
 import { INPUT_EMPTY_MESSAGE, TIMEOUT_MESSAGE } from '../runtime/types';
@@ -33,20 +34,35 @@ export function LoadBar() {
   );
 }
 
-/** `…` だけを組む、ごく小さな記法の表示。 */
+/**
+ * `…` と、節へのリンク `[第4.5節 while文](04-loop/05-while)` だけを組む、ごく小さな記法の表示。
+ *
+ * リンクにするのは ( ) の中が節の場所（`/learn/lesson/` のあとの部分）の形のときだけ
+ * （20-platform.md 第15.2節）。ほかの URL（https: や javascript: を含む）は文字のまま出す。
+ * 同じタブで開く。書きかけのコードは課題の欄が残す。
+ * 同じ形を scripts/check-lessons.mjs（LESSON_LINK）が見て、リンク先の節が実在することを確かめる。
+ */
+const INLINE_RE = /`([^`]*)`|\[([^\]\n]+)\]\((\d\d[a-z0-9-]*\/\d\d-[a-z0-9-]+)\)/g;
+
 export function Inline({ text }: { text: string }) {
-  const parts = text.split(/(`[^`]*`)/g);
-  return (
-    <>
-      {parts.map((part, i) =>
-        part.length > 1 && part.startsWith('`') && part.endsWith('`') ? (
-          <code key={i}>{part.slice(1, -1)}</code>
-        ) : (
-          <span key={i}>{part}</span>
-        ),
-      )}
-    </>
-  );
+  const parts: ReactNode[] = [];
+  let last = 0;
+  for (const m of text.matchAll(INLINE_RE)) {
+    const at = m.index ?? 0;
+    if (at > last) parts.push(<span key={parts.length}>{text.slice(last, at)}</span>);
+    if (m[3] !== undefined) {
+      parts.push(
+        <a key={parts.length} className="kit-lessonlink" href={lessonHref(m[3])}>
+          <Inline text={m[2]} />
+        </a>,
+      );
+    } else {
+      parts.push(<code key={parts.length}>{m[1]}</code>);
+    }
+    last = at + m[0].length;
+  }
+  if (last < text.length) parts.push(<span key={parts.length}>{text.slice(last)}</span>);
+  return <>{parts}</>;
 }
 
 /** 複数行の説明文を段落に分けて出す。 */

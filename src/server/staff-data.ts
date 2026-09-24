@@ -401,6 +401,8 @@ export async function userDetail(
  *
  * 運営の画面は教材と照らし合わせる場所なので、題だけだと何番目の節か分からない。
  * 渡す一覧は節の並び順（ファイル名の順）であること。
+ * 練習編の節は、この番号を src/lesson/chapters.ts の practiceSectionLabel に渡して「練習1-2」と呼ぶ
+ * （20-platform.md 第15.1節）。「第◯章◯節」にしない。
  */
 export function sectionNumbers(ordered: { lessonId: string; chapter: string }[]): Map<string, number> {
   const out = new Map<string, number>();
