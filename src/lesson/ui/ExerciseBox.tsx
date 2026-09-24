@@ -33,6 +33,40 @@ const PASS_HOLD_MS = 1000;
  */
 const AUTO_GRADE_MS = 500;
 
+/**
+ * 書きかけのコードの置き場所。課題の id → コード。進度（kit-lesson-progress-v1）とは分ける。
+ * 進度はログインのたびに入れ替わるが、書きかけはこの端末で書いた人のためだけのものなので、
+ * サーバへは送らない。保存領域が使えない環境（閉じた窓など）では黙って何もしない。
+ */
+const DRAFT_KEY = 'kit-exercise-draft-v1';
+
+function readDrafts(): Record<string, string> {
+  try {
+    const raw = localStorage.getItem(DRAFT_KEY);
+    const parsed = raw ? JSON.parse(raw) : {};
+    return parsed && typeof parsed === 'object' ? (parsed as Record<string, string>) : {};
+  } catch {
+    return {};
+  }
+}
+
+function loadDraft(id: string): string | null {
+  const draft = readDrafts()[id];
+  return typeof draft === 'string' ? draft : null;
+}
+
+/** null なら消す（最初の形に戻したとき） */
+function saveDraft(id: string, code: string | null): void {
+  try {
+    const drafts = readDrafts();
+    if (code === null) delete drafts[id];
+    else drafts[id] = code;
+    localStorage.setItem(DRAFT_KEY, JSON.stringify(drafts));
+  } catch {
+    /* 残せなくても書くことはできる */
+  }
+}
+
 export default function ExerciseBox({ id, kind, starter, stdin, choices }: Props) {
   const initial = starter ?? '';
   // 第0章の型（打つ練習・選ぶ練習）は Python を動かさない。
@@ -127,7 +161,19 @@ export default function ExerciseBox({ id, kind, starter, stdin, choices }: Props
   function update(next: string) {
     codeRef.current = next;
     setCode(next);
+    saveDraft(id, next === initial ? null : next);
   }
+
+  /* 書きかけのコードを、この端末に課題ごとに残す（2026-09-24）。ページを移って戻ると
+     最初の形に戻っていた。開き直したら、残してあるものを欄に戻す */
+  useEffect(() => {
+    if (direct) return;
+    const draft = loadDraft(id);
+    if (draft === null || draft === initial) return;
+    codeRef.current = draft;
+    setCode(draft);
+    setResetSignal((n) => n + 1);
+  }, [id]);
 
   async function tryRun() {
     setBusy('run');
