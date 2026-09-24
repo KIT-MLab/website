@@ -1,0 +1,113 @@
+---
+id: python-09-matmul
+chapter: 09-matrix
+title: 行列の積
+minutes: 15
+terms: [行列の積]
+---
+
+{/* 困る例 */}
+
+理系の配点(0.3・0.3・0.4)と文系の配点(0.4・0.2・0.4)の2通りで、全員分の合計を出したいとします。9.3節の計算を、配点の数だけ書くことになります。
+
+{/* やってみる */}
+
+次のコードの ▶ を押してください。
+
+<Run
+  code={`import numpy as np
+
+scores = np.array([[80, 70, 90], [60, 50, 40]])
+W = np.array([[0.3, 0.4], [0.3, 0.2], [0.4, 0.4]])
+result = scores @ W
+print(result.shape)
+print(result[0, 0])
+print(scores[0] @ W[:, 0])`}
+  out={`(2, 2)
+81.0
+81.0`}
+/>
+
+{/* 説明 */}
+
+4行目の `W` は、3科目の重みを2通り並べた行列です。0列目が理系の配点、1列目が文系の配点になります。
+
+5行目の `scores @ W` は行列の積です。`(2, 3)` と `(3, 2)` の積は `(2, 2)` の形になり、6行目の `shape` で確かめられます。
+
+7行目と8行目は、どちらも `81.0` です。結果の1マスは、左の行(1人目の点数)と右の列(理系の配点)の内積になっています。
+
+行列の積は、行列とベクトルの積を広げたものです。右側の列が増えるほど、結果の列も同じ数だけ増えます。
+
+{/* よくある間違い */}
+
+<Mistake
+  id="matmul-row-vs-col"
+  code={`import numpy as np
+scores = np.array([[80, 70, 90], [60, 50, 40]])
+W = np.array([[0.3, 0.4], [0.3, 0.2], [0.4, 0.4]])
+print(scores[0] @ W[0])`}
+  error={`ValueError: matmul: Input operand 1 has a mismatch in its core dimension 0, with gufunc signature (n?,k),(k,m?)->(n?,m?) (size 2 is different from 3)`}
+>
+`W[0]` は0行目(1科目分の2通りの配点)で、列ではありません。列を取り出すには `W[:, 0]` のように書きます。
+</Mistake>
+
+{/* 課題 */}
+
+<Exercise
+  id="python-09-matmul-m1"
+  kind="modify"
+  starter={`import numpy as np
+
+scores = np.array([[80, 70, 90], [60, 50, 40]])
+W = np.array([[0.3, 0.4], [0.3, 0.2], [0.4, 0.4]])
+result = scores @ W
+print(result.shape)`}
+  tests={[{ kind: 'stdout' }]}
+  hints={[
+    '結果の行の数は、scoresの行の数と同じです。',
+    '1行3列の点数を、行として3つ並べてください。',
+  ]}
+  mistakes={['matmul-row-vs-col']}
+>
+`(3, 2)` と表示されるように、3行目の `scores` を書き換えてください。
+</Exercise>
+
+<Exercise
+  id="python-09-matmul-t1"
+  kind="type"
+  tests={[{ kind: 'text', expect: `49.0` }]}
+  hints={[]}
+  mistakes={['matmul-row-vs-col']}
+>
+上の `scores` の2人目(60・50・40)と、`W` の0列目(理系の配点、0.3・0.3・0.4)を、手で計算してください。`result[1, 0]` の値を、小数第1位まで(例: `12.3`)打ってください。
+</Exercise>
+
+<Exercise
+  id="python-09-matmul-b1"
+  kind="build"
+  stdin={`80
+70
+90
+60
+50
+40`}
+  forbid={['for ']}
+  tests={[
+    { kind: 'stdout', stdin: `80\n70\n90\n60\n50\n40\n` },
+    { kind: 'stdout', stdin: `0\n0\n0\n0\n0\n0\n` },
+    { kind: 'stdout', stdin: `-5\n10\n-8\n-5\n20\n-8\n` },
+  ]}
+  hints={[
+    '2人分の点数を、2行3列の行列にまとめます。',
+    '理系と文系の配点を、3行2列の行列Wにまとめると、積を1回で計算できます。',
+  ]}
+  mistakes={['matmul-row-vs-col']}
+>
+入力欄から2人分、3科目の点数を読み取ってください(1行に1つの数、1人ずつ3つ)。理系の配点0.3・0.3・0.4と文系の配点0.4・0.2・0.4を、3行2列の行列Wにまとめてください。
+
+scoresとWの積で、全員分の合計を一度に求めてください。結果とその形をこの順で表示し、for文は使わないでください。
+</Exercise>
+
+{/* つながり */}
+
+行列の積で、2通りの配点を一度に計算できるようになりました。次の節では、形が合わないときの直し方を扱います。

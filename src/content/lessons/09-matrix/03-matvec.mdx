@@ -1,0 +1,99 @@
+---
+id: python-09-matvec
+chapter: 09-matrix
+title: 行列とベクトルの積
+minutes: 15
+terms: [行列]
+---
+
+{/* 困る例 */}
+
+全員分の重み付きの合計を出すには、1人ずつ内積を計算して並べることになります。人数が増えるたびに、同じ計算を書き直します。
+
+{/* やってみる */}
+
+次のコードの ▶ を押してください。
+
+<Run
+  code={`import numpy as np
+
+scores = np.array([[80, 70, 90], [60, 50, 40]])
+w = np.array([0.3, 0.3, 0.4])
+print(scores[0] @ w)
+print(scores[1] @ w)
+print(scores @ w)`}
+  out={`81.0
+49.0
+[81. 49.]`}
+/>
+
+{/* 説明 */}
+
+3行目の `scores` は、点数を行と列の2方向に並べた行列です。1行が1人分、1列が1科目分の点数になります。
+
+5行目と6行目は、9.2節と同じ内積を1人ずつ計算しています。`scores[0]` は1人目の3科目、`scores[1]` は2人目の3科目です。
+
+7行目の `scores @ w` は、全員分をまとめて計算します。`(2, 3)` の行列と `(3,)` のベクトルの積は `(2,)` の形になり、各行と `w` の内積が並びます。
+
+for文で1人ずつ計算しても同じ値になりますが、行列とベクトルの積なら1行で書けます。人数が増えても、書き方は変わりません。
+
+{/* よくある間違い */}
+
+<Mistake
+  id="matvec-order"
+  code={`import numpy as np
+scores = np.array([[80, 70, 90], [60, 50, 40]])
+w = np.array([0.3, 0.3, 0.4])
+print(w @ scores)`}
+  error={`ValueError: matmul: Input operand 1 has a mismatch in its core dimension 0, with gufunc signature (n?,k),(k,m?)->(n?,m?) (size 2 is different from 3)`}
+>
+行列とベクトルの積は、左右を入れ替えると成分の数が合わなくなります。全員分をまとめて計算したいときは、行列を先、ベクトルをあとに書きます。
+</Mistake>
+
+{/* 課題 */}
+
+<Exercise
+  id="python-09-matvec-m1"
+  kind="modify"
+  starter={`import numpy as np
+
+scores = np.array([[80, 70, 90], [60, 50, 40]])
+w = np.array([0.3, 0.3, 0.4])
+print((scores @ w).shape)`}
+  tests={[{ kind: 'stdout' }]}
+  hints={[
+    '結果の形は、scoresの行の数だけで決まります。',
+    '1行3列の点数を、行として4つ並べてください。',
+  ]}
+  mistakes={['matvec-order']}
+>
+`(4,)` と表示されるように、3行目の `scores` を書き換えてください。
+</Exercise>
+
+<Exercise
+  id="python-09-matvec-b1"
+  kind="build"
+  stdin={`80
+70
+90
+60
+50
+40`}
+  forbid={['for ']}
+  tests={[
+    { kind: 'stdout', stdin: `80\n70\n90\n60\n50\n40\n` },
+    { kind: 'stdout', stdin: `0\n0\n0\n0\n0\n0\n` },
+    { kind: 'stdout', stdin: `-5\n10\n-8\n-5\n20\n-8\n` },
+  ]}
+  hints={[
+    '2人分の点数を、2行3列の行列にまとめます。',
+    '重みは0.3・0.3・0.4で固定です。行列とベクトルの積で全員分を一度に出せます。',
+  ]}
+  mistakes={['matvec-order']}
+>
+入力欄から2人分、3科目の点数を読み取ってください(1行に1つの数、1人ずつ3つ)。重みを0.3・0.3・0.4として、全員分の重み付きの合計を一度に求め、結果とその形を、この順で表示してください。for文は使わないでください。
+</Exercise>
+
+{/* つながり */}
+
+行列とベクトルの積で、全員分を一度に計算できるようになりました。次の節では、配点が2通りある場合を扱います。

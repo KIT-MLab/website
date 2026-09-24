@@ -1,0 +1,102 @@
+---
+id: python-09-shape
+chapter: 09-matrix
+title: 形の決まり
+minutes: 15
+terms: []
+---
+
+{/* 困る例 */}
+
+配点の重みを、理系・文系の順に2行3列の表で持っているとします。そのまま `scores @ weights` と書くと、形が合わずエラーで止まります。
+
+{/* やってみる */}
+
+次のコードの ▶ を押してください。
+
+<Run
+  code={`import numpy as np
+
+scores = np.array([[80, 70, 90], [60, 50, 40]])
+weights = np.array([[0.3, 0.3, 0.4], [0.4, 0.2, 0.4]])
+print(scores.shape, weights.shape)
+print(scores @ weights.T)
+print((scores @ weights.T).shape)`}
+  out={`(2, 3) (2, 3)
+[[81. 82.]
+ [49. 50.]]
+(2, 2)`}
+/>
+
+{/* 説明 */}
+
+5行目で形を確かめると、`scores` は `(2, 3)`、`weights` も `(2, 3)` です。行列の積 `(n, k) @ (k, m)` は、左の列の数と右の行の数がそろっていないと計算できません。
+
+6行目の `weights.T` は、8.2節の転置です。形を `(3, 2)` に変えることで、`scores` の列の数3とそろいます。
+
+7行目の形は `(2, 2)` になります。掛ける前に `(n, k) @ (k, m) → (n, m)` の形を言えると、エラーが出ても原因をすぐ探せます。
+
+この形の決まりは、行と列の数がいくつであっても同じです。掛ける前に形を確かめる習慣は、あとの章でも役に立ちます。
+
+{/* よくある間違い */}
+
+<Mistake
+  id="matmul-shape-mismatch"
+  code={`import numpy as np
+scores = np.array([[80, 70, 90], [60, 50, 40]])
+weights = np.array([[0.3, 0.3, 0.4], [0.4, 0.2, 0.4]])
+print(scores @ weights)`}
+  error={`ValueError: matmul: Input operand 1 has a mismatch in its core dimension 0, with gufunc signature (n?,k),(k,m?)->(n?,m?) (size 2 is different from 3)`}
+>
+`scores` の列の数は3、`weights` の行の数は2です。そろっていないので、`weights.T` で形を `(3, 2)` に変えてから掛けます。
+</Mistake>
+
+{/* 課題 */}
+
+<Exercise
+  id="python-09-shape-m1"
+  kind="modify"
+  starter={`import numpy as np
+
+scores = np.array([[80, 70, 90], [60, 50, 40]])
+weights = np.array([[0.3, 0.3, 0.4]])
+print((scores @ weights.T).shape)`}
+  tests={[{ kind: 'stdout' }]}
+  hints={[
+    '結果の列の数は、weights.Tの列の数、つまりweightsの行の数と同じです。',
+    'weightsに、3科目分の重みの組を3つ並べてください。',
+  ]}
+  mistakes={['matmul-shape-mismatch']}
+>
+`(2, 3)` と表示されるように、4行目の `weights` を書き換えてください。
+</Exercise>
+
+<Exercise
+  id="python-09-shape-b1"
+  kind="build"
+  stdin={`80
+70
+90
+60
+50
+40`}
+  forbid={['for ']}
+  tests={[
+    { kind: 'stdout', stdin: `80\n70\n90\n60\n50\n40\n` },
+    { kind: 'stdout', stdin: `0\n0\n0\n0\n0\n0\n` },
+    { kind: 'stdout', stdin: `-5\n10\n-8\n-5\n20\n-8\n` },
+  ]}
+  hints={[
+    '2人分の点数を、2行3列の行列にまとめます。',
+    '配点は理系0.3・0.3・0.4、文系0.4・0.2・0.4の2行3列の表です。転置してから掛けます。',
+  ]}
+  mistakes={['matmul-shape-mismatch']}
+>
+入力欄から2人分、3科目の点数を読み取ってください(1行に1つの数、1人ずつ3つ)。配点は理系0.3・0.3・0.4、文系0.4・0.2・0.4の2行3列の表とします。
+
+形を確かめてから転置し、積の結果とその形を、この順で表示してください。for文は使わないでください。
+</Exercise>
+
+{/* つながり */}
+
+形を確かめてから積を計算できるようになりました。次の節では、この章の道具で点数表を書き直します。

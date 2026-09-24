@@ -1,0 +1,99 @@
+---
+id: python-09-vector
+chapter: 09-matrix
+title: ベクトルと長さ
+minutes: 15
+terms: [ベクトル]
+---
+
+{/* 困る例 */}
+
+2人の3科目の点数が、どれくらい近いかを1つの数で言いたいとします。科目ごとの差を見ても、3つの数のままでは、全体としてどれくらい近いかが分かりません。
+
+{/* やってみる */}
+
+次のコードの ▶ を押してください。
+
+<Run
+  code={`import numpy as np
+
+v = np.array([3, 4])
+print(np.sqrt(np.sum(v ** 2)))
+
+a = np.array([80, 70, 90])
+b = np.array([60, 50, 40])
+print(np.sqrt(np.sum((a - b) ** 2)))`}
+  out={`5.0
+57.445626465380286`}
+/>
+
+{/* 説明 */}
+
+3行目の `v` は、数Cで習った2次元のベクトル `(3, 4)` と同じ並びです。4行目は成分を2乗して足し、平方根を取っています。三平方の定理と同じ計算で、`v` の長さになります。
+
+ベクトルは、数を1列に並べたものです。成分が2つなら平面の矢印と同じですが、3つ以上に増やしても同じ式で長さを計算できます。6〜8行目の `a` と `b` は、3科目の点数を並べたベクトルです。
+
+8行目の `a - b` は、科目ごとの差を並べたベクトルです。その長さを、2人の点数の距離と呼びます。値が小さいほど、2人の点数は近いことになります。
+
+2乗の和を求めるとき、for文で1つずつ足しても同じ値になりますが、配列ならまとめて計算できます。成分の数が増えても、書き方を変える必要がありません。
+
+{/* よくある間違い */}
+
+<Mistake
+  id="vector-length-mismatch"
+  code={`import numpy as np
+a = np.array([80, 70, 90])
+b = np.array([70, 90])
+print(np.sqrt(np.sum((a - b) ** 2)))`}
+  error={`ValueError: operands could not be broadcast together with shapes (3,) (2,) `}
+>
+`a` は3つ、`b` は2つの成分です。ベクトルどうしの引き算は、成分の数がそろっていないとできません。入力した数を数え直してください。
+</Mistake>
+
+{/* 課題 */}
+
+<Exercise
+  id="python-09-vector-m1"
+  kind="modify"
+  starter={`import numpy as np
+
+a = np.array([80, 70, 90])
+b = np.array([70, 70, 90])
+print(np.sqrt(np.sum((a - b) ** 2)))`}
+  tests={[{ kind: 'stdout' }]}
+  hints={[
+    '距離は、aとbの差を2乗して足し、平方根を取った値です。',
+    '差の2乗の和が225になる3つの数の組を探してください。',
+  ]}
+  mistakes={['vector-length-mismatch']}
+>
+`15.0` と表示されるように、4行目の `b` を書き換えてください。
+</Exercise>
+
+<Exercise
+  id="python-09-vector-b1"
+  kind="build"
+  stdin={`80
+70
+90
+60
+50
+40`}
+  forbid={['for ']}
+  tests={[
+    { kind: 'stdout', stdin: `80\n70\n90\n60\n50\n40\n` },
+    { kind: 'stdout', stdin: `0\n0\n0\n0\n0\n0\n` },
+    { kind: 'stdout', stdin: `-5\n10\n-8\n-5\n20\n-8\n` },
+  ]}
+  hints={[
+    '2人分の点数を、それぞれ3つの成分を持つベクトルにします。',
+    '距離は、上の「やってみる」の a - b の長さと同じ式で出せます。',
+  ]}
+  mistakes={['vector-length-mismatch']}
+>
+入力欄から2人分、3科目の点数を読み取ってください(1行に1つの数、1人ずつ3つ)。2人の点数の差の長さを、2人の点数の距離として、小数第1位まで丸めて表示してください。for文は使わないでください。
+</Exercise>
+
+{/* つながり */}
+
+ベクトルの長さと距離が出せるようになりました。次の節では、重み付きの合計を内積で出す書き方を扱います。

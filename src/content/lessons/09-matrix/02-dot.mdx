@@ -1,0 +1,94 @@
+---
+id: python-09-dot
+chapter: 09-matrix
+title: 内積
+minutes: 15
+terms: [内積]
+---
+
+{/* 困る例 */}
+
+3科目に0.3・0.3・0.4の重みを付けて合計を出したいとします。`a[0]*w[0] + a[1]*w[1] + a[2]*w[2]` のような式を、人が増えるたびに書くことになります。
+
+{/* やってみる */}
+
+次のコードの ▶ を押してください。
+
+<Run
+  code={`import numpy as np
+
+a = np.array([80, 70, 90])
+w = np.array([0.3, 0.3, 0.4])
+print(a[0] * w[0] + a[1] * w[1] + a[2] * w[2])
+print(a @ w)`}
+  out={`81.0
+81.0`}
+/>
+
+{/* 説明 */}
+
+5行目は、3科目の点数と重みを、同じ位置どうし掛けて足しています。数Cの2次元の内積 `ax*bx + ay*by` と同じ計算を、3つの成分に広げた形です。
+
+6行目の `a @ w` は、同じ計算を1つの記号で表します。これを内積と呼びます。2つのベクトルの、同じ位置の成分どうしを掛けて足した1つの数です。
+
+5行目と6行目の結果が、どちらも `81.0` になっています。`@` が、掛けて足す計算をまとめて行っていると分かります。
+
+内積は `np.sum(a * w)` と書いても同じ値になります。`@` は、掛けてから足すという2つの操作をまとめた書き方です。
+
+{/* よくある間違い */}
+
+<Mistake
+  id="dot-length-mismatch"
+  code={`import numpy as np
+a = np.array([80, 70, 90])
+w = np.array([0.3, 0.3, 0.4, 0.0])
+print(a @ w)`}
+  error={`ValueError: matmul: Input operand 1 has a mismatch in its core dimension 0, with gufunc signature (n?,k),(k,m?)->(n?,m?) (size 4 is different from 3)`}
+>
+`a` は3成分、`w` は4成分です。内積は、同じ数の成分どうしでないと計算できません。重みの数を科目の数に合わせてください。
+</Mistake>
+
+{/* 課題 */}
+
+<Exercise
+  id="python-09-dot-m1"
+  kind="modify"
+  starter={`import numpy as np
+
+a = np.array([80, 70, 90])
+w = np.array([0.5, 0.5, 0.0])
+print(a @ w)`}
+  tests={[{ kind: 'stdout' }]}
+  hints={[
+    '内積は、同じ位置の成分どうしを掛けて足した合計です。',
+    '3科目の点数はそのままに、重みの組み合わせだけを変えます。',
+  ]}
+  mistakes={['dot-length-mismatch']}
+>
+`80.0` と表示されるように、4行目の `w` を書き換えてください。
+</Exercise>
+
+<Exercise
+  id="python-09-dot-b1"
+  kind="build"
+  stdin={`80
+70
+90`}
+  forbid={['for ']}
+  tests={[
+    { kind: 'stdout', stdin: `80\n70\n90\n` },
+    { kind: 'stdout', stdin: `0\n0\n0\n` },
+    { kind: 'stdout', stdin: `-10\n20\n-5\n` },
+  ]}
+  hints={[
+    '重みは0.3・0.3・0.4で固定です。読み取った点数とのベクトルを作ります。',
+    '重み付きの合計は、上の「やってみる」の a @ w と同じ形で出せます。',
+  ]}
+  mistakes={['dot-length-mismatch']}
+>
+入力欄から1人分、3科目の点数を読み取ってください(1行に1つの数)。重みを0.3・0.3・0.4として、内積で重み付きの合計を求め、小数第1位まで丸めて表示してください。
+</Exercise>
+
+{/* つながり */}
+
+内積で重み付きの合計が出せるようになりました。次の節では、全員分を一度に計算する書き方を扱います。
