@@ -16,6 +16,8 @@ export const CHAPTER_TITLES: Record<string, string> = {
   '07-array': '第7章 数をまとめて扱う',
   '08-table': '第8章 表の形を扱う',
   '09-matrix': '第9章 ベクトルと行列',
+  '10-slope': '第10章 変化率と傾き',
+  '11-probability': '第11章 確率の初歩',
 };
 
 export function chapterTitle(chapter: string): string {

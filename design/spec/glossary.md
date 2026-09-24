@@ -84,3 +84,15 @@
 | 内積 | inner product | 2つのベクトルの、同じ位置の成分どうしを掛けて足した1つの数。`a @ b`と書く。 | 09-matrix |
 | 行列 | matrix | 数を行と列の2方向に並べたもの。numpy では2次元配列で表す。 | 09-matrix |
 | 行列の積 | matrix product | 左の行列の各行と、右の行列の各列の内積を並べた行列。`A @ B`と書く。左の列の数と右の行の数が同じでないと計算できない。 | 09-matrix |
+| 変化率 | rate of change | 入力が変わったとき、出力がどれだけ変わるかの割合。2点の間では `(f(b) - f(a)) / (b - a)` で求める。 | 10-slope |
+| 傾き | slope | 直線が1だけ右へ進むあいだに、どれだけ上がるか。2点を結ぶ直線の傾きは、その2点の間の変化率と同じ。 | 10-slope |
+| 微分 | derivative | 2点の幅を小さくしていったときに、変化率が近づいていく値。その点での接線の傾きになる。 | 10-slope |
+| 偏微分 | partial derivative | 入力が2つ以上ある関数で、1つだけを動かし、ほかを止めたときの傾き。 | 10-slope |
+| 確率 | probability | ある出来事の起こりやすさを、0以上1以下の数で表したもの。 | 11-probability |
+| 分布 | distribution | 起こりうるそれぞれの出来事に確率を割り当てた並び。合計が1になる。 | 11-probability |
+| ネイピア数 | Napier's constant | 約2.718の数。`e` と書く。numpy では `np.exp(1)` で求められる。 | 11-probability |
+| 指数関数 | exponential function | `e` を何乗かする関数。`np.exp(x)` と書く。どんな数を入れても正の数になる。 | 11-probability |
+| 対数 | logarithm | 指数関数の逆。`np.log(x)` は、`e` を何乗すると `x` になるかを返す。掛け算を足し算に変える。 | 11-probability |
+| 分散 | variance | 値が平均からどれだけ散らばっているかを表す数。平均との差の2乗の平均。 | 11-probability |
+| 標準偏差 | standard deviation | 分散の平方根。もとの値と同じ単位で散らばりを表す。 | 11-probability |
+| 標準化 | standardization | 平均との差を標準偏差で割って、平均0・標準偏差1の値に直すこと。 | 11-probability |
