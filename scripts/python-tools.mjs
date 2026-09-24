@@ -81,6 +81,11 @@ export const PYTHON_TOOLS = [
   // 第9章 ベクトルと行列（40-part2-curriculum.md 第2節）。内積も行列の積も同じ @ で書く
   { name: '内積・行列の積 @', in: 'python-09-dot',     re: /[\w)\]]\s*@\s*[\w([]/ },
 
+  // 第11章 確率の初歩（40-part2-curriculum.md 第4節）
+  { name: 'np.exp',         in: 'python-11-exp',      re: /np\.exp\s*\(/ },
+  { name: 'np.log',         in: 'python-11-log',      re: /np\.log\s*\(/ },
+  { name: 'np.var / np.std', in: 'python-11-spread',  re: /np\.(var|std)\s*\(|\.(var|std)\s*\(/ },
+
   /* まだどの節でも教えていない道具。導入する節が無いので、どこで使っても落ちる（検査16）。
      第10章の書き手が a, b = 7, 30 を5か所で使い、読んで見つけた（2026-09-24）。
      教える節が決まったら、in をその節の id に直す */
