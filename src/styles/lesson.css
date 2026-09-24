@@ -1473,3 +1473,168 @@
   border: 1px solid var(--l-rule);
   border-radius: 4px;
 }
+
+/* ============================================================
+ * <Secant> — 曲線と2点を結ぶ直線の図（20-platform.md 第16章。試作の案C）。
+ * 枠と題は <Figure> と同じ（.kit-fig / .kit-fig__cap / .kit-fig__in）。
+ * 線の色: 曲線＝墨、2点を結ぶ直線＝朱、接線＝藍の破線（色だけに頼らない）。
+ * 図は本文の幅に縮む。狭い画面では SVG の字が小さくなりすぎるので、字だけ大きくする
+ * （曲線の名前の置き場所は、この大きいほうの字で見積もっている。Secant.astro の LABEL_FS）
+ * ============================================================ */
+.kit-secant__in {
+  display: grid;
+  gap: 10px;
+  padding: 14px 14px 12px;
+}
+
+.kit-secant__ctrl {
+  display: flex;
+  align-items: center;
+  gap: 8px 12px;
+  flex-wrap: wrap;
+  font-size: 14.5px;
+  line-height: 1.6;
+}
+
+.kit-secant__ctrl label {
+  font-family: "Zen Old Mincho", serif;
+  color: var(--l-ink-2);
+}
+
+.kit-secant__range {
+  flex: 1 1 180px;
+  min-width: 0;
+  margin: 0;
+  accent-color: var(--l-shu);
+}
+
+.kit-secant__h {
+  font-family: var(--font-mono);
+  min-width: 9ch;
+}
+
+.kit-secant__toggle:focus-visible,
+.kit-secant__range:focus-visible {
+  outline: 2px solid var(--l-shu);
+  outline-offset: 2px;
+}
+
+.kit-secant__legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 18px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 13.5px;
+  line-height: 1.7;
+  color: var(--l-ink-2);
+}
+
+.lesson-body .kit-secant__legend li {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+}
+
+.kit-secant__sw {
+  display: inline-block;
+  width: 22px;
+  height: 0;
+  border-top: 2px solid;
+}
+
+.kit-secant__sw.is-ink { border-color: var(--l-ink); }
+.kit-secant__sw.is-shu { border-color: var(--l-shu); }
+.kit-secant__sw.is-ai { border-color: var(--l-ai); border-top-style: dashed; }
+
+.kit-secant__plot {
+  position: relative;
+}
+
+.kit-secant__plot svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.kit-secant__grid { stroke: var(--l-lv2); stroke-width: 1; }
+.kit-secant__zero { stroke: var(--l-rule); stroke-width: 1; }
+.kit-secant__axis { stroke: var(--l-ink-2); stroke-width: 1; }
+.kit-secant__curve { fill: none; stroke: var(--l-ink); stroke-width: 2; }
+.kit-secant__sec { stroke: var(--l-shu); stroke-width: 2; }
+.kit-secant__tan { stroke: var(--l-ai); stroke-width: 2; stroke-dasharray: 6 5; }
+.kit-secant__pt { fill: var(--l-shu); stroke: var(--l-card); stroke-width: 2; }
+.kit-secant__dot { fill: var(--l-ink); stroke: var(--l-card); stroke-width: 2; }
+.kit-secant__hit { fill: transparent; }
+
+.kit-secant__tick {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  fill: var(--l-ink-2);
+}
+
+.kit-secant__name {
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 700;
+  fill: var(--l-ink);
+}
+
+@media (max-width: 560px) {
+  .kit-secant__tick { font-size: 20px; }
+  .kit-secant__name { font-size: 21px; }
+}
+
+.kit-secant__tip {
+  position: absolute;
+  pointer-events: none;
+  transform: translate(-50%, -130%);
+  padding: 2px 7px;
+  background: var(--l-ink);
+  color: var(--l-card);
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  line-height: 1.6;
+  white-space: nowrap;
+}
+
+.kit-secant__tip[hidden] {
+  display: none;
+}
+
+.kit-secant__table {
+  justify-self: start; /* 枠の中は grid なので、何もしないと表が横いっぱいに伸びる */
+  border-collapse: collapse;
+  border-top: 1px solid var(--l-strong);
+  font-variant-numeric: tabular-nums;
+}
+
+.kit-secant__table th,
+.kit-secant__table td {
+  padding: 4px 22px 4px 0;
+  border-bottom: 1px solid var(--l-rule);
+  text-align: right;
+  vertical-align: baseline;
+}
+
+.kit-secant__table th {
+  font-family: "Zen Old Mincho", serif;
+  font-weight: 400;
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  color: var(--l-ink-2);
+  white-space: nowrap;
+}
+
+.kit-secant__table td {
+  font-family: var(--font-mono);
+  font-size: 14.5px;
+  line-height: 1.8;
+}
+
+.kit-secant__table th:last-child,
+.kit-secant__table td:last-child {
+  padding-right: 0;
+}

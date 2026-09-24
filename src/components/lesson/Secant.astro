@@ -1,0 +1,508 @@
+---
+/**
+ * <Secant> — 曲線と、2点を結ぶ直線の図（20-platform.md 第16章。試作の案C）。
+ * 幅 h を 2 から 0.01 まで小さくすると、2点を結ぶ直線が接線に近づくことを見せる。
+ *
+ *   <Secant fn="x**2" x0={3} xmin={0} xmax={5.4} ymin={0} ymax={28} caption="x = 3 での傾き" />
+ *
+ * **書き手に座標を書かせない。** 渡すのは式・見ている点・見せる範囲だけで、
+ * 線・目盛り・曲線の名前の位置は、1つの尺度（src/lesson/ui/secant.ts）から部品が決める。
+ *
+ * 式は決まったものだけを受ける（eval を使わない）。知らない式・範囲に収まらない点・
+ * 曲線の名前を置く場所が無い、のどれかならビルド時に落とす（<Keys> <Figure> と同じ）。
+ *
+ * ビルド時に h = 2 の図を組んでおき、ブラウザでは 2点を結ぶ直線・右の点・表だけを動かす。
+ */
+import { nextId } from '../../lesson/ui/ids';
+import {
+  SECANT_FNS,
+  H_MAX,
+  H_MIN,
+  W,
+  H,
+  M,
+  makeScale,
+  slopeOf,
+  fmtSlope,
+  fmtNum,
+  fmtH,
+} from '../../lesson/ui/secant';
+
+interface Props {
+  /** 式。src/lesson/ui/secant.ts の表にあるものだけ（x**2 / x**3 / x**2 - 4*x + 5） */
+  fn: string;
+  /** 傾きを見る点。x0 + 2（h のいちばん大きい値）まで範囲に収める */
+  x0: number;
+  xmin: number;
+  xmax: number;
+  ymin: number;
+  ymax: number;
+  /** 図の上に出す短い題 */
+  caption: string;
+}
+
+const { fn, x0, xmin, xmax, ymin, ymax, caption } = Astro.props;
+
+const where = `<Secant fn="${fn}">`;
+
+const def = SECANT_FNS[fn];
+if (!def) {
+  throw new Error(
+    `${where} の式は部品の表にありません。使えるのは ${Object.keys(SECANT_FNS).map((k) => `"${k}"`).join(' / ')} です。` +
+      '新しい式は src/lesson/ui/secant.ts の表に、導関数と一緒に足してください。',
+  );
+}
+for (const [name, v] of Object.entries({ x0, xmin, xmax, ymin, ymax })) {
+  if (typeof v !== 'number' || !Number.isFinite(v)) {
+    throw new Error(`${where} の ${name} が数ではありません（${JSON.stringify(v)}）。${name}={3} のように波括弧で渡してください。`);
+  }
+}
+if (!caption) throw new Error(`${where} に caption がありません。`);
+if (!(xmin < xmax)) throw new Error(`${where} は xmin < xmax にしてください（xmin=${xmin}, xmax=${xmax}）。`);
+if (!(ymin < ymax)) throw new Error(`${where} は ymin < ymax にしてください（ymin=${ymin}, ymax=${ymax}）。`);
+if (x0 < xmin || x0 + H_MAX > xmax) {
+  throw new Error(
+    `${where} の x0=${x0} では、h = ${H_MAX} のときの右の点 x0 + ${H_MAX} = ${x0 + H_MAX} が範囲 xmin=${xmin}〜xmax=${xmax} から出ます。` +
+      `xmin <= x0 かつ x0 + ${H_MAX} <= xmax にしてください。`,
+  );
+}
+for (const x of [x0, x0 + H_MAX]) {
+  const y = def.f(x);
+  if (y < ymin || y > ymax) {
+    throw new Error(
+      `${where} の点 (${fmtNum(x)}, ${fmtNum(y)}) が ymin=${ymin}〜ymax=${ymax} から出ます。ymin か ymax を広げてください。`,
+    );
+  }
+}
+
+const id = nextId('secant');
+const s = makeScale(xmin, xmax, ymin, ymax);
+const { sx, sy } = s;
+const plot = { l: M.l, r: W - M.r, t: M.t, b: H - M.b };
+const f = def.f;
+const y0 = f(x0);
+const tanSlope = def.df(x0);
+
+/* --- 目盛り: 1・2・5 × 10のべき で、6本前後になる間隔 ----------------- */
+function ticks(lo: number, hi: number): number[] {
+  const raw = (hi - lo) / 6;
+  const mag = 10 ** Math.floor(Math.log10(raw));
+  const step = [1, 2, 5, 10].map((k) => k * mag).find((v) => v >= raw)!;
+  const out: number[] = [];
+  for (let k = Math.ceil(lo / step); k * step <= hi + 1e-9; k++) out.push(Number((k * step).toFixed(10)));
+  return out;
+}
+const xTicks = ticks(xmin, xmax);
+const yTicks = ticks(ymin, ymax);
+
+/* 線の端の縦位置。尺度の外へ大きく出る値は、枠で切るので丸めてよい */
+const clampPx = (v: number) => Math.max(-2000, Math.min(H + 2000, v));
+const lineAt = (slope: number) => ({
+  x1: sx(xmin),
+  y1: clampPx(sy(y0 + slope * (xmin - x0))),
+  x2: sx(xmax),
+  y2: clampPx(sy(y0 + slope * (xmax - x0))),
+});
+
+/* --- 曲線 ------------------------------------------------------------- */
+const N = 200;
+const curvePts = Array.from({ length: N + 1 }, (_, i) => {
+  const x = xmin + ((xmax - xmin) * i) / N;
+  return [sx(x), clampPx(sy(f(x)))] as const;
+});
+const curveD = curvePts.map(([px, py], i) => `${i ? 'L' : 'M'}${px.toFixed(1)} ${py.toFixed(1)}`).join('');
+
+const tan = lineAt(tanSlope);
+const sec0 = lineAt(slopeOf(def, x0, H_MAX));
+
+/* --- 曲線の名前を、線が集まらない場所に置く ---------------------------
+   曲線に沿って候補を並べ、名前の箱が「曲線・接線・h を 2〜0.01 で動かしたときの
+   2点を結ぶ直線」のどれにも触れず、枠に収まるものだけを残す。その中で、接線と
+   2点を結ぶ直線からいちばん離れたものを選ぶ。
+   箱の大きさは狭い画面の字の大きさ（lesson.css の 21）で見積もる。広い画面では字が
+   小さくなるだけなので、どちらでも線に触れない。 */
+const LABEL_FS = 21;
+const labelW = [...def.label].length * 0.62 * LABEL_FS;
+const labelAscent = 0.9 * LABEL_FS;
+const labelDescent = 0.3 * LABEL_FS;
+const GAP = 8; // 曲線から名前までの間
+const CLEAR = 6; // 箱のまわりに空ける分（線の太さと点の大きさ）
+
+type Seg = [number, number, number, number];
+const curveSegs: Seg[] = curvePts.slice(1).map(([px, py], i) => [curvePts[i][0], curvePts[i][1], px, py]);
+const sweep: Seg[] = [tanSlope, ...Array.from({ length: 25 }, (_, i) => slopeOf(def, x0, H_MAX * (H_MIN / H_MAX) ** (i / 24)))].map(
+  (k) => {
+    const l = lineAt(k);
+    return [l.x1, l.y1, l.x2, l.y2];
+  },
+);
+
+/** 線分が箱に触れるか（Liang–Barsky） */
+function hits([x1, y1, x2, y2]: Seg, b: { l: number; t: number; r: number; b: number }): boolean {
+  const dx = x2 - x1;
+  const dy = y2 - y1;
+  const p = [-dx, dx, -dy, dy];
+  const q = [x1 - b.l, b.r - x1, y1 - b.t, b.b - y1];
+  let t0 = 0;
+  let t1 = 1;
+  for (let i = 0; i < 4; i++) {
+    if (p[i] === 0) {
+      if (q[i] < 0) return false;
+      continue;
+    }
+    const t = q[i] / p[i];
+    if (p[i] < 0) {
+      if (t > t1) return false;
+      if (t > t0) t0 = t;
+    } else {
+      if (t < t0) return false;
+      if (t < t1) t1 = t;
+    }
+  }
+  return true;
+}
+function distToSeg(px: number, py: number, [x1, y1, x2, y2]: Seg): number {
+  const dx = x2 - x1;
+  const dy = y2 - y1;
+  const len2 = dx * dx + dy * dy || 1;
+  const t = Math.max(0, Math.min(1, ((px - x1) * dx + (py - y1) * dy) / len2));
+  return Math.hypot(px - (x1 + t * dx), py - (y1 + t * dy));
+}
+
+let best: { x: number; y: number; anchor: 'start' | 'end'; score: number } | null = null;
+for (let i = 0; i <= 80; i++) {
+  const x = xmin + ((xmax - xmin) * i) / 80;
+  const y = f(x);
+  if (y < ymin || y > ymax) continue;
+  const px = sx(x);
+  const py = sy(y);
+  /* 左上・右下・右上・左下 */
+  for (const [side, above] of [
+    ['end', true],
+    ['start', false],
+    ['start', true],
+    ['end', false],
+  ] as const) {
+    const l = side === 'end' ? px - GAP - labelW : px + GAP;
+    const base = above ? py - GAP - labelDescent : py + GAP + labelAscent;
+    const box = { l, r: l + labelW, t: base - labelAscent, b: base + labelDescent };
+    if (box.l < plot.l + 4 || box.r > plot.r - 4 || box.t < plot.t + 4 || box.b > plot.b - 4) continue;
+    const pad = { l: box.l - CLEAR, r: box.r + CLEAR, t: box.t - CLEAR, b: box.b + CLEAR };
+    if (curveSegs.some((g) => hits(g, pad)) || sweep.some((g) => hits(g, pad))) continue;
+    const cx = (box.l + box.r) / 2;
+    const cy = (box.t + box.b) / 2;
+    const score = Math.min(...sweep.map((g) => distToSeg(cx, cy, g)));
+    if (!best || score > best.score) {
+      best = { x: side === 'end' ? box.r : box.l, y: base, anchor: side, score };
+    }
+  }
+}
+if (!best) {
+  throw new Error(
+    `${where} の図の中に、曲線の名前「${def.label}」を線に重ねずに置ける場所がありません。xmin〜xmax か ymin〜ymax を広げてください。`,
+  );
+}
+
+const x0s = fmtNum(x0);
+const svgLabel =
+  `${def.label} のグラフ。x = ${x0s} の点と、そこから幅 h だけ右の点を結ぶ直線（朱）、` +
+  `x = ${x0s} での接線（藍の破線、傾き ${fmtNum(tanSlope)}）。`;
+---
+
+<figure
+  class="kit-fig kit-secant"
+  data-secant
+  data-fn={fn}
+  data-x0={x0}
+  data-xmin={xmin}
+  data-xmax={xmax}
+  data-ymin={ymin}
+  data-ymax={ymax}
+>
+  <p class="kit-fig__cap">{caption}</p>
+  <div class="kit-fig__in kit-secant__in">
+    <div class="kit-secant__ctrl">
+      <button type="button" class="kit-btn kit-secant__toggle" data-toggle>止める</button>
+      <label for={`${id}-h`}>幅 h</label>
+      <input
+        id={`${id}-h`}
+        class="kit-secant__range"
+        type="range"
+        min="0"
+        max="100"
+        step="1"
+        value="0"
+        aria-valuetext={`h = ${fmtH(H_MAX)}`}
+        data-range
+      />
+      <span class="kit-secant__h" data-hout>h = {fmtH(H_MAX)}</span>
+    </div>
+
+    <ul class="kit-secant__legend">
+      <li><i class="kit-secant__sw is-ink"></i>曲線 {def.label}</li>
+      <li><i class="kit-secant__sw is-shu"></i>2点を結ぶ直線</li>
+      <li><i class="kit-secant__sw is-ai"></i>x = {x0s} での接線（傾き {fmtNum(tanSlope)}）</li>
+    </ul>
+
+    <div class="kit-secant__plot">
+      <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label={svgLabel} xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <clipPath id={`${id}-clip`}>
+            <rect x={plot.l} y={plot.t} width={plot.r - plot.l} height={plot.b - plot.t} />
+          </clipPath>
+        </defs>
+        {xTicks.map((v) => <line class="kit-secant__grid" x1={sx(v)} x2={sx(v)} y1={plot.t} y2={plot.b} />)}
+        {yTicks.map((v) => <line class="kit-secant__grid" x1={plot.l} x2={plot.r} y1={sy(v)} y2={sy(v)} />)}
+        {ymin < 0 && ymax > 0 && <line class="kit-secant__zero" x1={plot.l} x2={plot.r} y1={sy(0)} y2={sy(0)} />}
+        {xmin < 0 && xmax > 0 && <line class="kit-secant__zero" x1={sx(0)} x2={sx(0)} y1={plot.t} y2={plot.b} />}
+        <line class="kit-secant__axis" x1={plot.l} x2={plot.r} y1={plot.b} y2={plot.b} />
+        <line class="kit-secant__axis" x1={plot.l} x2={plot.l} y1={plot.t} y2={plot.b} />
+        {xTicks.map((v) => (
+          <text class="kit-secant__tick" x={sx(v)} y={plot.b + 6} dominant-baseline="hanging" text-anchor="middle">{fmtNum(v)}</text>
+        ))}
+        {yTicks.map((v) => (
+          <text class="kit-secant__tick" x={plot.l - 6} y={sy(v)} dominant-baseline="central" text-anchor="end">{fmtNum(v)}</text>
+        ))}
+        <g clip-path={`url(#${id}-clip)`}>
+          <line class="kit-secant__tan" {...tan} />
+          <path class="kit-secant__curve" d={curveD} />
+          <line class="kit-secant__sec" {...sec0} data-sec />
+        </g>
+        <text class="kit-secant__name" x={best.x} y={best.y} text-anchor={best.anchor}>{def.label}</text>
+        <circle class="kit-secant__pt" cx={sx(x0)} cy={sy(y0)} r="5" />
+        <circle class="kit-secant__pt" cx={sx(x0 + H_MAX)} cy={sy(f(x0 + H_MAX))} r="5" data-p1 />
+        <circle class="kit-secant__dot" r="4" visibility="hidden" data-dot />
+        <rect
+          class="kit-secant__hit"
+          x={plot.l}
+          y={plot.t}
+          width={plot.r - plot.l}
+          height={plot.b - plot.t}
+          data-hit
+        />
+      </svg>
+      <div class="kit-secant__tip" hidden data-tip></div>
+    </div>
+
+    <table class="kit-secant__table">
+      <thead>
+        <tr><th scope="col">幅 h</th><th scope="col">2点を結ぶ直線の傾き</th></tr>
+      </thead>
+      <tbody data-rows>
+        <tr><td>{fmtNum(H_MAX)}</td><td>{fmtSlope(slopeOf(def, x0, H_MAX))}</td></tr>
+      </tbody>
+    </table>
+  </div>
+</figure>
+
+<script>
+  import {
+    SECANT_FNS,
+    H_MAX,
+    H_MIN,
+    H_MARKS,
+    W,
+    H,
+    makeScale,
+    slopeOf,
+    fmtSlope,
+    fmtNum,
+    fmtH,
+  } from '../../lesson/ui/secant';
+
+  /* 動かし方（第16.2節）: h を 2 から 0.01 まで対数の刻みで6秒、0.01 で1秒止まって、また 2 から */
+  const DOWN = 6000;
+  const HOLD = 1000;
+  const LOG = Math.log(H_MIN / H_MAX);
+  const hAt = (t: number) => (t >= DOWN ? H_MIN : H_MAX * Math.exp((LOG * t) / DOWN));
+  const tOf = (h: number) => (DOWN * Math.log(h / H_MAX)) / LOG;
+  /* つまみは 0〜100。0 が h = 2、100 が h = 0.01（対数）。矢印キー1回で約5%ずつ変わる */
+  const STEPS = 100;
+  const hOfV = (v: number) => H_MAX * Math.exp((LOG * v) / STEPS);
+  const vOfH = (h: number) => Math.round((STEPS * Math.log(h / H_MAX)) / LOG);
+
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  function setup(root: HTMLElement) {
+    const d = root.dataset;
+    const def = SECANT_FNS[d.fn ?? ''];
+    if (!def) return; // ビルド時に止めているので、ここへは来ない
+    const x0 = Number(d.x0);
+    const s = makeScale(Number(d.xmin), Number(d.xmax), Number(d.ymin), Number(d.ymax));
+    const y0 = def.f(x0);
+
+    const q = <T extends Element>(sel: string) => root.querySelector(sel) as T;
+    const sec = q<SVGLineElement>('[data-sec]');
+    const p1 = q<SVGCircleElement>('[data-p1]');
+    const btn = q<HTMLButtonElement>('[data-toggle]');
+    const range = q<HTMLInputElement>('[data-range]');
+    const hout = q<HTMLElement>('[data-hout]');
+    const rows = q<HTMLElement>('[data-rows]');
+    const svg = q<SVGSVGElement>('svg');
+    const hit = q<SVGRectElement>('[data-hit]');
+    const dot = q<SVGCircleElement>('[data-dot]');
+    const tip = q<HTMLElement>('[data-tip]');
+
+    let h = H_MAX;
+    let t = 0;
+    let playing = !reduce;
+    const seen = new Set<number>([H_MAX]); // h = 2 の行はビルド時に入っている
+
+    /* 見えている間だけ動かす。IntersectionObserver が一度も鳴らない環境
+       （描画していない枠など）では、タブが見えているかだけで決める */
+    let ioSeen = false;
+    let ioVisible = false;
+    let raf = 0;
+    let last = 0;
+
+    const clampPx = (v: number) => Math.max(-2000, Math.min(H + 2000, v));
+    function draw() {
+      const k = slopeOf(def, x0, h);
+      sec.setAttribute('y1', String(clampPx(s.sy(y0 + k * (s.xmin - x0)))));
+      sec.setAttribute('y2', String(clampPx(s.sy(y0 + k * (s.xmax - x0)))));
+      p1.setAttribute('cx', String(s.sx(x0 + h)));
+      p1.setAttribute('cy', String(s.sy(def.f(x0 + h))));
+      hout.textContent = `h = ${fmtH(h)}`;
+      range.setAttribute('aria-valuetext', `h = ${fmtH(h)}`);
+    }
+
+    /* 決まった h（2, 1, 0.5, 0.1, 0.01）を通ったら、その行を積む。
+       値は通った瞬間の h ではなく、決まった h そのもので出す（Python で計算した表と同じ値になる） */
+    function mark(from: number, to: number) {
+      const lo = Math.min(from, to) * (1 - 1e-9);
+      const hi = Math.max(from, to) * (1 + 1e-9);
+      let added = false;
+      for (const c of H_MARKS) {
+        if (c >= lo && c <= hi && !seen.has(c)) {
+          seen.add(c);
+          added = true;
+        }
+      }
+      if (!added) return;
+      rows.replaceChildren(
+        ...H_MARKS.filter((c) => seen.has(c)).map((c) => {
+          const tr = document.createElement('tr');
+          const a = document.createElement('td');
+          const b = document.createElement('td');
+          a.textContent = fmtNum(c);
+          b.textContent = fmtSlope(slopeOf(def, x0, c));
+          tr.append(a, b);
+          return tr;
+        }),
+      );
+    }
+
+    const running = () =>
+      playing && document.visibilityState === 'visible' && (ioSeen ? ioVisible : true);
+
+    function frame(now: number) {
+      raf = 0;
+      const dt = Math.min(now - last, 100); // 止まっていた間の時間は進めない
+      last = now;
+      t += dt;
+      let from = h;
+      if (t >= DOWN + HOLD) {
+        t = 0;
+        from = H_MAX;
+      }
+      const next = hAt(t);
+      mark(from, next);
+      h = next;
+      range.value = String(vOfH(h));
+      draw();
+      update();
+    }
+
+    /* 次の1コマ。ふつうは requestAnimationFrame が先に来る。描画していない環境
+       （タブは見えているのに描画が止まっている枠）では rAF が一度も来ないので、
+       50ms の時計でも進める。先に来たほうだけを使う */
+    let timer = 0;
+    function request() {
+      raf = requestAnimationFrame((now) => {
+        clearTimeout(timer);
+        frame(now);
+      });
+      timer = window.setTimeout(() => {
+        cancelAnimationFrame(raf);
+        frame(performance.now());
+      }, 50);
+    }
+
+    function update() {
+      if (running()) {
+        if (!raf) {
+          last = performance.now();
+          request();
+        }
+      } else if (raf) {
+        cancelAnimationFrame(raf);
+        clearTimeout(timer);
+        raf = 0;
+      }
+    }
+
+    function setPlaying(on: boolean) {
+      playing = on;
+      btn.textContent = on ? '止める' : '動かす';
+      if (on) t = Math.min(tOf(h), DOWN); // いまの h から続ける
+      update();
+    }
+
+    btn.addEventListener('click', () => setPlaying(!playing));
+
+    /* つまみに触ったら自動は止め、手で動かせるようにする */
+    const grab = () => {
+      if (playing) setPlaying(false);
+    };
+    range.addEventListener('pointerdown', grab);
+    range.addEventListener('keydown', grab);
+    range.addEventListener('input', () => {
+      grab();
+      const next = hOfV(Number(range.value));
+      mark(h, next);
+      h = next;
+      draw();
+    });
+
+    document.addEventListener('visibilitychange', update);
+    if ('IntersectionObserver' in window) {
+      new IntersectionObserver((entries) => {
+        ioSeen = true;
+        ioVisible = entries[entries.length - 1].isIntersecting;
+        update();
+      }).observe(root);
+    }
+
+    /* 曲線の上の値 */
+    hit.addEventListener('pointermove', (e) => {
+      const r = svg.getBoundingClientRect();
+      const x = Math.min(s.xmax, Math.max(s.xmin, s.xOf(((e.clientX - r.left) / r.width) * W)));
+      const y = def.f(x);
+      if (y < s.ymin || y > s.ymax) {
+        tip.hidden = true;
+        dot.setAttribute('visibility', 'hidden');
+        return;
+      }
+      dot.setAttribute('cx', String(s.sx(x)));
+      dot.setAttribute('cy', String(s.sy(y)));
+      dot.setAttribute('visibility', 'visible');
+      tip.hidden = false;
+      tip.textContent = `x = ${x.toFixed(2)}, y = ${y.toFixed(2)}`;
+      /* 図の端で吹き出しがはみ出さないよう、中心を内側に寄せる */
+      const half = tip.offsetWidth / 2;
+      const left = (s.sx(x) / W) * r.width;
+      tip.style.left = `${Math.max(half, Math.min(r.width - half, left))}px`;
+      tip.style.top = `${(s.sy(y) / H) * r.height}px`;
+    });
+    hit.addEventListener('pointerleave', () => {
+      tip.hidden = true;
+      dot.setAttribute('visibility', 'hidden');
+    });
+
+    btn.textContent = playing ? '止める' : '動かす';
+    draw();
+    update();
+  }
+
+  document.querySelectorAll<HTMLElement>('[data-secant]').forEach(setup);
+</script>

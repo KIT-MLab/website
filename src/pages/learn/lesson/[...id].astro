@@ -14,6 +14,7 @@ import Exercise from '../../../components/lesson/Exercise.astro';
 import Level0 from '../../../components/lesson/Level0.astro';
 import Figure from '../../../components/lesson/Figure.astro';
 import Keys from '../../../components/lesson/Keys.astro';
+import Secant from '../../../components/lesson/Secant.astro';
 import AskRail from '../../../components/lesson/AskRail.astro';
 import { chapterTitle, lessonHref, practiceSectionLabel } from '../../../lesson/chapters';
 import generated from '../../../generated/lesson-data.json';
@@ -103,7 +104,7 @@ const isPractice = practiceLabel(1) !== null;
     </div>
 
     <article class="lesson-body" data-exq={oneAtATime}>
-      <Content components={{ Run, Mistake, Exercise, Level0, Keys, Figure }} />
+      <Content components={{ Run, Mistake, Exercise, Level0, Keys, Figure, Secant }} />
 
       <nav class="lesson-nav" aria-label="節の移動">
         {prev ? <a href={lessonHref(prev.id)}>← 前の節へ　{prev.data.title}</a> : <span class="lesson-nav__spacer" />}

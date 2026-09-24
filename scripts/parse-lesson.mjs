@@ -17,7 +17,7 @@
  * つまりコード中の「\」は JavaScript の規則で解釈される（`\\n` と書くと Python の `\n`）。
  */
 
-const COMPONENTS = ['Run', 'Mistake', 'Exercise', 'Level0', 'Experiment', 'Keys', 'Figure'];
+const COMPONENTS = ['Run', 'Mistake', 'Exercise', 'Level0', 'Experiment', 'Keys', 'Figure', 'Secant'];
 
 export function lineOf(text, index) {
   let line = 1;
