@@ -460,10 +460,6 @@
   color: var(--k-dim);
 }
 
-.kit-editor .cm-editor {
-  max-height: 22em;
-}
-
 /* 読み取り専用のコード例では、いまの行を示す帯は意味を持たないので消す */
 .kit-code--ro .cm-activeLine,
 .kit-code--ro .cm-activeLineGutter {

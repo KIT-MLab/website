@@ -19,11 +19,15 @@ import { dirname, join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseLesson } from './parse-lesson.mjs';
 import { execPython } from './pyodide-node.mjs';
+import { buildSectionRefs } from './section-refs.mjs';
 
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const LESSONS_DIR = join(ROOT, 'src', 'content', 'lessons');
 const OUT_DIR = join(ROOT, 'src', 'generated');
 const OUT_FILE = join(OUT_DIR, 'lesson-data.json');
+/* 「第N章M節」の行き先（20-platform.md 第15.2節）。採点画面の Inline（src/lesson/ui/shared.tsx）が読む。
+   本文（MDX）側の自動リンクは scripts/remark-section-links.mjs が同じ元を自分で読んで作る */
+const SECTION_REFS_FILE = join(OUT_DIR, 'section-refs.json');
 
 function listMdx(dir) {
   const out = [];
@@ -344,6 +348,7 @@ if (failures.length > 0) {
 
 mkdirSync(OUT_DIR, { recursive: true });
 writeFileSync(OUT_FILE, `${JSON.stringify({ lessons }, null, 2)}\n`, 'utf8');
+writeFileSync(SECTION_REFS_FILE, `${JSON.stringify(buildSectionRefs(LESSONS_DIR), null, 2)}\n`, 'utf8');
 const count = Object.values(lessons).reduce((n, l) => n + l.exerciseIds.length, 0);
 console.log(`build:tests  ${Object.keys(lessons).length}節 / ${count}問の期待値を作りました -> src/generated/lesson-data.json`);
 process.exit(0);

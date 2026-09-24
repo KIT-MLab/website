@@ -47,6 +47,8 @@ export type GradeResult = {
   failedTest: number | null;
   /** 'NameError' など。エラーが出なかったときは null */
   errorType: string | null;
+  /** 合格したときだけ持つ。判定に使った各テストの入力と、実際に出た結果 */
+  runs?: { input: string; output: string }[];
 };
 
 /** エラーの型ごとの一般的な説明（第4.3節 4-2）。 */
@@ -275,6 +277,8 @@ export async function gradeExercise(
     }
   }
 
+  const runs: { input: string; output: string }[] = [];
+
   for (let i = 0; i < exercise.tests.length; i++) {
     const test = exercise.tests[i];
     if (test.kind !== 'stdout' && test.kind !== 'call') continue;
@@ -304,22 +308,28 @@ export async function gradeExercise(
           errorType: null,
         };
       }
-    } else if (test.kind === 'call' && !valuesEqual(result.value, test.expect)) {
-      return {
-        passed: false,
-        feedback: {
-          kind: 'diff',
-          input: showInput(test),
-          expect: showValue(test.expect),
-          actual: showValue(result.value),
-        },
-        failedTest: i,
-        errorType: null,
-      };
+      runs.push({ input: showInput(test), output: normalizeOutput(result.stdout) });
+    } else if (test.kind === 'call') {
+      if (!valuesEqual(result.value, test.expect)) {
+        return {
+          passed: false,
+          feedback: {
+            kind: 'diff',
+            input: showInput(test),
+            expect: showValue(test.expect),
+            actual: showValue(result.value),
+          },
+          failedTest: i,
+          errorType: null,
+        };
+      }
+      const valueText = showValue(result.value);
+      const output = result.stdout ? `${normalizeOutput(result.stdout)}\n戻り値: ${valueText}` : valueText;
+      runs.push({ input: showInput(test), output });
     }
   }
 
-  return { passed: true, feedback: { kind: 'pass' }, failedTest: null, errorType: null };
+  return { passed: true, feedback: { kind: 'pass' }, failedTest: null, errorType: null, runs };
 }
 
 export { INPUT_EMPTY_MESSAGE, TIMEOUT_MESSAGE };

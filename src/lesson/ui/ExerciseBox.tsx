@@ -4,7 +4,7 @@
  * 10-lesson-and-writing.md 第9.2節「演習は編集できるエディタと採点ボタンを本文中に置く。
  * 結果もその場に出る」。読んでいる場所から離れずに、書く・試す・採点するを回せること。
  */
-import { useEffect, useRef, useState } from 'react';
+import { Fragment, useEffect, useRef, useState } from 'react';
 import CodeEditor from './CodeEditor';
 import { Inline, LoadBar, outputText, Prose, StdinBox } from './shared';
 import { getExerciseData, getLessonData, isDirectKind, type ExerciseData, type ExerciseKind, type LessonData } from '../data';
@@ -474,6 +474,38 @@ function Verdict({ result, kind }: { result: GradeResult; kind: ExerciseKind }) 
       <div className="kit-verdict kit-verdict--pass">
         <strong>合格</strong>
         <p>判定に使った入力すべてで、期待した結果になりました。</p>
+        {result.runs && result.runs.length > 0 ? (
+          result.runs.length === 1 && result.runs[0].input === '（入力なし）' ? (
+            <div className="kit-out">
+              <div className="kit-out__label">出た結果</div>
+              <pre className="kit-out__text">{result.runs[0].output === '' ? '（何も出ません）' : result.runs[0].output}</pre>
+            </div>
+          ) : (
+            <>
+              <p className="kit-verdict__where">判定に使った入力と、このコードが出した結果です。</p>
+              <table className="kit-diff">
+                <tbody>
+                  {result.runs.map((r, i) => (
+                    <Fragment key={i}>
+                      <tr>
+                        <th>入力</th>
+                        <td>
+                          <code>{r.input}</code>
+                        </td>
+                      </tr>
+                      <tr>
+                        <th>出た結果</th>
+                        <td>
+                          <pre>{r.output === '' ? '（何も出ません）' : r.output}</pre>
+                        </td>
+                      </tr>
+                    </Fragment>
+                  ))}
+                </tbody>
+              </table>
+            </>
+          )
+        ) : null}
       </div>
     );
   }

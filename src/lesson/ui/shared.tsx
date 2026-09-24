@@ -4,6 +4,9 @@ import { lessonHref } from '../chapters';
 import { onLoadProgress, pythonStatus } from '../runtime/runner';
 import type { ExecResult, LoadProgress } from '../runtime/types';
 import { INPUT_EMPTY_MESSAGE, TIMEOUT_MESSAGE } from '../runtime/types';
+import sectionRefs from '../../generated/section-refs.json';
+
+const SECTION_REFS: Record<string, string> = sectionRefs;
 
 /** 実行結果を、画面に出す文字列にする。エラーは訳さずそのまま出す（10-lesson 第5章）。 */
 export function outputText(result: ExecResult): string {
@@ -35,14 +38,14 @@ export function LoadBar() {
 }
 
 /**
- * `…` と、節へのリンク `[第4.5節 while文](04-loop/05-while)` だけを組む、ごく小さな記法の表示。
+ * `…` と、節への参照「第N章M節」だけを組む、ごく小さな記法の表示。
  *
- * リンクにするのは ( ) の中が節の場所（`/learn/lesson/` のあとの部分）の形のときだけ
- * （20-platform.md 第15.2節）。ほかの URL（https: や javascript: を含む）は文字のまま出す。
- * 同じタブで開く。書きかけのコードは課題の欄が残す。
- * 同じ形を scripts/check-lessons.mjs（LESSON_LINK）が見て、リンク先の節が実在することを確かめる。
+ * リンクにするのは src/generated/section-refs.json（scripts/build-tests.mjs が書き出す）に
+ * 行き先がある形だけ（20-platform.md 第15.2節）。無ければ文字のまま出す。同じタブで開く。
+ * 本文（MDX）側の同じ変換は scripts/remark-section-links.mjs が受け持つ。
+ * 同じ形を scripts/check-lessons.mjs（検査20）が見て、リンク先の節が実在することを確かめる。
  */
-const INLINE_RE = /`([^`]*)`|\[([^\]\n]+)\]\((\d\d[a-z0-9-]*\/\d\d-[a-z0-9-]+)\)/g;
+const INLINE_RE = /`([^`]*)`|第(\d+)章(\d+)節/g;
 
 export function Inline({ text }: { text: string }) {
   const parts: ReactNode[] = [];
@@ -50,14 +53,19 @@ export function Inline({ text }: { text: string }) {
   for (const m of text.matchAll(INLINE_RE)) {
     const at = m.index ?? 0;
     if (at > last) parts.push(<span key={parts.length}>{text.slice(last, at)}</span>);
-    if (m[3] !== undefined) {
-      parts.push(
-        <a key={parts.length} className="kit-lessonlink" href={lessonHref(m[3])}>
-          <Inline text={m[2]} />
-        </a>,
-      );
-    } else {
+    if (m[1] !== undefined) {
       parts.push(<code key={parts.length}>{m[1]}</code>);
+    } else {
+      const entry = SECTION_REFS[`${Number(m[2])}-${Number(m[3])}`];
+      parts.push(
+        entry ? (
+          <a key={parts.length} className="kit-lessonlink" href={lessonHref(entry)}>
+            {m[0]}
+          </a>
+        ) : (
+          <span key={parts.length}>{m[0]}</span>
+        ),
+      );
     }
     last = at + m[0].length;
   }

@@ -34,9 +34,11 @@ import {
   splitSentences,
 } from './lesson-rules.mjs';
 import { PYTHON_TOOLS } from './python-tools.mjs';
+import { buildSectionRefs } from './section-refs.mjs';
 
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const LESSONS_DIR = join(ROOT, 'src', 'content', 'lessons');
+const SECTION_REFS = buildSectionRefs(LESSONS_DIR);
 
 function listMdx(dir) {
   const out = [];
@@ -521,21 +523,31 @@ for (const file of files) {
     }
   }
 
-  /* --- 検査20 ヒントと <Mistake> の本文の、節へのリンクの行き先が実在すること（20-platform.md 第15.2節） ---
-     `[第4.5節 while文](04-loop/05-while)` と書くと、その節へのリンクになる。無い節へのリンクを出荷しない。
-     ( ) の中が節の場所の形でないものは、リンクにならず文字のまま画面に出るので、それも落とす。 */
+  /* --- 検査20 学習者が読む文章の、節への参照が「第N章M節」の形で、行き先が実在すること
+     （20-platform.md 第15.2節）。旧形式（`第7.1節` / `7.1節` / `[第7.1節 …](04-loop/05-while)`）は
+     学習者が読む文章では使わない。新形式は本文（MDX）なら scripts/remark-section-links.mjs、
+     ヒントや <Mistake> の直し方（採点画面で Inline が出す文章）なら src/lesson/ui/shared.tsx の
+     Inline が、自動でリンクにする。ここではその元になる文章だけを見る（本文・課題の問題文・
+     <Level0>・<Mistake> の直し方・ヒント）。MDX のコメント（仕様書の節を引くもの）は、
+     地の文の抽出（parse-lesson.mjs）がすでに落としているので、ここには出てこない。 */
   {
     const places = [
       ...ex.flatMap((e) => (Array.isArray(e.hints) ? e.hints : []).map((h) => [e.line, `${e.id} のヒント`, String(h)])),
-      ...lesson.mistakes.map((m) => [m.line, `<Mistake id="${m.id}">`, m.fix]),
+      ...lesson.allParagraphs.map((p) => [1, p.where, p.text]),
     ];
     for (const [line, where, text] of places) {
+      if (/\d+\.\d+節/.test(text)) {
+        add(20, line, `${where}: 節への参照が旧形式です。「第N章M節」の形に書き直してください: ${text.slice(0, 40)}`);
+      }
+      for (const m of text.matchAll(/第(\d+)章(\d+)節/g)) {
+        const key = `${Number(m[1])}-${Number(m[2])}`;
+        if (!SECTION_REFS[key]) {
+          add(20, line, `${where}: 「第${Number(m[1])}章${Number(m[2])}節」に行き先の節がありません`);
+        }
+      }
       for (const m of text.matchAll(/(?<!!)\[([^\]\n]+)\]\(([^)\n]*)\)/g)) {
-        const target = m[2];
-        if (!LESSON_LINK_PATH.test(target)) {
-          add(20, line, `${where}: リンクの行き先「${target}」が節の場所の形（04-loop/05-while）ではありません。リンクにならず文字のまま出ます`);
-        } else if (!existsSync(join(LESSONS_DIR, ...target.split('/')) + '.mdx')) {
-          add(20, line, `${where}: リンクの行き先の節がありません: ${target}`);
+        if (LESSON_LINK_PATH.test(m[2])) {
+          add(20, line, `${where}: 節へのリンクを [ラベル](パス) の旧形式で書いています。「第N章M節」の形に書き直してください（自動でリンクになります）: ${m[0]}`);
         }
       }
     }

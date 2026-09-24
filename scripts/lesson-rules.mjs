@@ -42,8 +42,11 @@ export const PRACTICE_SECTION_OPTIONAL = new Set(['つながり']);
 export const PRACTICE_EXERCISE_KINDS = ['build'];
 
 /**
- * ヒントなどに書く、節へのリンクの行き先（20-platform.md 第15.2節）。`04-loop/05-while`。
- * この形だけが src/lesson/ui/shared.tsx の Inline でリンクになる。ほかは文字のまま出る。
+ * 節の場所の形（20-platform.md 第15.2節）。`04-loop/05-while`。
+ * 節への参照はいまは本文に「第N章M節」と書くだけでよい（自動でリンクになる。
+ * scripts/remark-section-links.mjs・src/lesson/ui/shared.tsx の Inline）。
+ * `[ラベル](04-loop/05-while)` という旧形式のリンクを見つけて落とすためだけに、
+ * scripts/check-lessons.mjs の検査20 がこの形を使う。
  */
 export const LESSON_LINK_PATH = /^\d\d[a-z0-9-]*\/\d\d-[a-z0-9-]+$/;
 
