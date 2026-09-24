@@ -29,6 +29,8 @@ type User = {
   role: string;
   level: number;
   cohort: { code: string; name: string; kind: string };
+  /** `/api/me` だけが返す（第13.1節）。ログインと登録の応答には無い */
+  member?: boolean;
 };
 
 type Stage = 'register' | 'save' | 'login' | 'carry';
@@ -172,7 +174,19 @@ export function setupAccount(): void {
     cohort.textContent = user.cohort.name;
     const out = railButton('出る');
     out.addEventListener('click', () => void leave(out));
-    rail!.append(name, cohort, out);
+    rail!.append(name, cohort);
+    // メンバーの画面への入口（第13.2節）。メンバーにだけ出す
+    if (user.member) {
+      const home = document.createElement('p');
+      home.className = 'rail__note';
+      const link = document.createElement('a');
+      link.className = 'rail__link';
+      link.href = '/learn/home/';
+      link.textContent = 'マイページ';
+      home.append(link);
+      rail!.append(home);
+    }
+    rail!.append(out);
   }
 
   /* --- 進度の始末（第6.2節） --------------------------------------- */
@@ -187,8 +201,10 @@ export function setupAccount(): void {
   async function pull(): Promise<void> {
     try {
       const res = await fetch('/api/me');
-      const data = (await res.json()) as { progress?: RemoteLesson[]; exercises?: RemoteExercise[] };
+      const data = (await res.json()) as { user?: User | null; progress?: RemoteLesson[]; exercises?: RemoteExercise[] };
       await store.merge({ progress: data?.progress ?? [], exercises: data?.exercises ?? [] });
+      // 入った直後はログインの応答で塗ってあり、`member` が無い。/api/me の答えで塗り直す（第13.2節）
+      if (data?.user) paint(data.user);
     } catch {
       /* 引き写せなくても手元の記録はそのまま。学習は止めない */
     }

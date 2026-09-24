@@ -621,3 +621,216 @@ main.wrap {
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
+
+/* --- 集まり（第13.5節） ----------------------------------------
+   一覧は .roster の表をそのまま使う。編集の欄は質問の返事の欄（.qa__in）と
+   ロールの欄（.role）の形にそろえる。断りの文は琥珀（.role__msg と同じ決まり）。 */
+.mt-new {
+  margin: 0 0 10px;
+  font-size: 13px;
+}
+
+.mt-new a,
+.roster a.mt-edit {
+  color: var(--l-ai);
+}
+
+.mt-form {
+  max-width: 720px;
+  padding: 10px 14px 12px;
+  background: var(--l-card);
+  border: 1px solid var(--l-rule);
+}
+
+.mt-field {
+  margin: 0 0 10px;
+}
+
+.mt-field label,
+.mt-lab {
+  display: block;
+  margin: 0 0 2px;
+  font-size: 12.5px;
+  color: var(--l-ink-2);
+}
+
+.mt-pair {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.mt-in {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 4px 8px;
+  border: 1px solid var(--l-rule);
+  border-radius: 0;
+  background: var(--l-paper);
+  color: var(--l-ink);
+  font: inherit;
+  font-size: 13.5px;
+  line-height: 1.6;
+}
+
+.mt-pair .mt-in {
+  width: auto;
+}
+
+textarea.mt-in {
+  resize: vertical;
+}
+
+.mt-in:focus {
+  outline: 2px solid var(--l-strong);
+  outline-offset: 1px;
+}
+
+.mt-fixed {
+  margin: 0;
+  font-size: 13.5px;
+}
+
+.mt-note {
+  margin: 2px 0 0;
+  font-size: 12px;
+  color: var(--l-ink-2);
+}
+
+.mt-msg {
+  margin: 2px 0 0;
+  font-size: 12.5px;
+  color: var(--l-kohaku);
+}
+
+.mt-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.mt-bar button {
+  font: inherit;
+  font-size: 13px;
+  padding: 3px 14px;
+  color: var(--l-ink);
+  background: var(--l-lv1);
+  border: 1px solid var(--l-rule);
+  cursor: pointer;
+}
+
+.mt-bar button:hover {
+  background: var(--l-lv2);
+}
+
+.mt-bar button[disabled] {
+  color: var(--l-ink-2);
+  cursor: default;
+}
+
+/* --- 活動（第13.7節） ------------------------------------------
+   一覧は .roster の表。時間帯の表は**墨の色の不透明度だけ**で濃さを出す
+   （新しい色を足さない）。マスの中の <i> に墨を敷き、opacity を数に比例させる。 */
+.act-num {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.heat-pick {
+  margin: 0 0 8px;
+  font-size: 12.5px;
+  color: var(--l-ink-2);
+}
+
+.heat-pick select {
+  margin-left: 6px;
+  font: inherit;
+  font-size: 13px;
+  padding: 2px 6px;
+  color: var(--l-ink);
+  background: var(--l-paper);
+  border: 1px solid var(--l-rule);
+}
+
+.heat-wrap {
+  overflow-x: auto;
+}
+
+.heat {
+  border-collapse: collapse;
+  font-size: 11px;
+}
+
+.heat th {
+  padding: 1px 3px;
+  font-weight: 400;
+  color: var(--l-ink-2);
+  font-family: var(--font-mono);
+  text-align: center;
+}
+
+.heat tbody th {
+  padding-right: 6px;
+  font-family: var(--font-body);
+  text-align: right;
+  white-space: nowrap;
+}
+
+.heat td {
+  position: relative;
+  width: 22px;
+  height: 20px;
+  padding: 0;
+  border: 1px solid var(--l-rule);
+  background: var(--l-card);
+}
+
+.heat td i {
+  position: absolute;
+  inset: 0;
+  background: var(--l-ink);
+  opacity: 0;
+}
+
+.events {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: 13px;
+}
+
+.events li {
+  display: grid;
+  grid-template-columns: 11em 10em 11em minmax(0, 1fr);
+  gap: 2px 12px;
+  padding: 3px 8px;
+  border-bottom: 1px solid var(--l-rule);
+}
+
+.events__when {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--l-ink-2);
+  white-space: nowrap;
+}
+
+.events__who {
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.events__ok {
+  color: var(--l-midori);
+}
+
+.events__ng {
+  color: var(--l-shu);
+}
+
+@media (max-width: 760px) {
+  .events li {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

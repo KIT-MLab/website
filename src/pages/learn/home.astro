@@ -1,0 +1,308 @@
+---
+/**
+ * メンバーの画面（20-platform.md 第13章）。見た目は試作の案A「今週が主役」。
+ *
+ * **サーバで組み立てる。**メンバーかどうか（src/server/member.ts の isMember）をここで
+ * 判じ、メンバーでない人（入っていない人・外部の人）には1段落だけを返す。中身は1文字も
+ * 送らない（第13.2節）。
+ *
+ * **自分の API を fetch しない。**問い合わせは src/server/*.ts をそのまま呼ぶ。
+ *
+ * 本文（集まりの題・説明・返事など）はすべて文字として出す。set:html を使わない（第13.4節）。
+ * 日時はすべて日本時間（src/server/member.ts の jstDateTime / jstDate）。
+ * **時間（取り組んだ時間）はこの画面に出さない**（第13.8節）。
+ */
+export const prerender = false;
+
+import { getCollection } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import { currentUser, serverConfig } from '../../server/auth';
+import { isMember, jstDate, jstDateTime, lessonIndex, type LessonRef } from '../../server/member';
+import { cohortMeetings, colabUrlOk, pickMeeting, STILL_NOW_MS } from '../../server/meetings';
+import { daysAgo } from '../../server/staff-data';
+import { chapterTitle } from '../../lesson/chapters';
+import '../../styles/lesson-tokens.css';
+import '../../styles/member.css';
+
+const config = serverConfig();
+const me = config ? await currentUser(Astro.request) : null;
+const member = me !== null && isMember(me);
+const staff = member && (me!.role === 'staff' || me!.role === 'admin');
+
+Astro.response.headers.set('cache-control', 'no-store');
+
+const now = Date.now();
+
+/** 返事の本文の先頭何字を出すか（第13.3節）。符号位置で数える */
+const REPLY_HEAD = 40;
+
+const lessons = member ? [...(await getCollection('lessons'))].sort((a, b) => a.id.localeCompare(b.id)) : [];
+const index = lessonIndex(
+  lessons.map((l) => ({ entryId: l.id, lessonId: l.data.id, chapter: l.data.chapter, title: l.data.title })),
+);
+
+// --- 自分の進み具合 ---
+const doneRows =
+  member && config
+    ? await config.db
+        .prepare("SELECT lesson_id FROM progress WHERE user_id = ? AND state = 'done'")
+        .bind(me!.id)
+        .all<{ lesson_id: string }>()
+    : { results: [] };
+const done = new Set(doneRows.results.map((row) => row.lesson_id));
+
+const chapters: { title: string; cells: boolean[] }[] = [];
+for (const lesson of lessons) {
+  const title = chapterTitle(lesson.data.chapter);
+  let chapter = chapters.find((c) => c.title === title);
+  if (!chapter) {
+    chapter = { title, cells: [] };
+    chapters.push(chapter);
+  }
+  chapter.cells.push(done.has(lesson.data.id));
+}
+const doneCount = lessons.filter((l) => done.has(l.data.id)).length;
+const nextLesson = lessons.find((l) => !done.has(l.data.id));
+const nextRef = nextLesson ? index.get(nextLesson.data.id) : undefined;
+
+// --- 集まり ---
+const meetings = member && config ? await cohortMeetings(config.db, me!.cohort.code) : [];
+const picked = pickMeeting(meetings, now);
+const readAfter = (picked?.meeting.readAfter ?? [])
+  .map((id) => index.get(id))
+  .filter((ref): ref is LessonRef => ref !== undefined);
+const teamRows = meetings.filter((m) => m.teamNote !== '' || m.teamScore !== '');
+const pastMeetings = meetings.filter((m) => m.startsAt < now - STILL_NOW_MS).reverse();
+
+/** 保存の口で頭を確かめてあるが、出すときにももう一度見る（第13.4節） */
+const colabLink = (url: string) => (url !== '' && colabUrlOk(url) ? url : null);
+
+// --- 質問への返事（新しい順に3件） ---
+const replyRows =
+  member && config
+    ? await config.db
+        .prepare(
+          `SELECT lesson_id, body, created_at FROM comments
+            WHERE to_user_id = ? ORDER BY created_at DESC, id DESC LIMIT 3`,
+        )
+        .bind(me!.id)
+        .all<{ lesson_id: string | null; body: string; created_at: number }>()
+    : { results: [] };
+const replies = replyRows.results.map((row) => {
+  const chars = [...row.body];
+  const days = daysAgo(row.created_at, now);
+  return {
+    lesson: row.lesson_id ? index.get(row.lesson_id) : undefined,
+    when: days === 0 ? '今日' : `${days}日前`,
+    head: chars.slice(0, REPLY_HEAD).join('') + (chars.length > REPLY_HEAD ? '…' : ''),
+  };
+});
+---
+
+<Base title="マイページ">
+  {
+    !member ? (
+      <p class="member-deny">
+        このページはプロジェクトのメンバー向けです。<a href="/learn/">教材の一覧へ</a>
+      </p>
+    ) : (
+      <div class="member" data-member-home>
+        <div class="m-top">
+          <p class="m-hello m-muted">{me!.displayName} さん</p>
+
+          {/* 1. 今週の集まり */}
+          <article class="m-card m-week">
+            {picked ? (
+              <>
+                <div class="m-row">
+                  <span class={`m-tag ${picked.past ? 'm-tag--past' : 'm-tag--now'}`}>
+                    {picked.past ? '前回の集まり' : '今週の集まり'}
+                  </span>
+                  <span class="m-muted m-small m-num">
+                    第{picked.meeting.no}回　{jstDateTime(picked.meeting.startsAt)}
+                    {picked.meeting.place !== '' ? `　場所: ${picked.meeting.place}` : ''}
+                  </span>
+                </div>
+                <h2>{picked.meeting.title}</h2>
+                {picked.meeting.summary !== '' ? <p class="m-summary">{picked.meeting.summary}</p> : null}
+                {colabLink(picked.meeting.colabUrl) ? (
+                  <div class="m-row">
+                    <a class="m-btn" href={colabLink(picked.meeting.colabUrl)} target="_blank" rel="noopener">
+                      Colab を開く
+                    </a>
+                    <span class="m-small m-muted">開いたら『ドライブにコピーを保存』してから書き込んでください</span>
+                  </div>
+                ) : null}
+                {picked.meeting.bring !== '' || readAfter.length > 0 ? (
+                  <dl class="m-dl">
+                    {picked.meeting.bring !== '' ? (
+                      <>
+                        <dt>持ち物</dt>
+                        <dd>{picked.meeting.bring}</dd>
+                      </>
+                    ) : null}
+                    {readAfter.length > 0 ? (
+                      <>
+                        <dt>あとで読む</dt>
+                        <dd>
+                          {readAfter.map((ref) => (
+                            <a href={ref.href}>
+                              {ref.no} {ref.title}
+                            </a>
+                          ))}
+                        </dd>
+                      </>
+                    ) : null}
+                  </dl>
+                ) : null}
+                {staff ? (
+                  <p class="m-small">
+                    <a href={`/staff/meetings/?id=${picked.meeting.id}`}>この回を編集する</a>
+                  </p>
+                ) : null}
+              </>
+            ) : (
+              <p>まだ集まりの予定はありません。</p>
+            )}
+          </article>
+        </div>
+
+        {/* 2. 2列（狭い画面では1列） */}
+        <div class="m-cols">
+          <article class="m-card">
+            <h3 class="m-sec">自分の進み具合</h3>
+            <p class="m-small m-muted m-num">
+              済んだ節 {doneCount} / {lessons.length}
+            </p>
+            <div class="m-chapters">
+              {chapters.map((chapter) => (
+                <div class="m-ch">
+                  <span>{chapter.title}</span>
+                  <div class="m-bar" aria-hidden="true">
+                    {chapter.cells.map((on) => (
+                      <i class={on ? 'on' : ''} />
+                    ))}
+                  </div>
+                  <span class="m-ch__n m-num">
+                    {chapter.cells.filter((on) => on).length}/{chapter.cells.length}
+                  </span>
+                </div>
+              ))}
+            </div>
+            {nextRef ? (
+              <div class="m-next">
+                <a class="m-btn" href={nextRef.href}>
+                  続きから: {nextRef.no} {nextRef.title}
+                </a>
+              </div>
+            ) : null}
+          </article>
+
+          <div class="m-side">
+            <article class="m-card">
+              <h3 class="m-sec">質問への返事</h3>
+              {replies.length === 0 ? <p class="m-small m-muted">まだありません。</p> : null}
+              {replies.map((reply) =>
+                reply.lesson ? (
+                  <a class="m-reply" href={reply.lesson.href}>
+                    <span class="m-small m-muted">
+                      {reply.lesson.no} {reply.lesson.title} ・ {reply.when}
+                    </span>
+                    <span class="m-reply__body">「{reply.head}」</span>
+                  </a>
+                ) : (
+                  <div class="m-reply">
+                    <span class="m-small m-muted">{reply.when}</span>
+                    <span class="m-reply__body">「{reply.head}」</span>
+                  </div>
+                ),
+              )}
+            </article>
+
+            <article class="m-card">
+              <h3 class="m-sec">チームの記録</h3>
+              {teamRows.length === 0 ? (
+                <p class="m-small m-muted">まだありません。</p>
+              ) : (
+                <div class="m-table-wrap">
+                  <table class="m-table">
+                    <thead>
+                      <tr>
+                        <th>回</th>
+                        <th>やったこと</th>
+                        <th>数字</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {teamRows.map((m) => (
+                        <tr>
+                          <td class="m-num">{m.no}</td>
+                          <td>{m.teamNote}</td>
+                          <td class="m-num">{m.teamScore}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </article>
+          </div>
+        </div>
+
+        {/* 3. これまでの回（既定で閉じる） */}
+        <details class="m-past">
+          <summary>これまでの回（{pastMeetings.length}）</summary>
+          {pastMeetings.length === 0 ? (
+            <p class="m-small m-muted">まだありません。</p>
+          ) : (
+            <div class="m-table-wrap">
+              <table class="m-table">
+                <tbody>
+                  {pastMeetings.map((m) => (
+                    <tr>
+                      <td class="m-num">第{m.no}回</td>
+                      <td class="m-num">{jstDate(m.startsAt)}</td>
+                      <td>{m.title}</td>
+                      <td>
+                        {colabLink(m.colabUrl) ? (
+                          <a href={colabLink(m.colabUrl)} target="_blank" rel="noopener">
+                            Colab
+                          </a>
+                        ) : null}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </details>
+
+        {staff ? (
+          <div class="m-door">
+            <a class="m-btn" href="/staff/">
+              管理画面へ →
+            </a>
+          </div>
+        ) : null}
+      </div>
+    )
+  }
+
+  <script>
+    /* 活動した分（20-platform.md 第13.6節）。メンバーの画面では節の id の代わりに 'home'。
+       この画面はメンバーにしか中身を出さないので、中身が無ければ何もしない。
+       送る時機は節の画面と同じ（30秒ごと・裏に回ったとき・pagehide）。 */
+    import { trackActivity } from '../../lesson/activity';
+
+    if (document.querySelector('[data-member-home]')) {
+      const activity = trackActivity('home', async () => true);
+      const send = () => void activity.send();
+      window.setInterval(send, 30000);
+      document.addEventListener('visibilitychange', () => {
+        if (document.hidden) send();
+      });
+      window.addEventListener('pagehide', send);
+    }
+  </script>
+</Base>

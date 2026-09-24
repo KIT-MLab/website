@@ -109,10 +109,15 @@ const oneAtATime = entry.data.chapter === '00-start' ? '' : undefined;
     import { getLessonData } from '../../../lesson/data';
     import { getProgressStore } from '../../../lesson/store/progress';
     import { setupExerciseQueue } from '../../../lesson/exercise-queue';
+    import { trackActivity } from '../../../lesson/activity';
 
     const data = getLessonData();
     const store = getProgressStore();
     if (data) void store.openLesson(data.lessonId);
+
+    /* 活動した分（20-platform.md 第13.6節）。送るのは下の send() と同じ時機。
+       入っているかどうかは進度の送信（store.flush）と同じく手元の控えの owner で判じる */
+    const activity = data ? trackActivity(data.lessonId, async () => (await store.owner()) !== null) : null;
 
     // 第0章だけ、課題を1問ずつ出す（第11.7節）。ほかの章では何もせずに戻る
     setupExerciseQueue();
@@ -163,6 +168,7 @@ const oneAtATime = entry.data.chapter === '00-start' ? '' : undefined;
     function send() {
       countSeconds();
       void store.flush();
+      void activity?.send();
     }
 
     window.setInterval(send, SEND_EVERY_MS);

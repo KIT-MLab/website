@@ -1,0 +1,272 @@
+---
+/**
+ * 集まりを書く画面（20-platform.md 第13.5節）。
+ *
+ *   /staff/meetings/          … 回の一覧（新しい順）と「新しい回を作る」
+ *   /staff/meetings/?id=new   … 新しい回の編集
+ *   /staff/meetings/?id=12    … その回の編集
+ *
+ * 見える回・書ける所属は、運営なら自分の所属、管理者なら全部（第5.4節の範囲）。判定は
+ * src/server/meetings.ts が src/server/staff.ts の visibleUsers で行う。範囲の外の回は
+ * 居ないときと同じ「見つかりません。」にする。
+ *
+ * 保存は POST /api/staff/meetings。**消す機能は作らない**（第13.8節）。
+ * 日時は日付と時刻の2つの欄で、**日本時間として**受け取る。
+ */
+export const prerender = false;
+
+import Base from '../../layouts/Base.astro';
+import { serverConfig } from '../../server/auth';
+import { requireStaff } from '../../server/staff';
+import { staffMeeting, staffMeetings, writableCohorts, type Meeting } from '../../server/meetings';
+import { jstDateTime, jstFormValues } from '../../server/member';
+import { ymd } from '../../server/staff-data';
+import '../../styles/lesson-tokens.css';
+import '../../styles/staff.css';
+
+const config = serverConfig();
+const me = config && (await requireStaff(Astro.request));
+
+Astro.response.headers.set('cache-control', 'no-store');
+if (!me) Astro.response.status = 403;
+
+const now = Date.now();
+const idParam = Astro.url.searchParams.get('id');
+const editing = me !== null && idParam !== null;
+
+let meeting: Meeting | null = null;
+let missing = false;
+if (editing && config && idParam !== 'new') {
+  const n = Number(idParam);
+  meeting = Number.isInteger(n) && n > 0 ? await staffMeeting(config.db, me!, n) : null;
+  if (!meeting) {
+    missing = true;
+    Astro.response.status = 404;
+  }
+}
+
+const list = me && config && !editing ? await staffMeetings(config.db, me) : [];
+const cohorts = me && config && editing ? await writableCohorts(config.db, me) : [];
+const when = meeting ? jstFormValues(meeting.startsAt) : { date: '', time: '' };
+const cohortNow = meeting?.cohortCode ?? me?.cohort.code ?? '';
+const cohortName = cohorts.find((c) => c.code === cohortNow)?.name ?? cohortNow;
+---
+
+<Base title="集まり">
+  {
+    !me ? (
+      <p class="staff-deny">この画面は開けません。</p>
+    ) : missing ? (
+      <p class="staff-deny">見つかりません。</p>
+    ) : (
+      <div class="staff">
+        <div class="staff__top">
+          <h1 class="staff__title">集まり</h1>
+          <p class="staff__meta">
+            {me.displayName}（{me.cohort.name}）・
+            {me.role === 'admin' ? 'すべての所属が見えています' : 'この所属だけが見えています'}・{ymd(now)}
+          </p>
+        </div>
+
+        <nav class="staff-nav" aria-label="運営の画面">
+          <a href="/staff/">詰まっているところ</a>
+          <a href="/staff/questions">質問</a>
+          <a href="/staff/meetings/" aria-current="page">集まり</a>
+          <a href="/staff/activity/">活動</a>
+        </nav>
+
+        {!editing ? (
+          <>
+            <h2>
+              回の一覧<span class="staff__count">新しい順・{list.length}件</span>
+            </h2>
+            <p class="mt-new">
+              <a href="/staff/meetings/?id=new">新しい回を作る</a>
+            </p>
+            {list.length === 0 ? (
+              <p class="staff__none">まだ回はありません。</p>
+            ) : (
+              <table class="roster">
+                <thead>
+                  <tr>
+                    <th>回</th>
+                    <th>日時（日本時間）</th>
+                    <th>題</th>
+                    <th>所属</th>
+                    <th />
+                  </tr>
+                </thead>
+                <tbody>
+                  {list.map((m) => (
+                    <tr>
+                      <td class="act-num">第{m.no}回</td>
+                      <td>{jstDateTime(m.startsAt)}</td>
+                      <td>{m.title}</td>
+                      <td>{m.cohortName}</td>
+                      <td>
+                        <a class="mt-edit" href={`/staff/meetings/?id=${m.id}`}>
+                          編集する
+                        </a>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </>
+        ) : (
+          <>
+            <h2>{meeting ? `第${meeting.no}回を編集する` : '新しい回を作る'}</h2>
+            <p class="mt-new">
+              <a href="/staff/meetings/">回の一覧へ戻る</a>
+            </p>
+            <form class="mt-form" data-meeting-form data-id={meeting ? String(meeting.id) : ''} novalidate>
+              <div class="mt-field">
+                {me.role === 'admin' ? (
+                  <>
+                    <label for="mt-cohort">所属</label>
+                    <select class="mt-in" id="mt-cohort" name="cohort">
+                      {cohorts.map((c) => (
+                        <option value={c.code} selected={c.code === cohortNow}>
+                          {c.name}（{c.code}）
+                        </option>
+                      ))}
+                    </select>
+                  </>
+                ) : (
+                  <>
+                    <p class="mt-lab">所属</p>
+                    <p class="mt-fixed">{cohortName}</p>
+                    <input type="hidden" name="cohort" value={cohortNow} />
+                  </>
+                )}
+                <p class="mt-msg" data-msg="cohort" />
+              </div>
+
+              <div class="mt-field">
+                <label for="mt-no">第何回</label>
+                <input class="mt-in" id="mt-no" name="no" type="number" min="1" step="1" value={meeting?.no ?? ''} style="width: 8em" />
+                <p class="mt-msg" data-msg="no" />
+              </div>
+
+              <div class="mt-field">
+                <label for="mt-title">題</label>
+                <input class="mt-in" id="mt-title" name="title" type="text" value={meeting?.title ?? ''} />
+                <p class="mt-msg" data-msg="title" />
+              </div>
+
+              <div class="mt-field">
+                <p class="mt-lab">日時（日本時間）</p>
+                <div class="mt-pair">
+                  <input class="mt-in" name="date" type="date" aria-label="日付" value={when.date} />
+                  <input class="mt-in" name="time" type="time" aria-label="時刻" value={when.time} />
+                </div>
+                <p class="mt-msg" data-msg="date" />
+              </div>
+
+              <div class="mt-field">
+                <label for="mt-place">場所</label>
+                <input class="mt-in" id="mt-place" name="place" type="text" value={meeting?.place ?? ''} />
+              </div>
+
+              <div class="mt-field">
+                <label for="mt-summary">説明</label>
+                <textarea class="mt-in" id="mt-summary" name="summary" rows="3">{meeting?.summary ?? ''}</textarea>
+              </div>
+
+              <div class="mt-field">
+                <label for="mt-colab">Colab の URL</label>
+                <input class="mt-in" id="mt-colab" name="colabUrl" type="url" value={meeting?.colabUrl ?? ''} />
+                <p class="mt-note">https://colab.research.google.com/ か https://drive.google.com/ で始まるもの。空なら「Colab を開く」を出しません。</p>
+                <p class="mt-msg" data-msg="colabUrl" />
+              </div>
+
+              <div class="mt-field">
+                <label for="mt-bring">持ち物</label>
+                <input class="mt-in" id="mt-bring" name="bring" type="text" value={meeting?.bring ?? ''} />
+              </div>
+
+              <div class="mt-field">
+                <label for="mt-read">あとで読む（節の id を空白で区切る）</label>
+                <input
+                  class="mt-in"
+                  id="mt-read"
+                  name="readAfter"
+                  type="text"
+                  value={meeting?.readAfter.join(' ') ?? ''}
+                  placeholder="python-07-shape python-07-stats"
+                />
+              </div>
+
+              <div class="mt-field">
+                <label for="mt-note">チームでやったこと</label>
+                <textarea class="mt-in" id="mt-note" name="teamNote" rows="2">{meeting?.teamNote ?? ''}</textarea>
+              </div>
+
+              <div class="mt-field">
+                <label for="mt-score">チームの数字</label>
+                <input
+                  class="mt-in"
+                  id="mt-score"
+                  name="teamScore"
+                  type="text"
+                  value={meeting?.teamScore ?? ''}
+                  placeholder="正解率 0.787"
+                />
+              </div>
+
+              <div class="mt-bar">
+                <button type="submit">保存する</button>
+                <p class="mt-msg" data-msg="" />
+              </div>
+            </form>
+          </>
+        )}
+      </div>
+    )
+  }
+
+  <script>
+    /* 保存（20-platform.md 第13.5節）。断りはサーバが `field` で言う欄の下に出す。
+       欄の名前が無い断り（設定不足など）は保存のボタンの横に出す。
+       通ったら一覧へ戻る。 */
+    const form = document.querySelector<HTMLFormElement>('[data-meeting-form]');
+
+    if (form) {
+      const button = form.querySelector<HTMLButtonElement>('button[type="submit"]');
+      const slots = Array.from(form.querySelectorAll<HTMLElement>('[data-msg]'));
+
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        for (const slot of slots) slot.textContent = '';
+
+        const values: Record<string, string> = {};
+        for (const [name, value] of new FormData(form)) values[name] = String(value);
+
+        const say = (field: string, message: string) => {
+          const slot = slots.find((s) => s.dataset.msg === field) ?? slots.find((s) => s.dataset.msg === '');
+          if (slot) slot.textContent = message;
+        };
+
+        if (button) button.disabled = true;
+        try {
+          const res = await fetch('/api/staff/meetings', {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({ id: form.dataset.id || undefined, ...values }),
+          });
+          const data = (await res.json().catch(() => ({}))) as { error?: string; field?: string };
+          if (!res.ok) {
+            say(data.field ?? '', data.error ?? '保存できませんでした。');
+            return;
+          }
+          location.href = '/staff/meetings/';
+        } catch {
+          say('', '保存できませんでした。');
+        } finally {
+          if (button) button.disabled = false;
+        }
+      });
+    }
+  </script>
+</Base>

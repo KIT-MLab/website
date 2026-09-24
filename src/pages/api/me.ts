@@ -17,6 +17,7 @@
  */
 import type { APIRoute } from 'astro';
 import { currentUser, json, serverConfig } from '../../server/auth';
+import { isMember } from '../../server/member';
 
 export const prerender = false;
 
@@ -61,7 +62,8 @@ export const GET: APIRoute = async ({ request }) => {
 
   return json(
     {
-      user,
+      // メンバーかどうか（第13.1節）。画面はこれだけを見てメンバーの画面への入口を出す
+      user: { ...user, member: isMember(user) },
       progress: progress.results.map((row) => ({
         lessonId: row.lesson_id,
         state: row.state,

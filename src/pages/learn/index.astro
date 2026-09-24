@@ -8,6 +8,8 @@ const chapters = [...new Set(lessons.map((l) => l.data.chapter))];
 ---
 
 <Base title="学習">
+  {/* メンバーの画面への入口（20-platform.md 第13.2節）。メンバーにだけ、下の script が出す */}
+  <p class="member-band" hidden><a href="/learn/home/">マイページへ →</a></p>
   <h1 class="page-title">学習</h1>
   <section>
     <p class="lead">
@@ -37,7 +39,27 @@ const chapters = [...new Set(lessons.map((l) => l.data.chapter))];
   </section>
 </Base>
 
+<script>
+  /* このページは事前生成なので、メンバーかどうかは /api/me の答えで見る（第13.2節） */
+  void fetch('/api/me')
+    .then((res) => res.json())
+    .then((data: { user?: { member?: boolean } | null }) => {
+      const band = document.querySelector<HTMLElement>('.member-band');
+      if (band && data?.user?.member === true) band.hidden = false;
+    })
+    .catch(() => {});
+</script>
+
 <style>
+  .member-band {
+    margin: 0 0 var(--space-md);
+    padding: 3px 12px;
+    font-size: 14px;
+    background: var(--color-card);
+    border: 1.5px solid var(--color-line);
+    border-radius: var(--radius);
+  }
+  .member-band a { color: var(--color-ink); font-weight: 700; text-underline-offset: 4px; }
   .lead { margin: 20px 0 28px; }
   .learning-note { font-size: 14px; color: var(--color-ink-2); margin-top: 28px; }
   .lesson-chapter { margin: 16px 0; }

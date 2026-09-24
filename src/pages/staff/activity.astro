@@ -1,0 +1,224 @@
+---
+/**
+ * 活動を見る画面（20-platform.md 第13.7節）。
+ *
+ *   1. 一覧        … メンバーごとに1行。最後に活動した日時・今週・先週・直近4週・済んだ節の数
+ *   2. 時間帯の表  … 直近4週の活動した分を、曜日（月〜日）×時（0〜23時）で数える
+ *   3. 最近の出来事 … 節を済ませた・課題を提出した・質問した、を新しい順に50件
+ *
+ * 見える範囲は第5.4節のとおり（src/server/staff.ts の visibleUsers）。問い合わせは
+ * src/server/activity.ts にある。**自分の API を fetch しない。**
+ *
+ * 日時はすべて日本時間。週は月曜0時（日本時間）から。「直近4週」は今週を含む4つの週。
+ * 時間帯の表の濃さは墨の色の不透明度だけで表す（新しい色を足さない）。
+ */
+export const prerender = false;
+
+import { getCollection } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import { serverConfig } from '../../server/auth';
+import { requireStaff } from '../../server/staff';
+import { activityGrid, activityList, recentEvents } from '../../server/activity';
+import { durationLabel, jstDateTime, lessonIndex } from '../../server/member';
+import { exercisePlaces, ymd } from '../../server/staff-data';
+import generated from '../../generated/lesson-data.json';
+import '../../styles/lesson-tokens.css';
+import '../../styles/staff.css';
+
+const config = serverConfig();
+const me = config && (await requireStaff(Astro.request));
+
+Astro.response.headers.set('cache-control', 'no-store');
+if (!me) Astro.response.status = 403;
+
+const now = Date.now();
+
+const lessons = me ? [...(await getCollection('lessons'))].sort((a, b) => a.id.localeCompare(b.id)) : [];
+const index = lessonIndex(
+  lessons.map((l) => ({ entryId: l.id, lessonId: l.data.id, chapter: l.data.chapter, title: l.data.title })),
+);
+const places = exercisePlaces(generated);
+
+/** 節の呼び方「7.2 形と2次元配列」。教材から消えた節は id のまま出す */
+function lessonName(lessonId: string): string {
+  const ref = index.get(lessonId);
+  return ref ? `${ref.no} ${ref.title}` : lessonId;
+}
+
+const rows = config && me ? await activityList(config.db, me, now) : [];
+const grid = config && me ? await activityGrid(config.db, me, now) : [];
+const events = config && me ? await recentEvents(config.db, me, 50) : [];
+
+// --- 時間帯の表 ---
+const DAYS = ['月曜', '火曜', '水曜', '木曜', '金曜', '土曜', '日曜'];
+const HOURS = Array.from({ length: 24 }, (_, h) => h);
+const total = new Array(168).fill(0);
+for (const person of grid) person.cells.forEach((n, i) => (total[i] += n));
+const gridByUser = new Map(grid.map((person) => [person.userId, person.cells]));
+/* 人を選ぶ欄。数は option の data 属性に持たせる（Astro が属性として書くので、表示名などを
+   script に埋め込まずに済む）。一覧に居る人だけ、一覧と同じ並び。 */
+const picks = [
+  { value: '', label: '全員の合計', cells: total },
+  ...rows.map((row) => ({
+    value: row.id,
+    label: row.displayName,
+    cells: gridByUser.get(row.id) ?? new Array(168).fill(0),
+  })),
+];
+const maxTotal = Math.max(0, ...total);
+
+// --- 最近の出来事 ---
+const eventRows = events.map((event) => {
+  if (event.kind === 'done') return { ...event, what: '節を済ませた', mark: '', where: lessonName(event.lessonId) };
+  if (event.kind === 'question') return { ...event, what: '質問した', mark: '', where: lessonName(event.lessonId) };
+  const place = places.get(event.exerciseId);
+  return {
+    ...event,
+    what: '課題を提出した',
+    mark: event.passed ? 'ok' : 'ng',
+    where: place ? lessonName(place.lessonId) : event.exerciseId,
+  };
+});
+---
+
+<Base title="活動">
+  {
+    !me ? (
+      <p class="staff-deny">この画面は開けません。</p>
+    ) : (
+      <div class="staff">
+        <div class="staff__top">
+          <h1 class="staff__title">活動</h1>
+          <p class="staff__meta">
+            {me.displayName}（{me.cohort.name}）・
+            {me.role === 'admin' ? 'すべての所属が見えています' : 'この所属だけが見えています'}・{ymd(now)}
+          </p>
+        </div>
+
+        <nav class="staff-nav" aria-label="運営の画面">
+          <a href="/staff/">詰まっているところ</a>
+          <a href="/staff/questions">質問</a>
+          <a href="/staff/meetings/">集まり</a>
+          <a href="/staff/activity/" aria-current="page">活動</a>
+        </nav>
+
+        <h2>
+          一覧<span class="staff__count">{rows.length}人・週は月曜0時から</span>
+        </h2>
+        {rows.length === 0 ? (
+          <p class="staff__none">見えるメンバーはいません。</p>
+        ) : (
+          <table class="roster">
+            <thead>
+              <tr>
+                <th>メンバー</th>
+                <th>最後に活動した日時</th>
+                <th class="act-num">今週</th>
+                <th class="act-num">先週</th>
+                <th class="act-num">直近4週</th>
+                <th class="act-num">済んだ節</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((row) => (
+                <tr>
+                  <td class="roster__who">
+                    <a href={`/staff/user/${row.id}`}>{row.displayName}</a>
+                    <span class="roster__uid">{row.id}</span>
+                  </td>
+                  <td>{row.lastMinute === null ? '—' : jstDateTime(row.lastMinute)}</td>
+                  <td class="act-num">{durationLabel(row.thisWeek)}</td>
+                  <td class="act-num">{durationLabel(row.lastWeek)}</td>
+                  <td class="act-num">{durationLabel(row.fourWeeks)}</td>
+                  <td class="act-num">
+                    {row.done}/{lessons.length}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+
+        <h2>
+          時間帯<span class="staff__count">直近4週・日本時間</span>
+        </h2>
+        <p class="heat-pick">
+          <label>
+            人を選ぶ
+            <select data-heat-pick>
+              {picks.map((pick) => (
+                <option value={pick.value} data-cells={pick.cells.join(',')}>
+                  {pick.label}
+                </option>
+              ))}
+            </select>
+          </label>
+        </p>
+        <div class="heat-wrap">
+          <table class="heat">
+            <thead>
+              <tr>
+                <th />
+                {HOURS.map((h) => (
+                  <th>{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {DAYS.map((day, d) => (
+                <tr>
+                  <th>{day}</th>
+                  {HOURS.map((h) => (
+                    <td title={`${day} ${h}時: ${total[d * 24 + h]}分`} data-cell={d * 24 + h} data-day={day} data-hour={h}>
+                      <i style={`opacity: ${maxTotal > 0 ? total[d * 24 + h] / maxTotal : 0}`} />
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        <h2>
+          最近の出来事<span class="staff__count">新しい順・{eventRows.length}件</span>
+        </h2>
+        {eventRows.length === 0 ? <p class="staff__none">まだありません。</p> : null}
+        <ul class="events">
+          {eventRows.map((event) => (
+            <li>
+              <span class="events__when">{jstDateTime(event.at)}</span>
+              <a class="events__who" href={`/staff/user/${event.userId}`}>
+                {event.displayName}
+              </a>
+              <span>
+                {event.what}
+                {event.mark === 'ok' ? <span class="events__ok">（通った）</span> : null}
+                {event.mark === 'ng' ? <span class="events__ng">（落ちた）</span> : null}
+              </span>
+              <span>{event.where}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+    )
+  }
+
+  <script>
+    /* 時間帯の表の人を選ぶ（20-platform.md 第13.7節）。既定は全員の合計。
+       濃さはその人の中でいちばん多いマスを1として、墨の不透明度で出す。 */
+    const pick = document.querySelector<HTMLSelectElement>('[data-heat-pick]');
+    const cells = Array.from(document.querySelectorAll<HTMLTableCellElement>('.heat td[data-cell]'));
+
+    pick?.addEventListener('change', () => {
+      const option = pick.selectedOptions[0];
+      const counts = (option?.dataset.cells ?? '').split(',').map(Number);
+      const max = Math.max(0, ...counts);
+      for (const cell of cells) {
+        const n = counts[Number(cell.dataset.cell)] ?? 0;
+        cell.title = `${cell.dataset.day} ${cell.dataset.hour}時: ${n}分`;
+        const ink = cell.querySelector<HTMLElement>('i');
+        if (ink) ink.style.opacity = String(max > 0 ? n / max : 0);
+      }
+    });
+  </script>
+</Base>

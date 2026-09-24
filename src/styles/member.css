@@ -1,0 +1,345 @@
+/* ============================================================
+ * メンバーの画面 — 20-platform.md 第13.3節
+ *
+ * 試作の案A「今週が主役」の並びと部品の様式をそのまま写したもの。
+ * 色・書体・罫は tokens.css と lesson-tokens.css のトークンだけを使う。**新しい色を足さない。**
+ * 部品の様式は tokens.css の末尾のメモのとおり:
+ *   ボタン … 1.5px枠 + 3px 3px のベタ影、hover でアクセント反転、active で沈む。角丸 6px
+ *   見出し … 左バー（5px、アクセント）
+ *   カード … var(--l-card) の地、1.5px の罫、角丸 6px
+ * 読み込み順はページの frontmatter で決めている（lesson-tokens.css → member.css）。
+ * ============================================================ */
+
+/* 地と幅。Base.astro の `body` と `.wrap` を詳しさで上書きする（staff.css と同じやり方） */
+html body {
+  background: var(--l-paper);
+}
+
+main.wrap {
+  max-width: 1040px;
+}
+
+.member {
+  color: var(--l-ink);
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.75;
+}
+
+.member h2,
+.member h3 {
+  margin: 0;
+  font-family: var(--font-head);
+  font-weight: 900;
+  line-height: 1.35;
+  text-wrap: balance;
+}
+
+.member p {
+  margin: 0;
+}
+
+.member a {
+  color: var(--l-ai);
+}
+
+.m-muted {
+  color: var(--l-ink-2);
+}
+
+.m-small {
+  font-size: 13px;
+}
+
+.m-num {
+  font-variant-numeric: tabular-nums;
+}
+
+/* --- 部品 ---------------------------------------------------- */
+.m-card {
+  display: grid;
+  gap: var(--space-sm);
+  align-content: start;
+  min-width: 0;
+  padding: var(--space-md) var(--space-md) calc(var(--space-md) + 2px);
+  background: var(--l-card);
+  border: 1.5px solid var(--color-line);
+  border-radius: var(--radius);
+}
+
+.m-sec {
+  border-left: 5px solid var(--color-accent);
+  padding-left: 10px;
+  font-size: 17px;
+}
+
+.member .m-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 7px 16px;
+  font: inherit;
+  font-weight: 700;
+  color: var(--l-ink);
+  text-decoration: none;
+  background: var(--l-card);
+  border: 1.5px solid var(--color-line);
+  border-radius: var(--radius);
+  box-shadow: 3px 3px 0 var(--color-line);
+  cursor: pointer;
+  transition:
+    background-color 120ms var(--ease-out),
+    color 120ms var(--ease-out);
+}
+
+.member .m-btn:hover {
+  background: var(--color-accent);
+  color: var(--l-card);
+}
+
+.member .m-btn:active {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0 var(--color-line);
+}
+
+.member .m-btn:focus-visible,
+.m-past summary:focus-visible {
+  outline: 3px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+.m-tag {
+  padding: 1px 8px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  border: 1px solid currentColor;
+  border-radius: 99px;
+}
+
+.m-tag--now {
+  color: var(--color-accent);
+}
+
+.m-tag--past {
+  color: var(--l-ink-2);
+}
+
+.m-dl {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 2px 14px;
+  margin: 0;
+  font-size: 14px;
+}
+
+.m-dl dt {
+  color: var(--l-ink-2);
+}
+
+.m-dl dd {
+  margin: 0;
+  min-width: 0;
+}
+
+.m-dl dd a + a {
+  margin-left: 1em;
+}
+
+.m-bar {
+  display: flex;
+  gap: 2px;
+}
+
+.m-bar i {
+  flex: 1;
+  height: 8px;
+  border-radius: 1px;
+  background: var(--l-chip);
+}
+
+.m-bar i.on {
+  background: var(--l-midori);
+}
+
+.member .m-reply {
+  display: grid;
+  gap: 2px;
+  padding-top: 8px;
+  font-size: 14px;
+  color: inherit;
+  text-decoration: none;
+  border-top: 1px solid var(--l-rule);
+}
+
+.member .m-reply:first-of-type {
+  padding-top: 0;
+  border-top: 0;
+}
+
+.member .m-reply:hover .m-reply__body {
+  text-decoration: underline;
+}
+
+.m-table-wrap {
+  overflow-x: auto;
+}
+
+.m-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.m-table th,
+.m-table td {
+  padding: 5px 8px;
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px solid var(--l-rule);
+}
+
+.m-table th {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--l-ink-2);
+}
+
+.m-table td {
+  white-space: pre-wrap;
+}
+
+/* --- 案A の並び ---------------------------------------------- */
+.m-top {
+  display: grid;
+  gap: var(--space-md);
+}
+
+.m-hello {
+  font-size: 14px;
+}
+
+.m-week {
+  gap: var(--space-md);
+  padding: var(--space-lg) var(--space-lg) calc(var(--space-lg) + 4px);
+  border-width: 2px;
+}
+
+.m-week h2 {
+  font-size: 26px;
+}
+
+.m-summary {
+  white-space: pre-wrap;
+}
+
+.m-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-md);
+  align-items: center;
+}
+
+.m-cols {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+  gap: var(--space-md);
+  margin-top: var(--space-md);
+}
+
+.m-side {
+  display: grid;
+  gap: var(--space-md);
+  align-content: start;
+}
+
+.m-chapters {
+  display: grid;
+  gap: 6px;
+}
+
+.m-ch {
+  display: grid;
+  grid-template-columns: 11em minmax(0, 1fr) 3.2em;
+  gap: 10px;
+  align-items: center;
+  font-size: 14px;
+}
+
+.m-ch__n {
+  text-align: right;
+  color: var(--l-ink-2);
+}
+
+.m-next {
+  margin-top: 6px;
+}
+
+.m-past {
+  margin-top: var(--space-md);
+}
+
+.m-past summary {
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--l-ink-2);
+}
+
+.m-past .m-table {
+  margin-top: 6px;
+}
+
+/* 運営・管理者にだけ出す右下の入口（案Aの試作と同じ見た目） */
+.m-door {
+  position: fixed;
+  right: 18px;
+  bottom: calc(18px + env(safe-area-inset-bottom, 0px));
+  z-index: 5;
+}
+
+.member .m-door .m-btn {
+  background: var(--l-ink);
+  color: var(--l-paper);
+}
+
+.member .m-door .m-btn:hover {
+  background: var(--color-accent);
+  color: var(--l-card);
+}
+
+/* メンバーでない人への1段落（第13.1節） */
+.member-deny {
+  margin: 0;
+  font-size: 15px;
+}
+
+@media (max-width: 760px) {
+  .m-cols {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .m-week {
+    padding: var(--space-md);
+  }
+
+  .m-week h2 {
+    font-size: 22px;
+    overflow-wrap: anywhere;
+  }
+
+  .m-ch {
+    grid-template-columns: 8.5em minmax(0, 1fr) 3em;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .member .m-btn {
+    transition: none;
+  }
+
+  .member .m-btn:active {
+    transform: none;
+  }
+}
