@@ -1,0 +1,95 @@
+---
+id: python-08-index
+chapter: 08-table
+title: 行と列を指定する添字
+minutes: 15
+terms: []
+---
+
+{/* 困る例 */}
+
+第7.2節の `scores[1][2]` は1つの値だけを取り出します。数学の点だけを全員分そろえたくても、列をまとめて指定する書き方がありません。
+
+{/* やってみる */}
+
+次のコードの ▶ を押してください。
+
+<Run
+  code={`import numpy as np
+
+scores = np.array([[80, 70, 90], [60, 50, 40]])
+print(scores[0, 1])
+print(scores[:, 1])
+print(scores[1, :])`}
+  out={`70
+[70 50]
+[60 50 40]`}
+/>
+
+{/* 説明 */}
+
+4行目の `scores[0, 1]` は、`scores[0][1]` と同じ値を、コンマで区切った1つの `[ ]` で指定します。行と列の添字をまとめて書けます。
+
+5行目の `scores[:, 1]` は、行の位置に `:` を書き、列だけを1番目に絞ります。`:` は「すべての行」という意味なので、人の方向はそのまま残ります。数学の点をこの形で全員分そろえられます。
+
+6行目の `scores[1, :]` は逆に、行を1番目に絞り、列はすべて残します。1人分の3科目がそのまま出ます。
+
+まとめると、列を取り出すのは科目の方向を1つに絞る操作、行を取り出すのは人の方向を1つに絞る操作です。
+
+{/* よくある間違い */}
+
+<Mistake
+  id="index-column-out-of-range"
+  code={`import numpy as np
+scores = np.array([[80, 70, 90], [60, 50, 40]])
+print(scores[:, 3])`}
+  error={`IndexError: index 3 is out of bounds for axis 1 with size 3`}
+>
+科目は3つなので、列の添字は `0` から `2` までです。`3` はどの列にも当たりません。
+</Mistake>
+
+{/* 課題 */}
+
+<Exercise
+  id="python-08-index-m1"
+  kind="modify"
+  starter={`import numpy as np
+scores = np.array([[80, 70, 90], [60, 50, 40]])
+print(scores[:, 0])`}
+  tests={[{ kind: 'stdout' }]}
+  hints={['列の添字を、上の「やってみる」のコードと見比べてください。']}
+  mistakes={['index-column-out-of-range']}
+>
+`[90 40]` と表示されるように、3行目を書き換えてください。
+</Exercise>
+
+<Exercise
+  id="python-08-index-b1"
+  kind="build"
+  stdin={`80
+70
+90
+60
+50
+40
+1`}
+  forbid={['for ', '][']}
+  tests={[
+    { kind: 'stdout', stdin: `80\n70\n90\n60\n50\n40\n1\n` },
+    { kind: 'stdout', stdin: `0\n0\n0\n0\n0\n0\n0\n` },
+    { kind: 'stdout', stdin: `-5\n10\n-8\n-5\n20\n-8\n2\n` },
+  ]}
+  hints={[
+    '2人分の点数を1つの2次元配列にまとめます。列の取り出しは、上の「やってみる」の scores[:, 1] と同じ形です。',
+    '取り出した列は配列なので、mean() がそのまま使えます。',
+  ]}
+  mistakes={['index-column-out-of-range']}
+>
+入力欄から2人分、3科目の点数を読み取ってください（1行に1つの数、1人ずつ3つ）。続けて、取り出したい科目の番号（0が国語、1が数学、2が英語）を読み取ります。
+
+指定した科目の列と、その平均を小数第1位まで丸めて、この順で表示してください。for文は使わないでください。
+</Exercise>
+
+{/* つながり */}
+
+行と列を指定して取り出せるようになりました。次の節では、行と列を丸ごと入れ替える書き方を扱います。

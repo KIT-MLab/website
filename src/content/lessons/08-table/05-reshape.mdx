@@ -1,0 +1,94 @@
+---
+id: python-08-reshape
+chapter: 08-table
+title: reshapeで表にする
+minutes: 15
+terms: [reshape]
+---
+
+{/* 困る例 */}
+
+第7.5節の点数表は、for文で1人ずつ3科目ぶんを読み取り、リストに集めてから配列にしていました。人数が変わっても、組み立て方はそのままです。
+
+{/* やってみる */}
+
+次のコードの ▶ を押してください。
+
+<Run
+  code={`import numpy as np
+
+flat = np.array([80, 70, 90, 60, 50, 40])
+print(flat.shape)
+table = flat.reshape(2, 3)
+print(table.shape)
+print(table)`}
+  out={`(6,)
+(2, 3)
+[[80 70 90]
+ [60 50 40]]`}
+/>
+
+{/* 説明 */}
+
+3行目の `flat` は、6個の値が1列に並んだ配列です。形は `(6,)` で、1次元であることを示します。
+
+5行目の `flat.reshape(2, 3)` は、値の並び順を変えずに、2行3列の形に直します。reshapeと呼びます。先頭から3個ずつ、1行目・2行目に分けて詰め直されます。
+
+reshapeが変えるのは形だけです。値の個数と並び順はそのまま残るので、`2 * 3` が元の個数6と一致していないと使えません。第7.5節のように人数ぶんfor文で読み取らなくても、まず1列に読み取ってから、あとで人数×3科目の表に直せます。
+
+{/* よくある間違い */}
+
+<Mistake
+  id="reshape-size-mismatch"
+  code={`import numpy as np
+flat = np.array([80, 70, 90, 60, 50, 40])
+print(flat.reshape(2, 4))`}
+  error={`ValueError: cannot reshape array of size 6 into shape (2,4)`}
+>
+`2 * 4` は8で、元の個数6と合っていません。行数と列数の積が、元の個数と同じになるようにしてください。
+</Mistake>
+
+{/* 課題 */}
+
+<Exercise
+  id="python-08-reshape-m1"
+  kind="modify"
+  starter={`import numpy as np
+flat = np.array([1, 2, 3, 4, 5, 6])
+table = flat.reshape(2, 3)
+print(table[1])`}
+  tests={[{ kind: 'stdout' }]}
+  hints={['reshapeは、先頭から順に行へ詰め直します。2行目に入る3つの値を考えてください。']}
+  mistakes={['reshape-size-mismatch']}
+>
+`[40 50 60]` と表示されるように、2行目の `flat` を書き換えてください。
+</Exercise>
+
+<Exercise
+  id="python-08-reshape-b1"
+  kind="build"
+  stdin={`2
+80
+70
+90
+60
+50
+40`}
+  forbid={['append([']}
+  tests={[
+    { kind: 'stdout', stdin: `2\n80\n70\n90\n60\n50\n40\n` },
+    { kind: 'stdout', stdin: `1\n0\n0\n0\n` },
+    { kind: 'stdout', stdin: `3\n-5\n10\n10\n-5\n20\n20\n0\n0\n0\n` },
+  ]}
+  hints={[
+    '先にすべての値を1つのリストに集めてから、reshapeで人数×3の形にします。',
+    '人ごとに分けてリストに入れる必要はありません。',
+  ]}
+  mistakes={['reshape-size-mismatch']}
+>
+入力欄の1行目を人数として読み取り、続けて人数×3個の点数を読み取ってください。読み取った値をreshapeで人数行3列の表にし、形と中身をこの順で表示してください。人ごとに分けてリストに集めないでください。
+</Exercise>
+
+{/* つながり */}
+
+1列に並んだ入力を表の形に直せるようになりました。次の節では、この章で学んだ道具で点数表を書き直します。

@@ -1,0 +1,97 @@
+---
+id: python-08-transpose
+chapter: 08-table
+title: 転置
+minutes: 15
+terms: [転置]
+---
+
+{/* 困る例 */}
+
+第7.2節では、行と列を入れ替えるのに、for文を二重に回して1つずつ移し替えました。行や列が増えるほど、書く行数が増えます。
+
+{/* やってみる */}
+
+次のコードの ▶ を押してください。
+
+<Run
+  code={`import numpy as np
+
+scores = np.array([[80, 70, 90], [60, 50, 40]])
+print(scores.shape)
+print(scores.T.shape)
+print(scores.T)`}
+  out={`(2, 3)
+(3, 2)
+[[80 60]
+ [70 50]
+ [90 40]]`}
+/>
+
+{/* 説明 */}
+
+5行目の `scores.T` は、行と列を入れ替えた配列です。これを転置（transpose）と呼びます。2行3列の配列を転置すると、3行2列になります。
+
+`.T` は関数と違い、かっこを付けずに書きます。転置する前に、新しい形を先に考えてから、shapeで確かめてください。
+
+6行目のように転置した配列を表示すると、元の1列目だった `80` `60` が1行目に並びます。値そのものは変わらず、並ぶ向きだけが入れ替わります。
+
+何行何列になるかを実行する前に言えるようにしておくと、形が合わずにエラーで止まったとき、どこで形が食い違ったかを探せます。
+
+{/* よくある間違い */}
+
+<Mistake
+  id="transpose-not-callable"
+  code={`import numpy as np
+scores = np.array([[80, 70, 90], [60, 50, 40]])
+print(scores.T())`}
+  error={`TypeError: 'numpy.ndarray' object is not callable`}
+>
+`.T` はかっこを付けずに使います。`scores.T()` ではなく `scores.T` と書いてください。
+</Mistake>
+
+{/* 課題 */}
+
+<Exercise
+  id="python-08-transpose-m1"
+  kind="modify"
+  starter={`import numpy as np
+table = np.array([[1, 2, 3], [4, 5, 6]])
+print(table.T.shape)`}
+  tests={[{ kind: 'stdout' }]}
+  hints={[
+    '転置すると、行の数と列の数が入れ替わります。目標の形から、元の表が何行何列かを逆算してください。',
+    '行の数と列の数さえ合えば、表の中の値は何でもかまいません。',
+  ]}
+  mistakes={['transpose-not-callable']}
+>
+`(2, 4)` と表示されるように、2行目の表を書き換えてください。
+</Exercise>
+
+<Exercise
+  id="python-08-transpose-b1"
+  kind="build"
+  stdin={`80
+70
+90
+60
+50
+40`}
+  forbid={['for ', '][']}
+  tests={[
+    { kind: 'stdout', stdin: `80\n70\n90\n60\n50\n40\n` },
+    { kind: 'stdout', stdin: `0\n0\n0\n0\n0\n0\n` },
+    { kind: 'stdout', stdin: `-5\n10\n10\n3\n-8\n10\n` },
+  ]}
+  hints={[
+    '先に2行3列の配列を作ります。転置は .T をそのまま付けるだけです。',
+    '形は shape で確認できます。転置したあとの行数・列数を先に考えてから確かめてください。',
+  ]}
+  mistakes={['transpose-not-callable']}
+>
+入力欄から2人分、3科目の点数を読み取り、2次元配列にしてください（1行に1つの数、1人ずつ3つ）。`.T` で転置し、転置したあとの形と中身を、この順で表示してください。for文は使わないでください。
+</Exercise>
+
+{/* つながり */}
+
+転置で行と列を入れ替えられるようになりました。次の節では、形の違う配列どうしを計算する書き方を扱います。
