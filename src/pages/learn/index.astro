@@ -48,6 +48,14 @@ const chapters = [...new Set(lessons.map((l) => l.data.chapter))];
       if (band && data?.user?.member === true) band.hidden = false;
     })
     .catch(() => {});
+
+  /* 右上からログイン・ログアウトしたときも塗り直す。ログインの応答には member が無く、
+     直後の /api/me の答えで塗り直されたときに member が届く（account.ts の pull） */
+  window.addEventListener('kit:account', (e) => {
+    const user = (e as CustomEvent<{ member?: boolean } | null>).detail;
+    const band = document.querySelector<HTMLElement>('.member-band');
+    if (band) band.hidden = user?.member !== true;
+  });
 </script>
 
 <style>

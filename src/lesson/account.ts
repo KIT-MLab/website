@@ -162,6 +162,8 @@ export function setupAccount(): void {
 
   /** `note` は出るときに送りきれなかったことを伝える1行（第6.2節）。ふだんは null。 */
   function paint(user: User | null, note: string | null = null): void {
+    // ログイン・ログアウトをほかの部品に知らせる（/learn/ の「マイページへ」の帯など）
+    window.dispatchEvent(new CustomEvent('kit:account', { detail: user }));
     /* 質問の欄は入っている人にだけ出す（第10.1節）。
        送り先が自分のアカウントに紐づくので、入っていない人には置き場所がない。 */
     const ask = document.querySelector<HTMLElement>('[data-rail-ask]');
