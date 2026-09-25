@@ -96,6 +96,48 @@ D1 の無料枠は、1日あたり読み取り500万行・書き込み10万行�
 
 ---
 
-## 5. まだ決めていないこと
+## 5. 招待コードを足す・閉じる（2026-09-25 追加）
+
+招待コードは `cohorts` から切り離してある（`20-platform.md` 第5.2.1節）。**内部の招待コードは
+このリポジトリには一切書かない。** 本番と、あなたの手元の開発用データベースの両方へ、
+次の `wrangler d1 execute` で直接1行ずつ足す。
+
+まず、新しい `invite_codes` テーブルを作る migration をあてる（1回だけでよい）。
+
+```
+npx wrangler d1 migrations apply mlab-course --remote
+```
+
+（これは第3.1節と同じ1行。以後 migration を足すたびにこれを実行してもらう決まりのまま。）
+
+### 5.1 コードを足す（本番）
+
+`新しいコード` と `<ミリ秒>` を差し替えて実行。`<ミリ秒>` は「いま」でよい
+（例: ブラウザの開発者ツールで `Date.now()`、または `node -e "console.log(Date.now())"`）。
+`MLAB-2026` に対して内部の招待コードを1つ作る例:
+
+```
+npx wrangler d1 execute mlab-course --remote --command "INSERT INTO invite_codes (code, cohort_code, open, created_at) VALUES ('新しいコード', 'MLAB-2026', 1, <ミリ秒>)"
+```
+
+### 5.2 コードを閉じる（本番）
+
+```
+npx wrangler d1 execute mlab-course --remote --command "UPDATE invite_codes SET open = 0 WHERE code = '…'"
+```
+
+### 5.3 開発用データベース（手元）
+
+`--remote` を `--local` に変えるだけ。本番とは別のデータベースなので、試すときはこちらを使う。
+
+```
+npx wrangler d1 migrations apply mlab-course --local
+npx wrangler d1 execute mlab-course --local --command "INSERT INTO invite_codes (code, cohort_code, open, created_at) VALUES ('新しいコード', 'MLAB-2026', 1, <ミリ秒>)"
+npx wrangler d1 execute mlab-course --local --command "UPDATE invite_codes SET open = 0 WHERE code = '…'"
+```
+
+---
+
+## 6. まだ決めていないこと
 
 - 本番のデータベースと、開発用のデータベースを分けるか。分けないと、開発中の操作が本番の記録に混ざる。**分けることを勧める**（`mlab-course-dev` をもう1つ作る）。判断はあとで

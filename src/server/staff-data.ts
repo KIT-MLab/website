@@ -16,7 +16,7 @@
  * 時刻はすべてミリ秒（第6章）。`seconds` だけが秒である（列の名前のとおり）。
  */
 import type { CurrentUser, Db } from './auth';
-import { normalizeUserId } from './auth';
+import { hashPasscode, newPasscode, normalizeUserId } from './auth';
 import { visibleUsers } from './staff';
 // 課題の呼び方は src/lesson/exercise-place.ts に1つだけ置いてある。ここからは読むだけ
 export { exerciseLabel, exercisePlaces, type ExercisePlace } from '../lesson/exercise-place';
@@ -385,6 +385,64 @@ export async function userDetail(
       createdAt: row.created_at,
     })),
   };
+}
+
+// ---------------------------------------------------------------- パスワードの作り直し
+
+/**
+ * パスワードの作り直しの答え（第5.3節「運営が管理画面から再発行する」）。
+ *
+ * `reason` の意味:
+ *   `not_found` … 範囲の外、または居ない利用者。**居ないときとまったく同じ**にする
+ *                 （userDetail と同じ考え方。居るかどうかを教えない）
+ *   `self`      … 自分自身は指定できない
+ *   `forbidden` … 管理者でない運営が、管理者を指定した
+ */
+export type PasscodeResetResult =
+  | { ok: true; id: string; passcode: string }
+  | { ok: false; reason: 'not_found' | 'self' | 'forbidden' };
+
+type ResetTargetRow = { id: string; role: string };
+
+/**
+ * パスワードを作り直す（第5.3節）。範囲は userDetail とまったく同じ `visibleUsers`
+ * （運営は自分の所属だけ、管理者は全部）。範囲の外は「見つからない」と同じ 404 に
+ * なるよう、呼ぶ側に `not_found` を返す。
+ *
+ * ここで決めた規則（仕様書に細則が無いため、ここで定める）:
+ *   - **誰も自分自身のパスワードはここでは作り直せない。** 管理者も例外にしない。
+ *     取り違えて自分を指定したときに、自分のログインをその場で失う操作を許さないため
+ *     （src/pages/api/admin/role.ts の「自分の管理者は外せない」と同じ考え方）
+ *   - **運営（staff）は管理者（admin）のパスワードを作り直せない。** 管理者だけができる
+ *   - それ以外は visibleUsers の範囲どおり（運営は自分の所属の学生・運営、管理者は全部）
+ *
+ * 作り直す中身は3つ: 新しいハッシュを保存する・`fail_count`/`retry_after` を0に戻す・
+ * その利用者の `sessions` を全部消す（ログイン中の端末をログアウトさせる。第5.3節）。
+ * 平文のパスワードは戻り値としてだけ渡す。**ログには一切出さない。**
+ */
+export async function resetPasscode(db: Db, me: CurrentUser, rawId: string): Promise<PasscodeResetResult> {
+  const id = normalizeUserId(rawId);
+  const scope = visibleUsers(me);
+
+  const target = await db
+    .prepare(`SELECT u.id AS id, u.role AS role FROM users u WHERE u.id = ? AND ${scope.where}`)
+    .bind(id, ...scope.binds)
+    .first<ResetTargetRow>();
+  if (!target) return { ok: false, reason: 'not_found' };
+
+  if (target.id === me.id) return { ok: false, reason: 'self' };
+  if (target.role === 'admin' && me.role !== 'admin') return { ok: false, reason: 'forbidden' };
+
+  const passcode = newPasscode();
+  const passHash = await hashPasscode(passcode);
+
+  await db
+    .prepare('UPDATE users SET pass_hash = ?, fail_count = 0, retry_after = 0 WHERE id = ?')
+    .bind(passHash, target.id)
+    .run();
+  await db.prepare('DELETE FROM sessions WHERE user_id = ?').bind(target.id).run();
+
+  return { ok: true, id: target.id, passcode };
 }
 
 // ---------------------------------------------------------------- 日付の出し方

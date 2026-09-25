@@ -429,6 +429,85 @@ main.wrap {
   color: var(--l-ink-2);
 }
 
+/* --- パスワードを作り直す（運営以上・第5.3節） -----------------
+   形は上の .role と同じにする（同じ種類の「運営の操作」のため）。
+   大きく出す番号（.passcode__value）だけは、アカウントの小窓の控える段
+   （account.css の .kit-acct__pass）と同じ大きさ・字間にそろえる。
+   staff.css は account.css を読み込まないので、値をここでも持つ。 */
+.passcode {
+  margin: 0 0 16px;
+  padding: 9px 12px;
+  background: var(--l-card);
+  border: 1px solid var(--l-rule);
+}
+
+.passcode__label {
+  margin: 0 0 6px;
+  font-size: 12.5px;
+  color: var(--l-ink-2);
+}
+
+.passcode__note {
+  margin: 0 0 8px;
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.passcode__bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.passcode__btn {
+  font: inherit;
+  font-size: 13px;
+  padding: 3px 14px;
+  color: var(--l-ink);
+  background: var(--l-lv1);
+  border: 1px solid var(--l-rule);
+  cursor: pointer;
+}
+
+/* 押せないものは変えない（第14.6節） */
+.passcode__btn:hover:not([disabled]) {
+  background: var(--l-lv2);
+}
+
+.passcode__btn--strong {
+  font-weight: 700;
+  background: var(--l-strong);
+  border-color: var(--l-strong);
+  color: var(--l-card);
+}
+
+.passcode__btn--strong:hover:not([disabled]) {
+  background: #000;
+}
+
+.passcode__btn[disabled] {
+  color: var(--l-ink-2);
+  cursor: default;
+}
+
+/* 紙に書き写す前提。account.css の .kit-acct__pass と同じ値 */
+.passcode__value {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 30px;
+  line-height: 1.3;
+  letter-spacing: 0.14em;
+  color: var(--l-strong);
+}
+
+/* 断りの文は琥珀。.role__msg と同じ決まり */
+.passcode__msg {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--l-kohaku);
+}
+
 /* 一覧の中で、学生でない人に添える役の名前。
    行の見た目が同じだと、運営や管理者の行を学生と読み違える。
    目立たせる必要はないので、地の色に近い小さな文字にする */

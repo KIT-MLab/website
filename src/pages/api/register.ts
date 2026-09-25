@@ -1,8 +1,13 @@
 /**
- * 登録（20-platform.md 第5.2節・第7章）。
+ * 登録（20-platform.md 第5.2節・第5.2.1節・第7章）。
  *
  * 招待コードと表示名を受け取り、利用者IDとパスワードを発行して返す。
  * 集める個人情報は**表示名だけ**（第5.5節）。メールアドレスも学籍番号も本名も受け取らない。
+ *
+ * **招待コードは `invite_codes` で探す。**`cohorts.code` そのものを招待コードとして
+ * 引かない（第5.2.1節）。公開リポジトリに書かれてしまっている `MLAB-2026` は
+ * `invite_codes` の中で閉じてある（`open = 0`）ので、実際に配る内部の招待コードは
+ * 別に、このリポジトリの外から足す。
  *
  * **パスワードの平文を返すのはこの応答の1回だけ。**しまってあるのは PBKDF2 のハッシュなので、
  * このあとはサーバも運営も元の6桁を読めない。忘れたときは運営が再発行する（第5.3節）。
@@ -50,7 +55,7 @@ const OPEN_LIMIT = { hour: 10, day: 50 };
 const HOUR_MS = 60 * 60 * 1000;
 const DAY_MS = 24 * HOUR_MS;
 
-type CohortRow = { code: string; name: string; kind: string };
+type InviteRow = { cohort_code: string; cohort_name: string; cohort_kind: string };
 
 /**
  * D1 が返す例外のうち、主キーの衝突だけを拾う。
@@ -73,14 +78,22 @@ export const POST: APIRoute = async ({ request }) => {
   // 招待コードは前後の空白を落として大文字に。紙から打ち直す前提なので、
   // 小文字で打っても末尾に空白が付いても通す（第5.2節）。
   const code = String(body.code ?? '').trim().toUpperCase();
-  const cohort = await db
-    .prepare('SELECT code, name, kind FROM cohorts WHERE code = ?')
+  // invite_codes から探し、そこから所属を引く（第5.2.1節）。cohorts.code を直接は引かない。
+  const invite = await db
+    .prepare(
+      `SELECT c.code AS cohort_code, c.name AS cohort_name, c.kind AS cohort_kind
+         FROM invite_codes i
+         JOIN cohorts c ON c.code = i.cohort_code
+        WHERE i.code = ? AND i.open = 1`,
+    )
     .bind(code)
-    .first<CohortRow>();
+    .first<InviteRow>();
   // field は「どの欄の下に出すか」を画面に伝えるためだけのもの（第5.6節）。
   // これが無いと画面が文面の中身を見て振り分けることになり、文面を直した瞬間に
   // 断りの文が別の欄の下に出る。**文言と配置を結びつけない。**
-  if (!cohort) return json({ error: '招待コードが違います。', field: 'code' }, 400);
+  // 存在しないコードと閉じたコードは同じ文面で断る。コードが存在することを教えない。
+  if (!invite) return json({ error: '招待コードが違います。', field: 'code' }, 400);
+  const cohort = { code: invite.cohort_code, name: invite.cohort_name, kind: invite.cohort_kind };
 
   // 長さは符号位置で数える。`String.length` は UTF-16 の単位なので、絵文字や一部の
   // 漢字が2文字と数えられ、画面に出す「40文字まで」と食い違う。

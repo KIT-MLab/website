@@ -41,6 +41,12 @@ else if (!detail) Astro.response.status = 404;
 // ロールの付け外しは管理者だけ（第5.4節）。判定はこの1か所に任せる。
 const admin = detail ? await requireAdmin(Astro.request) : null;
 
+// パスワードを作り直すボタンを出してよいか（第5.3節）。規則は src/server/staff-data.ts の
+// resetPasscode に合わせてここでも判じる。自分自身と、管理者でない運営から見た管理者には
+// 出さない（押しても必ず断られるボタンを見せないため。サーバ側でも同じ規則を確かめている）。
+const canResetPasscode =
+  !!detail && !!me && detail.user.id !== me.id && !(detail.user.role === 'admin' && me.role !== 'admin');
+
 const ROLE_NAMES: Record<string, string> = { student: '学生', staff: '運営', admin: '管理者' };
 
 // 進度は章ごとにまとめて出す。まだ開いていない節も並べる（どこまで来ていないかを見るため）。
@@ -117,6 +123,35 @@ const submissions = detail?.submissions ?? [];
             </select>
             <button type="button">変える</button>
             <p class="role__msg" data-role-msg />
+          </div>
+        ) : null}
+
+        {canResetPasscode ? (
+          <div class="passcode" data-passcode={detail.user.id}>
+            <p class="passcode__label">パスワード</p>
+            <div data-passcode-idle>
+              <button type="button" class="passcode__btn" data-passcode-start>
+                パスワードを作り直す
+              </button>
+            </div>
+            <div data-passcode-confirm hidden>
+              <p class="passcode__note">
+                {detail.user.displayName}さんのパスワードを作り直します。いまのパスワードは使えなくなり、ログイン中の端末もログアウトされます。
+              </p>
+              <div class="passcode__bar">
+                <button type="button" class="passcode__btn passcode__btn--strong" data-passcode-go>
+                  作り直す
+                </button>
+                <button type="button" class="passcode__btn" data-passcode-cancel>
+                  やめる
+                </button>
+              </div>
+            </div>
+            <div data-passcode-done hidden>
+              <p class="passcode__note">この番号を本人に伝えてください。この画面を離れると二度と表示されません。</p>
+              <p class="passcode__value" data-passcode-value></p>
+            </div>
+            <p class="passcode__msg" data-passcode-msg />
           </div>
         ) : null}
 
@@ -221,6 +256,65 @@ const submissions = detail?.submissions ?? [];
           message.textContent = '送れませんでした。';
         } finally {
           button.disabled = false;
+        }
+      });
+    }
+
+    /* パスワードを作り直す（20-platform.md 第5.3節）。
+       確認は window.confirm を使わず、段を切り替える形の in-page 確認にする
+       （アカウントの小窓の「控える」段と同じ考え方: 見せたら二度と出さない）。 */
+    const pcBox = document.querySelector<HTMLElement>('[data-passcode]');
+    if (pcBox) {
+      const idle = pcBox.querySelector<HTMLElement>('[data-passcode-idle]');
+      const confirmStage = pcBox.querySelector<HTMLElement>('[data-passcode-confirm]');
+      const done = pcBox.querySelector<HTMLElement>('[data-passcode-done]');
+      const msg = pcBox.querySelector<HTMLElement>('[data-passcode-msg]');
+      const valueEl = pcBox.querySelector<HTMLElement>('[data-passcode-value]');
+      const start = pcBox.querySelector<HTMLButtonElement>('[data-passcode-start]');
+      const go = pcBox.querySelector<HTMLButtonElement>('[data-passcode-go]');
+      const cancel = pcBox.querySelector<HTMLButtonElement>('[data-passcode-cancel]');
+      const id = pcBox.dataset.passcode ?? '';
+
+      // 6桁を3桁ずつ空ける。アカウントの小窓（src/lesson/account.ts の groupPasscode）と
+      // 同じ形だが、あちらは節のページからしか読み込まれないのでここでは書き写す。
+      const group = (code: string): string => (code.length === 6 ? `${code.slice(0, 3)} ${code.slice(3)}` : code);
+
+      const show = (which: HTMLElement | null) => {
+        for (const el of [idle, confirmStage, done]) if (el) el.hidden = el !== which;
+      };
+
+      start?.addEventListener('click', () => {
+        if (msg) msg.textContent = '';
+        show(confirmStage);
+      });
+
+      cancel?.addEventListener('click', () => {
+        if (msg) msg.textContent = '';
+        show(idle);
+      });
+
+      go?.addEventListener('click', async () => {
+        if (!go) return;
+        go.disabled = true;
+        if (msg) msg.textContent = '';
+        try {
+          const res = await fetch(`/api/staff/user/${id}/passcode`, {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+          });
+          const resBody = (await res.json()) as { error?: string; passcode?: string };
+          if (!res.ok || !resBody.passcode) {
+            if (msg) msg.textContent = resBody.error ?? '作り直せませんでした。';
+            show(idle);
+            return;
+          }
+          if (valueEl) valueEl.textContent = group(resBody.passcode);
+          show(done);
+        } catch {
+          if (msg) msg.textContent = '送れませんでした。';
+          show(idle);
+        } finally {
+          go.disabled = false;
         }
       });
     }
