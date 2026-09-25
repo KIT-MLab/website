@@ -104,6 +104,16 @@ const dataJson = JSON.stringify(sections).replace(/</g, '\\u003c');
       ニューラルネットワークの学習と評価まで進みます。コードはこのページの中で動かせます。
     </p>
 
+    {/* 「次回」の入口（20-platform.md 第21.1節）。メンバーにだけ、下の script が出す */}
+    <div class="pl-entrance" id="pl-entrance" hidden>
+      <span class="pl-entrance__k">次回</span>
+      <span class="pl-entrance__t">
+        <span id="pl-entrance-title" />
+        <small id="pl-entrance-goal" hidden />
+      </span>
+      <a href="/learn/plan/">予定をすべて見る →</a>
+    </div>
+
     {/* 「今週の演習」の段（20-platform.md 第19.4節）。メンバーにだけ、下の script が出す */}
     <section class="wk-entrance" id="wk-entrance" hidden>
       <h2 class="wk-entrance__h">
@@ -214,13 +224,16 @@ const dataJson = JSON.stringify(sections).replace(/</g, '\\u003c');
   <script>
     import { paintLearnList } from '../../lesson/learn-list';
     import { paintWeeklyList } from '../../lesson/weekly-list';
+    import { paintPlanEntrance } from '../../lesson/plan-entrance';
     void paintLearnList();
     void paintWeeklyList();
+    void paintPlanEntrance();
     // 入る・出るで手元の進度が入れ替わる（第14.5節）。塗り直す。ログイン・ログアウトで
-    // メンバーかどうかも変わるので、今週の演習の段も一緒に塗り直す
+    // メンバーかどうかも変わるので、今週の演習の段・次回の入口も一緒に塗り直す
     window.addEventListener('kit:account', () => {
       void paintLearnList();
       void paintWeeklyList();
+      void paintPlanEntrance();
     });
     // 課題を採点したら、今週の演習の棒も一緒に塗り直す（第19.4節）
     window.addEventListener('kit:progress', () => void paintWeeklyList());
@@ -272,6 +285,48 @@ const dataJson = JSON.stringify(sections).replace(/</g, '\\u003c');
   .learning-note a {
     color: var(--color-ink);
     text-underline-offset: 3px;
+  }
+
+  /* --- 次回（20-platform.md 第21.1節） --- */
+  .pl-entrance {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    gap: 16px;
+    align-items: baseline;
+    border-top: 1px solid var(--color-line);
+    border-bottom: 1px solid var(--l-rule);
+    padding: 12px 4px;
+    margin-bottom: 12px;
+  }
+  .pl-entrance[hidden] {
+    display: none;
+  }
+  .pl-entrance__k {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--l-shu);
+  }
+  .pl-entrance__t {
+    font-family: var(--font-head);
+    font-size: 17px;
+    min-width: 0;
+  }
+  .pl-entrance__t small {
+    font-family: var(--font-body);
+    font-size: 13px;
+    color: var(--color-ink-2);
+    margin-left: 10px;
+  }
+  .pl-entrance a {
+    color: var(--color-ink);
+    font-size: 14px;
+    text-underline-offset: 3px;
+    white-space: nowrap;
+  }
+  @media (max-width: 640px) {
+    .pl-entrance {
+      grid-template-columns: 1fr;
+    }
   }
 
   /* --- 今週の演習（20-platform.md 第19.4節。試作 案B） --- */

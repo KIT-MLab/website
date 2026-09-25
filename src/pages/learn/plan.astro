@@ -1,0 +1,235 @@
+---
+/**
+ * 「今後の予定」（20-platform.md 第21章）。3月の Kaggle 月例コンペに全員で出るまでの、
+ * 毎週の集まりの予定表。見た目は試作の案A「週ごとの表」。
+ *
+ * **サーバで組み立てる。**メンバーかどうか（src/server/member.ts の isMember）をここで
+ * 判じ、メンバーでない人には1段落だけを返す。中身は1文字も送らない（第21.1節・第13.2節と同じ）。
+ *
+ * 予定そのものは src/lesson/plan.ts に直書きしてある（第21.3節）。データベースは持たない。
+ */
+export const prerender = false;
+
+import Base from '../../layouts/Base.astro';
+import { currentUser, serverConfig } from '../../server/auth';
+import { isMember, jstFormValues } from '../../server/member';
+import { PLAN, PLAN_INTRO, PLAN_GOAL, nextMeeting, tableDateLabel, type PlanMeetRow } from '../../lesson/plan';
+import '../../styles/lesson-tokens.css';
+import '../../styles/member.css';
+
+const config = serverConfig();
+const me = config ? await currentUser(Astro.request) : null;
+const member = me !== null && isMember(me);
+
+Astro.response.headers.set('cache-control', 'no-store');
+
+const today = jstFormValues(Date.now()).date;
+const next: PlanMeetRow | null = member ? nextMeeting(PLAN, today) : null;
+
+/** 行の様式。次回は強調、過ぎた回は薄い字（第21.2節）。 */
+function rowClass(row: PlanMeetRow): string {
+  if (row === next) return 'pl-row pl-row--next';
+  const end = row.until ?? row.date;
+  if (end < today) return 'pl-row pl-row--past';
+  return 'pl-row';
+}
+---
+
+<Base title="今後の予定">
+  {
+    !member ? (
+      <p class="member-deny">
+        このページはプロジェクトのメンバー向けです。<a href="/learn/">教材の一覧へ</a>
+      </p>
+    ) : (
+      <div class="plan">
+        <p class="pl-back">
+          <a href="/learn/">← 学習の一覧へ</a>
+        </p>
+        <h1 class="page-title">今後の予定</h1>
+        <p class="pl-lead">{PLAN_INTRO}</p>
+        <div class="pl-goal">
+          <b>{PLAN_GOAL.headline}</b>
+          <p>{PLAN_GOAL.body}</p>
+        </div>
+
+        <div class="pl-table-wrap">
+          <table class="pl-table">
+            <thead>
+              <tr>
+                <th>回</th>
+                <th>日付</th>
+                <th>やること</th>
+                <th class="pl-g">目標</th>
+              </tr>
+            </thead>
+            <tbody>
+              {PLAN.map((row) =>
+                row.kind === 'off' ? (
+                  <tr class="pl-off">
+                    <td class="pl-num" />
+                    <td class="pl-num">{tableDateLabel(row)}</td>
+                    <td>{row.title}</td>
+                    <td class="pl-g" />
+                  </tr>
+                ) : (
+                  <tr class={rowClass(row)}>
+                    <td class="pl-num">{row.no}</td>
+                    <td class="pl-num">{tableDateLabel(row)}</td>
+                    <td class="pl-do">
+                      {row.title}
+                      {row.online ? <span class="pl-tag">オンライン</span> : null}
+                      {row === next ? <span class="pl-tag pl-tag--next">次回</span> : null}
+                      {row.goal !== '' ? (
+                        <div class={row.big ? 'pl-goal-inline pl-goal-inline--big' : 'pl-goal-inline'}>
+                          {row.goal}
+                        </div>
+                      ) : null}
+                    </td>
+                    <td class={row.big ? 'pl-g pl-g--big' : 'pl-g'}>{row.goal}</td>
+                  </tr>
+                ),
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    )
+  }
+
+  <style>
+    .plan {
+      color: var(--l-ink);
+      font-family: var(--font-body);
+      font-size: 15px;
+      line-height: 1.75;
+    }
+    .pl-back {
+      margin: 0 0 10px;
+      font-size: 13px;
+    }
+    .pl-back a {
+      color: var(--l-ink-2);
+      text-underline-offset: 3px;
+    }
+    .pl-lead {
+      margin: 10px 0 20px;
+      max-width: 70ch;
+      color: var(--l-ink-2);
+    }
+    .pl-goal {
+      background: var(--l-card);
+      border: 1.5px solid var(--color-line);
+      border-radius: var(--radius);
+      box-shadow: 3px 3px 0 var(--color-line);
+      padding: var(--space-md) var(--space-lg);
+      margin: 0 0 28px;
+    }
+    .pl-goal b {
+      font-family: var(--font-head);
+      font-size: 18px;
+    }
+    .pl-goal p {
+      margin: 4px 0 0;
+      color: var(--l-ink-2);
+      font-size: 14px;
+    }
+
+    .pl-table-wrap {
+      overflow-x: auto;
+    }
+    .pl-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+    .pl-table th {
+      text-align: left;
+      font-weight: 700;
+      font-size: 12px;
+      color: var(--l-ink-2);
+      border-bottom: 1.5px solid var(--color-line);
+      padding: 6px 8px;
+    }
+    .pl-table td {
+      padding: 9px 8px;
+      border-bottom: 1px solid var(--l-rule);
+      vertical-align: top;
+    }
+    .pl-num {
+      width: 3.6em;
+      font-variant-numeric: tabular-nums;
+      color: var(--l-ink-2);
+      white-space: nowrap;
+    }
+    .pl-g {
+      width: 15em;
+      color: var(--l-ink-2);
+      font-size: 13px;
+    }
+    .pl-g--big {
+      color: var(--l-ink);
+      font-weight: 700;
+    }
+
+    /* 過ぎた回は薄い字（第21.2節） */
+    .pl-row--past td {
+      color: var(--l-ink-2);
+    }
+
+    /* 次回の行: 紙より明るい地に、左端の朱の線（第21.2節） */
+    .pl-row--next td {
+      background: var(--l-card);
+    }
+    .pl-row--next td:first-child {
+      box-shadow: inset 4px 0 0 var(--l-shu);
+      color: var(--l-shu);
+      font-weight: 700;
+    }
+
+    /* 休み（祝日・冬休み・試験）は細い灰色の行、回の番号は付けない（第21.2節） */
+    .pl-off td {
+      color: var(--l-ink-2);
+      font-size: 13px;
+      padding: 5px 8px;
+    }
+
+    .pl-tag {
+      display: inline-block;
+      font-size: 11px;
+      border: 1px solid var(--l-rule);
+      border-radius: 3px;
+      padding: 0 5px;
+      margin-left: 6px;
+      color: var(--l-ink-2);
+      white-space: nowrap;
+      vertical-align: middle;
+    }
+    .pl-tag--next {
+      color: var(--l-shu);
+      border-color: var(--l-shu);
+      font-weight: 700;
+    }
+
+    /* 幅640px以下では目標の列を畳み、やることの下に小さく出す（第21.2節） */
+    .pl-goal-inline {
+      display: none;
+    }
+    @media (max-width: 640px) {
+      th.pl-g,
+      td.pl-g {
+        display: none;
+      }
+      .pl-goal-inline {
+        display: block;
+        margin-top: 2px;
+        font-size: 12px;
+        color: var(--l-ink-2);
+      }
+      .pl-goal-inline--big {
+        color: var(--l-ink);
+        font-weight: 700;
+      }
+    }
+  </style>
+</Base>
