@@ -41,6 +41,26 @@ def _kit_jsonable(v):
     return {"__repr__": repr(v)}
 
 
+def _kit_preimport(code):
+    import ast, importlib
+    try:
+        tree = ast.parse(code)
+    except SyntaxError:
+        return
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            names = [a.name for a in node.names]
+        elif isinstance(node, ast.ImportFrom) and node.module and node.level == 0:
+            names = [node.module]
+        else:
+            continue
+        for name in names:
+            try:
+                importlib.import_module(name)
+            except Exception:
+                pass
+
+
 def _kit_run(code, stdin_text, call_json, limit):
     out = io.StringIO()
     lines = stdin_text.split(chr(10)) if stdin_text else []
@@ -61,6 +81,10 @@ def _kit_run(code, stdin_text, call_json, limit):
     ns = {"__name__": "__main__", "__builtins__": builtins.__dict__, "input": _kit_input}
     result = {"stdout": "", "error": None, "value": None, "hasValue": False}
     linecache.cache["<program>"] = (len(code), None, code.splitlines(True), "<program>")
+    # import する部品（pandas・scikit-learn など）を、時間を数える前に読んでおく。
+    # scikit-learn は読むだけで5秒を超え、途中で止めると壊れたまま残るため。
+    # 読めない名前は黙って飛ばし、下の exec で ModuleNotFoundError として見せる
+    _kit_preimport(code)
     saved_stdout = sys.stdout
     sys.stdout = out
     deadline = time.monotonic() + limit
@@ -68,6 +92,9 @@ def _kit_run(code, stdin_text, call_json, limit):
     def _kit_trace(frame, event, arg):
         if time.monotonic() > deadline:
             raise _KitTimeLimit()
+        # 1行ずつ見張るのは書いたコードだけ。部品の中まで行ごとに見ると何十倍も遅くなる
+        if frame.f_code.co_filename != "<program>":
+            return None
         return _kit_trace
 
     try:
