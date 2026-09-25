@@ -91,6 +91,10 @@ export const PYTHON_TOOLS = [
   { name: 'np.log',         in: 'python-11-log',      re: /np\.log\s*\(/, term: '対数' },
   { name: 'np.var / np.std', in: 'python-11-spread',  re: /np\.(var|std)\s*\(|\.(var|std)\s*\(/, term: ['分散','標準偏差'] },
 
+  // 第15章 評価（50-part3-curriculum.md 第2.4節）
+  { name: 'np.random.default_rng / .permutation', in: 'python-15-split', re: /np\.random\.default_rng\s*\(|\.permutation\s*\(/, desc: '乱数の種を固定して、配列の並びをランダムに混ぜる書き方。`np.random.default_rng(7)` は種7の乱数の生成器を作り、`.permutation(n)` はその生成器を使って0からn-1の整数をランダムな順に並べた配列を返す。種が同じなら、並びは何度実行しても同じになる。' },
+  { name: 'np.polyfit / np.polyval', in: 'python-15-overfit', re: /np\.polyfit\s*\(|np\.polyval\s*\(/, desc: 'データに当てはまる曲線を求める関数。`np.polyfit(x, y, 次数)` は、指定した次数までの曲線のうち誤差の2乗の平均が最も小さくなる係数を一度に求め、`np.polyval(係数, x)` はその係数で予測の値を求める。' },
+
   /* まだどの節でも教えていない道具。導入する節が無いので、どこで使っても落ちる（検査16）。
      第10章の書き手が a, b = 7, 30 を5か所で使い、読んで見つけた（2026-09-24）。
      教える節が決まったら、in をその節の id に直す */

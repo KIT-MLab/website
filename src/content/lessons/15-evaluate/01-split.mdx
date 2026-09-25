@@ -1,0 +1,135 @@
+---
+id: python-15-split
+chapter: 15-evaluate
+title: 学習用とテスト用に分ける
+minutes: 18
+terms: [学習用データ, テスト用データ]
+---
+
+{/* 困る例 */}
+
+勉強時間から点数を予想する直線を、30人全員のデータで学習すると、その30人については損失が小さくなります。新しく来た人にどれだけ当たるかは、これでは確かめられません。
+
+{/* やってみる */}
+
+次のコードの ▶ を押してください。
+
+<Run
+  code={`import numpy as np
+
+hours  = np.array([2.0, 3.0, 5.0, 6.0, 8.0, 9.0, 6.0, 6.5, 8.5, 5.5, 7.0, 8.0, 2.5, 0.5, 3.0, 3.0, 8.0, 8.5, 0.5, 4.5, 7.5, 1.5, 7.5, 1.5, 4.5, 7.5, 3.0, 3.5, 3.0, 6.5])
+scores = np.array([45, 52, 65, 70, 82, 84, 63, 70, 85, 68, 70, 80, 44, 39, 62, 52, 85, 91, 33, 66, 80, 39, 77, 39, 72, 73, 52, 50, 49, 77])
+
+rng = np.random.default_rng(3)
+idx = rng.permutation(30)
+train_idx = idx[:24]
+test_idx = idx[24:]
+
+train_hours = hours[train_idx]
+train_scores = scores[train_idx]
+test_hours = hours[test_idx]
+test_scores = scores[test_idx]
+
+a = 0.0
+b = 0.0
+for i in range(1500):
+    z = a * train_hours + b
+    a = a - 0.02 * np.mean(2 * (z - train_scores) * train_hours)
+    b = b - 0.02 * np.mean(2 * (z - train_scores))
+
+train_loss = np.mean((a * train_hours + b - train_scores) ** 2)
+test_loss = np.mean((a * test_hours + b - test_scores) ** 2)
+print(round(train_loss, 1))
+print(round(test_loss, 1))`}
+  out={`15.4
+34.1`}
+/>
+
+{/* 説明 */}
+
+6行目の`np.random.default_rng(3)`は、種3の乱数の生成器を作ります。7行目の`.permutation(30)`は、0から29の整数をランダムな順に並べた配列を返します。種が同じなら、並びは毎回同じになります。
+
+8〜9行目で、並びの先頭24個を学習用、残り6個をテスト用の添字にします。11行目の`hours[train_idx]`のように、配列を添字にして複数の値をまとめて取り出せます。
+
+18〜21行目は、第13章3節と同じ式の勾配降下です。学習用データだけで`a`と`b`を決めています。学習用の損失は`15.4`ですが、テスト用の損失は`34.1`まで上がります。
+
+{/* 課題 */}
+
+<Exercise
+  id="python-15-split-m1"
+  kind="modify"
+  starter={`import numpy as np
+
+hours  = np.array([2.0, 3.0, 5.0, 6.0, 8.0, 9.0, 6.0, 6.5, 8.5, 5.5, 7.0, 8.0, 2.5, 0.5, 3.0, 3.0, 8.0, 8.5, 0.5, 4.5, 7.5, 1.5, 7.5, 1.5, 4.5, 7.5, 3.0, 3.5, 3.0, 6.5])
+scores = np.array([45, 52, 65, 70, 82, 84, 63, 70, 85, 68, 70, 80, 44, 39, 62, 52, 85, 91, 33, 66, 80, 39, 77, 39, 72, 73, 52, 50, 49, 77])
+
+rng = np.random.default_rng(3)
+idx = rng.permutation(30)
+train_idx = idx[:24]
+test_idx = idx[24:]
+
+train_hours = hours[train_idx]
+train_scores = scores[train_idx]
+test_hours = hours[test_idx]
+test_scores = scores[test_idx]
+
+a = 0.0
+b = 0.0
+for i in range(1500):
+    z = a * train_hours + b
+    a = a - 0.02 * np.mean(2 * (z - train_scores) * train_hours)
+    b = b - 0.02 * np.mean(2 * (z - train_scores))
+
+train_loss = np.mean((a * train_hours + b - train_scores) ** 2)
+test_loss = np.mean((a * test_hours + b - test_scores) ** 2)
+print(round(train_loss, 1))
+print(round(test_loss, 1))`}
+  tests={[{ kind: 'stdout' }]}
+  hints={[
+    'まず、いまのコードをそのまま実行して、出力を確かめてください。',
+    '種が変わると、混ざる並びが変わり、学習用とテスト用の人が入れ替わります。',
+  ]}
+  mistakes={[]}
+>
+`17.0`と`28.7`が表示されるように、6行目の`default_rng`の引数を書き換えてください。
+</Exercise>
+
+<Exercise
+  id="python-15-split-b1"
+  kind="build"
+  stdin={`10
+5
+2.0
+3.0
+5.0
+6.0
+8.0
+9.0
+6.0
+6.5
+8.5
+5.5`}
+  tests={[
+    {
+      kind: 'stdout',
+      stdin: `10\n5\n2.0\n3.0\n5.0\n6.0\n8.0\n9.0\n6.0\n6.5\n8.5\n5.5\n`,
+    },
+    { kind: 'stdout', stdin: `4\n1\n0.0\n2.0\n4.0\n6.0\n` },
+    { kind: 'stdout', stdin: `6\n2\n1.5\n3.5\n5.5\n7.5\n2.5\n4.5\n` },
+  ]}
+  hints={[
+    '乱数の生成器と並び替えは、上の「やってみる」の6〜7行目と同じです。',
+    '学習用の人数を先に決めてから、残りをテスト用の添字にします。',
+  ]}
+  mistakes={[]}
+>
+入力欄の1行目を人数、2行目を乱数の種として読み取ってください。続けて、その人数ぶんの勉強時間を1行ずつ読み取ってください。
+
+読み取った種で並びを混ぜ、8割を学習用、残りをテスト用に分けてください。学習用の人数は、人数に0.8を掛けて`round()`で整数に丸めた数にします。
+
+学習用の人数とテスト用の人数を、1行目に並べて表示してください。続けて、学習用の勉強時間を2行目に、テスト用の勉強時間を3行目に表示してください。どちらも混ぜた順のまま、配列を`print()`に渡して表示します。
+</Exercise>
+
+{/* つながり */}
+
+次の節では、モデルを複雑にするとこの開きがどう変わるかを見ます。

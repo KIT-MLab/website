@@ -36,7 +36,7 @@ export const PARTS = [
     ],
   },
   { name: '第2部 数学の基礎', chapters: ['09-matrix', '10-slope', '11-probability'] },
-  { name: '第3部 機械学習', chapters: ['12-predict', '13-regression', '14-classify'], totalChapters: 4 },
+  { name: '第3部 機械学習', chapters: ['12-predict', '13-regression', '14-classify', '15-evaluate'] },
   { name: '第4部 深層学習', count: 4 },
   { name: '第5部 自分の環境', count: 2 },
   { name: '第6部 深層学習を式から', count: 5 },

@@ -36,6 +36,7 @@ export const CHAPTER_TITLES: Record<string, string> = {
   '12-predict': '第12章 予測とは何か',
   '13-regression': '第13章 回帰',
   '14-classify': '第14章 分類',
+  '15-evaluate': '第15章 評価',
 };
 
 export function chapterTitle(chapter: string): string {

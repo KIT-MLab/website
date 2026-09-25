@@ -1,0 +1,132 @@
+---
+id: python-15-confusion
+chapter: 15-evaluate
+title: 4つの場合を数える（混同行列）
+minutes: 18
+terms: [混同行列]
+---
+
+{/* 困る例 */}
+
+同じ正解率75%の2つのモデルがあります。一方は合格する人を見逃しがちで、もう一方は不合格の人を合格と言いがちです。正解率だけでは、この違いが分かりません。
+
+{/* やってみる */}
+
+次のコードの ▶ を押してください。ここでも、別の8人の記録を使います。
+
+<Run
+  code={`import numpy as np
+
+passed = np.array([1, 1, 1, 0, 0, 0, 0, 0])
+pred_a = np.array([1, 0, 0, 0, 0, 0, 0, 0])
+pred_b = np.array([1, 1, 1, 1, 1, 0, 0, 0])
+
+def show_counts(pred, passed):
+    hit = np.sum((pred == 1) & (passed == 1))
+    miss = np.sum((pred == 0) & (passed == 1))
+    false_alarm = np.sum((pred == 1) & (passed == 0))
+    correct_reject = np.sum((pred == 0) & (passed == 0))
+    print(hit, miss, false_alarm, correct_reject)
+
+print((pred_a == passed).mean())
+show_counts(pred_a, passed)
+print((pred_b == passed).mean())
+show_counts(pred_b, passed)`}
+  out={`0.75
+1 2 0 5
+0.75
+3 0 2 3`}
+/>
+
+{/* 説明 */}
+
+8行目の`hit`は、合格と予想して実際に合格だった人数です。これを当たりと呼びます。9行目の`miss`は、合格を見逃した人数で、見逃しと呼びます。
+
+10行目の`false_alarm`は、不合格なのに合格と予想した人数で、空振りと呼びます。11行目の`correct_reject`は、不合格を正しく言い当てた人数で、正しく外すと呼びます。
+
+モデルAは見逃しが2人、空振りが0人です。モデルBは見逃しが0人、空振りが2人です。どちらの間違いが困るかは、使う場面によって決まります。
+
+{/* よくある間違い */}
+
+<Mistake
+  id="confusion-and"
+  code={`import numpy as np
+pred = np.array([1, 0, 1, 0])
+passed = np.array([1, 1, 0, 0])
+hit = np.sum(pred == 1 & passed == 1)`}
+  error={`ValueError: The truth value of an array with more than one element is ambiguous. Use a.any() or a.all()`}
+>
+`&`は`==`より先に計算されます。`pred == (1 & passed) == 1`という意味になり、狙った式になりません。比べる式はそれぞれ`()`で囲んでください。
+</Mistake>
+
+{/* 課題 */}
+
+<Exercise
+  id="python-15-confusion-m1"
+  kind="modify"
+  starter={`import numpy as np
+
+passed = np.array([1, 1, 1, 0, 0, 0, 0, 0])
+pred_a = np.array([1, 0, 0, 0, 0, 0, 0, 0])
+pred_b = np.array([1, 1, 1, 1, 1, 0, 0, 0])
+
+def show_counts(pred, passed):
+    hit = np.sum((pred == 1) & (passed == 1))
+    miss = np.sum((pred == 0) & (passed == 1))
+    false_alarm = np.sum((pred == 1) & (passed == 0))
+    correct_reject = np.sum((pred == 0) & (passed == 0))
+    print(hit, miss, false_alarm, correct_reject)
+
+print((pred_a == passed).mean())
+show_counts(pred_a, passed)
+print((pred_b == passed).mean())
+show_counts(pred_b, passed)`}
+  tests={[{ kind: 'stdout' }]}
+  hints={[
+    'まず、いまのコードをそのまま実行して、出力を確かめてください。',
+    'pred_aの一部を0から1に変えると、見逃しが減り、空振りが増えます。',
+  ]}
+  mistakes={['confusion-and']}
+>
+1行目に`0.625`が表示されるように、4行目の`pred_a`を書き換えてください。当たりが1人、見逃しが2人、空振りが1人、正しく外すが4人になります。
+</Exercise>
+
+<Exercise
+  id="python-15-confusion-b1"
+  kind="build"
+  stdin={`8
+1
+1
+1
+0
+0
+0
+0
+0
+1
+0
+0
+0
+1
+1
+0
+0`}
+  tests={[
+    { kind: 'stdout', stdin: `8\n1\n1\n1\n0\n0\n0\n0\n0\n1\n0\n0\n0\n1\n1\n0\n0\n` },
+    { kind: 'stdout', stdin: `1\n1\n0\n` },
+    { kind: 'stdout', stdin: `4\n1\n0\n1\n0\n0\n1\n0\n1\n` },
+  ]}
+  hints={[
+    '4つの場合の式は、上の「やってみる」の8〜11行目と同じです。',
+    '予想を先に、答えをあとに読み取ります。',
+  ]}
+  mistakes={['confusion-and']}
+>
+入力欄の1行目を人数として読み取ってください。続けて、予想と答えをこの順に1行ずつ、人数ぶん読み取ってください。
+
+当たり・見逃し・空振り・正しく外すの人数を、この順で1行に並べて表示してください。
+</Exercise>
+
+{/* つながり */}
+
+次の節では、これまでの手順をつなげて、合否の予想を評価します。

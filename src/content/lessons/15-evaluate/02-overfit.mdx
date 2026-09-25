@@ -1,0 +1,108 @@
+---
+id: python-15-overfit
+chapter: 15-evaluate
+title: 学習用に合わせすぎる（過学習）
+minutes: 20
+terms: [過学習]
+---
+
+{/* 困る例 */}
+
+点数を予想する曲線に、勉強時間の2乗や3乗を特徴として足すほど、学習用データの損失は下がり続けます。しかし、テスト用データではどこかで損失が上がり始めます。
+
+{/* やってみる */}
+
+次のコードの ▶ を押してください。
+
+<Run
+  code={`import numpy as np
+
+hours  = np.array([2.0, 3.0, 5.0, 6.0, 8.0, 9.0, 6.0, 6.5, 8.5, 5.5, 7.0, 8.0, 2.5, 0.5, 3.0, 3.0, 8.0, 8.5, 0.5, 4.5, 7.5, 1.5, 7.5, 1.5, 4.5, 7.5, 3.0, 3.5, 3.0, 6.5])
+scores = np.array([45, 52, 65, 70, 82, 84, 63, 70, 85, 68, 70, 80, 44, 39, 62, 52, 85, 91, 33, 66, 80, 39, 77, 39, 72, 73, 52, 50, 49, 77])
+
+rng = np.random.default_rng(50)
+idx = rng.permutation(30)
+train_idx = idx[:6]
+test_idx = idx[6:]
+
+for degree in [1, 3, 5]:
+    coef = np.polyfit(hours[train_idx], scores[train_idx], degree)
+    pred_train = np.polyval(coef, hours[train_idx])
+    pred_test = np.polyval(coef, hours[test_idx])
+    train_loss = np.mean((pred_train - scores[train_idx]) ** 2)
+    test_loss = np.mean((pred_test - scores[test_idx]) ** 2)
+    print(round(train_loss, 1), round(test_loss, 1))`}
+  out={`25.1 19.9
+6.4 56.8
+0.0 723.0`}
+/>
+
+{/* 説明 */}
+
+12行目の`np.polyfit(x, y, 次数)`は、指定した次数までの曲線の係数を求める関数です。次数3なら、勉強時間の1乗・2乗・3乗を使った曲線になります。
+
+誤差の2乗の平均が最も小さくなる係数を、一度に求めます。求め方は、この教材では扱いません。
+
+13〜14行目の`np.polyval(係数, x)`は、その係数を使って予測の値を求めます。学習用とテスト用への分け方は、第15章1節と同じです。違いが見えやすいように、学習用を6人だけにしています。
+
+17行目の出力は、次数の並びと同じ順で3行になります。次数を1、3、5と増やすと、学習用の損失は`25.1`→`6.4`→`0.0`と下がり続けます。テスト用の損失は`19.9`→`56.8`→`723.0`と上がります。
+
+次数5の曲線は、学習用の6人をちょうど通るので、学習用の損失が`0.0`になります。このように曲線が学習用のデータに合いすぎて、テスト用で外れることを、過学習と呼びます。
+
+<Overfit />
+
+{/* 課題 */}
+
+<Exercise
+  id="python-15-overfit-m1"
+  kind="modify"
+  starter={`import numpy as np
+
+hours  = np.array([2.0, 3.0, 5.0, 6.0, 8.0, 9.0, 6.0, 6.5, 8.5, 5.5, 7.0, 8.0, 2.5, 0.5, 3.0, 3.0, 8.0, 8.5, 0.5, 4.5, 7.5, 1.5, 7.5, 1.5, 4.5, 7.5, 3.0, 3.5, 3.0, 6.5])
+scores = np.array([45, 52, 65, 70, 82, 84, 63, 70, 85, 68, 70, 80, 44, 39, 62, 52, 85, 91, 33, 66, 80, 39, 77, 39, 72, 73, 52, 50, 49, 77])
+
+rng = np.random.default_rng(50)
+idx = rng.permutation(30)
+train_idx = idx[:6]
+test_idx = idx[6:]
+
+for degree in [1, 3, 5]:
+    coef = np.polyfit(hours[train_idx], scores[train_idx], degree)
+    pred_train = np.polyval(coef, hours[train_idx])
+    pred_test = np.polyval(coef, hours[test_idx])
+    train_loss = np.mean((pred_train - scores[train_idx]) ** 2)
+    test_loss = np.mean((pred_test - scores[test_idx]) ** 2)
+    print(round(train_loss, 1), round(test_loss, 1))`}
+  tests={[{ kind: 'stdout' }]}
+  hints={[
+    'まず、いまのコードをそのまま実行して、出力を確かめてください。',
+    '次数の並びを2つの値に変えると、出力も2行になります。',
+  ]}
+  mistakes={[]}
+>
+`8.5 37.8`と`0.1 489.7`の2行が表示されるように、11行目の次数の並びを書き換えてください。
+</Exercise>
+
+<Exercise
+  id="python-15-overfit-b1"
+  kind="build"
+  stdin={`3`}
+  tests={[
+    { kind: 'stdout', stdin: `3\n` },
+    { kind: 'stdout', stdin: `0\n` },
+    { kind: 'stdout', stdin: `5\n` },
+  ]}
+  hints={[
+    '学習用とテスト用への分け方は、上の「やってみる」の6〜9行目と同じです。',
+    'for文とrange()で、次数を1から上限まで1つずつ試します。',
+  ]}
+  mistakes={[]}
+>
+入力欄から次数の上限を、0から5までの整数で読み取ってください。次数を1からその上限まで、1つずつ増やしながら試します。上限が0のときは、何も表示しません。
+
+次数ごとに、学習用とテスト用の損失を求めてください。次数と学習用の損失、テスト用の損失を、この順で1行に並べて表示してください。次数を増やすごとに、新しい行に表示してください。
+</Exercise>
+
+{/* つながり */}
+
+次の節では、テスト用データでの良さを、正解率という1つの数で表します。

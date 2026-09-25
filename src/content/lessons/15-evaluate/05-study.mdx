@@ -1,0 +1,133 @@
+---
+id: python-15-study
+chapter: 15-evaluate
+title: 分けたデータで合否の予想を評価する
+minutes: 25
+terms: []
+---
+
+{/* 困る例 */}
+
+ここまで、分ける・標準化する・正解率を測る・4つの場合を数えるを別々に確かめました。合否の予想でも同じ手順が使えるか、まだ通してみていません。
+
+{/* やってみる */}
+
+次のコードの ▶ を押してください。
+
+<Run
+  code={`import numpy as np
+
+hours  = np.array([2.0, 3.0, 5.0, 6.0, 8.0, 9.0, 6.0, 6.5, 8.5, 5.5, 7.0, 8.0, 2.5, 0.5, 3.0, 3.0, 8.0, 8.5, 0.5, 4.5, 7.5, 1.5, 7.5, 1.5, 4.5, 7.5, 3.0, 3.5, 3.0, 6.5])
+sleep  = np.array([6.5, 7.0, 6.0, 6.5, 7.0, 5.5, 8.5, 6.5, 6.5, 6.5, 7.0, 6.5, 6.5, 8.5, 8.0, 8.0, 7.5, 7.0, 6.0, 8.5, 6.5, 5.0, 8.0, 5.0, 8.0, 7.0, 5.0, 4.5, 6.5, 4.5])
+scores = np.array([45, 52, 65, 70, 82, 84, 63, 70, 85, 68, 70, 80, 44, 39, 62, 52, 85, 91, 33, 66, 80, 39, 77, 39, 72, 73, 52, 50, 49, 77])
+passed = (scores >= 60) * 1
+
+rng = np.random.default_rng(0)
+idx = rng.permutation(30)
+train_idx = idx[:24]
+test_idx = idx[24:]
+
+h_mean = hours[train_idx].mean()
+h_std = hours[train_idx].std()
+s_mean = sleep[train_idx].mean()
+s_std = sleep[train_idx].std()
+
+X_train = np.array([(hours[train_idx] - h_mean) / h_std, (sleep[train_idx] - s_mean) / s_std]).T
+X_test = np.array([(hours[test_idx] - h_mean) / h_std, (sleep[test_idx] - s_mean) / s_std]).T
+y_train = passed[train_idx]
+y_test = passed[test_idx]
+
+def sigmoid(z):
+    return 1 / (1 + np.exp(-z))
+
+def loss(X, y, w, b):
+    p = sigmoid(X @ w + b)
+    return np.mean(-(y * np.log(p) + (1 - y) * np.log(1 - p)))
+
+def grad_w(X, y, w, b):
+    p = sigmoid(X @ w + b)
+    return X.T @ (p - y) / len(y)
+
+def grad_b(X, y, w, b):
+    p = sigmoid(X @ w + b)
+    return np.mean(p - y)
+
+w = np.array([0.0, 0.0])
+b = 0.0
+loss_before = loss(X_train, y_train, w, b)
+
+for i in range(300):
+    gw = grad_w(X_train, y_train, w, b)
+    gb = grad_b(X_train, y_train, w, b)
+    w = w - 0.5 * gw
+    b = b - 0.5 * gb
+
+loss_after = loss(X_train, y_train, w, b)
+pred_test = (sigmoid(X_test @ w + b) >= 0.5) * 1
+
+accuracy = (pred_test == y_test).mean()
+ones = y_test.sum()
+zeros = len(y_test) - ones
+if ones >= zeros:
+    baseline = ones / len(y_test)
+else:
+    baseline = zeros / len(y_test)
+
+hit = np.sum((pred_test == 1) & (y_test == 1))
+miss = np.sum((pred_test == 0) & (y_test == 1))
+false_alarm = np.sum((pred_test == 1) & (y_test == 0))
+correct_reject = np.sum((pred_test == 0) & (y_test == 0))
+
+print(round(loss_before, 3))
+print(round(loss_after, 3))
+print(np.round(w, 2))
+print(round(b, 2))
+print(pred_test)
+print(round(accuracy, 2))
+print(round(baseline, 2))
+print(hit, miss, false_alarm, correct_reject)`}
+  out={`0.693
+0.049
+[4.95 1.56]
+2.72
+[1 1 0 1 0 1]
+0.83
+0.5
+3 0 1 2`}
+/>
+
+{/* 説明 */}
+
+8〜11行目の分け方は第15章1節と同じです。13〜21行目で、学習用とテスト用の両方を標準化します（第13章5節）。
+
+このとき、平均と標準偏差は学習用のものだけを使います。実際に使うときは、新しい人が1人ずつ来るので、その人たちの平均は求められないからです。テスト用は、その新しい人の代わりです。
+
+学習前後の損失、正解率と基準、4つの場合の数は、これまでの節と同じ式です。テスト用の正解率`0.83`は、基準の`0.5`を上回りました。
+
+{/* 課題 */}
+
+<Exercise
+  id="python-15-study-b1"
+  kind="build"
+  stdin={`0`}
+  tests={[
+    { kind: 'stdout', stdin: `0\n` },
+    { kind: 'stdout', stdin: `1\n` },
+    { kind: 'stdout', stdin: `13\n` },
+  ]}
+  hints={[
+    '30人の勉強時間・睡眠時間・合否の配列、分け方、標準化、sigmoid・loss・grad_w・grad_bの式は、上の「やってみる」と同じです。',
+    '学習率0.5で300回くり返すところまでは、「やってみる」と同じです。',
+  ]}
+  mistakes={[]}
+>
+入力欄から乱数の種を読み取ってください。30人を学習用24人とテスト用6人に分け、学習用の平均と標準偏差で両方を標準化してください。
+
+標準化した入力でロジスティック回帰を学習してください。学習率は0.5、くり返しは300回です。
+
+テスト用データでの正解率を1行目に、基準の正解率を2行目に、`round()`で小数第2位まで丸めて表示してください。続けて、当たり・見逃し・空振り・正しく外すの人数を、この順で3行目に並べて表示してください。
+</Exercise>
+
+{/* つながり */}
+
+第3部はここまでです。次の練習編では、別のデータで、この章までの手順を自分で組みます。
