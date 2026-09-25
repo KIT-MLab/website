@@ -1,44 +1,206 @@
 ---
+/**
+ * `/learn/` 学習の一覧（20-platform.md 第17章）。
+ *
+ * 部→章→節を <details>/<summary> で畳む（試作 案A）＋「続きから」（試作 案C の一部だけ）。
+ * 進み具合は手元の進度（localStorage）にしか無いので、SSR はゼロの見た目で出し、
+ * ブラウザで src/lesson/learn-list.ts が塗り直す（第17.2節・第17.3節）。
+ * レイアウトが変わらないよう、SSR も同じ DOM 構造・同じメーターの形で出す（数字だけが変わる）。
+ */
 import { getCollection } from 'astro:content';
 import Base from '../../layouts/Base.astro';
-import { chapterTitle, lessonHref, practiceSectionLabel } from '../../lesson/chapters';
+import { PARTS, chapterTitle, lessonHref, practiceSectionLabel } from '../../lesson/chapters';
+import { sectionLabel } from '../../../scripts/section-refs.mjs';
+import generated from '../../generated/lesson-data.json';
 
 const lessons = (await getCollection('lessons')).sort((a, b) => a.id.localeCompare(b.id));
-const chapters = [...new Set(lessons.map((l) => l.data.chapter))];
+const genLessons = (generated as { lessons: Record<string, { exerciseIds: string[] }> }).lessons;
+
+type SectionView = {
+  href: string;
+  lessonId: string;
+  chapter: string;
+  label: string;
+  title: string;
+  minutes: number;
+  exerciseIds: string[];
+  numberLabel: string | null;
+};
+
+const byChapter = new Map<string, typeof lessons>();
+for (const l of lessons) {
+  const list = byChapter.get(l.data.chapter) ?? [];
+  list.push(l);
+  byChapter.set(l.data.chapter, list);
+}
+
+// 教材の順（course order）のまま。JSON 埋め込みと、章ごとの表示の両方がこれを使う
+const sections: SectionView[] = lessons.map((l) => {
+  const siblings = byChapter.get(l.data.chapter) ?? [];
+  const idx = siblings.findIndex((s) => s.id === l.id);
+  const practiceNumber = practiceSectionLabel(l.data.chapter, idx + 1);
+  return {
+    href: lessonHref(l.id),
+    lessonId: l.data.id,
+    chapter: l.data.chapter,
+    label: sectionLabel(l.data.chapter, idx),
+    title: l.data.title,
+    minutes: l.data.minutes,
+    exerciseIds: genLessons[l.data.id]?.exerciseIds ?? [],
+    // 表示は「1. 題」の形（リストの数字）。練習編は「練習1-2」（20-platform.md 第15.4節のまま）
+    numberLabel: practiceNumber ?? `${idx + 1}.`,
+  };
+});
+
+type ChapterView = {
+  chapter: string;
+  title: string;
+  isPractice: boolean;
+  total: number;
+  sections: SectionView[];
+};
+
+type PartView =
+  | { kind: 'written'; name: string; chapters: ChapterView[]; total: number }
+  | { kind: 'soon'; name: string; count: number };
+
+const partViews: PartView[] = PARTS.map((part) => {
+  if (!('chapters' in part)) return { kind: 'soon', name: part.name, count: part.count };
+  const chapters: ChapterView[] = part.chapters.map((chapter) => {
+    const chSections = sections.filter((s) => s.chapter === chapter);
+    return {
+      chapter,
+      title: chapterTitle(chapter),
+      isPractice: practiceSectionLabel(chapter, 1) !== null,
+      total: chSections.reduce((n, s) => n + s.exerciseIds.length, 0),
+      sections: chSections,
+    };
+  });
+  return { kind: 'written', name: part.name, chapters, total: chapters.reduce((n, c) => n + c.total, 0) };
+});
+
+// SSR の既定は「まだ何も進めていない」姿（第17.1節）: 第0部・第0章だけ開き、最初の節を「次」にする
+const firstWrittenPartIndex = partViews.findIndex((p) => p.kind === 'written');
+const first = sections[0];
+
+const dataJson = JSON.stringify(sections).replace(/</g, '\\u003c');
 ---
 
 <Base title="学習">
   {/* メンバーの画面への入口（20-platform.md 第13.2節）。メンバーにだけ、下の script が出す */}
   <p class="member-band" hidden><a href="/learn/home/">マイページへ →</a></p>
   <h1 class="page-title">学習</h1>
-  <section>
+  <section class="learn">
     <p class="lead">
       機械学習を初めて学ぶ人のための教材です。Python を書くところから始め、
       ニューラルネットワークの学習と評価まで進みます。コードはこのページの中で動かせます。
     </p>
+
     {
-      chapters.map((ch) => (
-        <div class="lesson-chapter">
-          <h3>{chapterTitle(ch)}</h3>
-          {/* 練習編は節を「練習1-2」と呼ぶ（20-platform.md 第15.1節）。番号を振るのは呼び方の側なので、
-              リストの 1. 2. は消す */}
-          <ol class={practiceSectionLabel(ch, 1) ? "is-practice" : undefined}>
-            {lessons
-              .filter((l) => l.data.chapter === ch)
-              .map((l, i) => (
-                <li>
-                  <a href={lessonHref(l.id)}>{[practiceSectionLabel(ch, i + 1), l.data.title].filter(Boolean).join(' ')}</a>
-                  <span class="lesson-minutes">目安 {l.data.minutes} 分</span>
-                </li>
-              ))}
-          </ol>
+      first && (
+        <div class="lp-resume" id="learn-resume">
+          <div>
+            <p class="lp-resume__k" id="learn-resume-kind">はじめから</p>
+            <p class="lp-resume__t" id="learn-resume-title">
+              {first.label} {first.title}
+            </p>
+            <p class="lp-resume__w" id="learn-resume-where">
+              {chapterTitle(first.chapter)} ・ 目安 {first.minutes} 分
+            </p>
+          </div>
+          <a class="site-btn" id="learn-resume-link" href={first.href}>
+            開く →
+          </a>
         </div>
-      ))
+      )
     }
+
+    <div class="lp-parts">
+      {
+        partViews.map((part, pi) =>
+          part.kind === 'soon' ? (
+            <div class="lp-part lp-part--soon">
+              <div class="lp-part__head">
+                {/* 開かない段。開く段の ▶ の列をそろえるための空き */}
+                <span aria-hidden="true" />
+                <span class="lp-part__name">
+                  {part.name}
+                  <small>{part.count}章</small>
+                </span>
+                <span class="lp-soon">準備中</span>
+              </div>
+            </div>
+          ) : (
+            <details class="lp-part" data-part={pi} open={pi === firstWrittenPartIndex}>
+              <summary class="lp-part__head">
+                <span class="lp-part__tw" aria-hidden="true">
+                  ▶
+                </span>
+                <span class="lp-part__name">
+                  {part.name}
+                  <small>{part.chapters.filter((c) => !c.isPractice).length}章{
+                    part.chapters.some((c) => c.isPractice) ? `・練習編${part.chapters.filter((c) => c.isPractice).length}` : ''
+                  }</small>
+                </span>
+                <span class="lp-meter" data-meter-part={pi}>
+                  <span class="lp-meter__track">
+                    <span class="lp-meter__fill" style="width:0%" />
+                  </span>
+                  <span class="lp-meter__pct">0%</span>
+                  <span class="lp-meter__cnt">0/{part.total}問</span>
+                </span>
+              </summary>
+              <div class="lp-part__body">
+                {part.chapters.map((ch, ci) => (
+                  <details class="lp-chap" data-chapter={ch.chapter} open={pi === firstWrittenPartIndex && ci === 0}>
+                    <summary class="lp-chap__head">
+                      <span class="lp-chap__tw" aria-hidden="true">
+                        ▶
+                      </span>
+                      <span class="lp-chap__name">{ch.title}</span>
+                      <span class="lp-meter lp-meter--sm" data-meter-chapter={ch.chapter}>
+                        <span class="lp-meter__track">
+                          <span class="lp-meter__fill" style="width:0%" />
+                        </span>
+                        <span class="lp-meter__pct">0%</span>
+                        <span class="lp-meter__cnt">0/{ch.total}問</span>
+                      </span>
+                    </summary>
+                    <ol class={ch.isPractice ? 'lp-secs is-practice' : 'lp-secs'}>
+                      {ch.sections.map((s, si) => (
+                        <li data-lesson-id={s.lessonId} class={pi === 0 && ci === 0 && si === 0 ? 'is-next' : ''}>
+                          <span class="lp-secs__st" data-state>
+                            {pi === 0 && ci === 0 && si === 0 ? '次' : '未'}
+                          </span>
+                          <a href={s.href}>
+                            {s.numberLabel} {s.title}
+                          </a>
+                          <span class="lp-secs__min">{s.minutes}分</span>
+                        </li>
+                      ))}
+                    </ol>
+                  </details>
+                ))}
+              </div>
+            </details>
+          ),
+        )
+      }
+    </div>
+
     <p class="learning-note">
       作っている途中です。<a href="/learn/glossary/">用語集</a>と<a href="/learn/sandbox/">実験ページ</a>も見られます。
     </p>
   </section>
+
+  <script type="application/json" id="kit-learn-data" set:html={dataJson} is:inline />
+
+  <script>
+    import { paintLearnList } from '../../lesson/learn-list';
+    void paintLearnList();
+    // 入る・出るで手元の進度が入れ替わる（第14.5節）。塗り直す
+    window.addEventListener('kit:account', () => void paintLearnList());
+  </script>
 </Base>
 
 <script>
@@ -69,14 +231,258 @@ const chapters = [...new Set(lessons.map((l) => l.data.chapter))];
     border: 1.5px solid var(--color-line);
     border-radius: var(--radius);
   }
-  .member-band a { color: var(--color-ink); font-weight: 700; text-underline-offset: 4px; }
-  .lead { margin: 20px 0 28px; }
-  .learning-note { font-size: 14px; color: var(--color-ink-2); margin-top: 28px; }
-  .lesson-chapter { margin: 16px 0; }
-  .lesson-chapter h3 { font-size: 17px; border-bottom: var(--rule-thin); padding-bottom: 6px; margin-bottom: 8px; }
-  .lesson-chapter ol { padding-left: 28px; margin: 0; }
-  .lesson-chapter ol.is-practice { list-style: none; }
-  .lesson-chapter li { padding-bottom: 4px; }
-  .lesson-chapter a { color: var(--color-ink); text-underline-offset: 4px; }
-  .lesson-minutes { margin-left: 12px; font-size: 13px; color: var(--color-ink-2); }
+  .member-band a {
+    color: var(--color-ink);
+    font-weight: 700;
+    text-underline-offset: 4px;
+  }
+  .lead {
+    margin: 20px 0 28px;
+    max-width: 70ch;
+  }
+  .learning-note {
+    font-size: 14px;
+    color: var(--color-ink-2);
+    margin-top: 28px;
+  }
+  .learning-note a {
+    color: var(--color-ink);
+    text-underline-offset: 3px;
+  }
+
+  /* --- 続きから（20-platform.md 第17.3節。試作 案C の一部だけ） --- */
+  .lp-resume {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 14px;
+    align-items: center;
+    background: var(--color-card);
+    border: 1.5px solid var(--color-line);
+    border-radius: var(--radius);
+    box-shadow: 3px 3px 0 var(--color-line);
+    padding: 14px 18px;
+    margin-bottom: 24px;
+  }
+  .lp-resume[hidden] {
+    display: none;
+  }
+  .lp-resume__k {
+    margin: 0;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    color: var(--color-ink-2);
+  }
+  .lp-resume__t {
+    margin: 2px 0 0;
+    font-family: var(--font-head);
+    font-weight: 700;
+    font-size: 19px;
+  }
+  .lp-resume__w {
+    margin: 4px 0 0;
+    font-size: 13px;
+    color: var(--color-ink-2);
+  }
+
+  /* --- 部 --- */
+  .lp-parts {
+    margin-top: 4px;
+  }
+  .lp-part {
+    border-top: 1.5px solid var(--color-line);
+  }
+  .lp-part:last-child {
+    border-bottom: 1.5px solid var(--color-line);
+  }
+  .lp-part__head {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1.2em minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 6px;
+    cursor: pointer;
+    list-style: none;
+  }
+  .lp-part__head::-webkit-details-marker {
+    display: none;
+  }
+  .lp-part__head:hover {
+    background: var(--l-lv1);
+  }
+  .lp-part--soon .lp-part__head {
+    cursor: default;
+  }
+  /* 準備中の段は押せないので、乗せても色を変えない（第14.6節は押せるものだけ） */
+  .lp-part--soon .lp-part__head:hover {
+    background: transparent;
+  }
+  .lp-part-tw,
+  .lp-part__tw {
+    font-size: 12px;
+    color: var(--color-ink-2);
+    transition: transform 160ms var(--ease-out);
+  }
+  .lp-part[open] > .lp-part__head .lp-part__tw {
+    transform: rotate(90deg);
+  }
+  .lp-part__name {
+    font-family: var(--font-head);
+    font-weight: 900;
+    font-size: 18px;
+  }
+  .lp-part__name small {
+    font-family: var(--font-body);
+    font-weight: 400;
+    font-size: 13px;
+    color: var(--color-ink-2);
+    margin-left: 10px;
+  }
+  .lp-part--soon .lp-part__name {
+    color: var(--color-ink-2);
+  }
+  .lp-soon {
+    font-size: 12px;
+    color: var(--color-ink-2);
+    border: 1px solid var(--l-rule);
+    border-radius: 3px;
+    padding: 0 6px;
+    white-space: nowrap;
+  }
+  .lp-part__body {
+    padding: 0 6px 12px 28px;
+  }
+
+  /* --- 章 --- */
+  .lp-chap {
+    border-top: 1px solid var(--l-rule);
+  }
+  .lp-chap__head {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1.1em minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 4px;
+    cursor: pointer;
+    list-style: none;
+  }
+  .lp-chap__head::-webkit-details-marker {
+    display: none;
+  }
+  .lp-chap__head:hover {
+    background: var(--l-lv1);
+  }
+  .lp-chap__tw {
+    font-size: 11px;
+    color: var(--color-ink-2);
+    transition: transform 160ms var(--ease-out);
+  }
+  .lp-chap[open] > .lp-chap__head .lp-chap__tw {
+    transform: rotate(90deg);
+  }
+  .lp-chap__name {
+    font-weight: 700;
+  }
+
+  /* --- 節の一覧 --- */
+  .lp-secs {
+    list-style: none;
+    margin: 0 0 8px;
+    padding: 0 0 0 26px;
+    font-size: 14px;
+  }
+  .lp-secs li {
+    display: grid;
+    grid-template-columns: 2.4em minmax(0, 1fr) auto;
+    gap: 6px;
+    padding: 3px 0;
+  }
+  .lp-secs__st {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--color-ink-2);
+    padding-top: 2px;
+  }
+  .lp-secs li.is-done .lp-secs__st {
+    color: var(--l-midori);
+  }
+  .lp-secs li.is-next .lp-secs__st {
+    color: var(--color-accent);
+  }
+  .lp-secs li.is-next a {
+    font-weight: 700;
+  }
+  .lp-secs a {
+    color: var(--color-ink);
+    text-underline-offset: 3px;
+  }
+  .lp-secs__min {
+    font-size: 12px;
+    color: var(--color-ink-2);
+    white-space: nowrap;
+  }
+
+  /* --- 進み具合の棒。緑は済んだものだけ（第12.1節・第17.2節） --- */
+  .lp-meter {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+  .lp-meter__track {
+    width: 120px;
+    height: 6px;
+    background: var(--l-lv2);
+    border-radius: 3px;
+    overflow: hidden;
+    flex: none;
+  }
+  .lp-meter__fill {
+    display: block;
+    height: 100%;
+    background: var(--color-ink-2);
+    border-radius: 3px;
+    transition: width 200ms var(--ease-out);
+  }
+  .lp-meter.is-done .lp-meter__fill {
+    background: var(--l-midori);
+  }
+  .lp-meter__pct {
+    min-width: 3.6em;
+    text-align: right;
+    font-weight: 700;
+  }
+  .lp-meter.is-done .lp-meter__pct {
+    color: var(--l-midori);
+  }
+  .lp-meter__cnt {
+    color: var(--color-ink-2);
+  }
+  .lp-meter--sm .lp-meter__track {
+    width: 72px;
+    height: 5px;
+  }
+
+  @media (max-width: 640px) {
+    .lp-resume {
+      grid-template-columns: 1fr;
+    }
+    .lp-part__name small {
+      display: block;
+      margin-left: 0;
+    }
+    .lp-meter__track {
+      width: 64px;
+    }
+    .lp-meter--sm .lp-meter__track {
+      width: 44px;
+    }
+    .lp-meter__cnt {
+      display: none;
+    }
+  }
 </style>

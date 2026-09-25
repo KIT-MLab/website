@@ -50,6 +50,9 @@ const here = Astro.url.pathname.replace(/\/?$/, '/');
               </a>
             ))}
           </nav>
+          {/* 用語の検索の開閉ボタン（幅1280px未満だけ表示。20-platform.md 第18.1節）。
+              節のページだけが埋める。ほかのページ（bar=false）はこの帯を持たない */}
+          <slot name="topbar-extra" />
           <div class="acct" id="kit-acct-head" />
         </header>
       ) : (

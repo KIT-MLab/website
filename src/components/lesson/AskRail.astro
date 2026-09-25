@@ -1,9 +1,9 @@
 ---
 /**
- * 質問（20-platform.md 第10.1節・第8.5節）。
+ * 質問（20-platform.md 第10.1節・第8.5節・第18.2節）。
  *
- * 右レールの1ブロックと、本文の上にかぶせる小窓。中身の塗りと開け閉めは
- * src/lesson/ask.ts が受け持つ。
+ * 用語を検索する右の欄（TermPanel.astro）のいちばん下の1ブロックと、本文の上にかぶせる小窓。
+ * 中身の塗りと開け閉めは src/lesson/ask.ts が受け持つ。
  *
  * **入っている人にだけ出す**（第10.1節）。送り先が自分のアカウントに紐づくので、
  * 入っていない人には置き場所がない。押せない欄を見せる意味もない。出し入れは
@@ -19,7 +19,7 @@
 ---
 
 <div class="rail__block rail__askblock" data-rail-ask hidden>
-  <p class="rail__label">質問</p>
+  <p class="rail__label">探しても分からないときは</p>
   <button class="site-btn site-btn--small" type="button" id="kit-ask-open">この節について質問する</button>
   <p class="rail__note">直前に出した課題のコードが自動で添えられます。</p>
 </div>

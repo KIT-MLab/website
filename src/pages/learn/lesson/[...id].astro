@@ -15,7 +15,7 @@ import Level0 from '../../../components/lesson/Level0.astro';
 import Figure from '../../../components/lesson/Figure.astro';
 import Keys from '../../../components/lesson/Keys.astro';
 import Secant from '../../../components/lesson/Secant.astro';
-import AskRail from '../../../components/lesson/AskRail.astro';
+import TermPanel from '../../../components/lesson/TermPanel.astro';
 import { chapterTitle, lessonHref, practiceSectionLabel } from '../../../lesson/chapters';
 import generated from '../../../generated/lesson-data.json';
 import '../../../styles/lesson.css';
@@ -61,6 +61,18 @@ const isPractice = practiceLabel(1) !== null;
 ---
 
 <Base title={entry.data.title} bar>
+  {/* 幅1280px未満だけ表示。押すと右の用語検索の欄が右から重なって開く（第18.1節） */}
+  <button
+    type="button"
+    class="site-btn site-btn--small"
+    id="kit-term-toggle"
+    slot="topbar-extra"
+    aria-expanded="false"
+    aria-controls="kit-term-panel"
+  >
+    用語を検索
+  </button>
+
   <div class="lesson-page">
     {/* 左の欄（第14.2節）。広い画面では帯の下に固定し、中身が長ければ欄の中だけでスクロールする。
         幅860px以下では、帯のすぐ下に固定した1行のボタンに畳む */}
@@ -82,14 +94,6 @@ const isPractice = practiceLabel(1) !== null;
           </ol>
         </div>
 
-        <div class="rail__block">
-          <p class="rail__label">用語集</p>
-          <a class="rail__link" href="/learn/glossary/">この教材で使う言葉</a>
-        </div>
-
-        {/* ログインしている人にだけ出す（20-platform.md 第10.1節）。
-            出し入れは src/lesson/account.ts の paint() が /api/me の結果で行う。 */}
-        <AskRail />
       </div>
     </aside>
 
@@ -112,6 +116,8 @@ const isPractice = practiceLabel(1) !== null;
       </nav>
     </article>
   </div>
+
+  <TermPanel terms={entry.data.terms} currentHref={lessonHref(entry.id)} />
 
   <script type="application/json" id="kit-lesson-data" set:html={dataJson} is:inline />
 
@@ -254,6 +260,13 @@ const isPractice = practiceLabel(1) !== null;
     /* 節の紙は教材の決定（第10.9節）の #f6f2e9。端まで敷くため body に置く */
     body {
       background: var(--l-paper);
+    }
+
+    /* 用語を検索する右の欄（第18.1節）ぶんの余白。欄は幅1280px以上だけ常設で出る */
+    @media (min-width: 1280px) {
+      main.wrap {
+        margin-right: 272px;
+      }
     }
 
     @media (max-width: 860px) {

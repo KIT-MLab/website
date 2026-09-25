@@ -1,3 +1,14 @@
+// @ts-expect-error 部の表は .mjs 側に1つだけ置く（scripts/parts.mjs）。TypeScript の型検査は
+// どこでも走っていない（design/HANDOFF.md 第5章）ので、.mjs をそのまま読む
+import { PARTS as PARTS_RAW, partOfChapter as partOfChapterRaw, writtenParts as writtenPartsRaw } from '../../scripts/parts.mjs';
+
+/** 部（20-platform.md 第17.1節）。書いてある部は chapters、準備中の部は count を持つ。 */
+export type Part = { name: string; chapters: string[] } | { name: string; count: number };
+
+export const PARTS: Part[] = PARTS_RAW;
+export const writtenParts: () => Extract<Part, { chapters: string[] }>[] = writtenPartsRaw;
+export const partOfChapter: (chapter: string) => Extract<Part, { chapters: string[] }> | null = partOfChapterRaw;
+
 /**
  * 章の表示名。
  *

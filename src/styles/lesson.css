@@ -186,11 +186,6 @@
   text-decoration: none;
 }
 
-.rail__link {
-  color: var(--l-ink);
-  text-underline-offset: 3px;
-}
-
 /* 質問のブロック。ボタンは決まりのボタン（account.css の .site-btn） */
 .rail__askblock {
   display: grid;
@@ -1633,4 +1628,366 @@
 .kit-secant__table th:last-child,
 .kit-secant__table td:last-child {
   padding-right: 0;
+}
+
+/* ============================================================
+ * 用語を検索する右の欄（20-platform.md 第18章。試作 案B）。
+ * 幅1280px以上は帯の下に固定した常設の欄。それより狭い画面は右からの重なり
+ * （帯の「用語を検索」ボタンで開閉。#kit-term-toggle は [...id].astro が topbar-extra に置く）。
+ * ============================================================ */
+.term-panel {
+  position: fixed;
+  top: 51px;
+  right: 0;
+  bottom: 0;
+  z-index: 10;
+  background: var(--l-paper);
+  color: var(--l-ink);
+  font-family: var(--font-body);
+  font-size: 14px;
+  line-height: 1.6;
+  overflow-y: auto;
+  border-left: 1px solid var(--l-rule);
+}
+
+.term-panel__in {
+  padding: 22px 16px 80px;
+}
+
+.term-panel__bar {
+  display: none;
+}
+
+#kit-term-toggle {
+  display: none;
+}
+
+@media (min-width: 1280px) {
+  .term-panel {
+    width: 272px;
+  }
+
+  .term-scrim {
+    display: none !important;
+  }
+}
+
+@media (max-width: 1279px) {
+  #kit-term-toggle {
+    display: inline-flex;
+  }
+
+  .term-panel {
+    width: min(320px, 92vw);
+    z-index: 30;
+    box-shadow: -6px 0 18px rgba(43, 38, 30, 0.18);
+    transform: translateX(100%);
+    transition: transform 200ms var(--ease-out);
+  }
+
+  .term-panel.is-open {
+    transform: translateX(0);
+  }
+
+  .term-panel__bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--l-rule);
+  }
+
+  .term-panel__title {
+    margin: 0;
+    font-family: "Zen Old Mincho", serif;
+    font-weight: 700;
+    font-size: 15px;
+  }
+
+  .term-panel__close {
+    background: transparent;
+    border: 0;
+    font-size: 20px;
+    line-height: 1;
+    padding: 2px 8px;
+    cursor: pointer;
+    color: var(--l-ink);
+    border-radius: var(--radius);
+  }
+
+  /* 押せることを見せる（第14.6節） */
+  .term-panel__close:hover {
+    background: var(--l-chip);
+  }
+
+  .term-panel__in {
+    padding: 16px 16px 40px;
+  }
+
+  .term-scrim {
+    position: fixed;
+    inset: 51px 0 0 0;
+    background: rgba(31, 28, 23, 0.35);
+    z-index: 25;
+  }
+
+  .term-scrim[hidden] {
+    display: none;
+  }
+}
+
+/* --- 検索欄 ---------------------------------------------------- */
+.term-search {
+  position: relative;
+}
+
+.term-search__label {
+  display: block;
+  margin: 0 0 4px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--l-ink-2);
+}
+
+.term-search__input {
+  width: 100%;
+  box-sizing: border-box;
+  font: inherit;
+  font-size: 14px;
+  background: var(--l-card);
+  color: var(--l-ink);
+  border: 1.5px solid var(--color-line);
+  border-radius: var(--radius);
+  padding: 6px 10px;
+}
+
+.term-search__input:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.term-cands {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 100%;
+  z-index: 5;
+  list-style: none;
+  margin: 4px 0 0;
+  padding: 4px 0;
+  background: var(--l-card);
+  border: 1.5px solid var(--color-line);
+  border-radius: var(--radius);
+  box-shadow: 3px 3px 0 var(--color-line);
+  font-size: 13.5px;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.term-cands button {
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: 0;
+  padding: 6px 12px;
+  cursor: pointer;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  font: inherit;
+  color: inherit;
+}
+
+/* 押せることを見せる（第14.6節）。キーボードで選んだ候補も同じ地にする */
+.term-cands button:hover,
+.term-cands button.is-hl {
+  background: var(--l-chip);
+}
+
+.term-cands__word small {
+  color: var(--l-ink-2);
+  font-weight: 400;
+}
+
+.term-cands__kind {
+  font-size: 11px;
+  color: var(--l-ink-2);
+  white-space: nowrap;
+}
+
+.term-cands__none {
+  padding: 6px 12px;
+  color: var(--l-ink-2);
+  font-size: 13px;
+}
+
+/* --- 開いた札 ---------------------------------------------------- */
+.term-cards {
+  margin-top: 16px;
+}
+
+.term-cards:empty {
+  display: none;
+}
+
+.term-card {
+  background: var(--l-card);
+  border: 1.5px solid var(--color-line);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  font-size: 13.5px;
+  line-height: 1.7;
+}
+
+.term-card + .term-card {
+  margin-top: 10px;
+}
+
+.term-card__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.term-card__head h3 {
+  margin: 0;
+  font-family: "Zen Old Mincho", serif;
+  font-weight: 700;
+  font-size: 16px;
+}
+
+.term-card__head h3 small {
+  font-family: var(--font-body);
+  font-weight: 400;
+  font-size: 12px;
+  color: var(--l-ink-2);
+  margin-left: 6px;
+}
+
+.term-card__kind {
+  border: 1px solid var(--l-rule);
+  border-radius: 3px;
+  padding: 0 5px;
+  white-space: nowrap;
+}
+
+.term-card__x {
+  flex: none;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 1;
+  padding: 2px 6px;
+  border-radius: 3px;
+  color: var(--l-ink-2);
+}
+
+/* 押せることを見せる（第14.6節） */
+.term-card__x:hover {
+  background: var(--l-chip);
+  color: var(--l-ink);
+}
+
+.term-card__def {
+  margin: 6px 0 0;
+}
+
+/* 定義の中の `…`（本文の `…` と同じ地） */
+.term-card__def code {
+  font-family: var(--font-mono);
+  background: var(--l-chip);
+  padding: 0 0.3em;
+  border-radius: 3px;
+}
+
+.term-card__later {
+  margin: 6px 0 0;
+  color: var(--l-ink-2);
+}
+
+.term-card .kit-code,
+.term-card .kit-out {
+  margin-top: 8px;
+  font-size: 12px;
+}
+
+/* 静的な表示（CodeMirror を使わない）なので、文字色は自分で当てる。
+   .kit-code は動くコード欄（CodeMirror のテーマが文字色を持つ）と共有しているため */
+.term-card .kit-code code {
+  display: block;
+  padding: 10px 12px;
+  overflow-x: auto;
+  font-size: 12px;
+  line-height: 1.7;
+  color: var(--k-fg);
+  white-space: pre;
+}
+
+.term-card .kit-out__text {
+  font-size: 12px;
+  padding: 8px 10px;
+}
+
+.term-card__link {
+  margin: 8px 0 0;
+  font-size: 13px;
+}
+
+.term-card__link a {
+  color: var(--l-ai);
+  font-weight: 700;
+  text-underline-offset: 3px;
+}
+
+.term-card__chips {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+/* --- 「この節で使う言葉」のチップ・用語の札の中のチップ共通 ---------- */
+.term-chips {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.term-chip {
+  background: transparent;
+  border: 1px solid var(--l-rule);
+  border-radius: 3px;
+  padding: 1px 9px;
+  font: inherit;
+  font-size: 13px;
+  color: var(--l-ink);
+  cursor: pointer;
+}
+
+/* 押せることを見せる（第14.6節） */
+.term-chip:hover {
+  background: var(--l-chip);
+  border-color: var(--color-line);
+}
+
+.term-glossary {
+  margin: 18px 0 0;
+  padding-top: 12px;
+  border-top: 1px solid var(--l-rule);
+  font-size: 13px;
+}
+
+.term-glossary a {
+  color: var(--l-ai);
+  font-weight: 700;
+  text-underline-offset: 3px;
 }

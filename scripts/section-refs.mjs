@@ -34,3 +34,27 @@ export function buildSectionRefs(lessonsDir) {
 export function sectionHref(entryId) {
   return `/learn/lesson/${entryId}/`;
 }
+
+/**
+ * 練習編の章か（20-platform.md 第15.1節）。`04p-practice1` のように、前の章の番号のあとに p が付く。
+ * 練習編なら何番目の練習編かを返す。そうでなければ null。
+ * src/lesson/chapters.ts の practiceNo と同じ形（.mjs 側の生成スクリプトが使う）。
+ */
+export function practiceNo(chapter) {
+  const m = /^\d\dp-practice(\d+)$/.exec(chapter);
+  return m ? Number(m[1]) : null;
+}
+
+/**
+ * 節の呼び方（20-platform.md 第17.3節）。`第7章1節` / 練習編は `練習1-2`。
+ * `indexInChapter` は章の中の何番目か（0始まり）。
+ * src/lesson/chapters.ts の practiceSectionLabel と同じ形だが、こちらは章番号からも組み立てる
+ * （呼び出し側が chapterTitle を経由しなくても済むように）。
+ */
+export function sectionLabel(chapter, indexInChapter) {
+  const practice = practiceNo(chapter);
+  if (practice !== null) return `練習${practice}-${indexInChapter + 1}`;
+  const m = /^(\d\d)-/.exec(chapter);
+  const chapterNo = m ? Number(m[1]) : 0;
+  return `第${chapterNo}章${indexInChapter + 1}節`;
+}

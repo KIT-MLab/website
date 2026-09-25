@@ -1,0 +1,70 @@
+---
+/**
+ * 用語を検索する右の欄（20-platform.md 第18章）。
+ *
+ * 幅1280px以上は帯の下に固定した常設の欄。それより狭い画面では隠し、帯の
+ * 「用語を検索」ボタン（Base.astro の topbar-extra、[...id].astro が埋める）で開く
+ * 右からの重なり（第18.1節）。中身の並びは第18.2節のとおり。
+ *
+ * 質問（<AskRail />）は左の欄から**移した**ものであって、複製ではない
+ * （20-platform.md 第18.2節）。data-rail-ask の出し入れは src/lesson/account.ts の paint() が
+ * `/api/me` の結果で行う仕組みで、置き場所が変わっても id・data 属性で探すので変わらず動く。
+ */
+import AskRail from './AskRail.astro';
+
+interface Props {
+  /** 節の frontmatter の terms（第18.2節「この節で使う言葉」） */
+  terms: string[];
+  /** いま見ている節の href。まだ習っていない語（第18.3節）の判定に使う */
+  currentHref: string;
+}
+const { terms, currentHref } = Astro.props;
+---
+
+<div class="term-scrim" id="kit-term-scrim" hidden></div>
+
+<aside class="term-panel" id="kit-term-panel" aria-label="用語を検索" data-current-href={currentHref}>
+  <div class="term-panel__bar">
+    <p class="term-panel__title">用語を検索</p>
+    <button type="button" class="term-panel__close" id="kit-term-close" aria-label="閉じる">×</button>
+  </div>
+
+  <div class="term-panel__in">
+    <div class="term-search">
+      <label class="term-search__label" for="kit-term-input">用語を検索</label>
+      <input id="kit-term-input" class="term-search__input" type="search" autocomplete="off" />
+      <ul id="kit-term-cands" class="term-cands" role="listbox" hidden></ul>
+    </div>
+
+    <div id="kit-term-cards" class="term-cards"></div>
+
+    {
+      terms.length > 0 && (
+        <div class="rail__block">
+          <p class="rail__label">この節で使う言葉</p>
+          <ul class="term-chips" id="kit-term-chips">
+            {terms.map((t) => (
+              <li>
+                <button type="button" class="term-chip" data-open-word={t}>
+                  {t}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )
+    }
+
+    {/* ログインしている人にだけ出す（第10.1節）。左の欄にあったものをここへ移した */}
+    <AskRail />
+
+    <p class="term-glossary"><a href="/learn/glossary/">用語集の一覧</a></p>
+  </div>
+</aside>
+
+<script>
+  import { setupTermSearch } from '../../lesson/term-search';
+  const panel = document.getElementById('kit-term-panel');
+  const href = panel?.dataset.currentHref ?? '';
+  setupTermSearch({ currentHref: href });
+</script>

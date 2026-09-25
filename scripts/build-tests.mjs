@@ -19,7 +19,9 @@ import { dirname, join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseLesson } from './parse-lesson.mjs';
 import { execPython } from './pyodide-node.mjs';
-import { buildSectionRefs } from './section-refs.mjs';
+import { buildSectionRefs, sectionHref, sectionLabel } from './section-refs.mjs';
+import { loadGlossary } from './glossary.mjs';
+import { PYTHON_TOOLS } from './python-tools.mjs';
 
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const LESSONS_DIR = join(ROOT, 'src', 'content', 'lessons');
@@ -28,6 +30,9 @@ const OUT_FILE = join(OUT_DIR, 'lesson-data.json');
 /* 「第N章M節」の行き先（20-platform.md 第15.2節）。採点画面の Inline（src/lesson/ui/shared.tsx）が読む。
    本文（MDX）側の自動リンクは scripts/remark-section-links.mjs が同じ元を自分で読んで作る */
 const SECTION_REFS_FILE = join(OUT_DIR, 'section-refs.json');
+/* 用語の検索の引く表（20-platform.md 第18章）。src/components/lesson/TermPanel.astro と
+   src/lesson/term-search.ts が読む。ページの中では表を組み立てない（第18.3節）。 */
+const SEARCH_INDEX_FILE = join(OUT_DIR, 'search-index.json');
 
 function listMdx(dir) {
   const out = [];
@@ -90,6 +95,11 @@ function describeError(result) {
 
 const files = listMdx(LESSONS_DIR).sort();
 const lessons = {};
+/* 教材の順（course order）で節を集める。検索の索引（第18章）が使う。
+   files は既にソート済みなので、この配列に積む順がそのまま教材の順になる
+   （scripts/check-lessons.mjs の codeOf と同じ前提）。 */
+const courseSections = [];
+const chapterCounts = new Map();
 
 for (const file of files) {
   const rel = relative(ROOT, file).replace(/\\/g, '/');
@@ -98,6 +108,24 @@ for (const file of files) {
   if (!lessonId) {
     fail(rel, 'frontmatter に id がありません');
     continue;
+  }
+
+  {
+    const chapter = String(lesson.data.chapter ?? '');
+    const indexInChapter = chapterCounts.get(chapter) ?? 0;
+    chapterCounts.set(chapter, indexInChapter + 1);
+    const entryId = rel.replace(/^src\/content\/lessons\//, '').replace(/\.mdx$/, '');
+    courseSections.push({
+      order: courseSections.length,
+      lessonId,
+      chapter,
+      href: sectionHref(entryId),
+      label: sectionLabel(chapter, indexInChapter),
+      title: String(lesson.data.title ?? ''),
+      terms: Array.isArray(lesson.data.terms) ? lesson.data.terms : [],
+      // 「やってみる」に置かれた <Run> だけ（第18.3節の「使い方の例」の元）。書き出しはしない
+      tryRuns: lesson.runs.filter((r) => r.section === 'やってみる'),
+    });
   }
 
   // <Run> の out の照合
@@ -346,9 +374,128 @@ if (failures.length > 0) {
   process.exit(1);
 }
 
+/* --- 用語の検索の引く表を作る（20-platform.md 第18章） -------------------------------
+   ページの中では組み立てず、ビルドのときにここで1つだけ作る（第18.3節）。
+   NFKC・小文字にそろえた比較は、読む側（TermPanel / term-search.ts）でも同じ規則でやる。 */
+function normKey(s) {
+  return String(s ?? '').normalize('NFKC').toLowerCase();
+}
+
+const searchEntries = [];
+/** 行き先の節が無い、または使い方の例が無い項目。ビルドは止めない（人が読んで判断する） */
+const searchNotes = [];
+
+{
+  const glossary = loadGlossary();
+  const glossarySet = new Set(glossary.map((t) => normKey(t.word)));
+  const bySectionId = new Map(courseSections.map((s) => [s.lessonId, s]));
+
+  // その章でいちばん先の節（「terms に持つ節が無ければその章の最初の節」の受け皿。第18.3節）
+  const firstOfChapter = new Map();
+  for (const s of courseSections) {
+    if (!firstOfChapter.has(s.chapter)) firstOfChapter.set(s.chapter, s);
+  }
+
+  const exampleFrom = (runs) => {
+    const r = runs?.[0];
+    return r ? { code: r.code, out: r.out ?? '' } : null;
+  };
+
+  // --- 用語（design/spec/glossary.md） ---
+  for (const term of glossary) {
+    const home = courseSections.find((s) => s.terms.includes(term.word)) ?? firstOfChapter.get(term.chapter) ?? null;
+    if (!home) {
+      searchNotes.push(`用語「${term.word}」: 行き先の節がありません（初出の章 ${term.chapter} がまだ無い）`);
+      continue;
+    }
+    const example = exampleFrom(home.tryRuns);
+    if (!example) searchNotes.push(`用語「${term.word}」: ${home.href} に「やってみる」の <Run> が無く、使い方の例を作れません`);
+    searchEntries.push({
+      kind: '用語',
+      word: term.word,
+      english: term.english ?? '',
+      aliases: [],
+      definition: term.definition,
+      section: { href: home.href, label: home.label, title: home.title },
+      order: home.order,
+      example,
+    });
+  }
+
+  /* --- 書き方（scripts/python-tools.mjs） ---
+     用語集に同じものがある書き方（台帳の term、または名前が用語集の語と同じもの）は、札を分けずに
+     用語の札の読み替えにする。`input()` で引いても用語「input」が出るように。用語の札の例は、
+     その書き方に当たる <Run> を先に使う（節の最初の <Run> より、その書き方が確かに入っている）。
+     用語集に無いものだけを「書き方」の札にし、定義の文は台帳の desc を使う。
+     term も desc も無い書き方はここで止める（定義の無い札を出さない） */
+  const termEntry = new Map(searchEntries.map((e) => [normKey(e.word), e]));
+  for (const tool of PYTHON_TOOLS) {
+    if (/^python-99-/.test(tool.in)) continue; // まだどの節でも教えていない書き方（検査16 の先送り分）
+    const home = bySectionId.get(tool.in);
+    if (!home) continue; // まだ書いていない章
+    const matched = home.tryRuns.find((r) => tool.re.test(r.code));
+    const matchedExample = matched ? { code: matched.code, out: matched.out ?? '' } : null;
+    const terms = tool.term ? [tool.term].flat() : glossarySet.has(normKey(tool.name)) ? [tool.name] : [];
+    if (terms.length > 0) {
+      for (const word of terms) {
+        const entry = termEntry.get(normKey(word));
+        if (!entry) {
+          console.error(`build:tests  台帳の「${tool.name}」の term「${word}」が用語集にありません（scripts/python-tools.mjs）`);
+          process.exit(1);
+        }
+        if (normKey(word) !== normKey(tool.name)) entry.aliases.push(tool.name);
+        if (matchedExample) entry.example = matchedExample;
+      }
+      continue;
+    }
+    if (!tool.desc) {
+      console.error(`build:tests  台帳の「${tool.name}」に term も desc もありません。検索の札に出す定義が無いので止めます（scripts/python-tools.mjs）`);
+      process.exit(1);
+    }
+    /* 例は、その書き方が入っている <Run> だけ。無ければ例を出さない（`==` の札に、`==` の無いコードを見せない） */
+    const example = matchedExample;
+    if (!example) searchNotes.push(`書き方「${tool.name}」: ${home.href} の「やってみる」の <Run> にこの書き方が無く、使い方の例を出しません`);
+    searchEntries.push({
+      kind: '書き方',
+      word: tool.name,
+      english: '',
+      aliases: [tool.name],
+      definition: tool.desc,
+      section: { href: home.href, label: home.label, title: home.title },
+      order: home.order,
+      example,
+    });
+  }
+
+  // --- 節 ---
+  for (const s of courseSections) {
+    searchEntries.push({
+      kind: '節',
+      word: s.title,
+      english: '',
+      aliases: [],
+      definition: '',
+      section: { href: s.href, label: s.label, title: s.title },
+      order: s.order,
+      example: null,
+      terms: s.terms,
+    });
+  }
+}
+
+// 開いた札・候補の絞り込みが持ち回る鍵（TermPanel / term-search.ts）。索引の中の位置でよい
+searchEntries.forEach((e, i) => {
+  e.id = i;
+});
+
 mkdirSync(OUT_DIR, { recursive: true });
 writeFileSync(OUT_FILE, `${JSON.stringify({ lessons }, null, 2)}\n`, 'utf8');
 writeFileSync(SECTION_REFS_FILE, `${JSON.stringify(buildSectionRefs(LESSONS_DIR), null, 2)}\n`, 'utf8');
+writeFileSync(SEARCH_INDEX_FILE, `${JSON.stringify({ entries: searchEntries }, null, 2)}\n`, 'utf8');
+if (searchNotes.length > 0) {
+  console.log(`build:tests  用語の検索の索引: ${searchNotes.length}件、確かめてください`);
+  for (const n of searchNotes) console.log(`  ${n}`);
+}
 const count = Object.values(lessons).reduce((n, l) => n + l.exerciseIds.length, 0);
 console.log(`build:tests  ${Object.keys(lessons).length}節 / ${count}問の期待値を作りました -> src/generated/lesson-data.json`);
 process.exit(0);

@@ -2,8 +2,11 @@
  * 執筆規約の自動検査（20-platform.md 第2.4節）。
  *
  * 全 .mdx を読み、10-lesson-and-writing.md 第8章のチェックリストのうち
- * 機械判定できる18項目を検査する。1つでも落ちたら終了コード1を返す。
- * この検査はビルドの前に走り、失敗したらビルドを止める。
+ * 機械判定できる項目（20-platform.md 第2.4節。検査19までがそこにある）を検査する。
+ * 1つでも落ちたら終了コード1を返す。この検査はビルドの前に走り、失敗したらビルドを止める。
+ *
+ * 検査20（節への参照が「第N章M節」の形で行き先が実在すること）は20-platform.md 第15.2節、
+ * 検査21（章のディレクトリがどれかの部に属していること）は同 第17.1節で足した。
  *
  *   node scripts/check-lessons.mjs
  */
@@ -35,6 +38,7 @@ import {
 } from './lesson-rules.mjs';
 import { PYTHON_TOOLS } from './python-tools.mjs';
 import { buildSectionRefs } from './section-refs.mjs';
+import { partOfChapter } from './parts.mjs';
 
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const LESSONS_DIR = join(ROOT, 'src', 'content', 'lessons');
@@ -632,6 +636,24 @@ for (const file of files) {
       problems.push({
         file: lesson.rel, check: 18, line: 1,
         message: `「${term.word}」を使っていますが、初出は ${term.chapter} です（${line.trim().slice(0, 50)}）`,
+      });
+    }
+  }
+}
+
+/* --- 検査21 章のディレクトリが、どれか1つの部に属していること（20-platform.md 第17.1節） ---
+   部の表は scripts/parts.mjs に1つだけ置く（src/lesson/chapters.ts と共有。表を2つに増やさない）。
+   `/learn/` の一覧はこの表を頼りに部→章→節を組むので、表から漏れた章は一覧にも出てこない。
+   漏れに気づく手段が無いままでは静かに欠ける。 */
+{
+  for (const chapter of readdirSync(LESSONS_DIR)) {
+    if (!statSync(join(LESSONS_DIR, chapter)).isDirectory()) continue;
+    if (!partOfChapter(chapter)) {
+      problems.push({
+        file: `src/content/lessons/${chapter}`,
+        check: 21,
+        line: 1,
+        message: `この章はどの部にも属していません。scripts/parts.mjs の PARTS に足してください`,
       });
     }
   }
