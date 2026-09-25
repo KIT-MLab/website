@@ -916,3 +916,81 @@ textarea.mt-in {
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+/* --- 今週の演習（第19.5節）。人×問題の表（試作 案A） ---------- */
+.ctlbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+  padding: 8px 12px;
+  margin-bottom: 12px;
+  background: var(--l-card);
+  border: 1px solid var(--l-rule);
+  font-size: 13px;
+}
+
+.ctlbar label {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  cursor: pointer;
+}
+
+.board {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13.5px;
+  font-variant-numeric: tabular-nums;
+}
+
+.board th,
+.board td {
+  border-bottom: 1px solid var(--l-rule);
+  padding: 5px 8px;
+  text-align: center;
+}
+
+.board th:first-child,
+.board td:first-child {
+  text-align: left;
+}
+
+.board thead th {
+  font-size: 12.5px;
+  color: var(--l-ink-2);
+  vertical-align: bottom;
+}
+
+.board thead th .cnt {
+  display: block;
+  font-size: 11.5px;
+  color: var(--l-ink);
+  font-weight: 700;
+}
+
+.board thead th.hot {
+  color: var(--l-shu);
+}
+
+.board thead th.hot::after {
+  content: 'いちばん詰まっている';
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--l-shu);
+}
+
+.c-ok {
+  color: var(--l-midori);
+  font-weight: 900;
+}
+
+.c-ng {
+  color: var(--l-shu);
+  font-weight: 700;
+}
+
+.c-no {
+  color: var(--l-rule);
+}

@@ -5,6 +5,7 @@
  * ページの中では表を組み立てない（第18.3節）。ここでは読んで、絞り込みと開閉だけをする。
  */
 import searchIndexData from '../generated/search-index.json';
+import { chapterOfHref, fetchPublishStatus, type PublishStatus } from './publish-status';
 
 export type SearchKind = '用語' | '書き方' | '節';
 
@@ -79,8 +80,20 @@ function escapeHtml(text: string): string {
   return text.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c] ?? c);
 }
 
+/**
+ * 行き先の章が準備中で、運営でない人には見せられないか（20-platform.md 第20.1節・第18.3節）。
+ *
+ * 索引（search-index.json）はビルド時に作る静的なものなので、どの章が準備中かは持っていない。
+ * `/api/lessons/status` から読む（節のページのサーバ側の判定と同じ表だが、
+ * こちらはブラウザ側の1つの索引を複数の画面で使い回す構成なので、API から読むほうが単純。
+ * 20-platform.md 第20章の実装メモにこの選択を書いてある）。
+ */
+function isLocked(e: SearchEntry, status: PublishStatus): boolean {
+  return !status.staff && !status.publicChapters.has(chapterOfHref(e.section.href));
+}
+
 /** 開くべき要素をキーボードでもクリックでも選べるようにする、素朴な状態機械。 */
-export function setupTermSearch(opts: { currentHref: string }): void {
+export async function setupTermSearch(opts: { currentHref: string }): Promise<void> {
   const panel = document.getElementById('kit-term-panel');
   const input = document.getElementById('kit-term-input') as HTMLInputElement | null;
   const cands = document.getElementById('kit-term-cands');
@@ -90,6 +103,8 @@ export function setupTermSearch(opts: { currentHref: string }): void {
   const close = document.getElementById('kit-term-close');
   const scrim = document.getElementById('kit-term-scrim');
   if (!panel || !input || !cands || !cards) return;
+
+  const status = await fetchPublishStatus();
 
   const current = ENTRIES.find((e) => e.kind === '節' && e.section.href === opts.currentHref);
   const currentOrder = current?.order ?? Number.POSITIVE_INFINITY;
@@ -130,11 +145,12 @@ export function setupTermSearch(opts: { currentHref: string }): void {
     }
     cands!.innerHTML = shown
       .map((e, i) => {
-        const ahead = e.order > currentOrder;
+        const locked = isLocked(e, status);
+        const ahead = !locked && e.order > currentOrder;
         return `<li role="option" id="term-cand-${e.id}" aria-selected="${i === highlighted}">
           <button type="button" class="${i === highlighted ? 'is-hl' : ''}" data-open="${e.id}">
             <span class="term-cands__word">${escapeHtml(e.word)}${e.english ? ` <small>(${escapeHtml(e.english)})</small>` : ''}</span>
-            <span class="term-cands__kind">${e.kind}${ahead ? ' ・ まだ先' : ''}</span>
+            <span class="term-cands__kind">${e.kind}${locked ? ' ・ 準備中' : ahead ? ' ・ まだ先' : ''}</span>
           </button>
         </li>`;
       })
@@ -157,7 +173,10 @@ export function setupTermSearch(opts: { currentHref: string }): void {
   /* --- 開いた札 ------------------------------------------------------ */
 
   function cardHtml(e: SearchEntry): string {
-    const ahead = e.order > currentOrder;
+    const locked = isLocked(e, status);
+    const ahead = !locked && e.order > currentOrder;
+    // 準備中の章への行き先は、20-platform.md 第20.1節どおりリンクにせず「準備中」とだけ添える
+    const linkHtml = locked ? '<p class="term-card__link term-card__link--locked">準備中</p>' : null;
     const kindBadge = `<small class="term-card__kind">${e.kind}</small>`;
     if (e.kind === '節') {
       const chipsHtml = (e.terms ?? [])
@@ -166,7 +185,7 @@ export function setupTermSearch(opts: { currentHref: string }): void {
       return `<div class="term-card" data-card="${e.id}">
         <div class="term-card__head"><h3>${escapeHtml(e.word)}${kindBadge}</h3><button type="button" class="term-card__x" data-close="${e.id}" aria-label="閉じる">×</button></div>
         ${chipsHtml ? `<ul class="term-card__chips">${(e.terms ?? []).map((t) => `<li><button type="button" class="term-chip" data-open-word="${escapeHtml(t)}">${escapeHtml(t)}</button></li>`).join('')}</ul>` : ''}
-        <p class="term-card__link"><a href="${e.section.href}">開く →</a></p>
+        ${linkHtml ?? `<p class="term-card__link"><a href="${e.section.href}">開く →</a></p>`}
       </div>`;
     }
     const head = `<h3>${escapeHtml(e.word)}${e.english ? `<small>${escapeHtml(e.english)}</small>` : ''}${kindBadge}</h3>`;
@@ -177,7 +196,7 @@ export function setupTermSearch(opts: { currentHref: string }): void {
         <p class="term-card__later">${e.section.label}で習います。</p>
       </div>`;
     }
-    const example = e.example
+    const example = !locked && e.example
       ? `<pre class="kit-code term-card__code"><code>${escapeHtml(e.example.code)}</code></pre>
          <div class="kit-out term-card__out"><p class="kit-out__label">出る結果</p><p class="kit-out__text">${escapeHtml(e.example.out)}</p></div>`
       : '';
@@ -185,7 +204,7 @@ export function setupTermSearch(opts: { currentHref: string }): void {
       <div class="term-card__head">${head}<button type="button" class="term-card__x" data-close="${e.id}" aria-label="閉じる">×</button></div>
       ${e.definition ? `<p class="term-card__def">${withCode(e.definition)}</p>` : ''}
       ${example}
-      <p class="term-card__link"><a href="${e.section.href}">${e.section.label} ${escapeHtml(e.section.title)} を開く →</a></p>
+      ${linkHtml ?? `<p class="term-card__link"><a href="${e.section.href}">${e.section.label} ${escapeHtml(e.section.title)} を開く →</a></p>`}
     </div>`;
   }
 

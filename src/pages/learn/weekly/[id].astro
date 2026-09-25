@@ -1,0 +1,146 @@
+---
+/**
+ * 「今週の演習」の問題のページ（20-platform.md 第19.4節）。
+ *
+ * `/learn/weekly/<weeklyのid>/`。サーバ側で組み立てる（`prerender = false`）。
+ * **メンバーで、自分の所属がこの回を公開していないと、中身を1文字も送らない**
+ * （第13.2節と同じ考え方）。見た目は節のページと同じ組みを使うが、この回だけの
+ * 1ページなので、節のページの左の欄（同じ章の他の節への行き来）と用語検索の欄は
+ * 持たない（決めるのはこちらに一任されている。第18章の指示）。
+ *
+ * 採点は節のページと同じ部品（<Exercise>）をそのまま使う。判定データは
+ * src/generated/lesson-data.json の `weekly` を埋め込む。
+ */
+export const prerender = false;
+
+import { getCollection, render } from 'astro:content';
+import Base from '../../../layouts/Base.astro';
+import Exercise from '../../../components/lesson/Exercise.astro';
+import NotesPanel from '../../../components/lesson/NotesPanel.astro';
+import { currentUser, serverConfig } from '../../../server/auth';
+import { isMember } from '../../../server/member';
+import { isWeeklyOpen } from '../../../server/weekly';
+import { notesForWeekly } from '../../../server/lessons-publish';
+import generated from '../../../generated/lesson-data.json';
+import '../../../styles/lesson.css';
+
+const weeklyId = Astro.params.id ?? '';
+
+const config = serverConfig();
+const user = config ? await currentUser(Astro.request) : null;
+const member = user !== null && isMember(user);
+const isStaff = user !== null && (user.role === 'staff' || user.role === 'admin');
+
+const entry = member ? (await getCollection('weekly')).find((e) => e.data.id === weeklyId) : undefined;
+const open = member && entry && config ? await isWeeklyOpen(config.db, user!.cohort.code, entry.data.id) : false;
+
+// 運営・管理者は、公開する前の回も中身まで見て解ける（20-platform.md 第20.4節）
+const showContent = member && entry !== undefined && (open || isStaff);
+
+Astro.response.headers.set('cache-control', 'no-store');
+
+const genWeekly = (generated as { weekly?: Record<string, unknown> }).weekly ?? {};
+const lessonData = showContent && entry ? (genWeekly[entry.data.id] ?? null) : null;
+const dataJson = JSON.stringify(lessonData).replace(/</g, '\\u003c');
+
+const Content = showContent && entry ? (await render(entry)).Content : null;
+
+// 気づいたことのメモ（第20.3節）。運営にだけ問い合わせ、運営にだけ埋め込む
+const notes = isStaff && entry && config ? await notesForWeekly(config.db, entry.data.id) : [];
+---
+
+<Base title={showContent && entry ? entry.data.title : '今週の演習'} bar>
+  <div class="lesson-page wk-page">
+    {
+      !member ? (
+        <p class="wk-notice">
+          このページはプロジェクトのメンバー向けです。<a href="/learn/">学習の一覧へ</a>
+        </p>
+      ) : entry === undefined ? (
+        <p class="wk-notice">見つかりません。</p>
+      ) : !showContent ? (
+        <p class="wk-notice">
+          この回はまだ公開されていません。集まりのときに運営が公開します。<a href="/learn/">学習の一覧へ</a>
+        </p>
+      ) : (
+        <>
+          {isStaff && !open && (
+            <p class="wk-staffnote">運営だけに見えています。まだ公開していません。</p>
+          )}
+          <div class="lesson-top">
+            <p class="lesson-top__chapter">今週の演習</p>
+            <h1 class="lesson-title">{entry.data.title}</h1>
+            <p class="lesson-top__meta">{entry.data.date} ・ 教材の進み具合（百分率）には数えません</p>
+          </div>
+          <article class="lesson-body">{Content && <Content components={{ Exercise }} />}</article>
+          {isStaff && (
+            <NotesPanel label="気づいたことを書く（運営だけに見えます）" weeklyId={entry.data.id} notes={notes} />
+          )}
+        </>
+      )
+    }
+  </div>
+
+  <script type="application/json" id="kit-lesson-data" set:html={dataJson} is:inline />
+
+  <script>
+    import { getLessonData } from '../../../lesson/data';
+    import { getProgressStore } from '../../../lesson/store/progress';
+
+    /* 提出はグレードしたらすぐ送る（20-platform.md 第19.5節。ふだんの30秒ごとを待たない）。
+       運営の表がその場の様子を映すため。kit:progress は採点1回ごとに ExerciseBox が出す
+       （src/lesson/ui/ExerciseBox.tsx）。 */
+    const data = getLessonData();
+    if (data) {
+      const store = getProgressStore();
+      window.addEventListener('kit:progress', () => void store.flush());
+    }
+  </script>
+
+  <style is:global>
+    main.wrap {
+      max-width: none;
+      margin: 0;
+      padding: calc(51px + 30px) 32px 120px;
+    }
+
+    @media (max-width: 860px) {
+      main.wrap {
+        padding: 51px 16px 120px;
+      }
+    }
+
+    body {
+      background: var(--l-paper);
+    }
+  </style>
+
+  <style>
+    .wk-page {
+      margin: 0 auto;
+    }
+
+    .wk-notice {
+      max-width: 60ch;
+      font-family: var(--font-body);
+      font-size: 16px;
+      line-height: 1.9;
+    }
+
+    .wk-notice a {
+      color: var(--l-ai);
+      margin-left: 4px;
+    }
+
+    /* 運営だけに見えている未公開の回（20-platform.md 第20.4節） */
+    .wk-staffnote {
+      margin: 0 0 16px;
+      padding: 6px 10px;
+      font-size: 12.5px;
+      line-height: 1.6;
+      color: var(--l-kohaku);
+      background: var(--l-card);
+      border: 1px solid var(--l-kohaku);
+    }
+  </style>
+</Base>

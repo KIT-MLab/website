@@ -2105,6 +2105,11 @@
   text-underline-offset: 3px;
 }
 
+/* 準備中の章（20-platform.md 第20.1節）。リンクにしない、まだ先と同じ弱さで出す */
+.term-card__link--locked {
+  color: var(--l-ink-2);
+}
+
 .term-card__chips {
   list-style: none;
   margin: 8px 0 0;

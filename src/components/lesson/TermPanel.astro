@@ -59,6 +59,9 @@ const { terms, currentHref } = Astro.props;
     <AskRail />
 
     <p class="term-glossary"><a href="/learn/glossary/">用語集の一覧</a></p>
+
+    {/* 気づいたことのメモ（20-platform.md 第20.3節）。運営にだけ、呼ぶ側（節のページ）が埋める */}
+    <slot name="notes" />
   </div>
 </aside>
 

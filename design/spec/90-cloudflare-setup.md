@@ -136,6 +136,17 @@ npx wrangler d1 execute mlab-course --local --command "INSERT INTO invite_codes 
 npx wrangler d1 execute mlab-course --local --command "UPDATE invite_codes SET open = 0 WHERE code = '…'"
 ```
 
+### 5.4 教材の公開のテーブルを作る（2026-09-25 追加）
+
+`migrations/0009_lesson_publish.sql`（`chapter_status` と `review_notes`。`20-platform.md` 第20章）。
+第3.1節と同じ1行で本番にあてる。
+
+```
+npx wrangler d1 migrations apply mlab-course --remote
+```
+
+**これをあてるまで、本番の章はすべて準備中のままになる**（`20-platform.md` 第20.1節「記録が無い章は準備中」）。あてたあとも、管理者が「教材の公開」の画面（`/staff/lessons/`）で章ごとに「公開する」を押すまでは、その章は誰にも（運営以外には）見えない。
+
 ---
 
 ## 6. まだ決めていないこと

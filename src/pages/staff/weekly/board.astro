@@ -1,0 +1,219 @@
+---
+/**
+ * 回ごとの表（20-platform.md 第19.5節。試作の案A「人×問題の表」）。
+ *
+ * `/staff/weekly/board/?id=<weeklyのid>&cohort=<所属コード>`。人を行、問題を列にする。
+ * 通した問題は ✓（落ちた回数を小さく添える）、まだの問題は落ちた回数、手を付けていない
+ * 問題は ―。列の上に通した人数。「いちばん詰まっている」（落ちた回数 − 通した人数 × 2 が
+ * いちばん大きい列）に印。「名前を隠す」は前に映すときのため（手元だけの見た目、送らない）。
+ *
+ * SSR は最初の1回ぶんを出し、そのあとは15秒ごとに /api/staff/weekly-board を読み直す
+ * （その場の様子を映すため。同節）。
+ */
+export const prerender = false;
+
+import Base from '../../../layouts/Base.astro';
+import { getCollection } from 'astro:content';
+import { serverConfig } from '../../../server/auth';
+import { requireStaff } from '../../../server/staff';
+import { weeklyBoard, writableCohortsForWeekly } from '../../../server/weekly';
+import { ymd } from '../../../server/staff-data';
+import generated from '../../../generated/lesson-data.json';
+import '../../../styles/lesson-tokens.css';
+import '../../../styles/staff.css';
+
+const config = serverConfig();
+const me = config && (await requireStaff(Astro.request));
+
+Astro.response.headers.set('cache-control', 'no-store');
+if (!me) Astro.response.status = 403;
+
+const weeklyId = Astro.url.searchParams.get('id') ?? '';
+const cohortParam = Astro.url.searchParams.get('cohort');
+
+let missing = false;
+let cohortCode = '';
+let cohortName = '';
+let title = '';
+let date = '';
+let exerciseIds: string[] = [];
+let board: Awaited<ReturnType<typeof weeklyBoard>> = { passedCounts: [], people: [], hotIndex: -1 };
+
+if (me && config) {
+  const cohorts = await writableCohortsForWeekly(config.db, me);
+  cohortCode = cohortParam && cohortParam !== '' ? cohortParam : me.cohort.code;
+  const cohort = cohorts.find((c) => c.code === cohortCode);
+  const entry = (await getCollection('weekly')).find((e) => e.data.id === weeklyId);
+  const genWeekly = (generated as { weekly?: Record<string, { exerciseIds: string[] }> }).weekly ?? {};
+  exerciseIds = genWeekly[weeklyId]?.exerciseIds ?? [];
+
+  if (!cohort || !entry || exerciseIds.length === 0) {
+    missing = true;
+    Astro.response.status = 404;
+  } else {
+    cohortName = cohort.name;
+    title = entry.data.title;
+    date = entry.data.date;
+    board = await weeklyBoard(config.db, cohortCode, exerciseIds);
+  }
+}
+
+const labels = exerciseIds.map((_, i) => `問題${i + 1}`);
+const now = Date.now();
+const initialJson = JSON.stringify({ exerciseIds, ...board }).replace(/</g, '\\u003c');
+---
+
+<Base title="今週の演習 表">
+  {
+    !me ? (
+      <p class="staff-deny">この画面は開けません。</p>
+    ) : missing ? (
+      <p class="staff-deny">見つかりません。</p>
+    ) : (
+      <div class="staff">
+        <div class="staff__top">
+          <h1 class="staff__title">
+            {date} {title}
+          </h1>
+          <p class="staff__meta">
+            {cohortName}・{me.displayName}・{ymd(now)}
+          </p>
+        </div>
+
+        <nav class="staff-nav" aria-label="管理画面">
+          <a href="/staff/">詰まっているところ</a>
+          <a href="/staff/questions">質問</a>
+          <a href="/staff/meetings/">集まり</a>
+          <a href="/staff/weekly/" aria-current="page">今週の演習</a>
+          <a href="/staff/activity/">活動</a>
+          <a href="/staff/lessons/">教材の公開</a>
+        </nav>
+
+        <p class="mt-new">
+          <a href="/staff/weekly/">一覧へ戻る</a>
+        </p>
+
+        <div class="ctlbar">
+          <label>
+            <input type="checkbox" id="wk-hide-names" />
+            名前を隠す（前に映すとき）
+          </label>
+          <span class="wk-refresh">15秒ごとに読み直します・<span id="wk-updated">いま</span></span>
+        </div>
+
+        <div id="wk-board-root" data-weekly={weeklyId} data-cohort={cohortCode}>
+          {/* JS が塗り直す。SSR は最初の1回ぶんの見た目だけ用意する */}
+        </div>
+
+        <script type="application/json" id="wk-board-data" set:html={initialJson} is:inline />
+        <script type="application/json" id="wk-board-labels" set:html={JSON.stringify(labels).replace(/</g, '\\u003c')} is:inline />
+      </div>
+    )
+  }
+
+  <script>
+    type Cell = { state: 'pass' | 'fail' | 'none'; fails: number };
+    type Person = { userId: string; displayName: string; cells: Cell[] };
+    type Board = { exerciseIds: string[]; passedCounts: number[]; people: Person[]; hotIndex: number };
+
+    const root = document.getElementById('wk-board-root');
+    if (root) {
+      const weeklyId = root.dataset.weekly ?? '';
+      const cohort = root.dataset.cohort ?? '';
+      const labelsEl = document.getElementById('wk-board-labels');
+      const labels: string[] = labelsEl?.textContent ? JSON.parse(labelsEl.textContent) : [];
+      const dataEl = document.getElementById('wk-board-data');
+      const hideBox = document.getElementById('wk-hide-names') as HTMLInputElement | null;
+      const updatedEl = document.getElementById('wk-updated');
+
+      function render(board: Board) {
+        const hide = hideBox?.checked ?? false;
+        const table = document.createElement('table');
+        table.className = 'board';
+        const total = board.people.length;
+
+        const thead = document.createElement('thead');
+        const headRow = document.createElement('tr');
+        headRow.innerHTML = '<th>メンバー</th>';
+        labels.forEach((label, i) => {
+          const th = document.createElement('th');
+          if (i === board.hotIndex) th.className = 'hot';
+          const cnt = document.createElement('span');
+          cnt.className = 'cnt';
+          cnt.textContent = `${board.passedCounts[i] ?? 0}/${total}人`;
+          th.append(document.createTextNode(label), cnt);
+          headRow.append(th);
+        });
+        thead.append(headRow);
+        table.append(thead);
+
+        const tbody = document.createElement('tbody');
+        for (const person of board.people) {
+          const tr = document.createElement('tr');
+          const nameTd = document.createElement('td');
+          nameTd.className = hide ? 'nm hide-name' : 'nm';
+          nameTd.textContent = hide ? '＊＊＊＊' : person.displayName;
+          tr.append(nameTd);
+          for (const cell of person.cells) {
+            const td = document.createElement('td');
+            if (cell.state === 'pass') {
+              td.className = 'c-ok';
+              td.textContent = cell.fails > 0 ? `✓ (${cell.fails})` : '✓';
+            } else if (cell.state === 'fail') {
+              td.className = 'c-ng';
+              td.textContent = `×${cell.fails}`;
+            } else {
+              td.className = 'c-no';
+              td.textContent = '―';
+            }
+            tr.append(td);
+          }
+          tbody.append(tr);
+        }
+        table.append(tbody);
+
+        root.replaceChildren(table);
+      }
+
+      let current: Board | null = null;
+      if (dataEl?.textContent) {
+        try {
+          current = JSON.parse(dataEl.textContent) as Board;
+          render(current);
+        } catch {
+          /* 最初の読み直しに任せる */
+        }
+      }
+
+      hideBox?.addEventListener('change', () => {
+        if (current) render(current);
+      });
+
+      async function refresh() {
+        try {
+          const res = await fetch(`/api/staff/weekly-board?id=${encodeURIComponent(weeklyId)}&cohort=${encodeURIComponent(cohort)}`);
+          if (!res.ok) return;
+          const board = (await res.json()) as Board;
+          current = board;
+          render(board);
+          if (updatedEl) updatedEl.textContent = new Date().toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        } catch {
+          /* 次の周期に任せる */
+        }
+      }
+
+      window.setInterval(refresh, 15000);
+    }
+  </script>
+
+  <style>
+    .wk-refresh {
+      margin-left: auto;
+      font-size: 12.5px;
+      color: var(--l-ink-2);
+    }
+    .hide-name {
+      filter: blur(4px);
+    }
+  </style>
+</Base>

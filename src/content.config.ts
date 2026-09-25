@@ -17,4 +17,16 @@ const lessons = defineCollection({
   }),
 });
 
-export const collections = { lessons };
+// 「今週の演習」（20-platform.md 第19章）。1回＝1つの .mdx。frontmatter は第19.2節のとおり。
+// 模範解答は src/content/weekly/solutions/<課題のid>.py（章ごとではなく1か所にまとめる）。
+const weekly = defineCollection({
+  loader: glob({ pattern: '**/*.mdx', base: './src/content/weekly' }),
+  schema: z.object({
+    id: z.string(),
+    date: z.string(),
+    title: z.string(),
+    chapters: z.array(z.string()),
+  }),
+});
+
+export const collections = { lessons, weekly };

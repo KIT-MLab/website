@@ -1,0 +1,237 @@
+---
+/**
+ * 「今週の演習」を公開する運営の画面（20-platform.md 第19.3節・第19.5節）。
+ *
+ * 回（src/content/weekly の MDX）ごと・所属ごとに1行。「公開する」を押すと、その所属の
+ * メンバーに見えるようになる。**一度公開したら公開したまま。取り消す操作は置かない**。
+ * 確認は window.confirm を使わず、段を切り替える in-page 確認にする
+ * （src/pages/staff/user/[id].astro のパスワード作り直しと同じ考え方）。
+ *
+ * 見える・書ける所属は、運営なら自分の所属、管理者なら全部（kind が internal のものだけ。
+ * src/server/weekly.ts の writableCohortsForWeekly）。
+ */
+export const prerender = false;
+
+import Base from '../../layouts/Base.astro';
+import { getCollection } from 'astro:content';
+import { serverConfig } from '../../server/auth';
+import { requireStaff } from '../../server/staff';
+import { openWeeklyIds, writableCohortsForWeekly } from '../../server/weekly';
+import { ymd } from '../../server/staff-data';
+import '../../styles/lesson-tokens.css';
+import '../../styles/staff.css';
+
+const config = serverConfig();
+const me = config && (await requireStaff(Astro.request));
+
+Astro.response.headers.set('cache-control', 'no-store');
+if (!me) Astro.response.status = 403;
+
+type Row = {
+  weeklyId: string;
+  title: string;
+  date: string;
+  cohortCode: string;
+  cohortName: string;
+  published: boolean;
+};
+
+const rows: Row[] = [];
+if (me && config) {
+  const entries = [...(await getCollection('weekly'))].sort((a, b) => a.data.date.localeCompare(b.data.date));
+  const cohorts = await writableCohortsForWeekly(config.db, me);
+  const openByCohort = new Map<string, Set<string>>();
+  for (const c of cohorts) openByCohort.set(c.code, await openWeeklyIds(config.db, c.code));
+
+  for (const entry of entries) {
+    for (const cohort of cohorts) {
+      rows.push({
+        weeklyId: entry.data.id,
+        title: entry.data.title,
+        date: entry.data.date,
+        cohortCode: cohort.code,
+        cohortName: cohort.name,
+        published: openByCohort.get(cohort.code)?.has(entry.data.id) ?? false,
+      });
+    }
+  }
+}
+
+const now = Date.now();
+const showCohortColumn = new Set(rows.map((r) => r.cohortCode)).size > 1;
+---
+
+<Base title="今週の演習">
+  {
+    !me ? (
+      <p class="staff-deny">この画面は開けません。</p>
+    ) : (
+      <div class="staff">
+        <div class="staff__top">
+          <h1 class="staff__title">今週の演習</h1>
+          <p class="staff__meta">
+            {me.displayName}（{me.cohort.name}）・
+            {me.role === 'admin' ? 'すべての所属が見えています' : 'この所属だけが見えています'}・{ymd(now)}
+          </p>
+        </div>
+
+        <nav class="staff-nav" aria-label="管理画面">
+          <a href="/staff/">詰まっているところ</a>
+          <a href="/staff/questions">質問</a>
+          <a href="/staff/meetings/">集まり</a>
+          <a href="/staff/weekly/" aria-current="page">今週の演習</a>
+          <a href="/staff/activity/">活動</a>
+          <a href="/staff/lessons/">教材の公開</a>
+        </nav>
+
+        <h2>
+          回の一覧<span class="staff__count">{rows.length}件</span>
+        </h2>
+
+        {rows.length === 0 ? (
+          <p class="staff__none">今週の演習はまだありません。src/content/weekly に MDX を置いてください。</p>
+        ) : (
+          <table class="roster">
+            <thead>
+              <tr>
+                <th>回</th>
+                <th>範囲</th>
+                {showCohortColumn ? <th>所属</th> : null}
+                <th>状態</th>
+                <th />
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((row) => (
+                <tr>
+                  <td>{row.date}</td>
+                  <td>{row.title}</td>
+                  {showCohortColumn ? <td>{row.cohortName}</td> : null}
+                  <td>
+                    <span class={row.published ? 'wk-state wk-state--ok' : 'wk-state'} data-wk-state={`${row.weeklyId}::${row.cohortCode}`}>
+                      {row.published ? '公開済み' : '未公開'}
+                    </span>
+                  </td>
+                  <td>
+                    <div class="wk-act" data-wk-act={`${row.weeklyId}::${row.cohortCode}`} data-weekly={row.weeklyId} data-cohort={row.cohortCode} hidden={row.published}>
+                      <div data-wk-idle>
+                        <button type="button" class="wk-open-btn" data-wk-start>
+                          公開する
+                        </button>
+                      </div>
+                      <div data-wk-confirm hidden>
+                        <p class="mt-note">{row.date}（{row.title}）を、{row.cohortName}のメンバーに公開します。取り消せません。</p>
+                        <div class="mt-bar">
+                          <button type="button" class="wk-open-btn" data-wk-go>
+                            公開する
+                          </button>
+                          <button type="button" class="wk-open-btn wk-open-btn--quiet" data-wk-cancel>
+                            やめる
+                          </button>
+                        </div>
+                      </div>
+                      <p class="mt-msg" data-wk-msg />
+                    </div>
+                    <a href={`/staff/weekly/board/?id=${encodeURIComponent(row.weeklyId)}&cohort=${encodeURIComponent(row.cohortCode)}`} class="wk-board-link">
+                      表を見る →
+                    </a>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+    )
+  }
+
+  <script>
+    /* 公開する（20-platform.md 第19.3節）。確認は window.confirm を使わず、
+       段を切り替える in-page 確認にする（[id].astro のパスワード作り直しと同じ考え方）。 */
+    document.querySelectorAll<HTMLElement>('[data-wk-act]').forEach((box) => {
+      const idle = box.querySelector<HTMLElement>('[data-wk-idle]');
+      const confirmStage = box.querySelector<HTMLElement>('[data-wk-confirm]');
+      const msg = box.querySelector<HTMLElement>('[data-wk-msg]');
+      const start = box.querySelector<HTMLButtonElement>('[data-wk-start]');
+      const go = box.querySelector<HTMLButtonElement>('[data-wk-go]');
+      const cancel = box.querySelector<HTMLButtonElement>('[data-wk-cancel]');
+      const weeklyId = box.dataset.weekly ?? '';
+      const cohort = box.dataset.cohort ?? '';
+
+      const show = (which: HTMLElement | null) => {
+        for (const el of [idle, confirmStage]) if (el) el.hidden = el !== which;
+      };
+
+      start?.addEventListener('click', () => {
+        if (msg) msg.textContent = '';
+        show(confirmStage);
+      });
+
+      cancel?.addEventListener('click', () => {
+        if (msg) msg.textContent = '';
+        show(idle);
+      });
+
+      go?.addEventListener('click', async () => {
+        if (!go) return;
+        go.disabled = true;
+        if (msg) msg.textContent = '';
+        try {
+          const res = await fetch('/api/staff/weekly', {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({ weeklyId, cohort }),
+          });
+          const body = (await res.json().catch(() => ({}))) as { error?: string; ok?: boolean };
+          if (!res.ok || !body.ok) {
+            if (msg) msg.textContent = body.error ?? '公開できませんでした。';
+            return;
+          }
+          box.hidden = true;
+          const state = document.querySelector(`[data-wk-state="${weeklyId}::${cohort}"]`);
+          if (state) {
+            state.textContent = '公開済み';
+            state.classList.add('wk-state--ok');
+          }
+        } catch {
+          if (msg) msg.textContent = '送れませんでした。';
+        } finally {
+          go.disabled = false;
+        }
+      });
+    });
+  </script>
+
+  <style>
+    .wk-state {
+      color: var(--l-ink-2);
+      font-size: 13px;
+    }
+    .wk-state--ok {
+      color: var(--l-midori);
+      font-weight: 700;
+    }
+    .wk-act {
+      margin-bottom: 4px;
+    }
+    .wk-open-btn {
+      font: inherit;
+      font-size: 13px;
+      padding: 3px 14px;
+      color: var(--l-ink);
+      background: var(--l-lv1);
+      border: 1px solid var(--l-rule);
+      cursor: pointer;
+    }
+    .wk-open-btn:hover {
+      background: var(--l-lv2);
+    }
+    .wk-open-btn--quiet {
+      background: transparent;
+    }
+    .wk-board-link {
+      font-size: 13px;
+      color: var(--l-ai);
+    }
+  </style>
+</Base>

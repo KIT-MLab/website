@@ -1,0 +1,122 @@
+---
+/**
+ * 気づいたことのメモ（20-platform.md 第20.3節）。**運営にだけ見える。**
+ *
+ * 3か所で同じ形を使う。
+ *   - 節のページ（TermPanel のいちばん下。`lessonId` を渡す）
+ *   - 今週の演習のページ（`weeklyId` を渡す）
+ *   - 「教材の公開」の画面のいちばん上（教材全体のメモ。どちらも渡さない）
+ *
+ * **呼ぶ側が運営かどうかを確かめてから使うこと。**このコンポーネント自身はロールを
+ * 見ない（節のページは SSR なので、運営でない人にはこのタグごと出さない。第20.3節の
+ * 「非運営には UI ごと出さない」）。
+ *
+ * 中身の並びは第20.3節のとおり: 未解決のメモが上、書く欄がいちばん下ではなく先に置く
+ * （書いた直後にすぐ見えるよう、書く欄をいちばん上にする）。
+ */
+import type { ReviewNote } from '../../server/lessons-publish';
+
+interface Props {
+  /** 欄の見出し。呼ぶ場所ごとに文言を変える（第20.3節） */
+  label: string;
+  lessonId?: string;
+  weeklyId?: string;
+  notes: ReviewNote[];
+}
+const { label, lessonId, weeklyId, notes } = Astro.props;
+
+function fmt(ms: number): string {
+  // 運営だけが読む短いメモなので日本時間の簡単な表記でよい（節のページのように厳密な表示は要らない）
+  const d = new Date(ms + 9 * 60 * 60 * 1000);
+  return `${d.getUTCMonth() + 1}/${d.getUTCDate()}`;
+}
+---
+
+<div class="notebox" data-notebox data-lesson-id={lessonId ?? ''} data-weekly-id={weeklyId ?? ''}>
+  <p class="rail__label">{label}</p>
+
+  <form class="notebox__form" data-notebox-form>
+    <div class="kit-acct__field">
+      <textarea class="kit-acct__in notebox__in" rows="3" maxlength="2000" data-notebox-input placeholder="気づいたことを書く"></textarea>
+      <p class="kit-acct__deny" data-notebox-deny></p>
+    </div>
+    <div class="kit-ex__bar">
+      <button class="kit-btn kit-btn--strong" type="submit">送る</button>
+    </div>
+  </form>
+
+  <ul class="notebox__list" data-notebox-list>
+    {notes.map((n) => (
+      <li class="notebox__item" data-note-id={n.id}>
+        <p class="notebox__meta">
+          {n.createdByName} ・ {fmt(n.createdAt)}
+        </p>
+        <p class="notebox__body">{n.body}</p>
+        <button type="button" class="kit-btn notebox__resolve" data-note-resolve>解決</button>
+      </li>
+    ))}
+  </ul>
+  <p class="notebox__empty" data-notebox-empty hidden={notes.length > 0}>未解決のメモはありません。</p>
+</div>
+
+<script>
+  import { setupNotesPanels } from '../../lesson/notes';
+  setupNotesPanels();
+</script>
+
+<style is:global>
+  /* 「解決」を押した／新しく書いたぶんは JavaScript（src/lesson/notes.ts）が DOM に足す。
+     Astro のスコープ付きスタイルは、あとから作った要素には当たらないので is:global にする。 */
+  .notebox {
+    margin: 18px 0 0;
+    padding-top: 14px;
+    border-top: 1px solid var(--l-rule);
+  }
+
+  .notebox__form {
+    margin-bottom: 10px;
+  }
+
+  .notebox__in {
+    font-size: 13px;
+  }
+
+  .notebox__list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .notebox__item {
+    padding: 7px 0;
+    border-top: 1px solid var(--l-rule);
+  }
+
+  .notebox__item:first-child {
+    border-top: 0;
+  }
+
+  .notebox__meta {
+    margin: 0 0 2px;
+    font-size: 11.5px;
+    color: var(--l-ink-2);
+  }
+
+  .notebox__body {
+    margin: 0 0 4px;
+    font-size: 13px;
+    line-height: 1.6;
+    white-space: pre-wrap;
+  }
+
+  .notebox__resolve {
+    font-size: 12px;
+    padding: 2px 10px;
+  }
+
+  .notebox__empty {
+    margin: 0;
+    font-size: 12.5px;
+    color: var(--l-ink-2);
+  }
+</style>

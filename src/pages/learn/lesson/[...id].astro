@@ -5,7 +5,14 @@
  * ・本文は1カラム最大720px。上に細い帯、左に節の欄を固定する（20-platform.md 第14.2節）
  * ・コード例と演習は本文中のその場で実行・採点する。別画面に飛ばさない
  * ・左の欄は章の中の位置を示す。章をまたぐ移動はここからはしない
+ *
+ * **章ごとに公開・準備中がある（第20.1節）。** 準備中の章は、運営・管理者だけが中身まで
+ * 見られる。それ以外の人には「この章は準備中です。」の1段落だけを返し、本文も課題の
+ * 判定データ（`kit-lesson-data`）も1文字も送らない。開かれるたびにサーバで判定するので
+ * `export const prerender = false`（以前は `getStaticPaths` で事前生成していた）。
  */
+export const prerender = false;
+
 import { getCollection, render, type CollectionEntry } from 'astro:content';
 import Base from '../../../layouts/Base.astro';
 import Run from '../../../components/lesson/Run.astro';
@@ -20,232 +27,276 @@ import FitLine from '../../../components/lesson/FitLine.astro';
 import Boundary from '../../../components/lesson/Boundary.astro';
 import Overfit from '../../../components/lesson/Overfit.astro';
 import TermPanel from '../../../components/lesson/TermPanel.astro';
+import NotesPanel from '../../../components/lesson/NotesPanel.astro';
 import { chapterTitle, lessonHref, practiceSectionLabel } from '../../../lesson/chapters';
+import { currentUser, serverConfig } from '../../../server/auth';
+import { isChapterPublic, notesForLesson } from '../../../server/lessons-publish';
 import generated from '../../../generated/lesson-data.json';
 import '../../../styles/lesson.css';
 
-export async function getStaticPaths() {
-  const lessons = await getCollection('lessons');
-  const sorted = [...lessons].sort((a, b) => a.id.localeCompare(b.id));
-  return sorted.map((entry) => {
-    const siblings = sorted.filter((l) => l.data.chapter === entry.data.chapter);
-    const at = siblings.findIndex((l) => l.id === entry.id);
-    return {
-      params: { id: entry.id },
-      props: { entry, siblings, at },
-    };
-  });
+const idParam = Astro.params.id ?? '';
+
+// 節の並びはファイルの位置の順（20-platform.md 第2.1節）。以前は getStaticPaths がこの並びで
+// 一覧を作っていた。いまは毎回組むが、教材の節数（200前後）なら十分速い。
+const lessons: CollectionEntry<'lessons'>[] = [...(await getCollection('lessons'))].sort((a, b) => a.id.localeCompare(b.id));
+const entry = lessons.find((l) => l.id === idParam);
+
+const config = serverConfig();
+const viewer = config ? await currentUser(Astro.request) : null;
+const isStaff = viewer !== null && (viewer.role === 'staff' || viewer.role === 'admin');
+
+const chapterPublic = entry && config ? await isChapterPublic(config.db, entry.data.chapter) : false;
+// 運営・管理者は準備中の章も中身まで見られる（第20.1節）
+const canSee = entry !== undefined && (chapterPublic || isStaff);
+
+if (!entry) Astro.response.status = 404;
+
+// 準備中の章・運営として見ているときはキャッシュしない。運営でない人が公開済みの章を
+// 見るときは既定のまま（第20章の指示どおり「drafts/staff views」だけ no-store にする）。
+if (!entry || !chapterPublic || isStaff) {
+  Astro.response.headers.set('cache-control', 'no-store');
 }
 
-type Props = {
-  entry: CollectionEntry<'lessons'>;
-  siblings: CollectionEntry<'lessons'>[];
-  at: number;
-};
+const siblings = entry ? lessons.filter((l) => l.data.chapter === entry.data.chapter) : [];
+const at = entry ? siblings.findIndex((l) => l.id === entry.id) : -1;
 
-const { entry, siblings, at } = Astro.props;
-const { Content } = await render(entry);
+const Content = canSee && entry ? (await render(entry)).Content : null;
 
-const lessonData = (generated as { lessons: Record<string, unknown> }).lessons[entry.data.id] ?? null;
+const lessonData =
+  canSee && entry ? ((generated as { lessons: Record<string, unknown> }).lessons[entry.data.id] ?? null) : null;
 // </script> が本文に混ざっても JSON の埋め込みが切れないようにする
 const dataJson = JSON.stringify(lessonData).replace(/</g, '\\u003c');
 
-const prev = at > 0 ? siblings[at - 1] : null;
-const next = at < siblings.length - 1 ? siblings[at + 1] : null;
+const prev = canSee && at > 0 ? siblings[at - 1] : null;
+const next = canSee && entry && at < siblings.length - 1 ? siblings[at + 1] : null;
 
 /* 第0章は課題を1問ずつ出す（20-platform.md 第11.7節）。
    目印を1つ置くだけで、本文の書き方は変えない。第1章以降は属性が付かないので
    CSS も JS も当たらず、縦に並んだままになる。 */
-const oneAtATime = entry.data.chapter === '00-start' ? '' : undefined;
+const oneAtATime = entry?.data.chapter === '00-start' ? '' : undefined;
 
 /* 練習編（20-platform.md 第15.1節）。章は「練習編1」、節は「練習1-2」と呼ぶ。
    章の番号と節の番号（◯.◯）は付けない。ほかの章では null で、見え方は変わらない */
-const practiceLabel = (n: number) => practiceSectionLabel(entry.data.chapter, n);
+const practiceLabel = (n: number) => (entry ? practiceSectionLabel(entry.data.chapter, n) : null);
 const isPractice = practiceLabel(1) !== null;
+
+// 気づいたことのメモ（第20.3節）。運営にだけ問い合わせ、運営にだけ埋め込む
+const notes = isStaff && entry && config ? await notesForLesson(config.db, entry.data.id) : [];
 ---
 
-<Base title={entry.data.title} bar>
-  {/* 幅1280px未満だけ表示。押すと右の用語検索の欄が右から重なって開く（第18.1節） */}
-  <button
-    type="button"
-    class="site-btn site-btn--small"
-    id="kit-term-toggle"
-    slot="topbar-extra"
-    aria-expanded="false"
-    aria-controls="kit-term-panel"
-  >
-    用語を検索
-  </button>
-
-  <div class="lesson-page">
-    {/* 左の欄（第14.2節）。広い画面では帯の下に固定し、中身が長ければ欄の中だけでスクロールする。
-        幅860px以下では、帯のすぐ下に固定した1行のボタンに畳む */}
-    <aside class="lesson-rail" id="kit-side">
-      <button class="rail__toggle" type="button" aria-expanded="false" aria-controls="kit-side-in">
-        <span>{isPractice ? 'この練習編の節' : 'この章の節'}（{at + 1} / {siblings.length}）</span>
-        <span data-side-word>開く</span>
+<Base title={entry && canSee ? entry.data.title : '準備中'} bar>
+  {
+    canSee && (
+      <button
+        type="button"
+        class="site-btn site-btn--small"
+        id="kit-term-toggle"
+        slot="topbar-extra"
+        aria-expanded="false"
+        aria-controls="kit-term-panel"
+      >
+        用語を検索
       </button>
-      <div class="rail__in" id="kit-side-in">
-        <div class="rail__block">
-          <p class="rail__label">{chapterTitle(entry.data.chapter)}</p>
-          <ol class="rail__list">
-            {siblings.map((s, i) => (
-              <li data-lesson-id={s.data.id} class={s.id === entry.id ? 'is-now' : ''}>
-                <span class="rail__state">{s.id === entry.id ? 'いま' : '未'}</span>
-                <a href={lessonHref(s.id)}>{isPractice ? `${practiceLabel(i + 1)} ${s.data.title}` : s.data.title}</a>
-              </li>
-            ))}
-          </ol>
+    )
+  }
+
+  {
+    !entry ? (
+      <p class="lesson-notice">
+        見つかりません。<a href="/learn/">学習の一覧へ</a>
+      </p>
+    ) : !canSee ? (
+      <p class="lesson-notice">
+        この章は準備中です。<a href="/learn/">学習の一覧へ</a>
+      </p>
+    ) : (
+      <div class="lesson-page">
+        {/* 左の欄（第14.2節）。広い画面では帯の下に固定し、中身が長ければ欄の中だけでスクロールする。
+            幅860px以下では、帯のすぐ下に固定した1行のボタンに畳む */}
+        <aside class="lesson-rail" id="kit-side">
+          <button class="rail__toggle" type="button" aria-expanded="false" aria-controls="kit-side-in">
+            <span>{isPractice ? 'この練習編の節' : 'この章の節'}（{at + 1} / {siblings.length}）</span>
+            <span data-side-word>開く</span>
+          </button>
+          <div class="rail__in" id="kit-side-in">
+            {isStaff && !chapterPublic && (
+              <p class="lesson-staffnote">運営だけに見えています。まだ公開していません。</p>
+            )}
+            <div class="rail__block">
+              <p class="rail__label">{chapterTitle(entry.data.chapter)}</p>
+              <ol class="rail__list">
+                {siblings.map((s, i) => (
+                  <li data-lesson-id={s.data.id} class={s.id === entry.id ? 'is-now' : ''}>
+                    <span class="rail__state">{s.id === entry.id ? 'いま' : '未'}</span>
+                    <a href={lessonHref(s.id)}>{isPractice ? `${practiceLabel(i + 1)} ${s.data.title}` : s.data.title}</a>
+                  </li>
+                ))}
+              </ol>
+            </div>
+          </div>
+        </aside>
+
+        <div class="lesson-top">
+          <p class="lesson-top__chapter">{chapterTitle(entry.data.chapter)}</p>
+          <h1 class="lesson-title">{entry.data.title}</h1>
+          <p class="lesson-top__meta">
+            {isPractice
+              ? `${practiceLabel(at + 1)} ・ この練習編の ${at + 1} / ${siblings.length} 節`
+              : `この章の ${at + 1} / ${siblings.length} 節`} ・ 目安 {entry.data.minutes} 分
+          </p>
         </div>
 
+        <article class="lesson-body" data-exq={oneAtATime}>
+          <Content components={{ Run, Mistake, Exercise, Level0, Keys, Figure, Secant, Descent, FitLine, Boundary, Overfit }} />
+
+          <nav class="lesson-nav" aria-label="節の移動">
+            {prev ? <a href={lessonHref(prev.id)}>← 前の節へ　{prev.data.title}</a> : <span class="lesson-nav__spacer" />}
+            {next ? <a href={lessonHref(next.id)}>次の節へ　{next.data.title} →</a> : <span class="lesson-nav__spacer" />}
+          </nav>
+        </article>
       </div>
-    </aside>
+    )
+  }
 
-    <div class="lesson-top">
-      <p class="lesson-top__chapter">{chapterTitle(entry.data.chapter)}</p>
-      <h1 class="lesson-title">{entry.data.title}</h1>
-      <p class="lesson-top__meta">
-        {isPractice
-          ? `${practiceLabel(at + 1)} ・ この練習編の ${at + 1} / ${siblings.length} 節`
-          : `この章の ${at + 1} / ${siblings.length} 節`} ・ 目安 {entry.data.minutes} 分
-      </p>
-    </div>
+  {
+    canSee && entry && (
+      <TermPanel terms={entry.data.terms} currentHref={lessonHref(entry.id)}>
+        {isStaff && (
+          <Fragment slot="notes">
+            <NotesPanel label="気づいたことを書く（運営だけに見えます）" lessonId={entry.data.id} notes={notes} />
+          </Fragment>
+        )}
+      </TermPanel>
+    )
+  }
 
-    <article class="lesson-body" data-exq={oneAtATime}>
-      <Content components={{ Run, Mistake, Exercise, Level0, Keys, Figure, Secant, Descent, FitLine, Boundary, Overfit }} />
+  {canSee && <script type="application/json" id="kit-lesson-data" set:html={dataJson} is:inline />}
 
-      <nav class="lesson-nav" aria-label="節の移動">
-        {prev ? <a href={lessonHref(prev.id)}>← 前の節へ　{prev.data.title}</a> : <span class="lesson-nav__spacer" />}
-        {next ? <a href={lessonHref(next.id)}>次の節へ　{next.data.title} →</a> : <span class="lesson-nav__spacer" />}
-      </nav>
-    </article>
-  </div>
+  {
+    canSee && (
+      <script>
+        import { getLessonData } from '../../../lesson/data';
+        import { getProgressStore } from '../../../lesson/store/progress';
+        import { setupExerciseQueue } from '../../../lesson/exercise-queue';
+        import { trackActivity } from '../../../lesson/activity';
 
-  <TermPanel terms={entry.data.terms} currentHref={lessonHref(entry.id)} />
+        const data = getLessonData();
+        const store = getProgressStore();
+        if (data) void store.openLesson(data.lessonId);
 
-  <script type="application/json" id="kit-lesson-data" set:html={dataJson} is:inline />
+        /* 活動した分（20-platform.md 第13.6節）。送るのは下の send() と同じ時機。
+           入っているかどうかは進度の送信（store.flush）と同じく手元の控えの owner で判じる */
+        const activity = data ? trackActivity(data.lessonId, async () => (await store.owner()) !== null) : null;
 
-  <script>
-    import { getLessonData } from '../../../lesson/data';
-    import { getProgressStore } from '../../../lesson/store/progress';
-    import { setupExerciseQueue } from '../../../lesson/exercise-queue';
-    import { trackActivity } from '../../../lesson/activity';
+        // 第0章だけ、課題を1問ずつ出す（第11.7節）。ほかの章では何もせずに戻る
+        setupExerciseQueue();
 
-    const data = getLessonData();
-    const store = getProgressStore();
-    if (data) void store.openLesson(data.lessonId);
+        // 狭い画面で左の欄を畳む1行のボタン（第14.2節）。広い画面ではボタンごと隠れている
+        const side = document.getElementById('kit-side');
+        const sideToggle = side?.querySelector<HTMLButtonElement>('.rail__toggle');
+        sideToggle?.addEventListener('click', () => {
+          const open = side!.classList.toggle('is-open');
+          sideToggle.setAttribute('aria-expanded', String(open));
+          const word = sideToggle.querySelector('[data-side-word]');
+          if (word) word.textContent = open ? '閉じる' : '開く';
+        });
 
-    /* 活動した分（20-platform.md 第13.6節）。送るのは下の send() と同じ時機。
-       入っているかどうかは進度の送信（store.flush）と同じく手元の控えの owner で判じる */
-    const activity = data ? trackActivity(data.lessonId, async () => (await store.owner()) !== null) : null;
+        const items = Array.from(document.querySelectorAll<HTMLLIElement>('.rail__list li[data-lesson-id]'));
 
-    // 第0章だけ、課題を1問ずつ出す（第11.7節）。ほかの章では何もせずに戻る
-    setupExerciseQueue();
+        async function paint() {
+          const ids = items.map((el) => el.dataset.lessonId ?? '');
+          const states = await store.lessonStates(ids);
+          for (const el of items) {
+            const mark = el.querySelector('.rail__state');
+            if (!mark) continue;
+            const done = states[el.dataset.lessonId ?? ''] === 'done';
+            el.classList.toggle('is-done', done && !el.classList.contains('is-now'));
+            if (!el.classList.contains('is-now')) mark.textContent = done ? '済' : '未';
+          }
+        }
 
-    // 狭い画面で左の欄を畳む1行のボタン（第14.2節）。広い画面ではボタンごと隠れている
-    const side = document.getElementById('kit-side');
-    const sideToggle = side?.querySelector<HTMLButtonElement>('.rail__toggle');
-    sideToggle?.addEventListener('click', () => {
-      const open = side!.classList.toggle('is-open');
-      sideToggle.setAttribute('aria-expanded', String(open));
-      const word = sideToggle.querySelector('[data-side-word]');
-      if (word) word.textContent = open ? '閉じる' : '開く';
-    });
+        void paint();
+        window.addEventListener('kit:progress', () => void paint());
 
-    const items = Array.from(document.querySelectorAll<HTMLLIElement>('.rail__list li[data-lesson-id]'));
+        /* 進度をサーバへ送る（20-platform.md 第6.2節「送る間隔」・第7章）。
 
-    async function paint() {
-      const ids = items.map((el) => el.dataset.lessonId ?? '');
-      const states = await store.lessonStates(ids);
-      for (const el of items) {
-        const mark = el.querySelector('.rail__state');
-        if (!mark) continue;
-        const done = states[el.dataset.lessonId ?? ''] === 'done';
-        el.classList.toggle('is-done', done && !el.classList.contains('is-now'));
-        if (!el.classList.contains('is-now')) mark.textContent = done ? '済' : '未';
-      }
-    }
+           送るのは**30秒ごとと、節を離れるとき**だけである。1操作ごとには送らない。
+           採点のたびに送ると、勉強会で30人が一斉に解いている間ずっと書き込みが走る。
+           入っていない人は store.flush() が何もせずに true を返すので、この仕掛けは
+           そのまま置いておける（判断を2か所に持たない）。
 
-    void paint();
-    window.addEventListener('kit:progress', () => void paint());
+           滞在の秒数は**画面が見えている間だけ**数える。裏に回っているタブや、別の
+           アプリの後ろに隠れている時間を足すと、読んでいない時間まで滞在になる。
 
-    /* 進度をサーバへ送る（20-platform.md 第6.2節「送る間隔」・第7章）。
+           離れたことは visibilitychange（hidden）と pagehide の両方で拾う。閉じるときに
+           visibilitychange が鳴らない環境があり、pagehide だけの環境でタブを切り替えると
+           鳴らないため、片方では足りない。 */
+        const SEND_EVERY_MS = 30000;
+        /** 見えている状態が続いている区間の始まり。裏に回っている間は null */
+        let watching: number | null = document.visibilityState === 'visible' ? Date.now() : null;
 
-       送るのは**30秒ごとと、節を離れるとき**だけである。1操作ごとには送らない。
-       採点のたびに送ると、勉強会で30人が一斉に解いている間ずっと書き込みが走る。
-       入っていない人は store.flush() が何もせずに true を返すので、この仕掛けは
-       そのまま置いておける（判断を2か所に持たない）。
+        function countSeconds() {
+          if (!data || watching === null) return;
+          const whole = Math.floor((Date.now() - watching) / 1000);
+          if (whole <= 0) return;
+          // 端数は次に持ち越す。切り捨てたぶんを捨てると、30秒ごとに1秒弱ずつ目減りする
+          watching += whole * 1000;
+          void store.addSeconds(data.lessonId, whole);
+        }
 
-       滞在の秒数は**画面が見えている間だけ**数える。裏に回っているタブや、別の
-       アプリの後ろに隠れている時間を足すと、読んでいない時間まで滞在になる。
+        function send() {
+          countSeconds();
+          void store.flush();
+          void activity?.send();
+        }
 
-       離れたことは visibilitychange（hidden）と pagehide の両方で拾う。閉じるときに
-       visibilitychange が鳴らない環境があり、pagehide だけの環境でタブを切り替えると
-       鳴らないため、片方では足りない。 */
-    const SEND_EVERY_MS = 30000;
-    /** 見えている状態が続いている区間の始まり。裏に回っている間は null */
-    let watching: number | null = document.visibilityState === 'visible' ? Date.now() : null;
+        window.setInterval(send, SEND_EVERY_MS);
 
-    function countSeconds() {
-      if (!data || watching === null) return;
-      const whole = Math.floor((Date.now() - watching) / 1000);
-      if (whole <= 0) return;
-      // 端数は次に持ち越す。切り捨てたぶんを捨てると、30秒ごとに1秒弱ずつ目減りする
-      watching += whole * 1000;
-      void store.addSeconds(data.lessonId, whole);
-    }
+        document.addEventListener('visibilitychange', () => {
+          if (document.hidden) {
+            send();
+            watching = null;
+          } else {
+            watching = Date.now();
+          }
+        });
 
-    function send() {
-      countSeconds();
-      void store.flush();
-      void activity?.send();
-    }
+        window.addEventListener('pagehide', send);
 
-    window.setInterval(send, SEND_EVERY_MS);
+        /* 課題が1問も無い節を終わりにする（10-lesson-and-writing.md 第3.8節）。
+           通す相手がいないので、ExerciseBox の「全部通したら done」が一度も走らない。
 
-    document.addEventListener('visibilitychange', () => {
-      if (document.hidden) {
-        send();
-        watching = null;
-      } else {
-        watching = Date.now();
-      }
-    });
+           目印にするのは節の移動の帯まで読み進めたこと。「次へ」を押した時点にしないのは
+           理由が2つある。章の最後の節には「次へ」が無いので永久に終われないことと、
+           押した直後にページが移るので書き込みが間に合わないことがあるためである。
 
-    window.addEventListener('pagehide', send);
+           IntersectionObserver は使わない。描画していない環境（画面に出ていない枠、
+           縮小表示の取り込みなど）では一度も鳴らず、そのとき**黙って何も起きない**。
+           進度が付かないことに誰も気づけないので、位置を自分で測る。
+           短い節では読み込んだ時点で帯が見えているため、最初に1回測る。
 
-    /* 課題が1問も無い節を終わりにする（10-lesson-and-writing.md 第3.8節）。
-       通す相手がいないので、ExerciseBox の「全部通したら done」が一度も走らない。
-
-       目印にするのは節の移動の帯まで読み進めたこと。「次へ」を押した時点にしないのは
-       理由が2つある。章の最後の節には「次へ」が無いので永久に終われないことと、
-       押した直後にページが移るので書き込みが間に合わないことがあるためである。
-
-       IntersectionObserver は使わない。描画していない環境（画面に出ていない枠、
-       縮小表示の取り込みなど）では一度も鳴らず、そのとき**黙って何も起きない**。
-       進度が付かないことに誰も気づけないので、位置を自分で測る。
-       短い節では読み込んだ時点で帯が見えているため、最初に1回測る。
-
-       課題のある節では何もしない。そちらは全部通したときに立つ。 */
-    if (data && document.querySelectorAll('section.kit-ex').length === 0) {
-      const foot = document.querySelector('.lesson-nav');
-      if (foot) {
-        let marked = false;
-        const check = () => {
-          if (marked || foot.getBoundingClientRect().top > window.innerHeight) return;
-          marked = true;
-          window.removeEventListener('scroll', check);
-          window.removeEventListener('resize', check);
-          void store.finishLesson(data.lessonId).then(() => {
-            window.dispatchEvent(new CustomEvent('kit:progress'));
-          });
-        };
-        window.addEventListener('scroll', check, { passive: true });
-        window.addEventListener('resize', check);
-        check();
-      }
-    }
-  </script>
+           課題のある節では何もしない。そちらは全部通したときに立つ。 */
+        if (data && document.querySelectorAll('section.kit-ex').length === 0) {
+          const foot = document.querySelector('.lesson-nav');
+          if (foot) {
+            let marked = false;
+            const check = () => {
+              if (marked || foot.getBoundingClientRect().top > window.innerHeight) return;
+              marked = true;
+              window.removeEventListener('scroll', check);
+              window.removeEventListener('resize', check);
+              void store.finishLesson(data.lessonId).then(() => {
+                window.dispatchEvent(new CustomEvent('kit:progress'));
+              });
+            };
+            window.addEventListener('scroll', check, { passive: true });
+            window.addEventListener('resize', check);
+            check();
+          }
+        }
+      </script>
+    )
+  }
 
   <style is:global>
     /* 帯（高さ48px＋二重罫3px、Base.astro の .topbar）と左の欄（232px）を避けて本文を置く（第14.2節）。
@@ -282,6 +333,34 @@ const isPractice = practiceLabel(1) !== null;
       .foot {
         margin-left: 0;
       }
+    }
+  </style>
+
+  <style>
+    /* 準備中（第20.1節）・見つからないの1段落。教材の内容を1文字も出さない画面 */
+    .lesson-notice {
+      max-width: 60ch;
+      margin: 80px auto 0;
+      padding: 0 16px;
+      font-family: var(--font-body);
+      font-size: 16px;
+      line-height: 1.9;
+    }
+
+    .lesson-notice a {
+      color: var(--l-ai);
+      margin-left: 4px;
+    }
+
+    /* 運営だけに見えている準備中の章（20.4節の今週の演習の帯と同じ考え方） */
+    .lesson-staffnote {
+      margin: 0 0 16px;
+      padding: 6px 10px;
+      font-size: 12.5px;
+      line-height: 1.6;
+      color: var(--l-kohaku);
+      background: var(--l-card);
+      border: 1px solid var(--l-kohaku);
     }
   </style>
 </Base>

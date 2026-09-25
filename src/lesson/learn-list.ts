@@ -8,8 +8,16 @@
  */
 import { chapterTitle } from './chapters';
 import { getProgressStore } from './store/progress';
+import { fetchPublishStatus, type PublishStatus } from './publish-status';
 // @ts-expect-error 部の表は .mjs 側に1つだけ置く（scripts/parts.mjs。chapters.ts と同じ理由）
 import { PARTS } from '../../scripts/parts.mjs';
+
+/** 準備中の章の鍵の印（20-platform.md 第20.1節）。今週の演習の鍵（weekly-list.ts）と同じ絵 */
+const LOCK_SVG =
+  '<svg class="wk-lock" viewBox="0 0 16 16" aria-hidden="true" focusable="false">' +
+  '<path d="M4.5 7V5a3.5 3.5 0 0 1 7 0v2" fill="none" stroke="currentColor" stroke-width="1.3"/>' +
+  '<rect x="3" y="7" width="10" height="7" rx="1" fill="none" stroke="currentColor" stroke-width="1.3"/>' +
+  '</svg>';
 
 type LearnSection = {
   href: string;
@@ -54,9 +62,58 @@ function setMeter(el: Element | null, done: number, total: number): void {
   if (cnt) cnt.textContent = `${done}/${total}問`;
 }
 
+/**
+ * 準備中の章の見た目を塗る（20-platform.md 第20.1節）。
+ *
+ * 運営でない人には鍵の印を添え、節へのリンクを外す（文字だけにする）。運営・管理者には
+ * 「準備中」の小さな札を添えるだけで、リンクはそのまま残す（中身まで見られるため）。
+ */
+function paintPublishLocks(status: PublishStatus): void {
+  // paintLearnList は1回の読み込みで何度も呼ばれる（account.ts が /api/me の答えと、
+  // 手元の進度を合わせたあとの2回、kit:account を鳴らすため）。呼ばれるたびに前回ぶんの
+  // 印を消してから塗り直す。消さずに足すと、呼ばれた回数ぶん印が重なる
+  document.querySelectorAll('.lp-lock, .lp-soon--sm').forEach((el) => el.remove());
+  document.querySelectorAll<HTMLDetailsElement>('.lp-chap[data-chapter]').forEach((chapEl) => {
+    const chapter = chapEl.dataset.chapter ?? '';
+    if (status.publicChapters.has(chapter)) return;
+
+    const name = chapEl.querySelector('.lp-chap__name');
+    if (!name) return;
+
+    if (status.staff) {
+      const tag = document.createElement('span');
+      tag.className = 'lp-soon lp-soon--sm';
+      tag.textContent = '準備中';
+      // .lp-chap__head は3列のグリッド。兄弟に足すと4つ目の列がはみ出るので、
+      // 名前の中に足して同じ列に収める
+      name.append(tag);
+      return;
+    }
+
+    const lock = document.createElement('span');
+    lock.className = 'lp-lock';
+    lock.setAttribute('aria-label', '準備中');
+    lock.innerHTML = LOCK_SVG;
+    // .lp-chap__head は3列のグリッド。兄弟に足すと4つ目の列がはみ出るので、
+    // 名前の中に足して同じ列に収める
+    name.append(lock);
+
+    // 節へのリンクを外す（文字だけにする）。中身は変えず、タグだけ <a> → <span>
+    chapEl.querySelectorAll<HTMLAnchorElement>('.lp-secs a').forEach((a) => {
+      const span = document.createElement('span');
+      span.className = 'lp-secs__locked';
+      span.textContent = a.textContent;
+      a.replaceWith(span);
+    });
+  });
+}
+
 export async function paintLearnList(): Promise<void> {
   const sections = readSections();
   if (sections.length === 0) return;
+
+  const status = await fetchPublishStatus();
+  paintPublishLocks(status);
 
   const store = getProgressStore();
   const lessonIds = [...new Set(sections.map((s) => s.lessonId))];
@@ -71,8 +128,11 @@ export async function paintLearnList(): Promise<void> {
     }),
   );
 
-  // 教材の順で最初の、まだ済んでいない節。無ければ全部済み
-  const nextIndex = sections.findIndex((s) => states[s.lessonId] !== 'done');
+  // 運営でない人には、準備中の章の節を「次」にも「続きから」にも選ばない（第20.1節）
+  const allowed = (chapter: string) => status.staff || status.publicChapters.has(chapter);
+
+  // 教材の順で最初の、まだ済んでいない（かつ運営でなければ公開済みの章の）節。無ければ全部済み
+  const nextIndex = sections.findIndex((s) => states[s.lessonId] !== 'done' && allowed(s.chapter));
   const anyDone = sections.some((s) => states[s.lessonId] === 'done');
   const allDone = nextIndex === -1;
 
@@ -118,7 +178,10 @@ export async function paintLearnList(): Promise<void> {
   });
 
   // --- 開いておくのは、次の節を含む部と章だけ（第17.1節） ---
-  const target = sections[allDone ? sections.length - 1 : nextIndex];
+  // allDone のときは最後の「開ける」節（運営でなければ公開済みの章のうち最後の節）を開く。
+  // 1つも開ける節が無ければ（まだ何も公開していない）、SSR の既定（第0部・第0章）のままにする。
+  const openable = sections.filter((s) => allowed(s.chapter));
+  const target = allDone ? openable[openable.length - 1] : sections[nextIndex];
   if (target) {
     const partIndex = writtenParts.findIndex((p) => p.chapters.includes(target.chapter));
     document.querySelectorAll<HTMLDetailsElement>('.lp-part[data-part]').forEach((el) => {

@@ -104,6 +104,14 @@ const dataJson = JSON.stringify(sections).replace(/</g, '\\u003c');
       ニューラルネットワークの学習と評価まで進みます。コードはこのページの中で動かせます。
     </p>
 
+    {/* 「今週の演習」の段（20-platform.md 第19.4節）。メンバーにだけ、下の script が出す */}
+    <section class="wk-entrance" id="wk-entrance" hidden>
+      <h2 class="wk-entrance__h">
+        今週の演習<small>メンバーだけ</small>
+      </h2>
+      <div class="wk-rows" id="wk-rows" />
+    </section>
+
     {
       first && (
         <div class="lp-resume" id="learn-resume">
@@ -205,9 +213,17 @@ const dataJson = JSON.stringify(sections).replace(/</g, '\\u003c');
 
   <script>
     import { paintLearnList } from '../../lesson/learn-list';
+    import { paintWeeklyList } from '../../lesson/weekly-list';
     void paintLearnList();
-    // 入る・出るで手元の進度が入れ替わる（第14.5節）。塗り直す
-    window.addEventListener('kit:account', () => void paintLearnList());
+    void paintWeeklyList();
+    // 入る・出るで手元の進度が入れ替わる（第14.5節）。塗り直す。ログイン・ログアウトで
+    // メンバーかどうかも変わるので、今週の演習の段も一緒に塗り直す
+    window.addEventListener('kit:account', () => {
+      void paintLearnList();
+      void paintWeeklyList();
+    });
+    // 課題を採点したら、今週の演習の棒も一緒に塗り直す（第19.4節）
+    window.addEventListener('kit:progress', () => void paintWeeklyList());
   </script>
 </Base>
 
@@ -256,6 +272,97 @@ const dataJson = JSON.stringify(sections).replace(/</g, '\\u003c');
   .learning-note a {
     color: var(--color-ink);
     text-underline-offset: 3px;
+  }
+
+  /* --- 今週の演習（20-platform.md 第19.4節。試作 案B） --- */
+  .wk-entrance {
+    border: 1.5px solid var(--color-line);
+    border-radius: var(--radius);
+    background: var(--color-card);
+    padding: 4px 16px 10px;
+    margin-bottom: 24px;
+  }
+  .wk-entrance[hidden] {
+    display: none;
+  }
+  .wk-entrance__h {
+    font-family: var(--font-head);
+    font-weight: 900;
+    font-size: 16px;
+    margin: 10px 0 2px;
+  }
+  .wk-entrance__h small {
+    font-family: var(--font-body);
+    font-weight: 400;
+    font-size: 12.5px;
+    color: var(--color-ink-2);
+    margin-left: 8px;
+  }
+  .wk-row {
+    display: grid;
+    grid-template-columns: 3.4em minmax(0, 1fr) auto;
+    gap: 10px;
+    align-items: center;
+    padding: 7px 2px;
+    border-top: 1px solid var(--l-rule);
+    font-size: 14px;
+  }
+  .wk-row__d {
+    color: var(--color-ink-2);
+    font-variant-numeric: tabular-nums;
+  }
+  .wk-row__t {
+    color: var(--color-ink);
+    font-weight: 700;
+    text-underline-offset: 3px;
+  }
+  .wk-row--locked .wk-row__t--locked {
+    color: var(--color-ink-2);
+    font-weight: 400;
+  }
+  .wk-row__lock {
+    display: inline-flex;
+    align-items: center;
+    color: var(--color-ink-2);
+  }
+  .wk-lock {
+    width: 15px;
+    height: 15px;
+  }
+  .wk-meter {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+  .wk-meter__track {
+    width: 90px;
+    height: 6px;
+    background: var(--l-lv2);
+    border-radius: 3px;
+    overflow: hidden;
+    flex: none;
+    display: inline-block;
+  }
+  .wk-meter__fill {
+    display: block;
+    height: 100%;
+    background: var(--color-ink-2);
+    border-radius: 3px;
+    transition: width 200ms var(--ease-out);
+  }
+  .wk-meter.is-done .wk-meter__fill {
+    background: var(--l-midori);
+  }
+  .wk-meter__pct {
+    min-width: 3.6em;
+    text-align: right;
+    font-weight: 700;
+  }
+  .wk-meter.is-done .wk-meter__pct {
+    color: var(--l-midori);
   }
 
   /* --- 続きから（20-platform.md 第17.3節。試作 案C の一部だけ） --- */
@@ -492,5 +599,42 @@ const dataJson = JSON.stringify(sections).replace(/</g, '\\u003c');
     .lp-meter__cnt {
       display: none;
     }
+    .wk-row {
+      grid-template-columns: 1fr auto;
+    }
+    .wk-row__d {
+      grid-column: 1 / -1;
+    }
+    .wk-meter__track {
+      width: 60px;
+    }
+  }
+</style>
+
+<style is:global>
+  /* 準備中の章（20-platform.md 第20.1節）。src/lesson/learn-list.ts が JavaScript で作って
+     挿し込む要素なので、Astro のスコープ付きスタイル（data-astro-cid-*）は当たらない。
+     ここだけ is:global にして、あとから作られた要素にも効くようにする。 */
+  .lp-soon--sm {
+    margin-left: 8px;
+    vertical-align: middle;
+  }
+
+  .lp-lock {
+    display: inline-flex;
+    align-items: center;
+    margin-left: 8px;
+    color: var(--color-ink-2);
+    vertical-align: middle;
+  }
+
+  .lp-lock .wk-lock {
+    width: 14px;
+    height: 14px;
+  }
+
+  /* リンクを外した節（文字だけになったもの。20-platform.md 第20.1節） */
+  .lp-secs__locked {
+    color: var(--color-ink-2);
   }
 </style>

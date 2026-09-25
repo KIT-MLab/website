@@ -1,0 +1,478 @@
+---
+/**
+ * 「教材の公開」の画面（20-platform.md 第20.2節）。
+ *
+ * 部ごとに章を並べ、章ごとに状態（公開・準備中）、切り替え（管理者だけ）、未解決のメモの数、
+ * 最初の節へのリンクを出す。上に教材全体のメモの欄、下に節・回に紐づく未解決のメモの一覧
+ * （章ごとにまとめる。今週の演習のメモも含む）。解決したものは既定で隠す（第20.3節）。
+ *
+ * 運営（staff）は見られるだけ、切り替えは管理者だけ（第20.1節）。
+ */
+export const prerender = false;
+
+import { getCollection } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import NotesPanel from '../../components/lesson/NotesPanel.astro';
+import { serverConfig } from '../../server/auth';
+import { requireAdmin, requireStaff } from '../../server/staff';
+import { allPlacedNotes, chapterStatuses, openNoteCountByLesson, wholeCourseNotes } from '../../server/lessons-publish';
+import { sectionNumbers, ymd } from '../../server/staff-data';
+import { chapterTitle, lessonHref, practiceSectionLabel, writtenParts } from '../../lesson/chapters';
+import '../../styles/lesson-tokens.css';
+import '../../styles/staff.css';
+
+const config = serverConfig();
+const me = config && (await requireStaff(Astro.request));
+const admin = me && (await requireAdmin(Astro.request));
+
+Astro.response.headers.set('cache-control', 'no-store');
+if (!me) Astro.response.status = 403;
+
+const now = Date.now();
+
+const lessons = me ? [...(await getCollection('lessons'))].sort((a, b) => a.id.localeCompare(b.id)) : [];
+const weeklies = me ? [...(await getCollection('weekly'))].sort((a, b) => a.data.date.localeCompare(b.data.date)) : [];
+
+const byChapter = new Map<string, typeof lessons>();
+for (const l of lessons) {
+  const list = byChapter.get(l.data.chapter) ?? [];
+  list.push(l);
+  byChapter.set(l.data.chapter, list);
+}
+
+const statuses = me && config ? await chapterStatuses(config.db) : new Map();
+const openCounts = me && config ? await openNoteCountByLesson(config.db) : new Map<string, number>();
+
+function chapterNoteCount(chapter: string): number {
+  let n = 0;
+  for (const l of byChapter.get(chapter) ?? []) n += openCounts.get(l.data.id) ?? 0;
+  return n;
+}
+
+type ChapterRow = { chapter: string; title: string; isPublic: boolean; noteCount: number; firstHref: string };
+type PartRow = { name: string; chapters: ChapterRow[] };
+
+const partRows: PartRow[] = writtenParts()
+  .map((part) => ({
+    name: part.name,
+    chapters: part.chapters
+      .filter((chapter) => byChapter.has(chapter))
+      .map((chapter) => {
+        const first = byChapter.get(chapter)?.[0];
+        return {
+          chapter,
+          title: chapterTitle(chapter),
+          isPublic: statuses.get(chapter)?.public ?? false,
+          noteCount: chapterNoteCount(chapter),
+          firstHref: first ? lessonHref(first.id) : '/learn/',
+        };
+      }),
+  }))
+  .filter((part) => part.chapters.length > 0);
+
+// 教材全体のメモ（未解決だけ。第20.3節「教材全体に言えることを書く欄」）
+const courseNotes = me && config ? await wholeCourseNotes(config.db, false) : [];
+
+// 節・回に紐づく未解決＋解決済みのメモ（解決済みは既定で隠す。第20.3節）
+const placedNotes = me && config ? await allPlacedNotes(config.db, true) : [];
+
+const chapterOfLesson = new Map(lessons.map((l) => [l.data.id, l.data.chapter]));
+const titleOfLesson = new Map(lessons.map((l) => [l.data.id, l.data.title]));
+const sectionNo = sectionNumbers(lessons.map((l) => ({ lessonId: l.data.id, chapter: l.data.chapter })));
+function place(lessonId: string): string {
+  const chapter = chapterOfLesson.get(lessonId);
+  const n = sectionNo.get(lessonId);
+  if (!chapter || !n) return '';
+  return practiceSectionLabel(chapter, n) ?? `${chapterTitle(chapter).split(/[ 　]/)[0]}${n}節`;
+}
+
+const weeklyById = new Map(weeklies.map((w) => [w.data.id, w]));
+
+type NoteView = {
+  id: number;
+  body: string;
+  createdByName: string;
+  createdAt: number;
+  resolved: boolean;
+  where: string;
+  href: string;
+};
+
+const lessonNoteGroups: { chapter: string; title: string; notes: NoteView[] }[] = [];
+const weeklyNoteList: NoteView[] = [];
+
+for (const n of placedNotes) {
+  const view: NoteView = {
+    id: n.id,
+    body: n.body,
+    createdByName: n.createdByName,
+    createdAt: n.createdAt,
+    resolved: n.resolvedAt !== null,
+    where: '',
+    href: '#',
+  };
+  if (n.lessonId) {
+    const chapter = chapterOfLesson.get(n.lessonId) ?? '';
+    const title = titleOfLesson.get(n.lessonId) ?? n.lessonId;
+    const entry = lessons.find((l) => l.data.id === n.lessonId);
+    view.where = `${place(n.lessonId)}「${title}」`;
+    view.href = entry ? lessonHref(entry.id) : '/learn/';
+    let group = lessonNoteGroups.find((g) => g.chapter === chapter);
+    if (!group) {
+      group = { chapter, title: chapterTitle(chapter), notes: [] };
+      lessonNoteGroups.push(group);
+    }
+    group.notes.push(view);
+  } else if (n.weeklyId) {
+    const w = weeklyById.get(n.weeklyId);
+    view.where = w ? `今週の演習 ${w.data.date}（${w.data.title}）` : `今週の演習 ${n.weeklyId}`;
+    view.href = `/learn/weekly/${encodeURIComponent(n.weeklyId)}/`;
+    weeklyNoteList.push(view);
+  }
+}
+// 章の並びは教材の順にそろえる
+const chapterOrder = [...byChapter.keys()];
+lessonNoteGroups.sort((a, b) => chapterOrder.indexOf(a.chapter) - chapterOrder.indexOf(b.chapter));
+
+const openPlacedCount = placedNotes.filter((n) => n.resolvedAt === null).length;
+---
+
+<Base title="教材の公開">
+  {
+    !me ? (
+      <p class="staff-deny">この画面は開けません。</p>
+    ) : (
+      <div class="staff">
+        <div class="staff__top">
+          <h1 class="staff__title">教材の公開</h1>
+          <p class="staff__meta">
+            {me.displayName}（{me.cohort.name}）・{admin ? '公開の切り替えができます' : '見るだけです（切り替えは管理者だけ）'}・{ymd(now)}
+          </p>
+        </div>
+
+        <nav class="staff-nav" aria-label="管理画面">
+          <a href="/staff/">詰まっているところ</a>
+          <a href="/staff/questions">質問</a>
+          <a href="/staff/meetings/">集まり</a>
+          <a href="/staff/weekly/">今週の演習</a>
+          <a href="/staff/activity/">活動</a>
+          <a href="/staff/lessons/" aria-current="page">教材の公開</a>
+        </nav>
+
+        <h2>教材全体のメモ</h2>
+        <NotesPanel label="教材全体について気づいたことを書く" notes={courseNotes} />
+
+        <h2 class="lp2-h2">章ごとの公開</h2>
+        {partRows.map((part) => (
+          <>
+            <p class="lp2-part">{part.name}</p>
+            <table class="roster lp2-table">
+              <thead>
+                <tr>
+                  <th>章</th>
+                  <th>状態</th>
+                  {admin ? <th>切り替え</th> : null}
+                  <th>未解決のメモ</th>
+                  <th>最初の節</th>
+                </tr>
+              </thead>
+              <tbody>
+                {part.chapters.map((ch) => (
+                  <tr>
+                    <td>{ch.title}</td>
+                    <td>
+                      <span class={ch.isPublic ? 'wk-state wk-state--ok' : 'wk-state'} data-pub-state={ch.chapter}>
+                        {ch.isPublic ? '公開' : '準備中'}
+                      </span>
+                    </td>
+                    {admin ? (
+                      <td>
+                        <div class="wk-act" data-pub-act={ch.chapter} data-chapter={ch.chapter} data-public={String(ch.isPublic)}>
+                          <div data-pub-idle>
+                            <button type="button" class="wk-open-btn" data-pub-start>
+                              {ch.isPublic ? '準備中に戻す' : '公開する'}
+                            </button>
+                          </div>
+                          <div data-pub-confirm hidden>
+                            <p class="mt-note">
+                              {ch.title}を{ch.isPublic ? '準備中に戻します。' : '公開します。公開すると、運営でない人も中身を見られます。'}
+                            </p>
+                            <div class="mt-bar">
+                              <button type="button" class="wk-open-btn" data-pub-go>
+                                {ch.isPublic ? '準備中に戻す' : '公開する'}
+                              </button>
+                              <button type="button" class="wk-open-btn wk-open-btn--quiet" data-pub-cancel>
+                                やめる
+                              </button>
+                            </div>
+                          </div>
+                          <p class="mt-msg" data-pub-msg />
+                        </div>
+                      </td>
+                    ) : null}
+                    <td data-note-count={ch.chapter}>{ch.noteCount > 0 ? `${ch.noteCount}件` : ''}</td>
+                    <td>
+                      <a href={ch.firstHref}>開く →</a>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </>
+        ))}
+
+        <h2 class="lp2-h2">
+          節・今週の演習のメモ
+          <span class="staff__count">
+            未解決 {openPlacedCount}件・{placedNotes.length}件中
+          </span>
+        </h2>
+        <button type="button" class="wk-open-btn lp2-toggle" id="lp2-show-resolved" aria-pressed="false">
+          解決したものも見る
+        </button>
+
+        {placedNotes.length === 0 ? <p class="staff__none">まだメモはありません。</p> : null}
+
+        {lessonNoteGroups.map((group) => (
+          <div class="lp2-group">
+            <p class="lp2-group__h">{group.title}</p>
+            <ul class="qa">
+              {group.notes.map((n) => (
+                <li class={`qa__item ${n.resolved ? 'is-resolved' : ''}`} data-note-id={n.id} hidden={n.resolved}>
+                  <p class="qa__head">
+                    <span class="qa__where">{n.where}</span>
+                    <span class="qa__when">{ymd(n.createdAt)}</span>
+                    <span class="staff__id">{n.createdByName}</span>
+                    {n.resolved ? <span class="qa__state">解決済み</span> : null}
+                  </p>
+                  <p class="qa__body">{n.body}</p>
+                  <p class="lp2-links">
+                    <a href={n.href}>その節を開く →</a>
+                    {!n.resolved ? (
+                      <button type="button" class="kit-btn lp2-resolve" data-note-resolve data-note-chapter={group.chapter}>
+                        解決
+                      </button>
+                    ) : null}
+                  </p>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))}
+
+        {weeklyNoteList.length > 0 ? (
+          <div class="lp2-group">
+            <p class="lp2-group__h">今週の演習</p>
+            <ul class="qa">
+              {weeklyNoteList.map((n) => (
+                <li class={`qa__item ${n.resolved ? 'is-resolved' : ''}`} data-note-id={n.id} hidden={n.resolved}>
+                  <p class="qa__head">
+                    <span class="qa__where">{n.where}</span>
+                    <span class="qa__when">{ymd(n.createdAt)}</span>
+                    <span class="staff__id">{n.createdByName}</span>
+                    {n.resolved ? <span class="qa__state">解決済み</span> : null}
+                  </p>
+                  <p class="qa__body">{n.body}</p>
+                  <p class="lp2-links">
+                    <a href={n.href}>その回を開く →</a>
+                    {!n.resolved ? (
+                      <button type="button" class="kit-btn lp2-resolve" data-note-resolve>
+                        解決
+                      </button>
+                    ) : null}
+                  </p>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
+      </div>
+    )
+  }
+
+  <script>
+    /* 公開・準備中の切り替え（20-platform.md 第20.1節・第20.2節）。段を切り替える in-page
+       確認（window.confirm は使わない。src/pages/staff/weekly.astro と同じ考え方）。 */
+    document.querySelectorAll<HTMLElement>('[data-pub-act]').forEach((box) => {
+      const idle = box.querySelector<HTMLElement>('[data-pub-idle]');
+      const confirmStage = box.querySelector<HTMLElement>('[data-pub-confirm]');
+      const msg = box.querySelector<HTMLElement>('[data-pub-msg]');
+      const start = box.querySelector<HTMLButtonElement>('[data-pub-start]');
+      const go = box.querySelector<HTMLButtonElement>('[data-pub-go]');
+      const cancel = box.querySelector<HTMLButtonElement>('[data-pub-cancel]');
+      const chapter = box.dataset.chapter ?? '';
+
+      const show = (which: HTMLElement | null) => {
+        for (const el of [idle, confirmStage]) if (el) el.hidden = el !== which;
+      };
+
+      start?.addEventListener('click', () => {
+        if (msg) msg.textContent = '';
+        show(confirmStage);
+      });
+
+      cancel?.addEventListener('click', () => {
+        if (msg) msg.textContent = '';
+        show(idle);
+      });
+
+      go?.addEventListener('click', async () => {
+        if (!go) return;
+        const wantPublic = box.dataset.public !== 'true';
+        go.disabled = true;
+        if (msg) msg.textContent = '';
+        try {
+          const res = await fetch('/api/staff/lessons-publish', {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({ chapter, public: wantPublic }),
+          });
+          const body = (await res.json().catch(() => ({}))) as { error?: string; ok?: boolean };
+          if (!res.ok || !body.ok) {
+            if (msg) msg.textContent = body.error ?? '切り替えられませんでした。';
+            return;
+          }
+          box.dataset.public = String(wantPublic);
+          const state = document.querySelector(`[data-pub-state="${chapter}"]`);
+          if (state) {
+            state.textContent = wantPublic ? '公開' : '準備中';
+            state.classList.toggle('wk-state--ok', wantPublic);
+          }
+          const label = wantPublic ? '準備中に戻す' : '公開する';
+          if (start) start.textContent = label;
+          const goLabel = box.querySelector<HTMLButtonElement>('[data-pub-go]');
+          if (goLabel) goLabel.textContent = label;
+          const note = box.querySelector('.mt-note');
+          if (note) {
+            note.textContent = wantPublic
+              ? '（もう一度押すと準備中に戻せます。公開すると、運営でない人も中身を見られます。）'
+              : '（もう一度押すと準備中に戻せます。）';
+          }
+          show(idle);
+        } catch {
+          if (msg) msg.textContent = '送れませんでした。';
+        } finally {
+          go.disabled = false;
+        }
+      });
+    });
+
+    /* 節・回のメモの「解決」（20-platform.md 第20.3節） */
+    document.querySelectorAll<HTMLButtonElement>('[data-note-resolve]').forEach((button) => {
+      button.addEventListener('click', async () => {
+        const li = button.closest<HTMLLIElement>('[data-note-id]');
+        if (!li) return;
+        const id = li.dataset.noteId;
+        button.disabled = true;
+        try {
+          const res = await fetch(`/api/staff/notes/${id}/resolve`, { method: 'POST', headers: { 'content-type': 'application/json' } });
+          if (!res.ok) {
+            button.disabled = false;
+            return;
+          }
+          li.hidden = true;
+          li.classList.add('is-resolved');
+          const chapter = button.dataset.noteChapter;
+          if (chapter) {
+            const cell = document.querySelector(`[data-note-count="${chapter}"]`);
+            if (cell) {
+              const n = Math.max(0, Number(cell.textContent?.replace('件', '') || '0') - 1);
+              cell.textContent = n > 0 ? `${n}件` : '';
+            }
+          }
+        } catch {
+          button.disabled = false;
+        }
+      });
+    });
+
+    /* 解決したものも見る（既定で隠す。第20.3節） */
+    const toggle = document.getElementById('lp2-show-resolved');
+    toggle?.addEventListener('click', () => {
+      const showing = toggle.getAttribute('aria-pressed') === 'true';
+      toggle.setAttribute('aria-pressed', String(!showing));
+      toggle.textContent = showing ? '解決したものも見る' : '解決したものを隠す';
+      document.querySelectorAll<HTMLElement>('.qa__item.is-resolved').forEach((el) => {
+        el.hidden = showing;
+      });
+    });
+  </script>
+
+  <style>
+    /* 公開・準備中の状態とボタン。src/pages/staff/weekly.astro の .wk-state / .wk-open-btn と
+       同じ見た目（「運営の操作を段で確かめる」箱の決まり）。ページごとに Astro のスコープが
+       閉じているので、ここにも同じ綴りを置く。 */
+    .wk-state {
+      color: var(--l-ink-2);
+      font-size: 13px;
+    }
+    .wk-state--ok {
+      color: var(--l-midori);
+      font-weight: 700;
+    }
+    .wk-act {
+      margin-bottom: 4px;
+    }
+    .wk-open-btn {
+      font: inherit;
+      font-size: 13px;
+      padding: 3px 14px;
+      color: var(--l-ink);
+      background: var(--l-lv1);
+      border: 1px solid var(--l-rule);
+      cursor: pointer;
+    }
+    .wk-open-btn:hover {
+      background: var(--l-lv2);
+    }
+    .wk-open-btn--quiet {
+      background: transparent;
+    }
+
+    .lp2-h2 {
+      margin-top: 26px;
+    }
+
+    .lp2-part {
+      margin: 14px 0 4px;
+      font-weight: 700;
+      font-size: 13.5px;
+    }
+
+    .lp2-table {
+      margin-bottom: 6px;
+    }
+
+    .lp2-toggle {
+      margin-bottom: 10px;
+    }
+
+    .lp2-group {
+      margin-bottom: 16px;
+    }
+
+    .lp2-group__h {
+      margin: 0 0 6px;
+      font-weight: 700;
+      font-size: 13.5px;
+      color: var(--l-ink-2);
+    }
+
+    .lp2-links {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 6px 0 0;
+    }
+
+    .lp2-links a {
+      font-size: 12.5px;
+      color: var(--l-ai);
+    }
+
+    .lp2-resolve {
+      font-size: 12px;
+      padding: 2px 10px;
+    }
+  </style>
+</Base>
