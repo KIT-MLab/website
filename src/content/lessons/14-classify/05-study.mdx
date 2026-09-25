@@ -1,0 +1,109 @@
+---
+id: python-14-study
+chapter: 14-classify
+title: 勉強時間・睡眠時間から合否を予想する
+minutes: 25
+terms: []
+---
+
+{/* 困る例 */}
+
+第13章6節は、勉強時間・睡眠時間から点数を予想しました。同じ2つの入力から、今度は合否を予想したいです。
+
+{/* やってみる */}
+
+次のコードの ▶ を押してください。
+
+<Run
+  code={`import numpy as np
+
+hours = np.array([2.0, 3.0, 5.0, 6.0, 8.0, 9.0, 6.0, 6.5, 8.5, 5.5, 7.0, 8.0, 2.5, 0.5, 3.0, 3.0, 8.0, 8.5, 0.5, 4.5, 7.5, 1.5, 7.5, 1.5, 4.5, 7.5, 3.0, 3.5, 3.0, 6.5])
+sleep = np.array([6.5, 7.0, 6.0, 6.5, 7.0, 5.5, 8.5, 6.5, 6.5, 6.5, 7.0, 6.5, 6.5, 8.5, 8.0, 8.0, 7.5, 7.0, 6.0, 8.5, 6.5, 5.0, 8.0, 5.0, 8.0, 7.0, 5.0, 4.5, 6.5, 4.5])
+scores = np.array([45, 52, 65, 70, 82, 84, 63, 70, 85, 68, 70, 80, 44, 39, 62, 52, 85, 91, 33, 66, 80, 39, 77, 39, 72, 73, 52, 50, 49, 77])
+passed = (scores >= 60) * 1
+
+h_mean = hours.mean()
+h_std = hours.std()
+s_mean = sleep.mean()
+s_std = sleep.std()
+X = np.array([(hours - h_mean) / h_std, (sleep - s_mean) / s_std]).T
+
+def sigmoid(z):
+    return 1 / (1 + np.exp(-z))
+
+def loss(w, b):
+    p = sigmoid(X @ w + b)
+    return np.mean(-(passed * np.log(p) + (1 - passed) * np.log(1 - p)))
+
+def grad_w(w, b):
+    p = sigmoid(X @ w + b)
+    return X.T @ (p - passed) / len(passed)
+
+def grad_b(w, b):
+    p = sigmoid(X @ w + b)
+    return np.mean(p - passed)
+
+w = np.array([0.0, 0.0])
+b = 0.0
+loss_before = loss(w, b)
+
+for i in range(300):
+    gw = grad_w(w, b)
+    gb = grad_b(w, b)
+    w = w - 0.5 * gw
+    b = b - 0.5 * gb
+
+new_x = np.array([(5 - h_mean) / h_std, (7 - s_mean) / s_std])
+print(round(loss_before, 3))
+print(round(loss(w, b), 3))
+print(np.round(w, 2))
+print(round(b, 2))
+print(round(sigmoid(new_x @ w + b), 2))`}
+  out={`0.693
+0.079
+[5.07 1.32]
+2.18
+0.92`}
+/>
+
+{/* 説明 */}
+
+8〜12行目で勉強時間と睡眠時間を標準化し(第13章5節)、1人ぶんが1行になる `X` を作ります。
+
+14〜27行目の `sigmoid`・`loss`・`grad_w`・`grad_b` は、第14章4節と同じ式です。33〜37行目の勾配降下も、同じ形です。
+
+学習前の損失(`0.693`)と学習後の損失(`0.079`)を比べると、300回のくり返しで大きく下がったと分かります。
+
+39行目と44行目は、勉強時間5時間・睡眠時間7時間の人の合格の確率を求めます。
+
+{/* 課題 */}
+
+<Exercise
+  id="python-14-study-b1"
+  kind="build"
+  stdin={`2
+5
+7
+3
+6.5`}
+  tests={[
+    { kind: 'stdout', stdin: `2\n5\n7\n3\n6.5\n` },
+    { kind: 'stdout', stdin: `0\n` },
+    { kind: 'stdout', stdin: `1\n0\n4\n` },
+  ]}
+  hints={[
+    '30人のデータ、標準化、sigmoid・loss・grad_w・grad_b の式は、上の「やってみる」と同じものです。',
+    '学習率0.5で300回くり返すところまでは、「やってみる」と同じです。',
+  ]}
+  mistakes={[]}
+>
+30人ぶんの勉強時間・睡眠時間・合否から、標準化した入力で `w = [0, 0]`、`b = 0` を学習します。学習率は0.5、くり返しは300回です。
+
+学習前の損失を小数第3位まで丸めて1行目に、学習後の損失を小数第3位まで丸めて2行目に表示してください。続けて、学習した `w` を小数第2位まで丸めて配列のまま3行目に、`b` を小数第2位まで丸めて4行目に表示してください。
+
+最後に、入力欄の1行目を新しい人の人数として読み取り、勉強時間・睡眠時間をこの順に人数ぶん読み取ってください。学習に使った平均・標準偏差で標準化して確率を予想し、1人1行で `確率0.92 合格` の形で表示してください。
+</Exercise>
+
+{/* つながり */}
+
+分類で合否を予想できるようになりました。次の章では、学習に使っていないデータでモデルの良さを測ります。

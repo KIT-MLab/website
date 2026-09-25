@@ -1,0 +1,96 @@
+---
+id: python-14-sigmoid
+chapter: 14-classify
+title: シグモイド関数で確率に直す
+minutes: 18
+terms: [シグモイド関数]
+---
+
+{/* 困る例 */}
+
+第14章1節で見たように、直線の予測 `z` は0未満にも1より大きくもなり、合格の確率としては読めません。この `z` を、確率として読める0から1の値に直したいです。
+
+{/* やってみる */}
+
+次のコードの ▶ を押してください。
+
+<Run
+  code={`import numpy as np
+
+z = np.array([-0.08, 0.5, 1.26])
+exp_form = np.exp(z) / (np.exp(0) + np.exp(z))
+sig_form = 1 / (1 + np.exp(-z))
+print(np.round(exp_form, 3))
+print(np.round(sig_form, 3))`}
+  out={`[0.48  0.622 0.779]
+[0.48  0.622 0.779]`}
+/>
+
+{/* 説明 */}
+
+4行目は、第11章3節と同じ「`np.exp` で正の値にしてから合計で割る」方法です。合格の点数を `z`、不合格の点数を `0` として、2つを `np.exp` に通し、その和で割ります。
+
+5行目は4行目を整理した式で、同じ値になります。この形をシグモイド関数(sigmoid function)と呼びます。
+
+6〜7行目の出力は、どちらも `[0.48 0.622 0.779]` で一致します。`z` がどんな値でも、シグモイド関数の出力は必ず0から1の間になります。
+
+{/* よくある間違い */}
+
+<Mistake
+  id="sigmoid-list"
+  code={`import numpy as np
+z = [-2, 0, 3]
+print(np.exp(-z))`}
+  error={`TypeError: bad operand type for unary -: 'list'`}
+>
+`z` がリストのままだと、`-z` で符号を反転できません。`np.array(z)` で配列に変えてから `np.exp(-z)` を計算してください。
+</Mistake>
+
+{/* 課題 */}
+
+<Exercise
+  id="python-14-sigmoid-m1"
+  kind="modify"
+  starter={`import numpy as np
+
+z = np.array([-0.08, 0.5, 1.26])
+exp_form = np.exp(z) / (np.exp(0) + np.exp(z))
+sig_form = 1 / (1 + np.exp(-z))
+print(np.round(exp_form, 3))
+print(np.round(sig_form, 3))`}
+  tests={[{ kind: 'stdout' }]}
+  hints={[
+    'まず、いまのコードをそのまま実行して、出力を確かめてください。',
+    'z の3つの値を、0を中心にした等間隔の数にしてみてください。',
+  ]}
+  mistakes={['sigmoid-list']}
+>
+`[0.269 0.5   0.731]` が2回表示されるように、3行目の `z` を書き換えてください。
+</Exercise>
+
+<Exercise
+  id="python-14-sigmoid-b1"
+  kind="build"
+  stdin={`3
+-2
+0
+3`}
+  tests={[
+    { kind: 'stdout', stdin: `3\n-2\n0\n3\n` },
+    { kind: 'stdout', stdin: `1\n0\n` },
+    { kind: 'stdout', stdin: `2\n1\n1\n` },
+  ]}
+  hints={[
+    'シグモイド関数の式は、上の「やってみる」の5行目と同じ 1 / (1 + np.exp(-z)) です。',
+    '0.5以上を1、そうでなければ0にする書き方は、第14章1節の (scores >= 60) * 1 と同じです。',
+  ]}
+  mistakes={['sigmoid-list']}
+>
+`z` の配列から、シグモイド関数で合格の確率の配列を返す関数 `sigmoid` を書いてください。
+
+入力欄の1行目を人数として読み取り、続けてその人数ぶん `z` の値を読み取って配列にしてください。`sigmoid` を呼び出した結果を小数第4位まで丸めて配列のまま1行目に表示してください。続けて、確率が0.5以上なら1、そうでなければ0とした予想の配列を2行目に表示してください。
+</Exercise>
+
+{/* つながり */}
+
+直線の値を確率に直せるようになりました。次の節では、確率のずれをどう測るかを扱います。

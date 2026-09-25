@@ -1,0 +1,140 @@
+---
+id: python-14-logistic
+chapter: 14-classify
+title: 分類の重みを学習する（ロジスティック回帰）
+minutes: 20
+terms: [ロジスティック回帰]
+---
+
+{/* 困る例 */}
+
+勉強時間と睡眠時間の両方から、合格の確率を予想する良い `w` と `b` を見つけたいです。値を手で決めて試すのでは、良い値になかなかたどり着けません。
+
+{/* やってみる */}
+
+次のコードの ▶ を押してください。
+
+<Run
+  code={`import numpy as np
+
+hours = np.array([2.0, 3.0, 5.0, 6.0, 8.0])
+sleep = np.array([6.5, 7.0, 6.0, 6.5, 7.0])
+X = np.array([hours, sleep]).T
+passed = np.array([0, 0, 1, 1, 1])
+
+def sigmoid(z):
+    return 1 / (1 + np.exp(-z))
+
+def loss(w, b):
+    p = sigmoid(X @ w + b)
+    return np.mean(-(passed * np.log(p) + (1 - passed) * np.log(1 - p)))
+
+def grad_w(w, b):
+    p = sigmoid(X @ w + b)
+    return X.T @ (p - passed) / len(passed)
+
+def grad_b(w, b):
+    p = sigmoid(X @ w + b)
+    return np.mean(p - passed)
+
+w = np.array([0.0, 0.0])
+b = 0.0
+h = 0.0001
+numeric = np.array([(loss(w + np.array([h, 0]), b) - loss(w, b)) / h,
+                     (loss(w + np.array([0, h]), b) - loss(w, b)) / h])
+print(np.round(numeric, 1))
+print(np.round(grad_w(w, b), 1))
+
+gw = grad_w(w, b)
+gb = grad_b(w, b)
+w = w - 0.1 * gw
+b = b - 0.1 * gb
+print(np.round(w, 2))
+print(round(b, 2))`}
+  out={`[-1.4 -0.6]
+[-1.4 -0.6]
+[0.14 0.06]
+0.01`}
+/>
+
+{/* 説明 */}
+
+11〜13行目の `loss` は、正解に付けた確率の対数にマイナスを付けた交差エントロピー(第14章3節)の平均です。
+
+15〜17行目の `grad_w` が返す `w` の勾配は `X.T @ (確率 - 答え) / n` です。第13章4節の回帰の勾配 `X.T @ (予測 - 答え) * 2 / n` と同じ形です。
+
+`grad_b` が返す `b` の勾配は `np.mean(確率 - 答え)` です。式は結果だけ示します(導くのは第6部)。
+
+26〜29行目で、`w = [0, 0]` の勾配を数値の偏微分(`numeric`)と比べます。どちらも `[-1.4 -0.6]` で一致します。一致を確かめてから、この式を使います。
+
+確率はシグモイド関数、損失は交差エントロピーで測ります。これを勾配降下で小さくする分類の方法が、ロジスティック回帰(logistic regression)です。名前に回帰と付きますが、分類の方法です。
+
+同じ計算を30人全員の標準化した入力で300回くり返すと、損失は0.079、30人中29人が当たります。
+
+<Boundary />
+
+{/* 課題 */}
+
+<Exercise
+  id="python-14-logistic-m1"
+  kind="modify"
+  starter={`import numpy as np
+
+hours = np.array([2.0, 3.0, 5.0, 6.0, 8.0])
+sleep = np.array([6.5, 7.0, 6.0, 6.5, 7.0])
+X = np.array([hours, sleep]).T
+passed = np.array([0, 0, 1, 1, 1])
+
+def sigmoid(z):
+    return 1 / (1 + np.exp(-z))
+
+def grad_w(w, b):
+    p = sigmoid(X @ w + b)
+    return X.T @ (p - passed) / len(passed)
+
+def grad_b(w, b):
+    p = sigmoid(X @ w + b)
+    return np.mean(p - passed)
+
+w = np.array([0.0, 0.0])
+b = 0.0
+lr = 0.1
+gw = grad_w(w, b)
+gb = grad_b(w, b)
+w = w - lr * gw
+b = b - lr * gb
+print(np.round(w, 2))
+print(round(b, 2))`}
+  tests={[{ kind: 'stdout' }]}
+  hints={[
+    'まず、いまのコードをそのまま実行して、出力を確かめてください。',
+    '学習率を大きくすると、1回に動く量も大きくなります。',
+  ]}
+  mistakes={[]}
+>
+`[0.7 0.3]` と `0.05` が表示されるように、21行目の `lr` を書き換えてください。
+</Exercise>
+
+<Exercise
+  id="python-14-logistic-b1"
+  kind="build"
+  stdin={`1000`}
+  tests={[
+    { kind: 'stdout', stdin: `1000\n` },
+    { kind: 'stdout', stdin: `0\n` },
+    { kind: 'stdout', stdin: `500\n` },
+  ]}
+  hints={[
+    '30人の勉強時間・睡眠時間・合否の配列と sigmoid・loss・grad_w・grad_b の式は、上の「やってみる」を30人ぶんに広げたものです。',
+    '学習前の損失は、くり返す前の w = [0, 0]、b = 0 での loss です。',
+  ]}
+  mistakes={[]}
+>
+学習率0.01を使います。入力欄からくり返す回数を読み取り、`w = [0, 0]`、`b = 0` から勾配降下をその回数だけくり返してください。
+
+学習前の損失を小数第3位まで丸めて1行目に、学習後の損失を小数第3位まで丸めて2行目に表示してください。
+</Exercise>
+
+{/* つながり */}
+
+分類の重みを勾配降下で学習できるようになりました。次の節では、勉強時間と睡眠時間の両方から合否を予想する通し課題に取り組みます。

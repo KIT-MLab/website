@@ -35,6 +35,7 @@ export const CHAPTER_TITLES: Record<string, string> = {
   '11-probability': '第11章 確率の初歩',
   '12-predict': '第12章 予測とは何か',
   '13-regression': '第13章 回帰',
+  '14-classify': '第14章 分類',
 };
 
 export function chapterTitle(chapter: string): string {
