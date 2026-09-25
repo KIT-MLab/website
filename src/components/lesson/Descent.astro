@@ -1,0 +1,111 @@
+---
+/**
+ * <Descent> — 谷を下る点（design/spec/50-part3-curriculum.md 第5節、案B）。
+ * 第13章1・2節（勾配降下と学習率）。関数 (x - 3)**2 + 1、x = 0 から、学習率
+ * 0.05・0.3・1.05 の3つを、小さな図を横に並べて同じ歩数（0〜20歩）だけ進める。
+ * 数・見た目は承認された試作（p3-figures.html）の図1をそのまま移す。
+ *
+ * データは src/lesson/ui/part3-figures.ts に1つだけ置く（本文からは変えられない）。
+ */
+import { nextId } from '../../lesson/ui/ids';
+import { DESCENT_LRS, DESCENT_STEPS, DESCENT_PLOT, gdPath, drawValley, VALLEY_F, f1, svgWrap } from '../../lesson/ui/part3-figures';
+
+interface Props {
+  caption?: string;
+}
+const { caption = '同じ歩数で、学習率だけ違う' } = Astro.props;
+
+const id = nextId('descent');
+const paths = DESCENT_LRS.map((L) => gdPath(L.lr, DESCENT_STEPS));
+---
+
+<figure class="kit-fig kit-p3" data-descent data-prefix={id}>
+  <p class="kit-fig__cap">{caption}</p>
+  <div class="kit-fig__in kit-p3__in">
+    <div class="kit-p3__ctrl">
+      <button type="button" class="kit-secant__toggle" data-toggle data-playing="true" aria-label="止める" title="止める">
+        <svg class="kit-secant__stop" viewBox="0 0 16 16" aria-hidden="true"><rect x="2.5" y="2.5" width="11" height="11" /></svg>
+        <svg class="kit-secant__play" viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 1.8 L14 8 L3.5 14.2 Z" /></svg>
+      </button>
+      <label for={`${id}-r`}>何歩目か</label>
+      <input
+        id={`${id}-r`}
+        class="kit-secant__range"
+        type="range"
+        min="0"
+        max={DESCENT_STEPS}
+        step="1"
+        value="0"
+        aria-valuetext="0歩目"
+        data-range
+      />
+      <span class="kit-p3__state" data-state>0歩目</span>
+    </div>
+
+    <ul class="kit-secant__legend">
+      <li><i class="kit-secant__sw is-ink"></i>関数 (x − 3)² + 1</li>
+      <li><i class="kit-p3__sw-dot"></i>いまの x</li>
+    </ul>
+
+    <div class="kit-p3__three">
+      {DESCENT_LRS.map((L, i) => (
+        <div>
+          <div class="kit-p3__mini-cap">学習率 {L.name}</div>
+          <div class="kit-p3__plot" data-panel={i} set:html={svgWrap(DESCENT_PLOT.w, DESCENT_PLOT.h, drawValley(DESCENT_PLOT, paths[i], 0, `${id}-${i}`), `谷を下る点 学習率${L.lr}`)} />
+          <div class="kit-p3__mini-state" data-mini={i}>{`x = ${f1(paths[i][0], 2)}  値 = ${f1(VALLEY_F(paths[i][0]), 2)}`}</div>
+        </div>
+      ))}
+    </div>
+  </div>
+</figure>
+
+<script>
+  import { DESCENT_LRS, DESCENT_STEPS, DESCENT_PLOT, gdPath, drawValley, VALLEY_F, f1, svgWrap, setupTicker, wireRange } from '../../lesson/ui/part3-figures';
+
+  function setup(root: HTMLElement) {
+    const prefix = root.dataset.prefix ?? 'descent';
+    const paths = DESCENT_LRS.map((L) => gdPath(L.lr, DESCENT_STEPS));
+    const btn = root.querySelector('[data-toggle]') as HTMLButtonElement;
+    const range = root.querySelector('[data-range]') as HTMLInputElement;
+    const state = root.querySelector('[data-state]') as HTMLElement;
+    const panels = Array.from(root.querySelectorAll<HTMLElement>('[data-panel]'));
+    const minis = Array.from(root.querySelectorAll<HTMLElement>('[data-mini]'));
+
+    let k = 0;
+    let acc = 0;
+
+    function render() {
+      DESCENT_LRS.forEach((L, i) => {
+        panels[i].innerHTML = svgWrap(
+          DESCENT_PLOT.w,
+          DESCENT_PLOT.h,
+          drawValley(DESCENT_PLOT, paths[i], k, `${prefix}-${i}`),
+          `谷を下る点 学習率${L.lr}`,
+        );
+        minis[i].textContent = `x = ${f1(paths[i][k], 2)}  値 = ${f1(VALLEY_F(paths[i][k]), 2)}`;
+      });
+      range.value = String(k);
+      range.setAttribute('aria-valuetext', `${k}歩目`);
+      state.textContent = `${k}歩目`;
+    }
+
+    const ticker = setupTicker({
+      root,
+      btn,
+      onTick: (dt) => {
+        acc += dt;
+        if (acc >= 500) {
+          acc = 0;
+          k = k >= DESCENT_STEPS ? 0 : k + 1;
+          render();
+        }
+      },
+    });
+    wireRange(range, ticker, (v) => {
+      k = v;
+      render();
+    });
+  }
+
+  document.querySelectorAll<HTMLElement>('[data-descent]').forEach(setup);
+</script>

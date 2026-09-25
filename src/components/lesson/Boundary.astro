@@ -1,0 +1,109 @@
+---
+/**
+ * <Boundary> — 境目が動く（design/spec/50-part3-curriculum.md 第5節、案A）。
+ * 第14章4・5節（ロジスティック回帰）。勉強時間と睡眠時間の平面に、合格（藍の●）と
+ * 不合格（朱の×）。地の色は合格の確率（藍ほど高い・朱ほど低い）。学習率 0.5 で300回。
+ *
+ * データ・履歴は src/lesson/ui/part3-figures.ts に1つだけ置く（本文からは変えられない）。
+ */
+import { nextId } from '../../lesson/ui/ids';
+import { BOUNDARY_HIST, BOUNDARY_SHOW, BOUNDARY_PLOT, crossEntropy, boundaryHits, drawBoundary, f1, svgWrap, N } from '../../lesson/ui/part3-figures';
+
+interface Props {
+  caption?: string;
+}
+const { caption = '学習につれて、合格と不合格の境目が動く' } = Astro.props;
+
+const id = nextId('boundary');
+const H0 = BOUNDARY_HIST[BOUNDARY_SHOW[0]];
+const hit0 = boundaryHits(H0);
+---
+
+<figure class="kit-fig kit-p3" data-boundary data-prefix={id}>
+  <p class="kit-fig__cap">{caption}</p>
+  <div class="kit-fig__in kit-p3__in">
+    <div class="kit-p3__ctrl">
+      <button type="button" class="kit-secant__toggle" data-toggle data-playing="true" aria-label="止める" title="止める">
+        <svg class="kit-secant__stop" viewBox="0 0 16 16" aria-hidden="true"><rect x="2.5" y="2.5" width="11" height="11" /></svg>
+        <svg class="kit-secant__play" viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 1.8 L14 8 L3.5 14.2 Z" /></svg>
+      </button>
+      <label for={`${id}-r`}>何回目か</label>
+      <input
+        id={`${id}-r`}
+        class="kit-secant__range"
+        type="range"
+        min="0"
+        max={BOUNDARY_SHOW.length - 1}
+        step="1"
+        value="0"
+        aria-valuetext="0回目"
+        data-range
+      />
+      <span class="kit-p3__state" data-state>{`${H0.i}回目  損失 = ${f1(crossEntropy(H0), 3)}  当たった人 ${hit0}/${N}`}</span>
+    </div>
+
+    <ul class="kit-secant__legend">
+      <li><i class="kit-p3__sw-dot is-ai"></i>合格（●）</li>
+      <li class="kit-p3__x-shu">× 不合格</li>
+      <li><i class="kit-secant__sw is-ink"></i>確率 0.5 の境目</li>
+      <li>地の色: 藍ほど合格の確率が高い、朱ほど低い</li>
+    </ul>
+
+    <div class="kit-p3__plot" data-panel set:html={svgWrap(BOUNDARY_PLOT.w, BOUNDARY_PLOT.h, drawBoundary(BOUNDARY_PLOT, H0, `${id}-0`), '境目が動く')} />
+  </div>
+</figure>
+
+<script>
+  import {
+    BOUNDARY_HIST,
+    BOUNDARY_SHOW,
+    BOUNDARY_PLOT,
+    crossEntropy,
+    boundaryHits,
+    drawBoundary,
+    f1,
+    svgWrap,
+    setupTicker,
+    wireRange,
+    N,
+  } from '../../lesson/ui/part3-figures';
+
+  function setup(root: HTMLElement) {
+    const prefix = root.dataset.prefix ?? 'boundary';
+    const btn = root.querySelector('[data-toggle]') as HTMLButtonElement;
+    const range = root.querySelector('[data-range]') as HTMLInputElement;
+    const state = root.querySelector('[data-state]') as HTMLElement;
+    const panel = root.querySelector('[data-panel]') as HTMLElement;
+
+    let k = 0;
+    let acc = 0;
+
+    function render() {
+      const H = BOUNDARY_HIST[BOUNDARY_SHOW[k]];
+      panel.innerHTML = svgWrap(BOUNDARY_PLOT.w, BOUNDARY_PLOT.h, drawBoundary(BOUNDARY_PLOT, H, `${prefix}-0`), '境目が動く');
+      const hit = boundaryHits(H);
+      range.value = String(k);
+      range.setAttribute('aria-valuetext', `${H.i}回目`);
+      state.textContent = `${H.i}回目  損失 = ${f1(crossEntropy(H), 3)}  当たった人 ${hit}/${N}`;
+    }
+
+    const ticker = setupTicker({
+      root,
+      btn,
+      onTick: (dt) => {
+        acc += dt;
+        if (acc >= 700) {
+          acc = 0;
+          k = k >= BOUNDARY_SHOW.length - 1 ? 0 : k + 1;
+          render();
+        }
+      },
+    });
+    wireRange(range, ticker, (v) => {
+      k = v;
+      render();
+    });
+  }
+
+  document.querySelectorAll<HTMLElement>('[data-boundary]').forEach(setup);
+</script>

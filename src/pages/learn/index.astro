@@ -61,7 +61,7 @@ type ChapterView = {
 };
 
 type PartView =
-  | { kind: 'written'; name: string; chapters: ChapterView[]; total: number }
+  | { kind: 'written'; name: string; chapters: ChapterView[]; total: number; totalChapters: number }
   | { kind: 'soon'; name: string; count: number };
 
 const partViews: PartView[] = PARTS.map((part) => {
@@ -76,7 +76,15 @@ const partViews: PartView[] = PARTS.map((part) => {
       sections: chSections,
     };
   });
-  return { kind: 'written', name: part.name, chapters, total: chapters.reduce((n, c) => n + c.total, 0) };
+  // totalChapters が無ければ、書けている章だけで全部（chapters.filter の数と同じ）
+  const writtenChapterCount = chapters.filter((c) => !c.isPractice).length;
+  return {
+    kind: 'written',
+    name: part.name,
+    chapters,
+    total: chapters.reduce((n, c) => n + c.total, 0),
+    totalChapters: part.totalChapters ?? writtenChapterCount,
+  };
 });
 
 // SSR の既定は「まだ何も進めていない」姿（第17.1節）: 第0部・第0章だけ開き、最初の節を「次」にする
@@ -138,7 +146,7 @@ const dataJson = JSON.stringify(sections).replace(/</g, '\\u003c');
                 </span>
                 <span class="lp-part__name">
                   {part.name}
-                  <small>{part.chapters.filter((c) => !c.isPractice).length}章{
+                  <small>{part.totalChapters}章{
                     part.chapters.some((c) => c.isPractice) ? `・練習編${part.chapters.filter((c) => c.isPractice).length}` : ''
                   }</small>
                 </span>

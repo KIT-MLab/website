@@ -10,7 +10,11 @@
  */
 
 /**
- * @typedef {{ name: string, chapters: string[] } | { name: string, count: number }} Part
+ * @typedef {{ name: string, chapters: string[], totalChapters?: number } | { name: string, count: number }} Part
+ *
+ * totalChapters は、部分的に書けた部（例: 第3部）が計画している章数。省略時は
+ * chapters.length（＝全部書けている）。書いてある章だけを chapters に並べつつ、
+ * 一覧では計画どおりの章数を示すための最小限の足し場（src/pages/learn/index.astro）。
  */
 
 /** @type {Part[]} */
@@ -32,7 +36,7 @@ export const PARTS = [
     ],
   },
   { name: '第2部 数学の基礎', chapters: ['09-matrix', '10-slope', '11-probability'] },
-  { name: '第3部 機械学習', count: 4 },
+  { name: '第3部 機械学習', chapters: ['12-predict'], totalChapters: 4 },
   { name: '第4部 深層学習', count: 4 },
   { name: '第5部 自分の環境', count: 2 },
   { name: '第6部 深層学習を式から', count: 5 },

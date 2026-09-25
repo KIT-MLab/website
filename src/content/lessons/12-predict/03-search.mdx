@@ -1,0 +1,88 @@
+---
+id: python-12-search
+chapter: 12-predict
+title: 候補を全部試す
+minutes: 18
+terms: []
+---
+
+{/* 困る例 */}
+
+損失が小さい `a` を見つけたいのですが、どんな `a` を試せばよいか分かりません。`b` も一緒に探すとなると、組み合わせはさらに増えます。
+
+{/* やってみる */}
+
+次のコードの ▶ を押してください。
+
+<Run
+  code={`import numpy as np
+
+hours = np.array([2.0, 3.0, 5.0, 6.0, 8.0])
+scores = np.array([45, 52, 65, 70, 82])
+
+def loss(a, b):
+    pred = a * hours + b
+    return np.mean((pred - scores) ** 2)
+
+a_candidates = np.linspace(4, 8, 9)
+b_candidates = np.linspace(20, 40, 11)
+
+best_a = a_candidates[0]
+best_b = b_candidates[0]
+best_loss = loss(best_a, best_b)
+for a in a_candidates:
+    for b in b_candidates:
+        current = loss(a, b)
+        if current < best_loss:
+            best_loss = current
+            best_a = a
+            best_b = b
+
+print(best_a)
+print(best_b)
+print(round(best_loss, 2))`}
+  out={`6.0
+34.0
+0.4`}
+/>
+
+{/* 説明 */}
+
+10〜11行目の `np.linspace(4, 8, 9)` は、4から8まで等間隔に並んだ9個の値です。これを `a` と `b` の候補にします。
+
+13〜15行目は、最初の候補の組とその損失を、いまのところのいちばん良い組として覚えておきます。16〜18行目で候補を2重のfor文で総当たりし、それぞれの損失を計算します。19〜22行目で、それまでより小さい損失が出るたびに、その `a`, `b`, 損失を覚え直します。
+
+こうして、候補の中でいちばん損失が小さい組を見つけられます。候補を増やすほど、より良い `a`, `b` に近づきます。
+
+{/* 課題 */}
+
+<Exercise
+  id="python-12-search-b1"
+  kind="build"
+  stdin={`4
+8
+9
+20
+40
+11`}
+  tests={[
+    { kind: 'stdout', stdin: `4\n8\n9\n20\n40\n11\n` },
+    { kind: 'stdout', stdin: `6\n6\n1\n30\n30\n1\n` },
+    { kind: 'stdout', stdin: `0\n10\n11\n-10\n10\n21\n` },
+  ]}
+  hints={[
+    '候補の作り方と2重のfor文は、上の「やってみる」と同じ形です。',
+    '個数は int(input())、最小値と最大値は float(input()) で読み取ります。',
+  ]}
+  mistakes={[]}
+>
+勉強時間 2, 3, 5, 6, 8 時間、点数 45, 52, 65, 70, 82 点の配列を作ってください。
+
+入力欄から `a` の最小値・最大値・個数、`b` の最小値・最大値・個数をこの順に読み取ってください（個数は整数です）。
+
+`np.linspace` で候補を作り、2重のfor文で損失が最小になる `a` と `b` を探してください。`a`、`b`、そのときの損失を、小数第2位まで丸めてこの順に表示してください。
+</Exercise>
+
+{/* つながり */}
+
+候補を全部試して、損失が最小の `a` と `b` を見つけられるようになりました。次の節では、候補を増やすとどれくらい大変になるかを数で確かめます。

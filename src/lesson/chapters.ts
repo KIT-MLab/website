@@ -2,8 +2,12 @@
 // どこでも走っていない（design/HANDOFF.md 第5章）ので、.mjs をそのまま読む
 import { PARTS as PARTS_RAW, partOfChapter as partOfChapterRaw, writtenParts as writtenPartsRaw } from '../../scripts/parts.mjs';
 
-/** 部（20-platform.md 第17.1節）。書いてある部は chapters、準備中の部は count を持つ。 */
-export type Part = { name: string; chapters: string[] } | { name: string; count: number };
+/**
+ * 部（20-platform.md 第17.1節）。書いてある部は chapters、準備中の部は count を持つ。
+ * 部分的に書けた部（例: 第3部）は chapters に書けた章だけを並べ、totalChapters に
+ * 計画している章数を書く（省略時は chapters.length と同じ、つまり全部書けている）。
+ */
+export type Part = { name: string; chapters: string[]; totalChapters?: number } | { name: string; count: number };
 
 export const PARTS: Part[] = PARTS_RAW;
 export const writtenParts: () => Extract<Part, { chapters: string[] }>[] = writtenPartsRaw;
@@ -29,6 +33,7 @@ export const CHAPTER_TITLES: Record<string, string> = {
   '09-matrix': '第9章 ベクトルと行列',
   '10-slope': '第10章 変化率と傾き',
   '11-probability': '第11章 確率の初歩',
+  '12-predict': '第12章 予測とは何か',
 };
 
 export function chapterTitle(chapter: string): string {

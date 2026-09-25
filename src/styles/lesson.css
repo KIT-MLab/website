@@ -1659,6 +1659,140 @@
 }
 
 /* ============================================================
+ * 第3部の4つの動く図（50-part3-curriculum.md 第5節。試作 p3-figures.html）。
+ * 枠と題は <Secant> と同じ <Figure>（.kit-fig / .kit-fig__cap / .kit-fig__in）。
+ * 止める・動かすのボタンとつまみは <Secant> のものをそのまま使う（.kit-secant__toggle 等）。
+ * ここは図に固有の部分（凡例・小さな図の並び・SVG の中の線と点）だけを持つ。
+ * ============================================================ */
+.kit-p3__in {
+  display: grid;
+  gap: 10px;
+  padding: 14px 14px 12px;
+}
+
+.kit-p3__ctrl {
+  display: flex;
+  align-items: center;
+  gap: 8px 12px;
+  flex-wrap: wrap;
+  font-size: 14.5px;
+  line-height: 1.6;
+}
+
+.kit-p3__state {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--l-ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.kit-p3__phase {
+  font-family: var(--font-body);
+  font-weight: 700;
+}
+
+/* 「いまの x」のような小さな丸（凡例の中） */
+.kit-p3__sw-dot {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--l-shu);
+}
+.kit-p3__sw-dot.is-ai { background: var(--l-ai); }
+.kit-p3__sw-dot.is-ink { background: var(--l-ink); }
+/* テスト用の点（図の中と同じ白抜きの藍） */
+.kit-p3__sw-dot.is-hollow { background: var(--l-card); border: 1.5px solid var(--l-ai); box-sizing: border-box; }
+/* 点と線の差（図の中と同じ灰色の縦線） */
+.kit-p3__sw-resid {
+  display: inline-block;
+  width: 0;
+  height: 14px;
+  border-left: 2px solid var(--l-ink-2);
+  opacity: 0.65;
+}
+
+/* 凡例の「× 不合格」のような、線を引かず文字色だけで示す印 */
+.kit-p3__x-shu { color: var(--l-shu); font-weight: 700; }
+
+.kit-p3__three {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+@media (max-width: 640px) {
+  .kit-p3__three {
+    grid-template-columns: 1fr;
+  }
+}
+
+.kit-p3__mini-cap {
+  font-size: 13px;
+  font-weight: 700;
+  text-align: center;
+  color: var(--l-ink-2);
+}
+
+.kit-p3__mini-state {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  text-align: center;
+  line-height: 1.6;
+  color: var(--l-ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.kit-p3__mini-state .kit-p3__te {
+  color: var(--l-ai);
+}
+
+.kit-p3__plot svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.kit-p3__grid { stroke: var(--l-lv2); stroke-width: 1; }
+.kit-p3__axis { stroke: var(--l-ink-2); stroke-width: 1; }
+.kit-p3__tick {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  fill: var(--l-ink-2);
+}
+.kit-p3__label {
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 14px;
+  fill: var(--l-ink);
+}
+
+/* 曲線・直線 */
+.kit-p3__curve { fill: none; stroke: var(--l-ink); stroke-width: 2; }
+.kit-p3__cur { stroke: var(--l-shu); stroke-width: 2.5; fill: none; }
+.kit-p3__trail { fill: none; stroke: var(--l-shu); stroke-width: 1.5; stroke-dasharray: 3 3; opacity: 0.7; }
+.kit-p3__boundary { stroke: var(--l-ink); stroke-width: 2.5; }
+
+/* 点と差の縦線。差の灰色は --l-ink-2 を薄くしたもの（新しいトークンは足さない） */
+.kit-p3__resid { stroke: var(--l-ink-2); stroke-width: 1.5; opacity: 0.65; }
+.kit-p3__pt { fill: var(--l-ink); }
+.kit-p3__ghost { fill: var(--l-shu); opacity: 0.35; }
+.kit-p3__now { fill: var(--l-shu); stroke: var(--l-card); stroke-width: 2; }
+.kit-p3__out { fill: var(--l-shu); font-weight: 700; font-family: var(--font-body); font-size: 13px; }
+
+/* 学習用（墨の丸）・テスト用（藍の輪） */
+.kit-p3__pt-tr { fill: var(--l-ink); stroke: var(--l-card); stroke-width: 1.5; }
+.kit-p3__pt-te { fill: var(--l-card); stroke: var(--l-ai); stroke-width: 1.8; }
+
+/* 合格（藍の丸）・不合格（朱の×） */
+.kit-p3__pass { fill: var(--l-ai); stroke: var(--l-card); stroke-width: 1.5; }
+.kit-p3__fail { stroke: var(--l-shu); stroke-width: 2.5; }
+
+/* 確率で塗る地の色（境目が動く）。fill-opacity は差の大きさで変える（JS 側） */
+.kit-p3__cell-ai { fill: var(--l-ai); }
+.kit-p3__cell-shu { fill: var(--l-shu); }
+
+/* ============================================================
  * 用語を検索する右の欄（20-platform.md 第18章。試作 案B）。
  * 幅1280px以上は帯の下に固定した常設の欄。それより狭い画面は右からの重なり
  * （帯の「用語を検索」ボタンで開閉。#kit-term-toggle は [...id].astro が topbar-extra に置く）。

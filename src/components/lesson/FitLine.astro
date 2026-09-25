@@ -1,0 +1,124 @@
+---
+/**
+ * <FitLine> — 直線が寄っていく（design/spec/50-part3-curriculum.md 第5節、案Aから直したもの）。
+ * 第13章3節（線形回帰）。勉強時間と点数の30人。a = 0, b = 0 から、学習率 0.02 で1000回。
+ * ① 差を測る（点と直線の間に灰色の縦線、損失を表示）→ ② 直線を動かす（次の回の位置へ滑らかに）
+ * をゆっくりくり返す。見せる回は 0, 1, 2, 5, 10, 20, 50, 100, 200, 500, 1000。
+ *
+ * データ・履歴は src/lesson/ui/part3-figures.ts に1つだけ置く（本文からは変えられない）。
+ */
+import { nextId } from '../../lesson/ui/ids';
+import { FITLINE_HIST, FITLINE_SHOW, FITLINE_PLOT, mse, drawFitLine, f1, svgWrap } from '../../lesson/ui/part3-figures';
+
+interface Props {
+  caption?: string;
+}
+const { caption = '差を測って、直線を動かす。これをくり返す（学習率 0.02）' } = Astro.props;
+
+const id = nextId('fitline');
+const A0 = FITLINE_HIST[FITLINE_SHOW[0]];
+const label0 = `① 差を測る  損失 = ${f1(mse(A0.a, A0.b), 1)}`;
+---
+
+<figure class="kit-fig kit-p3" data-fitline data-prefix={id}>
+  <p class="kit-fig__cap">{caption}</p>
+  <div class="kit-fig__in kit-p3__in">
+    <div class="kit-p3__ctrl">
+      <button type="button" class="kit-secant__toggle" data-toggle data-playing="true" aria-label="止める" title="止める">
+        <svg class="kit-secant__stop" viewBox="0 0 16 16" aria-hidden="true"><rect x="2.5" y="2.5" width="11" height="11" /></svg>
+        <svg class="kit-secant__play" viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 1.8 L14 8 L3.5 14.2 Z" /></svg>
+      </button>
+      <label for={`${id}-r`}>どこまで進んだか</label>
+      <input
+        id={`${id}-r`}
+        class="kit-secant__range"
+        type="range"
+        min="0"
+        max={FITLINE_SHOW.length - 1}
+        step="1"
+        value="0"
+        aria-valuetext="0回目"
+        data-range
+      />
+      <span class="kit-p3__state" data-state>{`${A0.i}回目  a = ${f1(A0.a)}  b = ${f1(A0.b)}`}</span>
+    </div>
+
+    <ul class="kit-secant__legend">
+      <li><i class="kit-p3__sw-dot is-ink"></i>30人の勉強時間と点数</li>
+      <li><i class="kit-secant__sw is-shu"></i>いまの直線</li>
+      <li><i class="kit-p3__sw-resid"></i>点と直線の差</li>
+    </ul>
+
+    <div class="kit-p3__plot" data-panel set:html={svgWrap(FITLINE_PLOT.w, FITLINE_PLOT.h, drawFitLine(FITLINE_PLOT, A0.a, A0.b, 1, label0, `${id}-0`), '直線が寄っていく')} />
+  </div>
+</figure>
+
+<script>
+  import {
+    FITLINE_HIST,
+    FITLINE_SHOW,
+    FITLINE_PLOT,
+    FITLINE_MEASURE,
+    FITLINE_MOVE,
+    mse,
+    easeInOut,
+    drawFitLine,
+    f1,
+    svgWrap,
+    setupTicker,
+    wireRange,
+  } from '../../lesson/ui/part3-figures';
+
+  function setup(root: HTMLElement) {
+    const prefix = root.dataset.prefix ?? 'fitline';
+    const btn = root.querySelector('[data-toggle]') as HTMLButtonElement;
+    const range = root.querySelector('[data-range]') as HTMLInputElement;
+    const state = root.querySelector('[data-state]') as HTMLElement;
+    const panel = root.querySelector('[data-panel]') as HTMLElement;
+
+    let k = 0;
+    let t = 0;
+
+    function render() {
+      const A = FITLINE_HIST[FITLINE_SHOW[k]];
+      const last = k >= FITLINE_SHOW.length - 1;
+      let a = A.a;
+      let b = A.b;
+      let phase: 1 | 2 = 1;
+      if (t >= FITLINE_MEASURE && !last) {
+        const B = FITLINE_HIST[FITLINE_SHOW[k + 1]];
+        let u = (t - FITLINE_MEASURE) / FITLINE_MOVE;
+        u = easeInOut(u);
+        a = A.a + (B.a - A.a) * u;
+        b = A.b + (B.b - A.b) * u;
+        phase = 2;
+      }
+      const nextI = last ? null : FITLINE_SHOW[k + 1];
+      const label = phase === 1 ? `① 差を測る  損失 = ${f1(mse(a, b), 1)}` : `② 直線を動かす  → ${nextI}回目へ`;
+      panel.innerHTML = svgWrap(FITLINE_PLOT.w, FITLINE_PLOT.h, drawFitLine(FITLINE_PLOT, a, b, phase, label, `${prefix}-0`), '直線が寄っていく');
+      range.value = String(k);
+      range.setAttribute('aria-valuetext', `${A.i}回目`);
+      state.textContent = `${A.i}回目  a = ${f1(A.a)}  b = ${f1(A.b)}`;
+    }
+
+    const ticker = setupTicker({
+      root,
+      btn,
+      onTick: (dt) => {
+        t += dt;
+        if (t >= FITLINE_MEASURE + FITLINE_MOVE) {
+          t = 0;
+          k = k >= FITLINE_SHOW.length - 1 ? 0 : k + 1;
+        }
+        render();
+      },
+    });
+    wireRange(range, ticker, (v) => {
+      k = v;
+      t = 0;
+      render();
+    });
+  }
+
+  document.querySelectorAll<HTMLElement>('[data-fitline]').forEach(setup);
+</script>

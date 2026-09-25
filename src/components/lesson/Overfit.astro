@@ -1,0 +1,94 @@
+---
+/**
+ * <Overfit> — 学習用だけに合わせすぎる（design/spec/50-part3-curriculum.md 第5節）。
+ * 第15章2節。承認された試作（p3-figures.html）の図4・変体Aから、つまみを外したもの
+ * （止める・動かすのボタンだけ。50-part3-curriculum.md 第5節「つまみは置かない」）。
+ * 30人を種50で混ぜ、先頭6人を学習用、残り24人をテスト用にする。次数1・3・5の
+ * 曲線を学習用の6人に合わせ、① 学習用だけ → ② テスト用も出す、を自動でくり返す。
+ *
+ * データ・当てはめは src/lesson/ui/part3-figures.ts に1つだけ置く（本文からは変えられない）。
+ */
+import { nextId } from '../../lesson/ui/ids';
+import { OVERFIT_FITS, OVERFIT_PLOT, drawOverfit, overfitMiniHtml, svgWrap } from '../../lesson/ui/part3-figures';
+
+interface Props {
+  caption?: string;
+}
+const { caption = '曲線を学習用の6人に合わせる' } = Astro.props;
+
+const id = nextId('overfit');
+---
+
+<figure class="kit-fig kit-p3" data-overfit data-prefix={id}>
+  <p class="kit-fig__cap">{caption}</p>
+  <div class="kit-fig__in kit-p3__in">
+    <div class="kit-p3__ctrl">
+      <button type="button" class="kit-secant__toggle" data-toggle data-playing="true" aria-label="止める" title="止める">
+        <svg class="kit-secant__stop" viewBox="0 0 16 16" aria-hidden="true"><rect x="2.5" y="2.5" width="11" height="11" /></svg>
+        <svg class="kit-secant__play" viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 1.8 L14 8 L3.5 14.2 Z" /></svg>
+      </button>
+      <span class="kit-p3__state" data-state><span class="kit-p3__phase">① 学習用だけ</span></span>
+    </div>
+
+    <ul class="kit-secant__legend">
+      <li><i class="kit-p3__sw-dot is-ink"></i>学習用 6人</li>
+      <li><i class="kit-p3__sw-dot is-hollow"></i>テスト用 24人</li>
+      <li><i class="kit-secant__sw is-shu"></i>学習用に合わせた曲線</li>
+      <li><i class="kit-p3__sw-resid"></i>点と曲線の差</li>
+      <li>横は勉強時間、縦は点数</li>
+    </ul>
+
+    <div class="kit-p3__three">
+      {OVERFIT_FITS.map((F, i) => (
+        <div>
+          <div class="kit-p3__mini-cap">次数 {F.d}{F.d === 1 ? '（直線）' : ''}</div>
+          <div class="kit-p3__plot" data-panel={i} set:html={svgWrap(OVERFIT_PLOT.w, OVERFIT_PLOT.h, drawOverfit(OVERFIT_PLOT, F, false, `${id}-${i}`), `次数${F.d}`)} />
+          <div class="kit-p3__mini-state" data-mini={i} set:html={overfitMiniHtml(F, false)} />
+        </div>
+      ))}
+    </div>
+  </div>
+</figure>
+
+<script>
+  import { OVERFIT_FITS, OVERFIT_PHASE, OVERFIT_PLOT, drawOverfit, overfitMiniHtml, svgWrap, setupTicker } from '../../lesson/ui/part3-figures';
+
+  function setup(root: HTMLElement) {
+    const prefix = root.dataset.prefix ?? 'overfit';
+    const btn = root.querySelector('[data-toggle]') as HTMLButtonElement;
+    const state = root.querySelector('[data-state]') as HTMLElement;
+    const panels = Array.from(root.querySelectorAll<HTMLElement>('[data-panel]'));
+    const minis = Array.from(root.querySelectorAll<HTMLElement>('[data-mini]'));
+
+    let ph = 0;
+    let acc = 0;
+
+    function render() {
+      OVERFIT_FITS.forEach((F, i) => {
+        panels[i].innerHTML = svgWrap(
+          OVERFIT_PLOT.w,
+          OVERFIT_PLOT.h,
+          drawOverfit(OVERFIT_PLOT, F, ph === 1, `${prefix}-${i}`),
+          `次数${F.d}`,
+        );
+        minis[i].innerHTML = overfitMiniHtml(F, ph === 1);
+      });
+      state.innerHTML = `<span class="kit-p3__phase">${ph === 0 ? '① 学習用だけ' : '② テスト用も出す'}</span>`;
+    }
+
+    setupTicker({
+      root,
+      btn,
+      onTick: (dt) => {
+        acc += dt;
+        if (acc >= OVERFIT_PHASE) {
+          acc = 0;
+          ph = 1 - ph;
+          render();
+        }
+      },
+    });
+  }
+
+  document.querySelectorAll<HTMLElement>('[data-overfit]').forEach(setup);
+</script>

@@ -98,4 +98,7 @@ export const PYTHON_TOOLS = [
   /* 1行で書く条件式 x if 条件 else y。第3章で教えたのは行を分ける if / else だけ。
      第10.5節の書き手が使い、読んで見つけた（2026-09-24） */
   { name: '1行で書く条件式 … if … else …', in: 'python-99-ternary', re: /\S[ \t]+if[ \t]+[^:\n]+[ \t]else[ \t]+\S/ },
+  /* None を変数に入れる書き方と、is None で調べる書き方。第5章で「return が無いと None が返る」とだけ
+     説明した。第12章の書き手が best_loss = None と is None を使い、読んで見つけた（2026-09-25） */
+  { name: 'None を入れる・is None で調べる', in: 'python-99-none', re: /\bis\s+(not\s+)?None\b|=\s*None\b/ },
 ];
