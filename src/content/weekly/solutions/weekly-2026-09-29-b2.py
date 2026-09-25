@@ -1,7 +1,6 @@
-japanese = int(input())
-mathematics = int(input())
-english = int(input())
-total = japanese + mathematics + english
-print(f"国語 {japanese}点 数学 {mathematics}点 英語 {english}点")
-print(f"合計 {total}点")
-print(f"満点まであと {300 - total}点")
+import math
+
+width = int(input())
+height = int(input())
+diagonal = round(math.sqrt(width ** 2 + height ** 2), 1)
+print(f"対角線 {diagonal}")
