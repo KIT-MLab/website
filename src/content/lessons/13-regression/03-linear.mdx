@@ -1,0 +1,109 @@
+---
+id: python-13-linear
+chapter: 13-regression
+title: 直線を学習する（線形回帰）
+minutes: 20
+terms: [線形回帰]
+---
+
+{/* 困る例 */}
+
+第10章5節で、`a = 7`、`b = 30` のときの向き（aを減らす、bを減らす）までは出せました。ですが実際には、まだ1歩も動かしていません。
+
+{/* やってみる */}
+
+次のコードの ▶ を押してください。
+
+<Run
+  code={`import numpy as np
+
+hours = np.array([2.0, 3.0, 5.0, 6.0, 8.0])
+scores = np.array([45, 52, 65, 70, 82])
+
+def loss(w):
+    pred = hours * w[0] + w[1]
+    return np.mean((pred - scores) ** 2)
+
+def grad(w):
+    pred = hours * w[0] + w[1]
+    return np.array([np.mean(2 * (pred - scores) * hours), np.mean(2 * (pred - scores))])
+
+w = np.array([0.0, 0.0])
+h = 0.0001
+numeric = np.array([(loss(w + np.array([h, 0])) - loss(w)) / h,
+                     (loss(w + np.array([0, h])) - loss(w)) / h])
+print(np.round(numeric, 1))
+print(np.round(grad(w), 1))
+
+w = w - 0.02 * grad(w)
+print(np.round(w, 2))
+print(round(loss(w), 1))`}
+  out={`[-658.8 -125.6]
+[-658.8 -125.6]
+[13.18  2.51]
+235.3`}
+/>
+
+{/* 説明 */}
+
+10〜12行目の `grad` は、`a` と `b` それぞれの勾配をまとめた配列を返します。式は結果だけ示します（導くのは第6部）。
+
+16〜18行目で、`w = [0, 0]` の勾配を、第10章4節と同じ数値の偏微分（`numeric`）と比べます。どちらも `[-658.8, -125.6]` で一致します。一致を確かめてから、この式を使います。
+
+21〜23行目は、`w` を1回だけ動かした結果です。
+
+点数のような数を予想することを回帰と呼びます。直線のモデルを、損失が小さくなるように学習して数を予想することを、線形回帰と呼びます。同じ計算を30人全員のデータで1000回くり返すと、`a ≈ 6.06`、`b ≈ 33.29`、損失 ≈ `19.0` になります。
+
+<FitLine />
+
+{/* 課題 */}
+
+<Exercise
+  id="python-13-linear-m1"
+  kind="modify"
+  starter={`import numpy as np
+
+hours = np.array([2.0, 3.0, 5.0, 6.0, 8.0])
+scores = np.array([45, 52, 65, 70, 82])
+
+def grad(w):
+    pred = hours * w[0] + w[1]
+    return np.array([np.mean(2 * (pred - scores) * hours), np.mean(2 * (pred - scores))])
+
+w = np.array([0.0, 0.0])
+lr = 0.02
+w = w - lr * grad(w)
+print(np.round(w, 2))`}
+  tests={[{ kind: 'stdout' }]}
+  hints={[
+    'まず、いまのコードをそのまま実行して、出力を確かめてください。',
+    '学習率を小さくすると、1回に動く量も小さくなります。',
+  ]}
+  mistakes={[]}
+>
+`[6.59 1.26]` と表示されるように、11行目の `lr` を書き換えてください。
+</Exercise>
+
+<Exercise
+  id="python-13-linear-b1"
+  kind="build"
+  stdin={`1000`}
+  tests={[
+    { kind: 'stdout', stdin: `1000\n` },
+    { kind: 'stdout', stdin: `500\n` },
+    { kind: 'stdout', stdin: `0\n` },
+  ]}
+  hints={[
+    '勉強時間と点数の配列、loss・grad の式は、上の「やってみる」と同じものを30人ぶんで使います。',
+    '100で割り切れる回数かどうかは、i % 100 == 0 で調べられます。',
+  ]}
+  mistakes={[]}
+>
+学習率0.02を使います。入力欄からくり返す回数を読み取り、`w = [0, 0]` から勾配降下をその回数だけくり返してください。
+
+100回ごとに、そのときの回数と損失を小数第1位まで丸めて表示してください。最後に `w` を小数第2位まで丸めて配列のまま表示し、続けて損失を小数第1位まで丸めて表示してください。
+</Exercise>
+
+{/* つながり */}
+
+直線を勾配降下で合わせられるようになりました。次の節では、入力が2つ以上のときの予測を扱います。

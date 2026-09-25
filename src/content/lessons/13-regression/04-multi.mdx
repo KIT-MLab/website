@@ -1,0 +1,102 @@
+---
+id: python-13-multi
+chapter: 13-regression
+title: 入力が複数のときの予測
+minutes: 20
+terms: []
+---
+
+{/* 困る例 */}
+
+点数を勉強時間だけでなく睡眠時間からも予想したいです。第13章3節のように `a` と `b` の勾配をそれぞれ書くと、入力が増えるたびに式を書き足すことになります。
+
+{/* やってみる */}
+
+次のコードの ▶ を押してください。
+
+<Run
+  code={`import numpy as np
+
+hours = np.array([2.0, 3.0, 5.0, 6.0, 8.0])
+sleep = np.array([6.5, 7.0, 6.0, 6.5, 7.0])
+X = np.array([hours, sleep]).T
+
+def predict(X, w, b):
+    return X @ w + b
+
+print(predict(X, np.array([6.0, 0.0]), 20))`}
+  out={`[32. 38. 50. 56. 68.]`}
+/>
+
+{/* 説明 */}
+
+5行目の `X` は、`hours` と `sleep` を行として並べてから `.T`（第9章5節）で転置し、1人ぶんが1行になる形にしています。`predict` は `X @ w + b` で、入力の数だけ増やせます。
+
+`w` は入力ごとの重みをまとめた配列です。`b` は入力に掛ける数ではなく、全員の予測に同じだけ足す数です。入力が増えても1つのままなので、`w` とは分けて持ちます。
+
+`w` の勾配は `X.T @ (予測 - 答え) * 2 / n` です。第13章3節の勾配の式を、入力の数ぶんまとめて行列の積で計算する形にしています（導くのは第6部）。`b` の勾配は、第13章3節と同じ `np.mean(2 * (予測 - 答え))` です。
+
+{/* よくある間違い */}
+
+<Mistake
+  id="multi-transpose"
+  code={`import numpy as np
+hours = np.array([2.0, 3.0, 5.0, 6.0, 8.0])
+sleep = np.array([6.5, 7.0, 6.0, 6.5, 7.0])
+X = np.array([hours, sleep])
+w = np.array([6.0, 1.0])
+print(X @ w)`}
+  error={`ValueError: matmul: Input operand 1 has a mismatch in its core dimension 0, with gufunc signature (n?,k),(k,m?)->(n?,m?) (size 2 is different from 5)`}
+>
+`.T` を忘れると、`X` は2行5列のままです。`w` は長さ2の配列なので、5列とかけ合わせられません。`.T` を付けて5行2列にしてください。
+</Mistake>
+
+{/* 課題 */}
+
+<Exercise
+  id="python-13-multi-m1"
+  kind="modify"
+  starter={`import numpy as np
+
+hours = np.array([2.0, 3.0, 5.0, 6.0, 8.0])
+sleep = np.array([6.5, 7.0, 6.0, 6.5, 7.0])
+X = np.array([hours, sleep]).T
+
+def predict(X, w, b):
+    return X @ w + b
+
+print(predict(X, np.array([6.0, 0.0]), 20))`}
+  tests={[{ kind: 'stdout' }]}
+  hints={[
+    'まず、いまのコードをそのまま実行して、出力を確かめてください。',
+    'hours の重みはそのままで、sleep の重みだけを書き換えます。',
+  ]}
+  mistakes={['multi-transpose']}
+>
+`[45. 52. 62. 69. 82.]` と表示されるように、10行目の `w` の2つ目の値（sleepの重み）を書き換えてください。
+</Exercise>
+
+<Exercise
+  id="python-13-multi-b1"
+  kind="build"
+  stdin={`3000`}
+  tests={[
+    { kind: 'stdout', stdin: `3000\n` },
+    { kind: 'stdout', stdin: `1000\n` },
+    { kind: 'stdout', stdin: `0\n` },
+  ]}
+  hints={[
+    '30人の勉強時間・睡眠時間・点数の配列と predict は、上の「やってみる」と同じ形です。',
+    'w の勾配は X.T @ (pred - scores) * 2 / n、n は len(scores) です。',
+    'b の勾配は np.mean(2 * (pred - scores)) です。',
+  ]}
+  mistakes={['multi-transpose']}
+>
+学習率0.01を使います。入力欄からくり返す回数を読み取り、`w = [0, 0]`、`b = 0` から勾配降下をその回数だけくり返してください。
+
+学習した `w` を小数第2位まで丸めて配列のまま1行目に、`b` を同じ桁数で2行目に表示してください。続けて、損失を小数第1位まで丸めて3行目に表示してください。
+</Exercise>
+
+{/* つながり */}
+
+入力が複数でも同じ手順で学習できるようになりました。次の節では、入力の単位がそろっていないときに何が起きるかを見ます。
