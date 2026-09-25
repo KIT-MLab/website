@@ -222,7 +222,12 @@ const svgLabel =
   <p class="kit-fig__cap">{caption}</p>
   <div class="kit-fig__in kit-secant__in">
     <div class="kit-secant__ctrl">
-      <button type="button" class="kit-btn kit-secant__toggle" data-toggle>止める</button>
+      {/* 止める・動かすは文字にせず絵で示す（2026-09-25 利用者の指定）。止めるは朱の四角、動かすは墨の三角。
+          どちらを出すかは data-playing、読み上げは aria-label（下の paintToggle） */}
+      <button type="button" class="kit-btn kit-secant__toggle" data-toggle data-playing="true" aria-label="止める" title="止める">
+        <svg class="kit-secant__stop" viewBox="0 0 16 16" aria-hidden="true"><rect x="2.5" y="2.5" width="11" height="11" /></svg>
+        <svg class="kit-secant__play" viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 1.8 L14 8 L3.5 14.2 Z" /></svg>
+      </button>
       <label for={`${id}-h`}>幅 h</label>
       <input
         id={`${id}-h`}
@@ -441,9 +446,16 @@ const svgLabel =
       }
     }
 
+    function paintToggle(on: boolean) {
+      const word = on ? '止める' : '動かす';
+      btn.dataset.playing = String(on);
+      btn.setAttribute('aria-label', word);
+      btn.title = word;
+    }
+
     function setPlaying(on: boolean) {
       playing = on;
-      btn.textContent = on ? '止める' : '動かす';
+      paintToggle(on);
       if (on) t = Math.min(tOf(h), DOWN); // いまの h から続ける
       update();
     }
@@ -499,7 +511,7 @@ const svgLabel =
       dot.setAttribute('visibility', 'hidden');
     });
 
-    btn.textContent = playing ? '止める' : '動かす';
+    paintToggle(playing);
     draw();
     update();
   }
