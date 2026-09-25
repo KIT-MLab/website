@@ -1,0 +1,16 @@
+---
+/**
+ * 今週の演習のページだけで使う <Exercise> の薄い包み（20-platform.md 第22.2節）。
+ *
+ * 質問の声かけは「今週の演習のページだけ」（第22.2節）。<Exercise> 自体にはレッスンの節と
+ * 今週の演習の区別が無いので、ページ側（weekly/[id].astro）がこの部品に差し替えて
+ * `nudge` を足す。mdx の書き方は変えない（syntax=... はそのまま渡るだけ）。
+ */
+import Exercise from './Exercise.astro';
+
+const props = Astro.props;
+---
+
+<Exercise {...props} nudge>
+  <slot />
+</Exercise>

@@ -748,6 +748,7 @@
  * ------------------------------------------------------------ */
 .kit-cases {
   margin-top: 16px;
+  overflow-x: auto;
 }
 
 .kit-cases__label {
@@ -796,6 +797,36 @@
 .kit-cases__table td.kit-cases__none {
   font-family: "Zen Old Mincho", serif;
   font-size: 13.5px;
+  color: var(--l-ink-2);
+}
+
+/* 採点のたびに組ごとの状態を塗る列（ExerciseBox.tsx の paintCaseStatus が足す）。
+   採点する前は列自体が無い（表はいまの見た目のまま）。通った＝緑、止まった組＝朱、
+   まだ確かめていない組＝灰。色だけに頼らず、印と言葉の両方で示す */
+.kit-cases__table td.kit-cases__status {
+  font-family: "Zen Old Mincho", serif;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.kit-cases__table tr.is-case-pass td.kit-cases__status {
+  color: var(--l-midori);
+}
+
+.kit-cases__table tr.is-case-stop td.kit-cases__status {
+  color: var(--l-shu);
+  font-weight: 700;
+}
+
+.kit-cases__table tr.is-case-stop td {
+  background: rgba(156, 59, 33, 0.08);
+}
+
+.kit-cases__table tr.is-case-wait td.kit-cases__status {
+  color: var(--l-ink-2);
+}
+
+.kit-cases__table tr.is-case-wait td {
   color: var(--l-ink-2);
 }
 
@@ -928,6 +959,14 @@
   color: var(--l-ink-2);
 }
 
+/* 質問の声かけ（20-platform.md 第22.2節）。今週の演習の問題だけ。急かさない色にする */
+.kit-ex__nudge {
+  margin: 10px 0 0;
+  font-family: var(--font-body);
+  font-size: 13.5px;
+  color: var(--l-kohaku);
+}
+
 /* --- 通った印（20-platform.md 第12.1節） ----------------------
  * 箱は消さずに残し、上を半透明で覆って緑のチェックマークを重ねる。
  * 印はチェックマークであって札ではない（第10.6節。地色つきのラベルは増やさない）。
@@ -1045,6 +1084,13 @@
 .kit-verdict__where {
   font-size: 14px;
   color: var(--l-ink-2);
+}
+
+/* どの組で止まったか（コードの中の行番号とは別の情報。ExerciseBox.tsx の CaseNote） */
+.kit-verdict__case {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--l-shu);
 }
 
 .kit-diff {
@@ -2157,4 +2203,156 @@
   color: var(--l-ai);
   font-weight: 700;
   text-underline-offset: 3px;
+}
+
+/* ============================================================
+ * 構文の一覧（20-platform.md 第22.1節。試作 案C）。今週の演習の問題のページだけ。
+ * 地色・字・罫・畳んだ分類は、節のページの「用語を検索」の欄（.term-panel）に合わせる
+ * （20-platform.md 第18章。新しい配色は足さない）。置き方は src/pages/learn/weekly/[id].astro
+ * の .wk-grid が決める（幅1280px以上は2カラム、それより狭い画面は問題の下に回す）。
+ * ============================================================ */
+.wk-syntax {
+  margin-top: 40px;
+}
+
+@media (min-width: 1280px) {
+  .wk-syntax {
+    position: sticky;
+    top: 63px;
+    margin-top: 0;
+    max-height: calc(100vh - 75px);
+    overflow-y: auto;
+  }
+}
+
+.syn-panel {
+  background: var(--l-card);
+  border: 1px solid var(--l-rule);
+  padding: 16px 16px 18px;
+  font-family: var(--font-body);
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--l-ink);
+}
+
+.syn-panel__title {
+  margin: 0 0 2px;
+  font-family: "Zen Old Mincho", serif;
+  font-weight: 700;
+  font-size: 15px;
+}
+
+.syn-panel__sub {
+  margin: 0 0 10px;
+  font-size: 12.5px;
+  color: var(--l-ink-2);
+}
+
+.syn-cat {
+  border-top: 1px solid var(--l-rule);
+  padding: 8px 0;
+}
+
+.syn-cat:last-child {
+  padding-bottom: 0;
+}
+
+.syn-cat > summary {
+  cursor: pointer;
+  list-style: none;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+  font-family: "Zen Old Mincho", serif;
+  font-weight: 700;
+  font-size: 13.5px;
+}
+
+.syn-cat > summary::-webkit-details-marker {
+  display: none;
+}
+
+.syn-cat > summary::after {
+  content: "＋";
+  color: var(--l-ink-2);
+  font-weight: 400;
+}
+
+.syn-cat[open] > summary::after {
+  content: "－";
+}
+
+/* 押せることを見せる（20-platform.md 第14.6節） */
+.syn-cat > summary:hover {
+  color: var(--l-shu);
+}
+
+/* 問題の「構文の一覧」ボタンが開いた分類に枠を付ける（第22.1節） */
+.syn-cat.is-hl {
+  outline: 2px solid var(--l-shu);
+  outline-offset: 3px;
+}
+
+/* 表というより「行の並び」。狭い欄なので、書き方と結果を1行、説明はその下に回す
+   （試作の案Cの右の欄と同じ形。table.ref の行を grid にほどく） */
+.syn-table,
+.syn-table tbody {
+  display: block;
+  width: 100%;
+}
+
+.syn-table tr {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  column-gap: 8px;
+  border-bottom: 1px dotted var(--l-rule);
+  padding: 5px 0;
+}
+
+.syn-table td {
+  padding: 0;
+  vertical-align: baseline;
+  border: 0;
+}
+
+.syn-table td.syn-code {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.syn-table td.syn-code code {
+  background: none;
+  padding: 0;
+}
+
+.syn-table td.syn-result {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  color: var(--l-ink-2);
+  white-space: pre-wrap;
+  text-align: right;
+}
+
+.syn-table td.syn-note {
+  grid-column: 1 / -1;
+  color: var(--l-ink-2);
+  font-size: 12px;
+}
+
+.syn-cat__links {
+  margin: 6px 0 0;
+  font-size: 12px;
+}
+
+.syn-cat__links a {
+  color: var(--l-ai);
+  margin-right: 10px;
+}
+
+.syn-cat__links a:hover {
+  text-decoration: underline;
+  text-underline-offset: 2px;
 }

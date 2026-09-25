@@ -38,9 +38,20 @@ interface Props {
   hints?: string[];
   mistakes?: string[];
   forbid?: string[];
+  /**
+   * 構文の一覧（20-platform.md 第22.1節）で開く分類の key（src/lesson/syntax-list.ts）。
+   * 今週の演習の build / choose 問題だけに付く。レッスンの節では使わない
+   * （付けなければボタンごと出ない。既存のレッスンは影響を受けない）
+   */
+  syntax?: string[];
+  /**
+   * 質問の声かけ（20-platform.md 第22.2節）を出すか。今週の演習のページだけ true になる
+   * （src/components/lesson/WeeklyExercise.astro が渡す。レッスンの節では渡さない）
+   */
+  nudge?: boolean;
 }
 
-const { id, kind, starter, stdin, tests } = Astro.props;
+const { id, kind, starter, stdin, tests, syntax, nudge } = Astro.props;
 
 
 /* 値を Python の見た目で出す。src/lesson/grade.ts の showValue と同じ規則。
@@ -107,7 +118,7 @@ if (kind === 'choose') {
           <table class="kit-cases__table">
             <tbody>
               {cases.map((values, i) => (
-                <tr>
+                <tr data-case={i}>
                   <th scope="row">{i + 1}組目</th>
                   {values.length === 0 ? (
                     <td class="kit-cases__none" colspan={columns}>
@@ -125,6 +136,6 @@ if (kind === 'choose') {
         </div>
       )
     }
-    <ExerciseBox client:load id={id} kind={kind} starter={starter} stdin={stdin} choices={choices} />
+    <ExerciseBox client:load id={id} kind={kind} starter={starter} stdin={stdin} choices={choices} syntax={syntax} nudge={nudge} />
   </div>
 </section>

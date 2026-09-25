@@ -8,7 +8,7 @@ import { Fragment, useEffect, useRef, useState } from 'react';
 import CodeEditor from './CodeEditor';
 import { Inline, LoadBar, outputText, Prose, StdinBox } from './shared';
 import { getExerciseData, getLessonData, isDirectKind, type ExerciseData, type ExerciseKind, type LessonData } from '../data';
-import { gradeDirect, gradeExercise, type GradeResult } from '../grade';
+import { gradeDirect, gradeExercise, showInput, type GradeResult } from '../grade';
 import { execPython } from '../runtime/runner';
 import { getProgressStore } from '../store/progress';
 
@@ -19,6 +19,13 @@ type Props = {
   stdin?: string;
   /** kind="choose" の選択肢。<Exercise> の子の <li> を組み上げたもの（第11.4節） */
   choices?: string[];
+  /** 構文の一覧で開く分類の key（20-platform.md 第22.1節）。今週の演習の問題だけに付く */
+  syntax?: string[];
+  /**
+   * 質問の声かけを出すか（20-platform.md 第22.2節）。今週の演習のページだけ true になる
+   * （src/components/lesson/WeeklyExercise.astro が渡す。レッスンの節では渡さない）。
+   */
+  nudge?: boolean;
 };
 
 /**
@@ -32,6 +39,60 @@ const PASS_HOLD_MS = 1000;
  * 打っている途中でたまたま一致したときに早とちりしないための間。
  */
 const AUTO_GRADE_MS = 500;
+
+/**
+ * 質問の声かけを出すまでの間（20-platform.md 第22.2節）。1つの定数にまとめる
+ * （確かめるときはここだけ短くして、確かめ終わったら戻す）。
+ */
+const NUDGE_AFTER_MS = 10 * 60 * 1000;
+
+/**
+ * 「判定に使う入力」の表に、採点のたびに組ごとの状態を塗る。
+ *
+ * 表は Exercise.astro がサーバ側で組んでいて（`.kit-cases__table tr[data-case]`）、
+ * ここは React の外にある。採点した課題の id は <section id={id}> と同じなので、
+ * それで探しに行く（新しい ref は作らない。「見つけて塗るだけ」に留める）。
+ *
+ * 採点は最初に落ちたテストで止まる（src/lesson/grade.ts）ので、それより前の組は
+ * 通っている・その組で止まった・まだ確かめていない、の3つに分かれる。
+ */
+function paintCaseStatus(sectionId: string, result: GradeResult | null): void {
+  const section = document.getElementById(sectionId);
+  const table = section?.querySelector('.kit-cases__table');
+  if (!table) return;
+  const rows = table.querySelectorAll<HTMLTableRowElement>('tr[data-case]');
+  // 採点していない・forbidden で止まった（どの組も試していない）ときは、表を元の見た目に戻す
+  const paint = result !== null && !(result.failedTest === null && !result.passed);
+  rows.forEach((row) => {
+    const i = Number(row.dataset.case);
+    let cell = row.querySelector<HTMLTableCellElement>('.kit-cases__status');
+    if (!paint) {
+      cell?.remove();
+      row.classList.remove('is-case-pass', 'is-case-stop', 'is-case-wait');
+      return;
+    }
+    const status: 'pass' | 'stop' | 'wait' =
+      result!.passed || result!.failedTest === null || i < result!.failedTest
+        ? 'pass'
+        : i === result!.failedTest
+          ? 'stop'
+          : 'wait';
+    row.classList.remove('is-case-pass', 'is-case-stop', 'is-case-wait');
+    row.classList.add(`is-case-${status}`);
+    if (!cell) {
+      cell = document.createElement('td');
+      cell.className = 'kit-cases__status';
+      row.appendChild(cell);
+    }
+    const icon = status === 'pass' ? '✓' : status === 'stop' ? '✕' : '－';
+    const label = status === 'pass' ? '通った' : status === 'stop' ? 'ここで止まった' : 'まだ';
+    cell.innerHTML = '';
+    const iconEl = document.createElement('span');
+    iconEl.setAttribute('aria-hidden', 'true');
+    iconEl.textContent = icon;
+    cell.append(iconEl, document.createTextNode(` ${label}`));
+  });
+}
 
 /**
  * 書きかけのコードの置き場所。課題の id → コード。進度（kit-lesson-progress-v1）とは分ける。
@@ -67,7 +128,7 @@ function saveDraft(id: string, code: string | null): void {
   }
 }
 
-export default function ExerciseBox({ id, kind, starter, stdin, choices }: Props) {
+export default function ExerciseBox({ id, kind, starter, stdin, choices, syntax, nudge }: Props) {
   const initial = starter ?? '';
   // 第0章の型（打つ練習・選ぶ練習）は Python を動かさない。
   // CodeMirror も Pyodide も通らない道にする（20-platform.md 第11.4節）
@@ -94,6 +155,10 @@ export default function ExerciseBox({ id, kind, starter, stdin, choices }: Props
   const [solution, setSolution] = useState<string | null>(null);
   const [solutionNote, setSolutionNote] = useState<string | null>(null);
   const [resetSignal, setResetSignal] = useState(0);
+  /** 質問の声かけ（20-platform.md 第22.2節）。進んでいく時計は出さず、この1行だけ出す */
+  const [nudgeShown, setNudgeShown] = useState(false);
+  const nudgeStarted = useRef(false);
+  const nudgeTimer = useRef<number | null>(null);
   const codeRef = useRef(initial);
   /** 打つ欄・選択肢・コード欄を包む器。Ctrl＋Enter をここで捕まえる（第12.2節） */
   const workRef = useRef<HTMLDivElement | null>(null);
@@ -162,6 +227,7 @@ export default function ExerciseBox({ id, kind, starter, stdin, choices }: Props
     codeRef.current = next;
     setCode(next);
     saveDraft(id, next === initial ? null : next);
+    startNudgeClock();
   }
 
   /* 書きかけのコードを、この端末に課題ごとに残す（2026-09-24）。ページを移って戻ると
@@ -175,7 +241,50 @@ export default function ExerciseBox({ id, kind, starter, stdin, choices }: Props
     setResetSignal((n) => n + 1);
   }, [id]);
 
+  // 採点するたびに「判定に使う入力」の表を塗り直す（コーディネーターからの追加指示）
+  useEffect(() => {
+    paintCaseStatus(id, result);
+  }, [id, result]);
+
+  /**
+   * 質問の声かけの時計を1回だけ起こす（20-platform.md 第22.2節）。
+   * 最初に書き換えるか、実行・採点を試みたときに起こす。通っていれば起こさない
+   * （すでに通っている問題を開いただけでは、時計は動かない）。記録はしない。
+   */
+  function startNudgeClock() {
+    if (!nudge || passed || nudgeStarted.current) return;
+    nudgeStarted.current = true;
+    nudgeTimer.current = window.setTimeout(() => setNudgeShown(true), NUDGE_AFTER_MS);
+  }
+
+  // 通ったら消す。もう問題を出た（idが変わった）ときも次の問題の時計に切り替える
+  useEffect(() => {
+    return () => {
+      if (nudgeTimer.current !== null) window.clearTimeout(nudgeTimer.current);
+    };
+  }, [id]);
+
+  useEffect(() => {
+    if (!passed) return;
+    setNudgeShown(false);
+    if (nudgeTimer.current !== null) {
+      window.clearTimeout(nudgeTimer.current);
+      nudgeTimer.current = null;
+    }
+  }, [passed]);
+
+  /**
+   * 構文の一覧（20-platform.md 第22.1節）。この問題に使えそうな分類を右の欄で開く。
+   * 今週の演習のページにだけ SyntaxPanel（#kit-syntax-panel）があるので、レッスンの節では
+   * 受け手がいないまま投げるだけで何も起きない（新しい分岐を足さない）。
+   */
+  function openSyntax() {
+    if (!syntax || syntax.length === 0) return;
+    window.dispatchEvent(new CustomEvent('kit:syntax-open', { detail: { keys: syntax } }));
+  }
+
   async function tryRun() {
+    startNudgeClock();
     setBusy('run');
     const out = await execPython({ code: codeRef.current, stdin: stdinValue });
     setRunOutput(outputText(out));
@@ -184,6 +293,7 @@ export default function ExerciseBox({ id, kind, starter, stdin, choices }: Props
 
   async function grade() {
     if (!exercise || !lesson) return;
+    startNudgeClock();
     setBusy('grade');
     setRunOutput(null);
     // 提出したものをそのまま記録する。選ぶ練習は選んだ番号（第4.5節）
@@ -302,7 +412,10 @@ export default function ExerciseBox({ id, kind, starter, stdin, choices }: Props
               spellCheck={false}
               autoComplete="off"
               autoCapitalize="off"
-              onChange={(e) => setTyped(e.target.value)}
+              onChange={(e) => {
+                setTyped(e.target.value);
+                startNudgeClock();
+              }}
               onPaste={() => setPasted(true)}
             />
           </div>
@@ -321,7 +434,10 @@ export default function ExerciseBox({ id, kind, starter, stdin, choices }: Props
                   checked={picked === i + 1}
                   /* 通ったあとは選び直せない。覆いの下で別の選択肢を押せていた */
                   disabled={passed}
-                  onChange={() => setPicked(i + 1)}
+                  onChange={() => {
+                    setPicked(i + 1);
+                    startNudgeClock();
+                  }}
                 />
                 <span className="kit-choices__no">{i + 1}</span>
                 <span className="kit-choices__text" dangerouslySetInnerHTML={{ __html: html }} />
@@ -329,6 +445,15 @@ export default function ExerciseBox({ id, kind, starter, stdin, choices }: Props
             </li>
           ))}
         </ol>
+      ) : null}
+
+      {/* 選ぶ課題には採点の欄が無い（第12.3節）ので、構文の一覧だけの小さな帯を出す */}
+      {kind === 'choose' && syntax && syntax.length > 0 ? (
+        <div className="kit-ex__bar">
+          <button type="button" className="kit-btn" onClick={openSyntax}>
+            構文の一覧
+          </button>
+        </div>
       ) : null}
 
       {direct ? null : (
@@ -376,11 +501,21 @@ export default function ExerciseBox({ id, kind, starter, stdin, choices }: Props
               最初の形に戻す
             </button>
           ) : null}
+          {syntax && syntax.length > 0 ? (
+            <button type="button" className="kit-btn" onClick={openSyntax}>
+              構文の一覧
+            </button>
+          ) : null}
           {/* 押せることが画面から分かるように（第12.2節）。素地の小さな文字。札にしない */}
           <span className="kit-ex__keyhint">Ctrl ＋ Enter でも採点できます</span>
           {!direct && busy !== 'none' ? <LoadBar /> : null}
         </div>
       )}
+
+      {/* 質問の声かけ（20-platform.md 第22.2節）。ボタンの下の1行だけ。進む時計は出さない */}
+      {nudgeShown ? (
+        <p className="kit-ex__nudge">この問題を始めて10分たちました。近くの人や運営に聞いてみましょう。</p>
+      ) : null}
 
       {runOutput !== null ? (
         <div className="kit-out">
@@ -389,7 +524,7 @@ export default function ExerciseBox({ id, kind, starter, stdin, choices }: Props
         </div>
       ) : null}
 
-      {result ? <Verdict result={result} kind={kind} /> : null}
+      {result ? <Verdict result={result} kind={kind} exercise={exercise} /> : null}
 
       {hintCount > 0 ? (
         <div className="kit-hints">
@@ -449,8 +584,36 @@ export default function ExerciseBox({ id, kind, starter, stdin, choices }: Props
   );
 }
 
+/**
+ * 落ちたのがどの組かを、エラーの説明より前に出す（コーディネーターからの追加指示）。
+ * 「N行目で止まりました」（コードの中の場所）とは別の情報なので、言葉を分けて両方が分かるようにする。
+ */
+function CaseNote({ result, kind, exercise }: { result: GradeResult; kind: ExerciseKind; exercise: ExerciseData | null }) {
+  if (kind !== 'build' || result.failedTest === null || !exercise) return null;
+  const test = exercise.tests[result.failedTest];
+  const input = test ? showInput(test) : '';
+  const ordinal = `${result.failedTest + 1}組目`;
+  const f = result.feedback;
+  const paren = input && input !== '（入力なし）' ? `（${input}）` : '';
+  if (f.kind === 'mistake' || f.kind === 'error') {
+    return (
+      <p className="kit-verdict__case">
+        {ordinal}の入力{paren}で、{f.line ? `${f.line}行目で` : ''}エラーになりました。
+      </p>
+    );
+  }
+  if (f.kind === 'diff') {
+    return (
+      <p className="kit-verdict__case">
+        {ordinal}の入力{paren}で、期待した結果と違いました。
+      </p>
+    );
+  }
+  return null;
+}
+
 /** 採点の応答（20-platform.md 第4.3節）。単なる「不正解」だけを返してはいけない。 */
-function Verdict({ result, kind }: { result: GradeResult; kind: ExerciseKind }) {
+function Verdict({ result, kind, exercise }: { result: GradeResult; kind: ExerciseKind; exercise: ExerciseData | null }) {
   const f = result.feedback;
   if (f.kind === 'pass') {
     // 選ぶ練習は自己申告である（第11.4節）ので、合格の応答は控えめにする
@@ -512,6 +675,7 @@ function Verdict({ result, kind }: { result: GradeResult; kind: ExerciseKind }) 
   return (
     <div className="kit-verdict kit-verdict--fail">
       <strong>まだ通っていません</strong>
+      <CaseNote result={result} kind={kind} exercise={exercise} />
       {f.kind === 'no-answer' ? (
         <p>{f.mode === 'choose' ? 'まだ選んでいません。選択肢を1つ選んでください。' : '打つ欄が空です。見本のとおりに打ってください。'}</p>
       ) : null}
@@ -570,7 +734,8 @@ function Verdict({ result, kind }: { result: GradeResult; kind: ExerciseKind }) 
           <div className="kit-out kit-out--err">
             <pre className="kit-out__text">{f.display}</pre>
           </div>
-          {f.line ? <p className="kit-verdict__where">{f.line} 行目で止まりました。</p> : null}
+          {/* build は上の CaseNote が「N組目の入力で、N行目でエラーになりました。」とまとめて言う */}
+          {f.line && kind !== 'build' ? <p className="kit-verdict__where">{f.line} 行目で止まりました。</p> : null}
           <div className="kit-verdict__fix">
             <Prose text={f.mistake.fix} />
           </div>
@@ -581,7 +746,7 @@ function Verdict({ result, kind }: { result: GradeResult; kind: ExerciseKind }) 
           <div className="kit-out kit-out--err">
             <pre className="kit-out__text">{f.display}</pre>
           </div>
-          {f.line ? <p className="kit-verdict__where">{f.line} 行目で止まりました。</p> : null}
+          {f.line && kind !== 'build' ? <p className="kit-verdict__where">{f.line} 行目で止まりました。</p> : null}
           <p>{f.advice}</p>
         </>
       ) : null}

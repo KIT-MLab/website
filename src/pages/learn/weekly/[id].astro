@@ -15,12 +15,14 @@ export const prerender = false;
 
 import { getCollection, render } from 'astro:content';
 import Base from '../../../layouts/Base.astro';
-import Exercise from '../../../components/lesson/Exercise.astro';
+import WeeklyExercise from '../../../components/lesson/WeeklyExercise.astro';
 import NotesPanel from '../../../components/lesson/NotesPanel.astro';
+import SyntaxPanel from '../../../components/lesson/SyntaxPanel.astro';
 import { currentUser, serverConfig } from '../../../server/auth';
 import { isMember } from '../../../server/member';
 import { isWeeklyOpen } from '../../../server/weekly';
 import { notesForWeekly } from '../../../server/lessons-publish';
+import { syntaxCategoriesFor } from '../../../lesson/weekly-syntax';
 import generated from '../../../generated/lesson-data.json';
 import '../../../styles/lesson.css';
 
@@ -47,6 +49,9 @@ const Content = showContent && entry ? (await render(entry)).Content : null;
 
 // 気づいたことのメモ（第20.3節）。運営にだけ問い合わせ、運営にだけ埋め込む
 const notes = isStaff && entry && config ? await notesForWeekly(config.db, entry.data.id) : [];
+
+// 構文の一覧（第22.1節）。この回の chapters の最後の章までに絞る。空の分類は隠す
+const syntaxCategories = showContent && entry ? await syntaxCategoriesFor(entry.data.chapters) : [];
 ---
 
 <Base title={showContent && entry ? entry.data.title : '今週の演習'} bar>
@@ -67,12 +72,17 @@ const notes = isStaff && entry && config ? await notesForWeekly(config.db, entry
           {isStaff && !open && (
             <p class="wk-staffnote">運営だけに見えています。まだ公開していません。</p>
           )}
-          <div class="lesson-top">
-            <p class="lesson-top__chapter">今週の演習</p>
-            <h1 class="lesson-title">{entry.data.title}</h1>
-            <p class="lesson-top__meta">{entry.data.date} ・ 教材の進み具合（百分率）には数えません</p>
+          <div class="wk-grid">
+            <div class="wk-grid__main">
+              <div class="lesson-top">
+                <p class="lesson-top__chapter">今週の演習</p>
+                <h1 class="lesson-title">{entry.data.title}</h1>
+                <p class="lesson-top__meta">{entry.data.date} ・ 教材の進み具合（百分率）には数えません</p>
+              </div>
+              <article class="lesson-body">{Content && <Content components={{ Exercise: WeeklyExercise }} />}</article>
+            </div>
+            {syntaxCategories.length > 0 && <SyntaxPanel categories={syntaxCategories} />}
           </div>
-          <article class="lesson-body">{Content && <Content components={{ Exercise }} />}</article>
           {isStaff && (
             <NotesPanel label="気づいたことを書く（運営だけに見えます）" weeklyId={entry.data.id} notes={notes} />
           )}
@@ -116,8 +126,30 @@ const notes = isStaff && entry && config ? await notesForWeekly(config.db, entry
   </style>
 
   <style>
+    /* .lesson-page（lesson.css）の max-width: 720px を、構文の一覧ぶん広げる。
+       720（本文）＋ 28（間）＋ 272（欄。用語を検索の欄と同じ幅。第18.1節） */
     .wk-page {
       margin: 0 auto;
+      max-width: 1020px;
+    }
+
+    /* 構文の一覧（20-platform.md 第22.1節）。幅1280px以上は2カラム（本文720px＋欄272px）。
+       それより狭い画面は縦に並べ、欄は問題の下に回る（drawer にはしない） */
+    .wk-grid {
+      display: block;
+    }
+
+    .wk-grid__main {
+      max-width: 720px;
+    }
+
+    @media (min-width: 1280px) {
+      .wk-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 720px) 272px;
+        gap: 28px;
+        align-items: start;
+      }
     }
 
     .wk-notice {

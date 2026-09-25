@@ -1,0 +1,56 @@
+---
+/**
+ * 構文の一覧（20-platform.md 第22.1節。試作 案C）。今週の演習の問題のページの右の欄。
+ *
+ * 見た目は節のページの「用語を検索」の欄（TermPanel.astro）に合わせる（地色・字・罫・畳んだ
+ * 分類）。置き方だけ変える: 用語を検索は幅1280px未満では帯のボタンで開く重なり（drawer）だが、
+ * こちらは問題ごとにボタンで開閉する仕組みがあるため、幅1280px未満では単に問題の下に回す
+ * （第22.1節「幅が狭いと問題の下に回る」）。新しい配色は足さない。
+ *
+ * 中身はビルド時ではなくサーバ側で組む（今週の演習のページは prerender = false。
+ * src/lesson/weekly-syntax.ts が回の chapters で絞り込む）。
+ */
+import type { SyntaxCategoryView } from '../../lesson/weekly-syntax';
+
+interface Props {
+  categories: SyntaxCategoryView[];
+}
+const { categories } = Astro.props;
+---
+
+<aside class="wk-syntax" id="kit-syntax-panel" aria-label="構文の一覧">
+  <div class="syn-panel">
+    <p class="syn-panel__title">構文の一覧</p>
+    <p class="syn-panel__sub">この回の範囲で出てきた書き方です。使えそうなものを選んでください。</p>
+    {
+      categories.map((cat) => (
+        <details class="syn-cat" data-cat={cat.key}>
+          <summary>{cat.name}</summary>
+          <table class="syn-table">
+            <tbody>
+              {cat.entries.map((e) => (
+                <tr>
+                  <td class="syn-code">
+                    <code>{e.code}</code>
+                  </td>
+                  <td class="syn-result">{e.result}</td>
+                  <td class="syn-note">{e.note}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <p class="syn-cat__links">
+            {cat.sinceLinks.map((l) => (
+              <a href={l.href}>{l.label}</a>
+            ))}
+          </p>
+        </details>
+      ))
+    }
+  </div>
+</aside>
+
+<script>
+  import { setupSyntaxPanel } from '../../lesson/syntax-panel';
+  setupSyntaxPanel();
+</script>
