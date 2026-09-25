@@ -132,6 +132,9 @@ const showCohortColumn = new Set(rows.map((r) => r.cohortCode)).size > 1;
                       </div>
                       <p class="mt-msg" data-wk-msg />
                     </div>
+                    <a href={`/learn/weekly/${encodeURIComponent(row.weeklyId)}/`} class="wk-board-link">
+                      問題を開く →
+                    </a>{' '}
                     <a href={`/staff/weekly/board/?id=${encodeURIComponent(row.weeklyId)}&cohort=${encodeURIComponent(row.cohortCode)}`} class="wk-board-link">
                       表を見る →
                     </a>

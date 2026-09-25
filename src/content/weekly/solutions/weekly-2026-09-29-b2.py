@@ -1,6 +1,4 @@
-import math
-
-width = int(input())
-height = int(input())
-diagonal = round(math.sqrt(width ** 2 + height ** 2), 1)
-print(f"対角線 {diagonal}")
+distance = float(input())
+minutes = int(input())
+speed = distance / (minutes / 60)
+print(f"時速 {round(speed, 1)}km")
