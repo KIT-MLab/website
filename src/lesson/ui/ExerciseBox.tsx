@@ -26,6 +26,12 @@ type Props = {
    * （src/components/lesson/WeeklyExercise.astro が渡す。レッスンの節では渡さない）。
    */
   nudge?: boolean;
+  /**
+   * 「判定に使う入力」（kind="build" だけ）。1組が1行で、行の中は入力欄の各行
+   * （call は呼び出しの形）。Exercise.astro が tests から組んで渡す（10-lesson 第3.1節）。
+   * 問題文を見ながら書けるように、コード欄の下に出す（20-platform.md 第23.2節）。
+   */
+  cases?: string[][];
 };
 
 /**
@@ -47,51 +53,59 @@ const AUTO_GRADE_MS = 500;
 const NUDGE_AFTER_MS = 10 * 60 * 1000;
 
 /**
- * 「判定に使う入力」の表に、採点のたびに組ごとの状態を塗る。
+ * 「判定に使う入力」の表。採点のたびに組ごとの状態を塗る（20-platform.md 第22.4節）。
  *
- * 表は Exercise.astro がサーバ側で組んでいて（`.kit-cases__table tr[data-case]`）、
- * ここは React の外にある。採点した課題の id は <section id={id}> と同じなので、
- * それで探しに行く（新しい ref は作らない。「見つけて塗るだけ」に留める）。
+ * 以前は Exercise.astro がサーバ側で組み、ここから DOM を探して塗っていた。コード欄の下に
+ * 移したとき（第23.2節）に、この島の中で描くようにした。
  *
  * 採点は最初に落ちたテストで止まる（src/lesson/grade.ts）ので、それより前の組は
  * 通っている・その組で止まった・まだ確かめていない、の3つに分かれる。
+ * 採点していない・forbidden で止まった（どの組も試していない）ときは、状態の列を出さない。
  */
-function paintCaseStatus(sectionId: string, result: GradeResult | null): void {
-  const section = document.getElementById(sectionId);
-  const table = section?.querySelector('.kit-cases__table');
-  if (!table) return;
-  const rows = table.querySelectorAll<HTMLTableRowElement>('tr[data-case]');
-  // 採点していない・forbidden で止まった（どの組も試していない）ときは、表を元の見た目に戻す
+function CaseTable({ cases, result }: { cases: string[][]; result: GradeResult | null }) {
   const paint = result !== null && !(result.failedTest === null && !result.passed);
-  rows.forEach((row) => {
-    const i = Number(row.dataset.case);
-    let cell = row.querySelector<HTMLTableCellElement>('.kit-cases__status');
-    if (!paint) {
-      cell?.remove();
-      row.classList.remove('is-case-pass', 'is-case-stop', 'is-case-wait');
-      return;
-    }
-    const status: 'pass' | 'stop' | 'wait' =
-      result!.passed || result!.failedTest === null || i < result!.failedTest
-        ? 'pass'
-        : i === result!.failedTest
-          ? 'stop'
-          : 'wait';
-    row.classList.remove('is-case-pass', 'is-case-stop', 'is-case-wait');
-    row.classList.add(`is-case-${status}`);
-    if (!cell) {
-      cell = document.createElement('td');
-      cell.className = 'kit-cases__status';
-      row.appendChild(cell);
-    }
-    const icon = status === 'pass' ? '✓' : status === 'stop' ? '✕' : '－';
-    const label = status === 'pass' ? '通った' : status === 'stop' ? 'ここで止まった' : 'まだ';
-    cell.innerHTML = '';
-    const iconEl = document.createElement('span');
-    iconEl.setAttribute('aria-hidden', 'true');
-    iconEl.textContent = icon;
-    cell.append(iconEl, document.createTextNode(` ${label}`));
-  });
+  /* 値の数が組ごとに違っても、縦の位置がそろうように。足りない分は最後の升が受ける */
+  const columns = Math.max(1, ...cases.map((values) => values.length));
+  return (
+    <div className="kit-cases">
+      <p className="kit-cases__label">判定に使う入力</p>
+      <table className="kit-cases__table">
+        <tbody>
+          {cases.map((values, i) => {
+            const status: 'pass' | 'stop' | 'wait' | null = !paint
+              ? null
+              : result!.passed || result!.failedTest === null || i < result!.failedTest
+                ? 'pass'
+                : i === result!.failedTest
+                  ? 'stop'
+                  : 'wait';
+            return (
+              <tr key={i} data-case={i} className={status ? `is-case-${status}` : undefined}>
+                <th scope="row">{i + 1}組目</th>
+                {values.length === 0 ? (
+                  <td className="kit-cases__none" colSpan={columns}>
+                    入力なし
+                  </td>
+                ) : (
+                  values.map((value, j) => (
+                    <td key={j} colSpan={j === values.length - 1 ? columns - values.length + 1 : 1}>
+                      {value}
+                    </td>
+                  ))
+                )}
+                {status ? (
+                  <td className="kit-cases__status">
+                    <span aria-hidden="true">{status === 'pass' ? '✓' : status === 'stop' ? '✕' : '－'}</span>{' '}
+                    {status === 'pass' ? '通った' : status === 'stop' ? 'ここで止まった' : 'まだ'}
+                  </td>
+                ) : null}
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  );
 }
 
 /**
@@ -128,7 +142,7 @@ function saveDraft(id: string, code: string | null): void {
   }
 }
 
-export default function ExerciseBox({ id, kind, starter, stdin, choices, syntax, nudge }: Props) {
+export default function ExerciseBox({ id, kind, starter, stdin, choices, syntax, nudge, cases }: Props) {
   const initial = starter ?? '';
   // 第0章の型（打つ練習・選ぶ練習）は Python を動かさない。
   // CodeMirror も Pyodide も通らない道にする（20-platform.md 第11.4節）
@@ -240,11 +254,6 @@ export default function ExerciseBox({ id, kind, starter, stdin, choices, syntax,
     setCode(draft);
     setResetSignal((n) => n + 1);
   }, [id]);
-
-  // 採点するたびに「判定に使う入力」の表を塗り直す（コーディネーターからの追加指示）
-  useEffect(() => {
-    paintCaseStatus(id, result);
-  }, [id, result]);
 
   /**
    * 質問の声かけの時計を1回だけ起こす（20-platform.md 第22.2節）。
@@ -517,10 +526,13 @@ export default function ExerciseBox({ id, kind, starter, stdin, choices, syntax,
         <p className="kit-ex__nudge">この問題を始めて10分たちました。近くの人や運営に聞いてみましょう。</p>
       ) : null}
 
+      {/* 判定に使う入力（第23.2節でコード欄の下に移した）。組ごとの状態も塗る（第22.4節） */}
+      {cases && cases.some((values) => values.length > 0) ? <CaseTable cases={cases} result={result} /> : null}
+
       {runOutput !== null ? (
         <div className="kit-out">
           <div className="kit-out__label">試した結果</div>
-          <pre className="kit-out__text">{runOutput === '' ? '（何も出ません）' : runOutput}</pre>
+          <pre className="kit-out__text">{runOutput}</pre>
         </div>
       ) : null}
 
@@ -605,7 +617,7 @@ function CaseNote({ result, kind, exercise }: { result: GradeResult; kind: Exerc
   if (f.kind === 'diff') {
     return (
       <p className="kit-verdict__case">
-        {ordinal}の入力{paren}で、期待した結果と違いました。
+        {ordinal}の入力{paren}で、正しい出力と違いました。
       </p>
     );
   }
@@ -636,12 +648,12 @@ function Verdict({ result, kind, exercise }: { result: GradeResult; kind: Exerci
     return (
       <div className="kit-verdict kit-verdict--pass">
         <strong>合格</strong>
-        <p>判定に使った入力すべてで、期待した結果になりました。</p>
+        <p>判定に使った入力すべてで、正しい出力になりました。</p>
         {result.runs && result.runs.length > 0 ? (
           result.runs.length === 1 && result.runs[0].input === '（入力なし）' ? (
             <div className="kit-out">
-              <div className="kit-out__label">出た結果</div>
-              <pre className="kit-out__text">{result.runs[0].output === '' ? '（何も出ません）' : result.runs[0].output}</pre>
+              <div className="kit-out__label">出力</div>
+              <pre className="kit-out__text">{result.runs[0].output}</pre>
             </div>
           ) : (
             <>
@@ -657,9 +669,9 @@ function Verdict({ result, kind, exercise }: { result: GradeResult; kind: Exerci
                         </td>
                       </tr>
                       <tr>
-                        <th>出た結果</th>
+                        <th>出力</th>
                         <td>
-                          <pre>{r.output === '' ? '（何も出ません）' : r.output}</pre>
+                          <pre>{r.output}</pre>
                         </td>
                       </tr>
                     </Fragment>
@@ -674,7 +686,7 @@ function Verdict({ result, kind, exercise }: { result: GradeResult; kind: Exerci
   }
   return (
     <div className="kit-verdict kit-verdict--fail">
-      <strong>まだ通っていません</strong>
+      <strong>不合格</strong>
       <CaseNote result={result} kind={kind} exercise={exercise} />
       {f.kind === 'no-answer' ? (
         <p>{f.mode === 'choose' ? 'まだ選んでいません。選択肢を1つ選んでください。' : '打つ欄が空です。見本のとおりに打ってください。'}</p>
@@ -760,15 +772,15 @@ function Verdict({ result, kind, exercise }: { result: GradeResult; kind: Exerci
               </td>
             </tr>
             <tr>
-              <th>期待した結果</th>
+              <th>正しい出力</th>
               <td>
-                <pre>{f.expect === '' ? '（何も出ません）' : f.expect}</pre>
+                <pre>{f.expect}</pre>
               </td>
             </tr>
             <tr>
-              <th>実際の結果</th>
+              <th>出力</th>
               <td>
-                <pre>{f.actual === '' ? '（何も出ません）' : f.actual}</pre>
+                <pre>{f.actual}</pre>
               </td>
             </tr>
           </tbody>

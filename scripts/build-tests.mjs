@@ -17,7 +17,7 @@
 import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { dirname, join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { parseLesson } from './parse-lesson.mjs';
+import { exampleLeak, parseLesson } from './parse-lesson.mjs';
 import { execPython } from './pyodide-node.mjs';
 import { buildSectionRefs, sectionHref, sectionLabel } from './section-refs.mjs';
 import { loadGlossary } from './glossary.mjs';
@@ -75,6 +75,20 @@ function squash(code) {
 function sameCode(a, b) {
   const x = squash(a);
   return x.length > 0 && x === squash(b);
+}
+
+/**
+ * 新しい形の組む問題（20-platform.md 第23.2節）で、問題文に出力例を手で書いていないか。
+ * 出力例は判定の1組目の期待値から画面が作る。check-lessons / check-weekly も
+ * 生成済みの lesson-data.json で同じことを見るが、そちらはこのスクリプトより先に走るので、
+ * いま作った期待値で見るのはここだけである（clone した直後は lesson-data.json が無い）。
+ */
+function checkExampleLeak(rel, e, tests) {
+  if (e.form !== 'new' || tests.length === 0) return;
+  const leak = exampleLeak(e.prompt, tests[0].expect);
+  if (leak) {
+    fail(`${rel}:${e.line}`, `${e.id} の問題文に出力例の「${leak}」がそのまま書いてあります。出力例は判定の1組目から自動で出すので、問題文からは消してください（第23.2節）`);
+  }
 }
 
 /** ``` で囲んだコードを拾う。例題の「打つコード」は問題文の中にある。 */
@@ -283,6 +297,8 @@ for (const file of files) {
       }
     }
 
+    checkExampleLeak(rel, e, tests);
+
     exercises[e.id] = {
       id: e.id,
       kind: e.kind,
@@ -458,6 +474,8 @@ if (existsSync(WEEKLY_DIR)) {
           fail(`${rel}:${e.line}`, `tests[${i}] の kind は stdout か call です: ${test.kind}`);
         }
       }
+
+      checkExampleLeak(rel, e, tests);
 
       exercises[e.id] = {
         id: e.id,

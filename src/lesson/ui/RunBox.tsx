@@ -50,7 +50,7 @@ export default function RunBox({ code, expected = '', stdin, broken = false, edi
       <div className={`kit-out${broken ? ' kit-out--err' : ''}`}>
         <div className="kit-out__label">{broken ? '出るエラー' : '実行結果'}</div>
         <pre className={`kit-out__text${waiting ? ' kit-out__text--wait' : ''}`}>
-          {waiting ? '▶ を押すと出ます' : showing === '' ? '（何も出ません）' : showing}
+          {waiting ? '▶ を押すと出ます' : showing}
         </pre>
       </div>
     </div>

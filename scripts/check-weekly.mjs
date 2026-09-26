@@ -13,6 +13,8 @@
  *   - 節への参照「第N章M節」の形と行き先（検査20 と同じ規則）
  *   - 構造は練習編と同じ「はじめに」＋「課題」（第19.2節）
  *   - 課題の id が一意で、教材（lessons）の節・課題の id と重複しないこと（Build 手順1）
+ *   - 確認問題（choose）を置かないこと、組む問題が問題文・入力・出力の形で書いてあること（第23章。
+ *     規則は scripts/problem-form.mjs。check-lessons の検査22 と同じ）
  *
  * 節（src/content/lessons）は一切書き換えない。読むだけ。
  *
@@ -23,6 +25,7 @@ import { join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { loadGlossary } from './glossary.mjs';
 import { parseLesson, plainText } from './parse-lesson.mjs';
+import { checkProblemForm, loadGeneratedExpect } from './problem-form.mjs';
 import { ABSTRACT, BANNED, LIMITS, boundaryKinds, countChars, splitSentences } from './lesson-rules.mjs';
 import { PYTHON_TOOLS } from './python-tools.mjs';
 import { buildSectionRefs } from './section-refs.mjs';
@@ -34,7 +37,8 @@ const SECTION_REFS = buildSectionRefs(LESSONS_DIR);
 
 /** 「はじめに」＋「課題」だけ（第15.1節の練習編と同じ形。第19.2節）。 */
 const WEEKLY_SECTION_ORDER = ['はじめに', '課題'];
-const WEEKLY_EXERCISE_KINDS = ['build', 'choose', 'type'];
+/* 確認問題（choose）は置かない（第23.1節。利用者「少し簡単すぎる」） */
+const WEEKLY_EXERCISE_KINDS = ['build', 'type'];
 
 function listMdx(dir) {
   if (!existsSync(dir)) return [];
@@ -84,6 +88,8 @@ for (const file of listMdx(LESSONS_DIR)) {
 }
 
 const glossary = loadGlossary();
+/** 判定の1組目の期待値（生成済みの lesson-data.json から。無ければ build:tests が見る） */
+const expectOf = loadGeneratedExpect();
 
 const weeklyFiles = listMdx(WEEKLY_DIR).sort();
 const seenWeeklyIds = new Map();
@@ -163,9 +169,16 @@ for (const file of weeklyFiles) {
       else seenWeeklyExerciseIds.set(e.id, rel);
       if (lessonExerciseIds.has(e.id)) add(rel, 4, e.line, `課題の id が教材の課題の id と重複しています: ${e.id}`);
     }
-    if (!WEEKLY_EXERCISE_KINDS.includes(e.kind)) {
-      add(rel, 4, e.line, `今週の演習の課題は build / choose / type のどれかです: ${e.kind}（第19.2節）`);
+    if (e.kind === 'choose') {
+      add(rel, 4, e.line, '今週の演習に確認問題（kind="choose"）は置きません（第23.1節）');
+    } else if (!WEEKLY_EXERCISE_KINDS.includes(e.kind)) {
+      add(rel, 4, e.line, `今週の演習の課題は build / type のどれかです: ${e.kind}（第19.2節・第23.1節）`);
     }
+    // 組む問題は問題文・入力・出力に分けて書く（第23.2節）。今週の演習には古い形を残さない
+    if (e.kind === 'build' && e.form !== 'new') {
+      add(rel, 22, e.line, '組む問題は <Input>（入力）と <Output>（出力）に分けて書きます（第23.2節）');
+    }
+    for (const message of checkProblemForm(e, expectOf(e.id))) add(rel, 22, e.line, message);
     if (e.kind === 'build' && e.starter) add(rel, 4, e.line, '「組む」課題にコードを渡してはいけません（starter を消してください）');
     if (e.hints.length === 0) {
       add(rel, 4, e.line, 'hints がありません。読めばよい節を「第N章M節」で書いてください（第19.1節）');

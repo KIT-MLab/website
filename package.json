@@ -11,6 +11,7 @@
     "check:weekly": "node scripts/check-weekly.mjs",
     "build:tests": "node scripts/build-tests.mjs",
     "report:combos": "node scripts/combos.mjs",
+    "report:weekly": "node scripts/report-weekly.mjs",
     "build": "npm run check:lessons && npm run check:weekly && npm run build:tests && astro build",
     "preview": "astro preview",
     "astro": "astro",

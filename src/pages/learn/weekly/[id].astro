@@ -16,6 +16,8 @@ export const prerender = false;
 import { getCollection, render } from 'astro:content';
 import Base from '../../../layouts/Base.astro';
 import WeeklyExercise from '../../../components/lesson/WeeklyExercise.astro';
+import Input from '../../../components/lesson/Input.astro';
+import Output from '../../../components/lesson/Output.astro';
 import NotesPanel from '../../../components/lesson/NotesPanel.astro';
 import SyntaxPanel from '../../../components/lesson/SyntaxPanel.astro';
 import { currentUser, serverConfig } from '../../../server/auth';
@@ -79,7 +81,7 @@ const syntaxCategories = showContent && entry ? await syntaxCategoriesFor(entry.
                 <h1 class="lesson-title">{entry.data.title}</h1>
                 <p class="lesson-top__meta">{entry.data.date} ・ 教材の進み具合（百分率）には数えません</p>
               </div>
-              <article class="lesson-body">{Content && <Content components={{ Exercise: WeeklyExercise }} />}</article>
+              <article class="lesson-body">{Content && <Content components={{ Exercise: WeeklyExercise, Input, Output }} />}</article>
             </div>
             {syntaxCategories.length > 0 && <SyntaxPanel categories={syntaxCategories} />}
           </div>
@@ -126,27 +128,30 @@ const syntaxCategories = showContent && entry ? await syntaxCategoriesFor(entry.
   </style>
 
   <style>
-    /* .lesson-page（lesson.css）の max-width: 720px を、構文の一覧ぶん広げる。
-       720（本文）＋ 28（間）＋ 272（欄。用語を検索の欄と同じ幅。第18.1節） */
+    /* .lesson-page（lesson.css）の max-width: 720px を広げる。本文の列は右の欄（構文の一覧）の
+       手前まで使う（20-platform.md 第23.3節。入力｜出力・入力例｜出力例を左右に並べるため）。
+       1240 は試作の案Aの幅。欄は 272px（用語を検索の欄と同じ幅。第18.1節） */
     .wk-page {
       margin: 0 auto;
-      max-width: 1020px;
+      max-width: 1240px;
     }
 
-    /* 構文の一覧（20-platform.md 第22.1節）。幅1280px以上は2カラム（本文720px＋欄272px）。
+    /* 構文の一覧（20-platform.md 第22.1節）。幅1280px以上は2カラム（本文＋欄272px）。
        それより狭い画面は縦に並べ、欄は問題の下に回る（drawer にはしない） */
     .wk-grid {
       display: block;
     }
 
-    .wk-grid__main {
-      max-width: 720px;
+    /* 節のページの本文は720px のまま（第23.3節）。ここだけ lesson.css の上限を外す */
+    .wk-grid__main,
+    .wk-grid__main :global(.lesson-body) {
+      max-width: none;
     }
 
     @media (min-width: 1280px) {
       .wk-grid {
         display: grid;
-        grid-template-columns: minmax(0, 720px) 272px;
+        grid-template-columns: minmax(0, 1fr) 272px;
         gap: 28px;
         align-items: start;
       }

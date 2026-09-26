@@ -15,6 +15,9 @@ import type { ExerciseKind } from '../../lesson/data';
 /* 画面に出す札。内部の呼び名（変える・組む・打つ・選ぶ）は学習者には見せない。
    表は src/lesson/exercise-place.ts に1つだけ置いてある（運営の画面も同じものを使う） */
 import { STAGE } from '../../lesson/exercise-place';
+/* 番号（第23.1節）と出力例（第23.2節）は、build:tests が作った判定データから引く。
+   手で書かない。番号は exerciseIds の並び（ページの中の表示の順）で決まる */
+import generated from '../../generated/lesson-data.json';
 
 type Test =
   | { kind: 'stdout'; stdin?: string }
@@ -76,11 +79,66 @@ function valuesOf(test: Test): string[] {
   return lines.map((line) => (line === '' ? '（空の行）' : line));
 }
 
-/* 1組が1行。組の区切りが目で分かることが要件（第3.1節）。 */
+/* 1組が1行。組の区切りが目で分かることが要件（第3.1節）。
+   表そのものはコード欄の下に置くので（第23.2節）、採点する島（ExerciseBox）が描く */
 const cases = kind === 'build' ? (tests ?? []).map(valuesOf) : [];
-const showCases = cases.some((values) => values.length > 0);
-/* 値の数が組ごとに違っても、縦の位置がそろうように。足りない分は最後の升が受ける */
-const columns = Math.max(1, ...cases.map((values) => values.length));
+
+/* --- 番号と判定データ（第23.1節・第23.2節） ---
+   節も今週の演習も、exerciseIds はページの中の <Exercise> の並びそのもの */
+type GenTest = { kind?: string; stdin?: string; fn?: string; args?: unknown[]; expect?: unknown };
+type GenSet = { exerciseIds?: string[]; exercises?: Record<string, { tests?: GenTest[] }> };
+const genSets = [
+  ...Object.values((generated as { lessons?: Record<string, GenSet> }).lessons ?? {}),
+  ...Object.values((generated as { weekly?: Record<string, GenSet> }).weekly ?? {}),
+];
+const ownSet = genSets.find((s) => (s.exerciseIds ?? []).includes(id));
+const number = ownSet ? (ownSet.exerciseIds ?? []).indexOf(id) + 1 : null;
+const firstTest = ownSet?.exercises?.[id]?.tests?.[0];
+
+/* --- 組む問題の問題文（第23.2節）: 問題文 → 入力｜出力 → 入力例｜出力例 ---
+   書き手は <Exercise> の中に、問題文の地の文と <Input> <Output> を書く（10-lesson 第3.11節）。
+   <Input> <Output> は印（<kit-part>）で包んで出てくるので、ここで切り分けて置き直す。
+   どちらも無い古い形は、いままでどおり中身をそのまま出す。 */
+let statementHtml = '';
+let inputHtml = '';
+let outputHtml = '';
+let structured = false;
+if (kind === 'build') {
+  const html = Astro.slots.has('default') ? await Astro.slots.render('default') : '';
+  const partRe = /<kit-part data-part="(input|output)">([\s\S]*?)<\/kit-part>/g;
+  for (const m of html.matchAll(partRe)) {
+    structured = true;
+    if (m[1] === 'input' && inputHtml === '') inputHtml = m[2].trim();
+    if (m[1] === 'output' && outputHtml === '') outputHtml = m[2].trim();
+  }
+  // 1行に <Input>なし</Input> と書くと段落に包まれることがある。抜いたあとの空の段落を落とす
+  statementHtml = html.replace(partRe, '').replace(/<p>\s*<\/p>/g, '').trim();
+}
+
+/** 1組目の入力例と出力例。stdout は入力欄と表示、call は呼び出しと返り値（第23.2節） */
+function stripEnd(text: string): string {
+  return text.endsWith('\n') ? text.slice(0, -1) : text;
+}
+let example: { inLabel: string; input: string | null; outLabel: string; output: string } | null = null;
+if (structured && firstTest && 'expect' in firstTest) {
+  if (firstTest.kind === 'call') {
+    example = {
+      inLabel: '呼び出し例',
+      input: `${firstTest.fn}(${(firstTest.args ?? []).map(showValue).join(', ')})`,
+      outLabel: '返り値',
+      output: showValue(firstTest.expect),
+    };
+  } else if (firstTest.kind === 'stdout') {
+    const stdinText = typeof firstTest.stdin === 'string' ? stripEnd(firstTest.stdin) : '';
+    example = {
+      inLabel: '入力例',
+      // 入力が無い問題は入力例を出さない（入力は「なし」と書いてある）
+      input: typeof firstTest.stdin === 'string' && firstTest.stdin !== '' ? stdinText : null,
+      outLabel: '出力例',
+      output: stripEnd(String(firstTest.expect ?? '')),
+    };
+  }
+}
 
 /* 「選ぶ練習」の選択肢は、問題文の中の箇条書き（<li>）として書かれる（第11.4節）。
    最後の箇条書きを問題文から抜き、番号を振って選べる形にして島に渡す。
@@ -100,42 +158,63 @@ if (kind === 'choose') {
 ---
 
 <section class={`kit-ex kit-ex--${kind}`} id={id}>
-  <p class="kit-ex__stage">{STAGE[kind] ?? kind}</p>
+  {/* 帯は呼び名＋ページの中の通し番号（第23.1節）。番号が引けなければ呼び名だけ */}
+  <p class="kit-ex__stage">
+    {STAGE[kind] ?? kind}{number !== null && <span class="kit-ex__no">{number}</span>}
+  </p>
   <div class="kit-ex__in">
     {
-      kind === 'choose' ? (
+      structured ? (
+        <div class="kit-ps">
+          <div class="kit-ps__sec">
+            <h3 class="kit-ps__h">問題文</h3>
+            <div class="kit-ex__prompt" set:html={statementHtml} />
+          </div>
+          <div class="kit-ps__pair">
+            <div class="kit-ps__sec">
+              <h3 class="kit-ps__h">入力</h3>
+              <div class="kit-ex__prompt" set:html={inputHtml} />
+            </div>
+            <div class="kit-ps__sec">
+              <h3 class="kit-ps__h">出力</h3>
+              <div class="kit-ex__prompt" set:html={outputHtml} />
+            </div>
+          </div>
+          {example && (
+            <div class="kit-ps__pair">
+              {example.input !== null && (
+                <div class="kit-ps__sec">
+                  <h3 class="kit-ps__h">{example.inLabel}</h3>
+                  <pre class="kit-ps__box">{example.input}</pre>
+                </div>
+              )}
+              <div class="kit-ps__sec">
+                <h3 class="kit-ps__h">{example.outLabel}</h3>
+                <pre class="kit-ps__box">{example.output}</pre>
+              </div>
+            </div>
+          )}
+        </div>
+      ) : kind === 'choose' ? (
         <div class="kit-ex__prompt" set:html={promptHtml} />
+      ) : kind === 'build' ? (
+        <div class="kit-ex__prompt" set:html={statementHtml} />
       ) : (
         <div class="kit-ex__prompt">
           <slot />
         </div>
       )
     }
-    {
-      showCases && (
-        <div class="kit-cases">
-          <p class="kit-cases__label">判定に使う入力</p>
-          <table class="kit-cases__table">
-            <tbody>
-              {cases.map((values, i) => (
-                <tr data-case={i}>
-                  <th scope="row">{i + 1}組目</th>
-                  {values.length === 0 ? (
-                    <td class="kit-cases__none" colspan={columns}>
-                      入力なし
-                    </td>
-                  ) : (
-                    values.map((value, j) => (
-                      <td colspan={j === values.length - 1 ? columns - values.length + 1 : 1}>{value}</td>
-                    ))
-                  )}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )
-    }
-    <ExerciseBox client:load id={id} kind={kind} starter={starter} stdin={stdin} choices={choices} syntax={syntax} nudge={nudge} />
+    <ExerciseBox
+      client:load
+      id={id}
+      kind={kind}
+      starter={starter}
+      stdin={stdin}
+      choices={choices}
+      syntax={syntax}
+      nudge={nudge}
+      cases={cases}
+    />
   </div>
 </section>

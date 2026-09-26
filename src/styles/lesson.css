@@ -444,6 +444,8 @@
   white-space: pre-wrap;
   word-break: break-word;
   overflow-x: auto;
+  /* 何も出なかったときは空の枠を出す（「何も出ません」とは書かない）。1行ぶんの高さは残す */
+  min-height: calc(1.85em + 26px);
 }
 
 .kit-out--err .kit-out__text {
@@ -739,6 +741,62 @@
 
 .kit-ex__prompt p:last-child {
   margin-bottom: 0;
+}
+
+/* 帯の番号（20-platform.md 第23.1節。「演習問題 3」）。試作の案Aと同じく、数だけ等幅にして
+   字間を詰める。札は増やさない（第10.6節）。帯の中の文字が1つ増えるだけ */
+.kit-ex__no {
+  margin-left: 0.3em;
+  font-family: var(--font-mono);
+  font-weight: 500;
+  letter-spacing: 0;
+}
+
+/* --- 組む問題の問題文（20-platform.md 第23.2節。試作の案A＋入力と出力を左右に） ---
+ * 問題文 → 入力｜出力 → 入力例｜出力例。見出しは素地の明朝に細い罫。札にしない（第10.6節）。
+ * 左右の組は、2つ並べる幅（1つ240px）が無ければ縦に積む。狭い画面の横スクロールを出さない。
+ * ------------------------------------------------------------ */
+.kit-ps__sec {
+  min-width: 0;
+  margin: 0 0 16px;
+}
+
+.kit-ps .kit-ps__h {
+  margin: 0 0 6px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--l-rule);
+  font-family: "Zen Old Mincho", serif;
+  font-weight: 700;
+  font-size: 16px;
+  line-height: 1.6;
+  letter-spacing: 0.08em;
+}
+
+.kit-ps__pair {
+  display: grid;
+  /* min(…, 100%): 箱が240pxより狭い画面でも、欄が箱からはみ出さないように */
+  grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr));
+  gap: 0 20px;
+}
+
+.kit-ps .kit-ex__prompt ul,
+.kit-ps .kit-ex__prompt ol {
+  margin: 0 0 0.4em;
+}
+
+/* 入力例・出力例。判定の1組目から自動で作る。紙より明るい面に等幅（黒い面はコードと実行結果だけ） */
+.kit-ps__box {
+  margin: 0;
+  padding: 8px 12px;
+  background: var(--l-card);
+  border: 1px solid var(--l-rule);
+  font-family: var(--font-mono);
+  font-size: 14.5px;
+  line-height: 1.7;
+  white-space: pre;
+  overflow-x: auto;
+  /* 出力が空でも枠の高さを残す */
+  min-height: calc(1.7em + 18px);
 }
 
 /* --- 判定に使う入力（「組む」だけ） --------------------------
@@ -1123,6 +1181,8 @@
   word-break: break-word;
   background: var(--l-chip);
   padding: 4px 8px;
+  /* 何も出なかったときも、空の枠として1行ぶんの高さを残す */
+  min-height: calc(1.7em + 8px);
 }
 
 .kit-hints {

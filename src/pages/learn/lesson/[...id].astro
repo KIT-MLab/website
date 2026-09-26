@@ -18,6 +18,8 @@ import Base from '../../../layouts/Base.astro';
 import Run from '../../../components/lesson/Run.astro';
 import Mistake from '../../../components/lesson/Mistake.astro';
 import Exercise from '../../../components/lesson/Exercise.astro';
+import Input from '../../../components/lesson/Input.astro';
+import Output from '../../../components/lesson/Output.astro';
 import Level0 from '../../../components/lesson/Level0.astro';
 import Figure from '../../../components/lesson/Figure.astro';
 import Keys from '../../../components/lesson/Keys.astro';
@@ -147,7 +149,7 @@ const notes = isStaff && entry && config ? await notesForLesson(config.db, entry
         </div>
 
         <article class="lesson-body" data-exq={oneAtATime}>
-          <Content components={{ Run, Mistake, Exercise, Level0, Keys, Figure, Secant, Descent, FitLine, Boundary, Overfit }} />
+          <Content components={{ Run, Mistake, Exercise, Input, Output, Level0, Keys, Figure, Secant, Descent, FitLine, Boundary, Overfit }} />
 
           <nav class="lesson-nav" aria-label="節の移動">
             {prev ? <a href={lessonHref(prev.id)}>← 前の節へ　{prev.data.title}</a> : <span class="lesson-nav__spacer" />}

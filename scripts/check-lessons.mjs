@@ -7,6 +7,7 @@
  *
  * 検査20（節への参照が「第N章M節」の形で行き先が実在すること）は20-platform.md 第15.2節、
  * 検査21（章のディレクトリがどれかの部に属していること）は同 第17.1節で足した。
+ * 検査22（組む問題の問題文・入力・出力の形）は同 第23.2節で足した。新しい形で書いた問題だけを見る。
  *
  *   node scripts/check-lessons.mjs
  */
@@ -14,7 +15,8 @@ import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { dirname, join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { glossaryWords, loadGlossary } from './glossary.mjs';
-import { parseLesson, plainText } from './parse-lesson.mjs';
+import { exampleLeak, parseLesson, plainText } from './parse-lesson.mjs';
+import { checkProblemForm, loadGeneratedExpect } from './problem-form.mjs';
 import {
   ABSTRACT,
   BANNED,
@@ -95,6 +97,11 @@ const seenLessonIds = new Map();
 const seenExerciseIds = new Map();
 /** 検査16・17 用。節の並び順に、その節が持つ Python のコードを貯める */
 const codeOf = [];
+/** 検査22 用。判定の1組目の期待値（生成済みの lesson-data.json から。無ければ見ない） */
+const expectOf = loadGeneratedExpect();
+/** 組む問題のうち、新しい形・古い形の数と、古い形で問題文に出力例が入っている数（数えるだけ） */
+const formCount = { new: 0, old: 0 };
+let oldLeakCount = 0;
 
 for (const file of files) {
   const rel = relative(ROOT, file).replace(/\\/g, '/');
@@ -337,6 +344,17 @@ for (const file of files) {
     // 手で書くと隠しテストとずれても誰も気づかないので、問題文には書かせない。
     if (e.prompt.includes('判定に使う入力')) {
       add(5, e.line, '問題文に「判定に使う入力」を手で書いています。tests から機械が組んで出すので消してください');
+    }
+  }
+
+  /* --- 検査22 組む問題の問題文の形（20-platform.md 第23.2節） ---
+     新しい形（<Input> と <Output> を使うもの）で書いた問題だけを見る。古い形の節は
+     第2段階でまとめて直すので、いまは落とさずに数だけ最後に出す */
+  for (const e of ex) {
+    for (const message of checkProblemForm(e, expectOf(e.id))) add(22, e.line, message);
+    if (e.kind === 'build') {
+      formCount[e.form]++;
+      if (e.form === 'old' && e.tests[0] && exampleLeak(e.prompt, expectOf(e.id))) oldLeakCount++;
     }
   }
 
@@ -658,6 +676,12 @@ for (const file of files) {
     }
   }
 }
+
+/* 第2段階（教材の組む問題を新しい形に直す）の残り。落とさずに数だけ出す */
+console.log(
+  `check:lessons  組む問題 ${formCount.new + formCount.old}問のうち、古い形（<Input>/<Output> なし）が${formCount.old}問` +
+    `（うち問題文に出力例がそのまま入っているもの${oldLeakCount}問${expectOf.available ? '' : '。lesson-data.json が無いので数えていません'}）`,
+);
 
 if (problems.length === 0) {
   console.log(`check:lessons  ${files.length}節を検査して問題なし`);

@@ -140,6 +140,56 @@ export function evalAttribute(attr) {
   return new Function(`return (${attr.raw});`)();
 }
 
+/**
+ * 組む問題の問題文の形（20-platform.md 第23.2節）。<Exercise> の中身から
+ * <Input>…</Input> と <Output>…</Output> を切り分け、残りを「問題文」にする。
+ *
+ * どちらも無ければ古い形（form: 'old'）で、statement は中身そのまま。
+ * 数えるのは、書き手が2回書いたときに検査で落とすため（画面は最初の1つしか出さない）。
+ */
+export function splitProblemParts(children) {
+  const text = String(children ?? '');
+  const parts = {};
+  let statement = text;
+  for (const name of ['Input', 'Output']) {
+    const re = new RegExp(`<${name}>([\\s\\S]*?)</${name}>`, 'g');
+    const found = [...text.matchAll(re)];
+    parts[name] = { count: found.length, text: found[0] ? found[0][1].trim() : '' };
+    statement = statement.replace(re, '');
+  }
+  const form = parts.Input.count > 0 || parts.Output.count > 0 ? 'new' : 'old';
+  return {
+    form,
+    statement: statement.replace(/\n{3,}/g, '\n\n').trim(),
+    input: parts.Input.text,
+    output: parts.Output.text,
+    inputCount: parts.Input.count,
+    outputCount: parts.Output.count,
+  };
+}
+
+/**
+ * 問題文に、出力例（判定の1組目の期待値）がそのまま書いてあるか（20-platform.md 第23.2節）。
+ * 出力例は判定の1組目から自動で出すので、問題文に手で書くと二重になり、片方だけ直したずれに
+ * 誰も気づかない（10-lesson 第3.1節と同じ理由）。
+ *
+ * 見方: 期待値の各行（前後の空白を除いて4文字以上）が、問題文の読む文字の中にそのまま
+ * 出てくるか。4文字未満の行（`秀` や `12` など）は、決まりを書いた文にも自然に出てくるので見ない。
+ * 見つかった行を返す。無ければ null。
+ */
+export function exampleLeak(statement, expect) {
+  const lines = [];
+  if (typeof expect === 'string') lines.push(...expect.split('\n'));
+  else if (expect !== undefined && expect !== null) lines.push(...JSON.stringify(expect).split('\n'));
+  const plain = plainText(String(statement ?? ''));
+  for (const raw of lines) {
+    const line = raw.trim();
+    if ([...line].length < 4) continue;
+    if (plain.includes(line)) return line;
+  }
+  return null;
+}
+
 /** 部品（<Run> など）をすべて拾う。 */
 function findComponents(body) {
   const found = [];
@@ -282,6 +332,9 @@ export function parseLesson(source, file) {
         rawAttrs: c.attrs,
       });
     } else if (c.name === 'Exercise') {
+      /* 組む問題の新しい形（第23.2節）では、prompt は「問題文」だけになる。
+         入力・出力は input / output に分ける。古い形では prompt は中身そのまま */
+      const parts = splitProblemParts(c.children);
       exercises.push({
         section,
         line: c.line,
@@ -295,7 +348,12 @@ export function parseLesson(source, file) {
         hints: evalAttribute(c.attrs.hints) ?? [],
         mistakes: evalAttribute(c.attrs.mistakes) ?? [],
         forbid: evalAttribute(c.attrs.forbid) ?? [],
-        prompt: c.children.trim(),
+        prompt: parts.statement,
+        form: parts.form,
+        input: parts.input,
+        output: parts.output,
+        inputCount: parts.inputCount,
+        outputCount: parts.outputCount,
         rawAttrs: c.attrs,
       });
     } else if (c.name === 'Level0') {
@@ -394,6 +452,12 @@ export function parseLesson(source, file) {
   for (const e of exercises) {
     for (const p of paragraphsOf(e.prompt)) {
       allParagraphs.push({ section: '課題', text: p, where: `<Exercise id="${e.id}">` });
+    }
+    // 新しい形の「入力」「出力」も、学習者が読む文章なので同じ規則で見る
+    for (const [label, text] of [['入力', e.input], ['出力', e.output]]) {
+      for (const p of paragraphsOf(text)) {
+        allParagraphs.push({ section: '課題', text: p, where: `<Exercise id="${e.id}"> の${label}` });
+      }
     }
   }
   for (const l of level0) {
