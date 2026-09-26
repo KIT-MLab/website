@@ -7,7 +7,7 @@ chapters: ['00-start', '01-python', '02-numbers', '03-branch', '04-loop', '04p-p
 
 {/* はじめに */}
 
-第5章から第6章までの範囲で4問です。教材をまだ進めていなくても、問題に書いてある節を読めば解けます。困ったら、下に出るヒントも使ってください。
+第5章から第6章までの範囲で6問です。教材をまだ進めていなくても、問題に書いてある節を読めば解けます。困ったら、下に出るヒントも使ってください。
 
 {/* 課題 */}
 
@@ -74,6 +74,38 @@ chapters: ['00-start', '01-python', '02-numbers', '03-branch', '04-loop', '04p-p
 </Exercise>
 
 <Exercise
+  id="weekly-2026-10-13-b5"
+  kind="build"
+  stdin={`3
+100`}
+  tests={[
+    { kind: 'stdout', stdin: `3\n100\n` },
+    { kind: 'stdout', stdin: `1\n0\n` },
+    { kind: 'stdout', stdin: `0\n50\n` },
+    { kind: 'stdout', stdin: `5\n500\n` },
+  ]}
+  hints={[
+    '関数の3つ目の引数まで渡しつつ2つ目は既定値のままにするには、3つ目を名前を書いて渡します。',
+    '名前を書いて引数を渡す書き方は、第5章4節（名前を書いて引数を渡す）を読んでください。',
+  ]}
+  mistakes={[]}
+  syntax={['function']}
+>
+アイスの代金を返す関数 `ice_cream_bill` を書いてください。引数は `count`、`price`（既定値300円）、`topping_fee` です。`price` は1個あたりの値段、`topping_fee` はトッピングの追加料金です。
+
+読み取った個数とトッピングの追加料金を使います。`price` は既定値のまま、`topping_fee` だけ指定して呼び出してください。
+
+<Input>
+- 1行目: 個数（整数）
+- 2行目: トッピングの追加料金（整数）
+</Input>
+
+<Output>
+呼び出した結果（代金）を1行で表示します。
+</Output>
+</Exercise>
+
+<Exercise
   id="weekly-2026-10-13-b3"
   kind="build"
   stdin={`3
@@ -87,13 +119,15 @@ chapters: ['00-start', '01-python', '02-numbers', '03-branch', '04-loop', '04p-p
     { kind: 'stdout', stdin: `4\n5\n5\n5\n5\n` },
   ]}
   hints={[
-    '数える処理を関数にまとめ、既定値としきい値を上書きした呼び出しの両方に使います。第5章3節（引数と既定値）と第4章2節（リストで値をまとめて持つ）を読んでください。',
+    '数える処理を関数にまとめ、しきい値を変えて2回呼び出します。第5章1節（defで関数を作る）と第4章2節（リストで値をまとめて持つ）を読んでください。',
     'for文の中でif文を使って、条件に合うときだけ数を増やします。第4章1節（for文で繰り返す）を読んでください。',
   ]}
   mistakes={[]}
   syntax={['function', 'list', 'for', 'compare']}
 >
-関数 `heavy_readers(counts, threshold=5)` を書いてください。`counts` は1か月に借りた本の冊数のリストです。冊数が `threshold` 以上だった人数を返します。
+関数 `heavy_readers(counts, threshold)` を書いてください。`counts` は1か月に借りた本の冊数のリストです。冊数が `threshold` 以上だった人数を返します。
+
+読み取った冊数のリストを使って、しきい値が `5` のときと `3` のときの両方で呼び出してください。
 
 <Input>
 - 1行目: 人数（整数）
@@ -101,7 +135,7 @@ chapters: ['00-start', '01-python', '02-numbers', '03-branch', '04-loop', '04p-p
 </Input>
 
 <Output>
-既定のしきい値（5冊）での人数と、しきい値を `3` にしたときの人数を、この順に2行で表示します。形は出力例のとおりです。
+しきい値が5のときの人数と、3のときの人数を、この順に2行で表示します。形は出力例のとおりです。
 </Output>
 </Exercise>
 
@@ -137,4 +171,32 @@ chapters: ['00-start', '01-python', '02-numbers', '03-branch', '04-loop', '04p-p
 
 最後に、`"注意"` だった日数を表示します。形は出力例のとおりです。
 </Output>
+</Exercise>
+
+<Exercise
+  id="weekly-2026-10-13-m1"
+  kind="modify"
+  starter={`def total_score(math_score, science_score, english_score):
+    return math_score + science_score + english_socre
+
+m = int(input())
+s = int(input())
+e = int(input())
+print(total_score(m, s, e))`}
+  stdin={`100
+70
+0`}
+  tests={[
+    { kind: 'stdout', stdin: `100\n70\n0\n` },
+    { kind: 'stdout', stdin: `0\n0\n0\n` },
+    { kind: 'stdout', stdin: `50\n50\n50\n` },
+  ]}
+  hints={[
+    '実行すると出るエラーの、いちばん下の行を読んでください。第6章1節（エラーメッセージの読み方）を読んでください。',
+    '定義したときの名前と、returnの行で使っている名前を見比べてください。第6章2節（SyntaxErrorとNameError）を読んでください。',
+  ]}
+  mistakes={[]}
+  syntax={['function', 'errors']}
+>
+3教科の合計点を返す関数 `total_score` を実行すると、エラーになります。`170` と表示されるように、直してください。
 </Exercise>

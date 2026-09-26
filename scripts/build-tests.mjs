@@ -407,7 +407,8 @@ if (existsSync(WEEKLY_DIR)) {
     const solutions = [];
     for (const e of lesson.exercises) {
       let solution = null;
-      if (e.kind === 'build') {
+      /* build に加えて modify も（第6章以降、エラーになるコードを直す練習問題。第24.3節） */
+      if (e.kind === 'build' || e.kind === 'modify') {
         const solutionPath = join(WEEKLY_SOLUTIONS_DIR, `${e.id}.py`);
         try {
           solution = readFileSync(solutionPath, 'utf8');

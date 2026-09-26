@@ -38,7 +38,8 @@ const SECTION_REFS = buildSectionRefs(LESSONS_DIR);
 /** 「はじめに」＋「課題」だけ（第15.1節の練習編と同じ形。第19.2節）。 */
 const WEEKLY_SECTION_ORDER = ['はじめに', '課題'];
 /* 確認問題（choose）は置かない（第23.1節。利用者「少し簡単すぎる」） */
-const WEEKLY_EXERCISE_KINDS = ['build', 'type'];
+/* 第6章（エラーを読む）以降は、エラーになるコードを直す「変える」（modify）を1問置く（第24.3節） */
+const WEEKLY_EXERCISE_KINDS = ['build', 'type', 'modify'];
 
 function listMdx(dir) {
   if (!existsSync(dir)) return [];

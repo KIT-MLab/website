@@ -1,4 +1,4 @@
-def heavy_readers(counts, threshold=5):
+def heavy_readers(counts, threshold):
     result = 0
     for value in counts:
         if value >= threshold:
@@ -10,5 +10,5 @@ counts = []
 for i in range(n):
     counts.append(int(input()))
 
-print(f"5冊以上 {heavy_readers(counts)}人")
-print(f"3冊以上 {heavy_readers(counts, 3)}人")
+print(heavy_readers(counts, 5))
+print(heavy_readers(counts, 3))
