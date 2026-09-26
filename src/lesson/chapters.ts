@@ -1,6 +1,6 @@
 // @ts-expect-error 部の表は .mjs 側に1つだけ置く（scripts/parts.mjs）。TypeScript の型検査は
 // どこでも走っていない（design/HANDOFF.md 第5章）ので、.mjs をそのまま読む
-import { PARTS as PARTS_RAW, partOfChapter as partOfChapterRaw, writtenParts as writtenPartsRaw } from '../../scripts/parts.mjs';
+import { INTRO_CHAPTER as INTRO_CHAPTER_RAW, PARTS as PARTS_RAW, partOfChapter as partOfChapterRaw, writtenParts as writtenPartsRaw } from '../../scripts/parts.mjs';
 
 /**
  * 部（20-platform.md 第17.1節）。書いてある部は chapters、準備中の部は count を持つ。
@@ -10,6 +10,8 @@ import { PARTS as PARTS_RAW, partOfChapter as partOfChapterRaw, writtenParts as 
 export type Part = { name: string; chapters: string[]; totalChapters?: number } | { name: string; count: number };
 
 export const PARTS: Part[] = PARTS_RAW;
+/** 機械学習の入口の章（design/spec/53-ml-intro.md）。表は scripts/parts.mjs に1つだけ置く */
+export const INTRO_CHAPTER: string = INTRO_CHAPTER_RAW;
 export const writtenParts: () => Extract<Part, { chapters: string[] }>[] = writtenPartsRaw;
 export const partOfChapter: (chapter: string) => Extract<Part, { chapters: string[] }> | null = partOfChapterRaw;
 
@@ -30,6 +32,7 @@ export const CHAPTER_TITLES: Record<string, string> = {
   '06-error': '第6章 エラーを読む',
   '07-array': '第7章 数をまとめて扱う',
   '08-table': '第8章 表の形を扱う',
+  '08q-mlintro': '機械学習の入口',
   '09-matrix': '第9章 ベクトルと行列',
   '10-slope': '第10章 変化率と傾き',
   '11-probability': '第11章 確率の初歩',
@@ -54,11 +57,19 @@ export function practiceNo(chapter: string): number | null {
   return m ? Number(m[1]) : null;
 }
 
+/** 機械学習の入口の章か（design/spec/53-ml-intro.md）。 */
+export function isIntroChapter(chapter: string): boolean {
+  return chapter === INTRO_CHAPTER;
+}
+
 /**
- * 練習編の節の呼び方。章の中の n 番目（1から）の節を「練習1-2」と呼ぶ（第15.1節）。
- * 練習編でなければ null。ほかの章の呼び方（「7.2」「第7章2節」）は画面ごとに違うので、呼ぶ側が作る。
+ * 章の番号を持たない章の節の呼び方。章の中の n 番目（1から）の節を、練習編は「練習1-2」
+ * （第15.1節）、機械学習の入口は「入口2」と呼ぶ（design/spec/53-ml-intro.md 第2節）。
+ * どちらでもなければ null。ほかの章の呼び方（「7.2」「第7章2節」）は画面ごとに違うので、呼ぶ側が作る。
+ * 同じ呼び方を scripts/section-refs.mjs の sectionLabel も作る。
  */
 export function practiceSectionLabel(chapter: string, n: number): string | null {
+  if (isIntroChapter(chapter)) return `入口${n}`;
   const practice = practiceNo(chapter);
   return practice !== null ? `練習${practice}-${n}` : null;
 }

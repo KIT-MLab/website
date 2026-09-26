@@ -1,0 +1,57 @@
+---
+/**
+ * <Facilitate> — 集まりの進め方（design/spec/53-ml-intro.md 第4節）。**運営にだけ見える。**
+ *
+ * 機械学習の入口の各節の先頭（frontmatter のすぐあと）に置く。中身は4つ:
+ * 最初の問いかけ / 答え合わせで言うこと / 次につなげる問い / よく詰まるところ。
+ *
+ * **このコンポーネント自身はロールを見ない。**節のページ（src/pages/learn/lesson/[...id].astro）が
+ * 運営・管理者にだけこの部品を渡し、それ以外の人には中身を描かない FacilitateHidden.astro を渡す
+ * （第13.2節と同じく、運営でない人には1文字も送らない）。
+ *
+ * 見た目は、節のページの「運営だけに見えています。」の帯（.lesson-staffnote）と同じ琥珀の枠と明るい地。
+ * 検査（scripts/parse-lesson.mjs の withoutFacilitate）と検索の索引からは外してある。
+ */
+---
+
+<aside class="kit-facilitate" aria-label="集まりの進め方">
+  <p class="kit-facilitate__h">集まりの進め方（運営だけに見えます）</p>
+  <div class="kit-facilitate__body"><slot /></div>
+</aside>
+
+<style>
+  .kit-facilitate {
+    margin: 0 0 32px;
+    padding: 14px 18px 6px;
+    color: var(--l-ink);
+    background: var(--l-card);
+    border: 1px solid var(--l-kohaku);
+  }
+
+  .kit-facilitate__h {
+    margin: 0 0 8px;
+    font-size: 13.5px;
+    line-height: 1.6;
+    letter-spacing: 0.06em;
+    color: var(--l-kohaku);
+  }
+
+  .kit-facilitate__body {
+    font-size: 15px;
+    line-height: 1.8;
+  }
+
+  .kit-facilitate__body :global(p) {
+    margin: 12px 0 2px;
+    text-indent: 0;
+  }
+
+  .kit-facilitate__body :global(ul) {
+    margin: 0 0 8px;
+    padding-left: 1.4em;
+  }
+
+  .kit-facilitate__body :global(li) {
+    margin: 2px 0;
+  }
+</style>

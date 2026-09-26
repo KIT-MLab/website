@@ -213,6 +213,8 @@ Windows の git が作業ファイルを CRLF で書き出す。**読む側で�
 - **`SESSION_SECRET` の中身を出力しない。** `/api/health` は有無だけを返す
 - **本番の書き込む口（`/api/register` など）を、反映を待ちながらくり返し叩かない。** 2026-09-25、閉じた招待コードが断られるかを反映待ちの間くり返し送り、反映前の古い仕組みに受け付けられて試しのアカウントが1つできた（利用者に消してもらった）。反映は `/api/health` など読むだけの口で待ち、書き込む口は反映を確かめてから1回だけ送る
 - **登録まわりのように本番のデータベースの変更が要るものは、利用者が migration を当ててから push する。**先に push すると、表が無くて登録が止まる
+- **ほかの書き手が作業中の木から一部だけ出すときは、index だけを一時フォルダに出して確かめる**（`git checkout-index -a --prefix=<一時>/` ＋ node_modules へのジャンクション）。**片付けでジャンクションを `Remove-Item` しない。** PowerShell 5.1 は `-Force` だけだと確認待ちで止まり、`-Recurse` だと**つながった先の本物の node_modules の中身まで消す**。先に `[System.IO.Directory]::Delete(<ジャンクション>)` でリンクだけ消し、そのあと一時フォルダを消す（2026-09-26 に危うく消しかけた）
+- push のあと Workers Builds が動かないことがある（2026-09-26、GitHub に check run が付かなかった）。`gh api repos/KIT-MLab/website/commits/<sha>/check-runs` で確かめ、付かなければ空の commit で押し直す
 
 ---
 

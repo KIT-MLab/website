@@ -9,7 +9,7 @@
  */
 import { getCollection } from 'astro:content';
 import Base from '../../layouts/Base.astro';
-import { PARTS, chapterTitle, lessonHref, practiceSectionLabel } from '../../lesson/chapters';
+import { PARTS, chapterTitle, isIntroChapter, lessonHref, practiceSectionLabel } from '../../lesson/chapters';
 import { sectionLabel } from '../../../scripts/section-refs.mjs';
 import generated from '../../generated/lesson-data.json';
 
@@ -47,7 +47,8 @@ const sections: SectionView[] = lessons.map((l) => {
     title: l.data.title,
     minutes: l.data.minutes,
     exerciseIds: genLessons[l.data.id]?.exerciseIds ?? [],
-    // 表示は「1. 題」の形（リストの数字）。練習編は「練習1-2」（20-platform.md 第15.4節のまま）
+    // 表示は「1. 題」の形（リストの数字）。練習編は「練習1-2」（20-platform.md 第15.4節のまま）、
+    // 機械学習の入口は「入口2」（design/spec/53-ml-intro.md）
     numberLabel: practiceNumber ?? `${idx + 1}.`,
   };
 });
@@ -56,12 +57,14 @@ type ChapterView = {
   chapter: string;
   title: string;
   isPractice: boolean;
+  /** 機械学習の入口（章の番号を持たない。isPractice と同じく節を「入口2」と呼ぶ） */
+  isIntro: boolean;
   total: number;
   sections: SectionView[];
 };
 
 type PartView =
-  | { kind: 'written'; name: string; chapters: ChapterView[]; total: number; totalChapters: number }
+  | { kind: 'written'; name: string; chapters: ChapterView[]; total: number; totalChapters: number; sectionCount: number }
   | { kind: 'soon'; name: string; count: number };
 
 const partViews: PartView[] = PARTS.map((part) => {
@@ -72,18 +75,22 @@ const partViews: PartView[] = PARTS.map((part) => {
       chapter,
       title: chapterTitle(chapter),
       isPractice: practiceSectionLabel(chapter, 1) !== null,
+      isIntro: isIntroChapter(chapter),
       total: chSections.reduce((n, s) => n + s.exerciseIds.length, 0),
       sections: chSections,
     };
   });
   // totalChapters が無ければ、書けている章だけで全部（chapters.filter の数と同じ）
   const writtenChapterCount = chapters.filter((c) => !c.isPractice).length;
+  // 機械学習の入口の部は章の番号を持たないので、章の数ではなく節の数を添える
+  const sectionCount = chapters.reduce((n, c) => n + c.sections.length, 0);
   return {
     kind: 'written',
     name: part.name,
     chapters,
     total: chapters.reduce((n, c) => n + c.total, 0),
     totalChapters: part.totalChapters ?? writtenChapterCount,
+    sectionCount,
   };
 });
 
@@ -164,9 +171,9 @@ const dataJson = JSON.stringify(sections).replace(/</g, '\\u003c');
                 </span>
                 <span class="lp-part__name">
                   {part.name}
-                  <small>{part.totalChapters}章{
+                  <small>{part.chapters.every((c) => c.isIntro) ? `${part.sectionCount}節` : `${part.totalChapters}章${
                     part.chapters.some((c) => c.isPractice) ? `・練習編${part.chapters.filter((c) => c.isPractice).length}` : ''
-                  }</small>
+                  }`}</small>
                 </span>
                 <span class="lp-meter" data-meter-part={pi}>
                   <span class="lp-meter__track">

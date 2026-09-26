@@ -5,7 +5,7 @@
  * 機械判定できる項目（20-platform.md 第2.4節。検査19までがそこにある）を検査する。
  * 1つでも落ちたら終了コード1を返す。この検査はビルドの前に走り、失敗したらビルドを止める。
  *
- * 検査20（節への参照が「第N章M節」の形で行き先が実在すること）は20-platform.md 第15.2節、
+ * 検査20（節への参照が「第N章M節」（機械学習の入口は「入口2」）の形で行き先が実在すること）は20-platform.md 第15.2節、
  * 検査21（章のディレクトリがどれかの部に属していること）は同 第17.1節で足した。
  * 検査22（組む問題の問題文・入力・出力の形）は同 第23.2節で足した。新しい形で書いた問題だけを見る。
  *
@@ -15,7 +15,7 @@ import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { dirname, join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { glossaryWords, loadGlossary } from './glossary.mjs';
-import { exampleLeak, parseLesson, plainText } from './parse-lesson.mjs';
+import { exampleLeak, parseLesson, plainText, withoutFacilitate } from './parse-lesson.mjs';
 import { checkProblemForm, loadGeneratedExpect } from './problem-form.mjs';
 import {
   ABSTRACT,
@@ -111,7 +111,8 @@ for (const file of files) {
      この正規表現に当たらず、**その節のコードが1行も集まらない。**
      検査16 と18 が黙って何も見ない状態になるので、読む側でそろえる。
      parse-lesson.mjs でも同じ罠を踏んでいる。 */
-  const source = rawSource.split('\r\n').join('\n');
+  // 運営だけの「集まりの進め方」（<Facilitate>）は学習者の読む本文ではないので、どの検査にも入れない
+  const source = withoutFacilitate(rawSource.split('\r\n').join('\n'));
   const lesson = parseLesson(source, rel);
   const add = (check, line, message) => problems.push({ file: rel, check, line, message });
 
@@ -565,6 +566,12 @@ for (const file of files) {
         const key = `${Number(m[1])}-${Number(m[2])}`;
         if (!SECTION_REFS[key]) {
           add(20, line, `${where}: 「第${Number(m[1])}章${Number(m[2])}節」に行き先の節がありません`);
+        }
+      }
+      // 機械学習の入口の節は「入口2」と書く（章の番号を持たないため。scripts/section-refs.mjs）
+      for (const m of text.matchAll(/入口(\d+)/g)) {
+        if (!SECTION_REFS[`入口${Number(m[1])}`]) {
+          add(20, line, `${where}: 「入口${Number(m[1])}」に行き先の節がありません`);
         }
       }
       for (const m of text.matchAll(/(?<!!)\[([^\]\n]+)\]\(([^)\n]*)\)/g)) {

@@ -38,14 +38,14 @@ export type PlanOffRow = {
 export type PlanRow = PlanMeetRow | PlanOffRow;
 
 export const PLAN: PlanRow[] = [
-  { kind: 'meet', no: '1', date: '2026-09-29', title: '第1〜2章の演習', goal: '登録を済ませ、目的を共有する' },
-  { kind: 'meet', no: '2', date: '2026-10-06', title: '第3〜4章と練習編1の演習', goal: '' },
-  { kind: 'meet', no: '3', date: '2026-10-13', title: '第5〜6章の演習', goal: '' },
+  { kind: 'meet', no: '1', date: '2026-09-29', title: '第1〜2章の演習 ＋ 入口1 予測と正解率', goal: '登録を済ませ、目的を共有する' },
+  { kind: 'meet', no: '2', date: '2026-10-06', title: '第3〜4章・練習編1の演習 ＋ 入口2 規則で予測', goal: '' },
+  { kind: 'meet', no: '3', date: '2026-10-13', title: '第5〜6章の演習 ＋ 入口3 規則を自動で探す', goal: '' },
   {
     kind: 'meet',
     no: '4',
     date: '2026-10-20',
-    title: '第7〜8章と練習編2の演習',
+    title: '第7〜8章・練習編2の演習 ＋ 入口4 合わせすぎ',
     goal: 'Python の基礎を終える',
     big: true,
   },

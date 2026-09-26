@@ -12,12 +12,13 @@
 import { fileURLToPath } from 'node:url';
 import { join } from 'node:path';
 import { visit } from 'unist-util-visit';
-import { buildSectionRefs, sectionHref } from './section-refs.mjs';
+import { SECTION_REF_RE, buildSectionRefs, sectionHref, sectionRefKey } from './section-refs.mjs';
 
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const LESSONS_DIR = join(ROOT, 'src', 'content', 'lessons');
 
-const SECTION_RE = /第(\d+)章(\d+)節/g;
+// 「第N章M節」と、機械学習の入口の「入口2」（section-refs.mjs）
+const SECTION_RE = SECTION_REF_RE;
 const SKIP_PARENTS = new Set(['link', 'linkReference', 'inlineCode', 'code']);
 
 export default function remarkSectionLinks() {
@@ -38,7 +39,7 @@ export default function remarkSectionLinks() {
       for (const m of matches) {
         const at = m.index ?? 0;
         if (at > last) newNodes.push({ type: 'text', value: node.value.slice(last, at) });
-        const entry = refs[`${Number(m[1])}-${Number(m[2])}`];
+        const entry = refs[sectionRefKey(m)];
         if (entry) {
           newNodes.push({
             type: 'link',

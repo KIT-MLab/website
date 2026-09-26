@@ -17,6 +17,13 @@
  * 一覧では計画どおりの章数を示すための最小限の足し場（src/pages/learn/index.astro）。
  */
 
+/**
+ * 機械学習の入口の章（design/spec/53-ml-intro.md）。フォルダ名の並びで練習編2のあと・第9章の前に来る
+ * （`08p-practice2` < `08q-mlintro` < `09-matrix`）。章の番号（第N章）を持たず、節を「入口1」と呼ぶ。
+ * 呼び方は src/lesson/chapters.ts の practiceSectionLabel と scripts/section-refs.mjs の sectionLabel。
+ */
+export const INTRO_CHAPTER = '08q-mlintro';
+
 /** @type {Part[]} */
 export const PARTS = [
   { name: '第0部 準備', chapters: ['00-start'] },
@@ -35,6 +42,8 @@ export const PARTS = [
       '08p-practice2',
     ],
   },
+  /* 機械学習の入口（design/spec/53-ml-intro.md）。第1部のすぐあと。部の番号も章の番号も持たない */
+  { name: '機械学習の入口', chapters: [INTRO_CHAPTER] },
   { name: '第2部 数学の基礎', chapters: ['09-matrix', '10-slope', '11-probability'] },
   { name: '第3部 機械学習', chapters: ['12-predict', '13-regression', '14-classify', '15-evaluate'] },
   { name: '第4部 深層学習', count: 4 },

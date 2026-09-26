@@ -28,9 +28,11 @@ import Descent from '../../../components/lesson/Descent.astro';
 import FitLine from '../../../components/lesson/FitLine.astro';
 import Boundary from '../../../components/lesson/Boundary.astro';
 import Overfit from '../../../components/lesson/Overfit.astro';
+import Facilitate from '../../../components/lesson/Facilitate.astro';
+import FacilitateHidden from '../../../components/lesson/FacilitateHidden.astro';
 import TermPanel from '../../../components/lesson/TermPanel.astro';
 import NotesPanel from '../../../components/lesson/NotesPanel.astro';
-import { chapterTitle, lessonHref, practiceSectionLabel } from '../../../lesson/chapters';
+import { chapterTitle, isIntroChapter, lessonHref, practiceSectionLabel } from '../../../lesson/chapters';
 import { currentUser, serverConfig } from '../../../server/auth';
 import { isChapterPublic, notesForLesson } from '../../../server/lessons-publish';
 import generated from '../../../generated/lesson-data.json';
@@ -81,6 +83,13 @@ const oneAtATime = entry?.data.chapter === '00-start' ? '' : undefined;
    章の番号と節の番号（◯.◯）は付けない。ほかの章では null で、見え方は変わらない */
 const practiceLabel = (n: number) => (entry ? practiceSectionLabel(entry.data.chapter, n) : null);
 const isPractice = practiceLabel(1) !== null;
+/* 機械学習の入口（design/spec/53-ml-intro.md）。節は「入口1」と呼ぶ。練習編と同じく章の番号を付けない */
+const isIntro = entry ? isIntroChapter(entry.data.chapter) : false;
+const unitWord = isIntro ? 'この部' : 'この練習編';
+
+/* 集まりの進め方（<Facilitate>。53-ml-intro.md 第4節）は運営・管理者にだけ描く。
+   それ以外の人には中身を描かない部品を渡すので、HTML に1文字も入らない（第13.2節と同じ） */
+const FacilitateFor = isStaff ? Facilitate : FacilitateHidden;
 
 // 気づいたことのメモ（第20.3節）。運営にだけ問い合わせ、運営にだけ埋め込む
 const notes = isStaff && entry && config ? await notesForLesson(config.db, entry.data.id) : [];
@@ -117,7 +126,7 @@ const notes = isStaff && entry && config ? await notesForLesson(config.db, entry
             幅860px以下では、帯のすぐ下に固定した1行のボタンに畳む */}
         <aside class="lesson-rail" id="kit-side">
           <button class="rail__toggle" type="button" aria-expanded="false" aria-controls="kit-side-in">
-            <span>{isPractice ? 'この練習編の節' : 'この章の節'}（{at + 1} / {siblings.length}）</span>
+            <span>{isPractice ? `${unitWord}の節` : 'この章の節'}（{at + 1} / {siblings.length}）</span>
             <span data-side-word>開く</span>
           </button>
           <div class="rail__in" id="kit-side-in">
@@ -143,13 +152,13 @@ const notes = isStaff && entry && config ? await notesForLesson(config.db, entry
           <h1 class="lesson-title">{entry.data.title}</h1>
           <p class="lesson-top__meta">
             {isPractice
-              ? `${practiceLabel(at + 1)} ・ この練習編の ${at + 1} / ${siblings.length} 節`
+              ? `${practiceLabel(at + 1)} ・ ${unitWord}の ${at + 1} / ${siblings.length} 節`
               : `この章の ${at + 1} / ${siblings.length} 節`} ・ 目安 {entry.data.minutes} 分
           </p>
         </div>
 
         <article class="lesson-body" data-exq={oneAtATime}>
-          <Content components={{ Run, Mistake, Exercise, Input, Output, Level0, Keys, Figure, Secant, Descent, FitLine, Boundary, Overfit }} />
+          <Content components={{ Run, Mistake, Exercise, Input, Output, Level0, Keys, Figure, Secant, Descent, FitLine, Boundary, Overfit, Facilitate: FacilitateFor }} />
 
           <nav class="lesson-nav" aria-label="節の移動">
             {prev ? <a href={lessonHref(prev.id)}>← 前の節へ　{prev.data.title}</a> : <span class="lesson-nav__spacer" />}

@@ -275,6 +275,15 @@ export function plainText(text) {
 }
 
 /**
+ * 運営だけに見える「集まりの進め方」（<Facilitate>…</Facilitate>。design/spec/53-ml-intro.md 第4節）を落とす。
+ * 学習者の読む本文ではないので、字数・文の長さ・語の初出などの検査にも、検索の索引にも入れない。
+ * 行番号がずれないよう、中身は同じ数の改行に置き換える。
+ */
+export function withoutFacilitate(source) {
+  return String(source).replace(/<Facilitate>[\s\S]*?<\/Facilitate>/g, (m) => '\n'.repeat(m.split('\n').length - 1));
+}
+
+/**
  * 1つの節を解析する。
  * 返すもの: frontmatter、要素マーカー、部品、文章。
  */
@@ -285,6 +294,7 @@ export function parseLesson(source, file) {
      数えられて検査7（段落は3文以内）が落ちる。**clone した直後の全22節が落ちる。**
      読む側でそろえれば、どの環境から来たファイルでも同じ結果になる。 */
   source = String(source).replace(/\r\n/g, '\n');
+  source = withoutFacilitate(source);
   const { data, body } = splitFrontmatter(source);
   const markers = findMarkers(body);
   const components = findComponents(body);
