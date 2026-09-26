@@ -31,11 +31,19 @@ export const prerender = false;
  * 模範解答の中身。Vite がビルド時に文字列として埋め込む。
  * 置き場所は src/content/lessons/<章>/solutions/<課題のid>.py（第4.2節）。
  */
-const solutions = import.meta.glob('../../../content/lessons/**/solutions/*.py', {
-  query: '?raw',
-  import: 'default',
-  eager: true,
-}) as Record<string, string>;
+const solutions = {
+  ...import.meta.glob('../../../content/lessons/**/solutions/*.py', {
+    query: '?raw',
+    import: 'default',
+    eager: true,
+  }),
+  // 今週の演習（20-platform.md 第19.2節）。置き場所は src/content/weekly/solutions/<課題のid>.py
+  ...import.meta.glob('../../../content/weekly/solutions/*.py', {
+    query: '?raw',
+    import: 'default',
+    eager: true,
+  }),
+} as Record<string, string>;
 
 /** 課題の id → 模範解答。ファイル名から拡張子を落としたものが課題の id。 */
 const byExerciseId = new Map<string, string>();
