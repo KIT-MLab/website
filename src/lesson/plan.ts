@@ -38,47 +38,35 @@ export type PlanOffRow = {
 export type PlanRow = PlanMeetRow | PlanOffRow;
 
 export const PLAN: PlanRow[] = [
-  { kind: 'meet', no: '1', date: '2026-09-29', title: '第1〜2章の演習 ＋ 入口1 予測と正解率', goal: '登録を済ませ、目的を共有する' },
-  { kind: 'meet', no: '2', date: '2026-10-06', title: '第3〜4章・練習編1の演習 ＋ 入口2 規則で予測', goal: '' },
-  { kind: 'meet', no: '3', date: '2026-10-13', title: '第5〜6章の演習 ＋ 入口3 規則を自動で探す', goal: '' },
+  { kind: 'meet', no: '1', date: '2026-09-29', title: '入口1 予測と正解率 ／ Python の復習6問', goal: '登録を済ませ、目的を共有する' },
+  { kind: 'meet', no: '2', date: '2026-10-06', title: 'numpy① 配列・平均・条件で取り出す ／ 入口2 規則で予測する', goal: '' },
+  { kind: 'meet', no: '3', date: '2026-10-13', title: 'numpy② 2次元の表・軸・reshape ／ 入口3 規則を自動で探す', goal: '' },
+  { kind: 'meet', no: '4', date: '2026-10-20', title: '予測を関数にする・損失 ／ 入口4 合わせすぎ', goal: '' },
+  { kind: 'meet', no: '5', date: '2026-10-27', title: '候補を全部試す ／ pandas① Titanic の表を読む', goal: '' },
+  { kind: 'off', date: '2026-11-03', title: '休み（文化の日）' },
+  { kind: 'meet', no: '6', date: '2026-11-10', title: '傾き ／ pandas② 欠けた値・文字を数に', goal: '' },
+  { kind: 'meet', no: '7', date: '2026-11-17', title: '勾配降下 ／ scikit-learn① fit と predict', goal: '' },
   {
     kind: 'meet',
-    no: '4',
-    date: '2026-10-20',
-    title: '第7〜8章・練習編2の演習 ＋ 入口4 合わせすぎ',
-    goal: 'Python の基礎を終える',
+    no: '8',
+    date: '2026-11-24',
+    title: '線形回帰 ／ scikit-learn② 学習用とテスト用',
+    goal: '線形回帰を自分で書ける',
     big: true,
   },
-  { kind: 'meet', no: '5', date: '2026-10-27', title: 'pandas①　表を読む・列を選ぶ・条件で絞る', goal: '' },
-  { kind: 'off', date: '2026-11-03', title: '休み（文化の日）' },
-  { kind: 'meet', no: '6', date: '2026-11-10', title: 'pandas②　欠けた値・文字を数に・グループの平均', goal: '' },
-  {
-    kind: 'meet',
-    no: '7',
-    date: '2026-11-17',
-    title: 'scikit-learn①　学習用とテスト用・fit・predict・正解率',
-    goal: '',
-  },
-  { kind: 'meet', no: '8', date: '2026-11-24', title: 'scikit-learn②　モデルを比べる・過学習', goal: '' },
   {
     kind: 'meet',
     no: '9',
     date: '2026-12-01',
-    title: 'Titanic①　データを眺めて、まず1回提出',
+    title: '標準化・学習用とテスト用 ／ Titanic① まず1回提出',
     goal: '全員が1回提出する',
     big: true,
   },
-  { kind: 'meet', no: '10', date: '2026-12-08', title: 'Titanic②　特徴を足す・モデルを変える', goal: '' },
-  {
-    kind: 'meet',
-    no: '11',
-    date: '2026-12-15',
-    title: 'Titanic③　いちばん良いものを出して点数を並べる',
-    goal: '',
-  },
-  { kind: 'meet', no: '12', date: '2026-12-22', title: '過去の月例コンペで練習', goal: '1月の段取りを決める' },
+  { kind: 'meet', no: '10', date: '2026-12-08', title: '過学習 ／ Titanic② 特徴を足す・モデルを変える', goal: '' },
+  { kind: 'meet', no: '11', date: '2026-12-15', title: '分類・シグモイド ／ Titanic③ 点数を並べる', goal: '' },
+  { kind: 'meet', no: '12', date: '2026-12-22', title: 'ロジスティック回帰 ／ 過去の月例コンペで練習', goal: '1月の段取りを決める' },
   { kind: 'off', date: '2026-12-29', dateLabel: '12/29・1/5', title: '冬休み' },
-  { kind: 'meet', no: '13', date: '2027-01-12', title: '1月の月例コンペ①', goal: '初めての本番', big: true },
+  { kind: 'meet', no: '13', date: '2027-01-12', title: '正解率と混同行列 ／ 1月の月例コンペ①', goal: '初めての本番', big: true },
   { kind: 'meet', no: '14', date: '2027-01-19', title: '1月の月例コンペ②', goal: '' },
   {
     kind: 'meet',
@@ -104,7 +92,7 @@ export const PLAN: PlanRow[] = [
 ];
 
 /** ページ上の1段落の説明（第21.2節）。 */
-export const PLAN_INTRO = '毎週火曜・70分。3月の Kaggle 月例コンペに全員で出るまでの道筋です。';
+export const PLAN_INTRO = '毎週火曜・70分。前半30分で新しいことを教え、後半30分でみんなで取り組みます（やることの「／」の左が前半、右が後半）。Python の復習は家で進めます。';
 
 /** 目標の枠（第21.2節）。 */
 export const PLAN_GOAL = {
