@@ -74,6 +74,17 @@ const dataJson = JSON.stringify(lessonData).replace(/</g, '\\u003c');
 const prev = canSee && at > 0 ? siblings[at - 1] : null;
 const next = canSee && entry && at < siblings.length - 1 ? siblings[at + 1] : null;
 
+/* 章の最後の節では、次の章の最初の節へ進めるようにする（利用者「章の最後の節を下まで
+   スクロールすると行き先がどこにもない」）。次の章が準備中で運営でなければ、学習の一覧へ戻す */
+const lastSibling = siblings[siblings.length - 1];
+const nextChapterFirst =
+  canSee && entry && !next && lastSibling
+    ? (lessons.find((l) => l.id.localeCompare(lastSibling.id) > 0 && l.data.chapter !== entry.data.chapter) ?? null)
+    : null;
+const nextChapterOpen =
+  nextChapterFirst !== null &&
+  (isStaff || (config ? await isChapterPublic(config.db, nextChapterFirst.data.chapter) : false));
+
 /* 第0章は課題を1問ずつ出す（20-platform.md 第11.7節）。
    目印を1つ置くだけで、本文の書き方は変えない。第1章以降は属性が付かないので
    CSS も JS も当たらず、縦に並んだままになる。 */
@@ -162,7 +173,13 @@ const notes = isStaff && entry && config ? await notesForLesson(config.db, entry
 
           <nav class="lesson-nav" aria-label="節の移動">
             {prev ? <a href={lessonHref(prev.id)}>← 前の節へ　{prev.data.title}</a> : <span class="lesson-nav__spacer" />}
-            {next ? <a href={lessonHref(next.id)}>次の節へ　{next.data.title} →</a> : <span class="lesson-nav__spacer" />}
+            {next ? (
+              <a href={lessonHref(next.id)}>次の節へ　{next.data.title} →</a>
+            ) : nextChapterFirst && nextChapterOpen ? (
+              <a href={lessonHref(nextChapterFirst.id)}>次の章へ　{chapterTitle(nextChapterFirst.data.chapter)} →</a>
+            ) : (
+              <a href="/learn/">学習の一覧へ →</a>
+            )}
           </nav>
         </article>
       </div>
