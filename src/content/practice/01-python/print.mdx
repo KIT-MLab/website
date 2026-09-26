@@ -1,0 +1,116 @@
+---
+id: practice-01-print
+chapter: 01-python
+topic: print
+title: '`print()` による出力'
+sections: [python-01-print]
+order: 1
+levels: [1, 2, 3]
+---
+
+<Exercise
+  id="practice-01-print-1"
+  kind="build"
+  level={1}
+  name="文房具の代金"
+  tests={[{ kind: 'stdout' }]}
+  hints={['`print` のかっこの中に計算の式を書くと、計算した結果が表示されます。第1章1節を見てください。', '掛け算の記号は `*` です。']}
+  mistakes={[]}
+  syntax={['print', 'operators']}
+>
+1冊120円のノートを3冊と、1個80円の消しゴムを2個買いました。代金を計算の式で求めて表示してください。
+
+<Input>
+なし
+</Input>
+
+<Output>
+代金を、数だけ1行で表示します。
+</Output>
+</Exercise>
+
+<Exercise
+  id="practice-01-print-2"
+  kind="build"
+  level={1}
+  name="3つを並べる"
+  tests={[{ kind: 'stdout' }]}
+  hints={['文字列は `"` で囲み、数は囲まずに書きます。第1章1節を見てください。']}
+  mistakes={[]}
+  syntax={['print']}
+>
+`print` に3つの値をカンマ（`,`）で区切って渡し、1行に表示してください。渡す値は、文字列の `みかん`、数の `12`、文字列の `個` です。
+
+<Input>
+なし
+</Input>
+
+<Output>
+3つの値を、空白をはさんで1行に表示します。
+</Output>
+</Exercise>
+
+<Exercise
+  id="practice-01-print-3"
+  kind="build"
+  level={2}
+  name="7の段"
+  tests={[{ kind: 'stdout' }]}
+  hints={['1つの `print` に、計算の式をカンマで区切っていくつも渡せます。']}
+  mistakes={[]}
+  syntax={['print', 'operators']}
+>
+九九の7の段のうち、7×1から7×5までの5つの答えを表示してください。答えはどれも計算の式で求めます。
+
+<Input>
+なし
+</Input>
+
+<Output>
+5つの答えを、小さい順に、空白をはさんで1行に表示します。
+</Output>
+</Exercise>
+
+<Exercise
+  id="practice-01-print-4"
+  kind="build"
+  level={2}
+  name="授業の時間"
+  tests={[{ kind: 'stdout' }]}
+  hints={['1行ぶんを1つの `print` で表示します。文字列と計算の式を、カンマで区切って並べます。']}
+  mistakes={[]}
+  syntax={['print', 'operators']}
+>
+授業は1コマ90分で、1日に4コマあります。1日の授業の時間と、5日間の授業の時間を、それぞれ計算の式で求めて表示してください。
+
+<Input>
+なし
+</Input>
+
+<Output>
+1行目に `1日`、2行目に `5日間` と書き、それぞれ空白をはさんで分の数と `分` を表示します。形は出力例のとおりです。
+</Output>
+</Exercise>
+
+<Exercise
+  id="practice-01-print-5"
+  kind="build"
+  level={3}
+  name="旅行の費用"
+  tests={[{ kind: 'stdout' }]}
+  hints={['先に、電車に何回乗るか（人数と行き帰り）と、宿に何人が何泊するかを数えます。', '合計の式は、電車代の式と宿代の式を `+` でつないで作れます。']}
+  mistakes={[]}
+  syntax={['print', 'operators']}
+>
+2人で旅行に行きます。電車の運賃は1人片道2400円で、行きと帰りの両方に乗ります。宿代は1人1泊6500円で、2泊します。
+
+電車代・宿代・その2つを足した合計を、それぞれ計算の式で求めて表示してください。
+
+<Input>
+なし
+</Input>
+
+<Output>
+1行目から順に `電車代`・`宿代`・`合計` と書き、それぞれ空白をはさんで金額と `円` を表示します。形は出力例のとおりです。
+</Output>
+</Exercise>

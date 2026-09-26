@@ -166,7 +166,7 @@ export const SYNTAX_CATEGORIES: SyntaxCategory[] = [
     name: 'リスト',
     entries: [
       { code: 'print([3, 7, 2])', result: '[3, 7, 2]', note: '値をまとめて持つ', since: 'python-04-list' },
-      { code: 'numbers = [3, 7, 2]\nprint(numbers[0])', result: '3', note: '添字は0から数える', since: 'python-04-index' },
+      { code: 'numbers = [3, 7, 2]\nprint(numbers[0])', result: '3', note: 'インデックスは0から数える', since: 'python-04-index' },
       { code: 'numbers = [3, 7, 2]\nprint(len(numbers))', result: '3', note: '値の数を調べる', since: 'python-04-index' },
       {
         code: 'numbers = [3, 7, 2]\nnumbers.append(9)\nprint(numbers)',
@@ -201,7 +201,7 @@ export const SYNTAX_CATEGORIES: SyntaxCategory[] = [
       {
         code: 'def price_with_tax(amount, rate=0.1):\n    return amount * (1 + rate)\n\nprint(price_with_tax(1000))',
         result: '1100.0',
-        note: '既定値があれば省略できる',
+        note: 'デフォルト値があれば省略できる',
         since: 'python-05-args',
       },
       {
@@ -218,7 +218,7 @@ export const SYNTAX_CATEGORIES: SyntaxCategory[] = [
     entries: [
       { code: 'NameError', result: '', note: '使った名前が定義されていない（綴りミスが多い）', since: 'python-06-syntax' },
       { code: 'SyntaxError', result: '', note: '文の形が読み取れない（: 忘れ・全角記号など）', since: 'python-06-syntax' },
-      { code: 'IndexError', result: '', note: '添字がリストや配列の範囲の外', since: 'python-06-read' },
+      { code: 'IndexError', result: '', note: 'インデックスがリストや配列の範囲の外', since: 'python-06-read' },
       { code: 'TypeError', result: '', note: '型が合わない操作（文字列+数など）', since: 'python-06-type' },
       { code: 'ValueError', result: '', note: '型は合っているが値が変換できない', since: 'python-06-type' },
     ],

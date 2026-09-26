@@ -29,8 +29,8 @@ export const PYTHON_TOOLS = [
   { name: 'float()',        in: 'python-02-int-float',  re: /\bfloat\s*\(/, term: 'float' },
   { name: 'round()',        in: 'python-02-round',      re: /\bround\s*\(/, term: 'round' },
   { name: '**',             in: 'python-02-operators',  re: /\*\*/, term: 'べき乗' },
-  { name: '%',              in: 'python-02-operators',  re: /[^%\s]\s*%\s*[^%\s]/, term: '剰余' },
-  { name: '//',             in: 'python-02-operators',  re: /\/\//, term: '整数除算' },
+  { name: '%',              in: 'python-02-operators',  re: /[^%\s]\s*%\s*[^%\s]/, term: '余り' },
+  { name: '//',             in: 'python-02-operators',  re: /\/\//, term: '切り捨て除算' },
   { name: 'import',         in: 'python-02-math',       re: /^[ \t]*import\s/m },
   { name: 'math',           in: 'python-02-math',       re: /\bmath\./ },
   { name: 'if',             in: 'python-03-if',         re: /^[ \t]*if\s/m, term: 'if文' },
@@ -52,7 +52,7 @@ export const PYTHON_TOOLS = [
   { name: 'for',            in: 'python-04-for',      re: /^[ \t]*for\s/m, term: 'for文' },
   { name: 'range()',        in: 'python-04-for',      re: /\brange\s*\(/, term: 'range' },
   { name: 'リスト',          in: 'python-04-list',     re: /=\s*\[|\[\s*\]/ },
-  { name: '添字 []',         in: 'python-04-index',    re: /\w\s*\[\s*[^\]]*\s*\]/, term: '添字' },
+  { name: 'インデックス []',   in: 'python-04-index',    re: /\w\s*\[\s*[^\]]*\s*\]/, term: 'インデックス' },
   { name: 'len()',          in: 'python-04-index',    re: /\blen\s*\(/, term: 'len' },
   { name: 'append()',       in: 'python-04-append',   re: /\.append\s*\(/, term: 'append' },
   { name: 'remove()',       in: 'python-04-append',   re: /\.remove\s*\(/, term: 'remove' },
@@ -61,10 +61,10 @@ export const PYTHON_TOOLS = [
   // 第5章 まとめて名前を付ける
   { name: 'def',            in: 'python-05-def',      re: /^[ \t]*def\s/m },
   { name: 'return',         in: 'python-05-return',   re: /^[ \t]*return\b/m },
-  { name: '既定値のある引数',  in: 'python-05-args',     re: /def\s+\w+\s*\([^)]*=[^)]*\)/, term: '既定値' },
-  /* 呼び出す側の = 。定義側（既定値）とは別の道具である（第5.4節）。
+  { name: 'デフォルト引数',    in: 'python-05-args',     re: /def\s+\w+\s*\([^)]*=[^)]*\)/, term: 'デフォルト値' },
+  /* 呼び出す側の = 。定義側（デフォルト値）とは別の道具である（第5.4節）。
      第7.2節の np.mean(scores, axis=0) がこれに当たる。def の行は数えない。
-     数えると、既定値を定義している行そのものに当たってしまう */
+     数えると、デフォルト値を定義している行そのものに当たってしまう */
   { name: '名前を書いて渡す引数', in: 'python-05-keyword',  re: /^(?!\s*def\b).*\b\w+\([^)]*\b[A-Za-z_]\w*\s*=[^=)]/m, term: 'キーワード引数' },
 
   // 第7章 数をまとめて扱う（numpy）。第6章は新しい道具を増やさない
@@ -78,7 +78,7 @@ export const PYTHON_TOOLS = [
   // 第8章 表の形を扱う（numpy）。形の違う配列どうしの計算（8.3）は見分けが付かないので載せない
   /* 名前の直後の [ ] の中にコンマがあるもの。a[1, 2] や a[:, 0]。
      np.array([[1, 2], [3, 4]]) は [ の直前が ( か空白なので当たらない */
-  { name: '行と列の添字 [i, j]', in: 'python-08-index',  re: /\w\[[^\[\]]*,[^\[\]]*\]/, desc: '2次元配列から、行と列を指定して取り出す書き方。`a[1, 2]` は1行目の2列目（添字は0から数える）。`a[:, 0]` は0列目を丸ごと取り出す。' },
+  { name: '行と列のインデックス [i, j]', in: 'python-08-index',  re: /\w\[[^\[\]]*,[^\[\]]*\]/, desc: '2次元配列から、行と列を指定して取り出す書き方。`a[1, 2]` は1行目の2列目（インデックスは0から数える）。`a[:, 0]` は0列目を丸ごと取り出す。' },
   { name: '転置 .T',        in: 'python-08-transpose', re: /\.T\b/, term: '転置' },
   { name: 'arange / linspace / zeros', in: 'python-08-range', re: /np\.(arange|linspace|zeros)\s*\(/, desc: '決まった並びの配列を一度に作る関数。`np.arange(0, 5)` は0から4まで1ずつ、`np.linspace(0, 1, 5)` は0から1までを等しい間隔で5個、`np.zeros(3)` は0を3個並べる。' },
   { name: 'reshape',        in: 'python-08-reshape',  re: /\.reshape\s*\(/ },

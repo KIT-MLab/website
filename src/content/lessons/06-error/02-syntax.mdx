@@ -28,7 +28,7 @@ SyntaxErrorは、Pythonが実行を始める前に、文の形を読み取れな
 
 NameErrorは、文の形は正しいのに、実行の途中で使った名前が見つからないときに出ます。`apple` を `aple` と綴り間違えると起こります。組み込みの `print` を `pirnt` と書いても、同じNameErrorになります。
 
-コロンの不足、かっこの閉じ忘れ、全角の記号、字下げの誤りは、どれもSyntaxErrorの仲間です。直すたびに、次のSyntaxErrorが出ることもあります。
+コロンの不足、かっこの閉じ忘れ、全角の記号、インデントの誤りは、どれもSyntaxErrorの仲間です。直すたびに、次のSyntaxErrorが出ることもあります。
 
 どちらの種類でも、いちばん下の行の名前と行番号を読めば、場所が分かります。
 
@@ -60,7 +60,7 @@ print(f"くだものは{apple + orange}個です"）`}
 print(score)`}
   error={`IndentationError: expected an indented block after 'for' statement on line 1`}
 >
-for文の中身の行に字下げがありません。`for` の次の行の頭に半角空白を入れてください。
+for文の中身の行にインデントがありません。`for` の次の行の頭に半角空白を入れてください。
 </Mistake>
 
 {/* 課題 */}

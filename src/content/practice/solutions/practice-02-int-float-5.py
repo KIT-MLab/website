@@ -1,0 +1,6 @@
+big_price = int(input())
+big_weight = int(input())
+small_price = int(input())
+small_weight = int(input())
+print(f"大袋 100gあたり{big_price / big_weight * 100}円")
+print(f"小袋 100gあたり{small_price / small_weight * 100}円")

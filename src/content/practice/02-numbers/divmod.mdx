@@ -1,0 +1,143 @@
+---
+id: practice-02-divmod
+chapter: 02-numbers
+topic: divmod
+title: 切り捨て除算と余り
+sections: [python-02-operators]
+order: 3
+levels: [1, 2, 3]
+---
+
+<Exercise
+  id="practice-02-divmod-1"
+  kind="build"
+  level={1}
+  name="ダースに分ける"
+  stdin={`30`}
+  tests={[
+    { kind: 'stdout', stdin: `30\n` },
+    { kind: 'stdout', stdin: `0\n` },
+    { kind: 'stdout', stdin: `12\n` },
+  ]}
+  hints={['割った商は `//`、余りは `%` で求めます。第2章3節を見てください。']}
+  mistakes={[]}
+  syntax={['input', 'operators', 'print']}
+>
+鉛筆の本数を、何ダースと何本かに分けてください。1ダースは12本です。
+
+<Input>
+- 1行目: 鉛筆の本数（整数）
+</Input>
+
+<Output>
+ダースの数と、残りの本数を、この順に2行で表示します。数だけを表示します。
+</Output>
+</Exercise>
+
+<Exercise
+  id="practice-02-divmod-2"
+  kind="build"
+  level={1}
+  name="1の位を取り出す"
+  stdin={`347`}
+  tests={[
+    { kind: 'stdout', stdin: `347\n` },
+    { kind: 'stdout', stdin: `0\n` },
+    { kind: 'stdout', stdin: `5\n` },
+  ]}
+  hints={['10で割ったときの商と余りが、それぞれ何を表すかを考えます。']}
+  mistakes={[]}
+  syntax={['input', 'operators', 'print']}
+>
+0以上の整数について、1の位の数と、1の位を取り除いた数を求めてください。
+
+<Input>
+- 1行目: 0以上の整数
+</Input>
+
+<Output>
+1の位の数と、1の位を取り除いた数を、この順に2行で表示します。
+</Output>
+</Exercise>
+
+<Exercise
+  id="practice-02-divmod-3"
+  kind="build"
+  level={2}
+  name="硬貨の枚数"
+  stdin={`780`}
+  tests={[
+    { kind: 'stdout', stdin: `780\n` },
+    { kind: 'stdout', stdin: `0\n` },
+    { kind: 'stdout', stdin: `499\n` },
+  ]}
+  hints={['500円玉の枚数を決めたあと、500円玉で払えなかった残りの金額から100円玉の枚数を求めます。', '途中の残りの金額を、変数に入れておくと考えやすくなります。']}
+  mistakes={[]}
+  syntax={['input', 'operators', 'print']}
+>
+1000円未満の金額を、500円玉と、100円玉と、100円未満の残りに分けます。500円玉をできるだけ多く使い、次に100円玉をできるだけ多く使います。
+
+<Input>
+- 1行目: 金額（円、0以上1000未満の整数）
+</Input>
+
+<Output>
+500円玉の枚数、100円玉の枚数、100円未満の残りの金額を、この順に3行で表示します。数だけを表示します。
+</Output>
+</Exercise>
+
+<Exercise
+  id="practice-02-divmod-4"
+  kind="build"
+  level={2}
+  name="偶数と奇数の個数"
+  stdin={`7`}
+  tests={[
+    { kind: 'stdout', stdin: `7\n` },
+    { kind: 'stdout', stdin: `0\n` },
+    { kind: 'stdout', stdin: `1\n` },
+    { kind: 'stdout', stdin: `10\n` },
+  ]}
+  hints={['1から7までを書き出して、偶数と奇数を数えてみます。10までや、1だけのときも数えて、きまりを探します。']}
+  mistakes={[]}
+  syntax={['input', 'operators', 'print']}
+>
+1から、入力された整数までの数のうち、偶数がいくつ、奇数がいくつあるかを求めてください。入力が0のときは、どちらも0個です。
+
+<Input>
+- 1行目: 0以上の整数
+</Input>
+
+<Output>
+偶数の個数と、奇数の個数を、この順に2行で表示します。
+</Output>
+</Exercise>
+
+<Exercise
+  id="practice-02-divmod-5"
+  kind="build"
+  level={3}
+  name="箱の数と空き"
+  stdin={`25
+10`}
+  tests={[
+    { kind: 'stdout', stdin: `25\n10\n` },
+    { kind: 'stdout', stdin: `0\n10\n` },
+    { kind: 'stdout', stdin: `20\n10\n` },
+    { kind: 'stdout', stdin: `7\n1\n` },
+  ]}
+  hints={['`//` は切り捨てるので、品物が1つでもはみ出したときに箱が1つ足りなくなります。割る前に何を足せばよいかを考えます。', '空いている場所の数は、箱の数から求めます。計算の順番は第2章4節を見てください。']}
+  mistakes={[]}
+  syntax={['input', 'operators', 'print']}
+>
+品物を箱に詰めます。1箱に入る数から、全部を詰めるのに要る箱の数と、詰め終わったあとに空いている場所の数を求めてください。
+
+<Input>
+- 1行目: 品物の数（0以上の整数）
+- 2行目: 1箱に入る数（1以上の整数）
+</Input>
+
+<Output>
+箱の数と、空いている場所の数を、この順に2行で表示します。
+</Output>
+</Exercise>

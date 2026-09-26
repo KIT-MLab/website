@@ -10,6 +10,24 @@
  * 文字列のまま比べれば日付の前後が分かる（ISO の並びは辞書順 = 日付順）。
  */
 
+/**
+ * 前半（教える。第25.2節）。`lessons` は節の frontmatter の id。`label` はまとめの短い言葉
+ * （「numpy① 配列・平均・条件で取り出す」）。どちらか片方だけでもよい。
+ */
+export type PlanTeach = { label?: string; lessons?: string[] };
+
+/**
+ * 後半（みんなでやる。第25.2節）。行き先は多くて1つ: 節（`lesson`）・今週の演習（`weekly`）・
+ * 外のページ（`url`）。`label` を省くと、`lesson` なら節の呼び方と題、`weekly` なら回の題から作る。
+ */
+export type PlanTogether = { label?: string; lesson?: string; weekly?: string; url?: string };
+
+/**
+ * 練習問題集の範囲（第25.5節）。`chapter` は章のディレクトリ名。`topics` を省くとその章の話題を全部。
+ * `levels` は解いてほしい★の段。
+ */
+export type PlanPractice = { chapter: string; topics?: string[]; levels: (1 | 2 | 3)[] };
+
 export type PlanMeetRow = {
   kind: 'meet';
   /** 表に出す回の番号。「1」や、まとめた行の「18〜22」 */
@@ -18,6 +36,7 @@ export type PlanMeetRow = {
   date: string;
   /** 複数回をまとめた行（3月の月例コンペ）の、最後の日。無ければ1回だけの行 */
   until?: string;
+  /** `/learn/plan/` の表の「やること」（「／」の左が前半、右が後半。第25.2節） */
   title: string;
   /** 空なら目標の列を出さない */
   goal: string;
@@ -25,6 +44,19 @@ export type PlanMeetRow = {
   big?: boolean;
   /** オンラインの回（第21.2節「オンラインの札」） */
   online?: boolean;
+  /*
+   * ここから下は今週のページ（`/learn/week/`。第25.4節）が読む。どれも省いてよい。
+   * `teach` と `together` を両方とも省いた行は、`title` を「／」で分けて前半・後半の言葉にする。
+   * `prep` `practice` `review` は**この回までに**やること（「それまでに」の欄）。
+   */
+  teach?: PlanTeach;
+  together?: PlanTogether[];
+  /** 予習する教材の節（節の frontmatter の id） */
+  prep?: string[];
+  /** 解いてほしい練習問題集の範囲 */
+  practice?: PlanPractice[];
+  /** 復習する今週の演習（weekly の id） */
+  review?: string[];
 };
 
 export type PlanOffRow = {
@@ -38,19 +70,73 @@ export type PlanOffRow = {
 export type PlanRow = PlanMeetRow | PlanOffRow;
 
 export const PLAN: PlanRow[] = [
-  { kind: 'meet', no: '1', date: '2026-09-29', title: '入口1 予測と正解率 ／ Python の復習6問', goal: '登録を済ませ、目的を共有する' },
-  { kind: 'meet', no: '2', date: '2026-10-06', title: 'numpy① 配列・平均・条件で取り出す ／ 入口2 規則で予測する', goal: '' },
-  { kind: 'meet', no: '3', date: '2026-10-13', title: 'numpy② 2次元の表・軸・reshape ／ 入口3 規則を自動で探す', goal: '' },
-  { kind: 'meet', no: '4', date: '2026-10-20', title: '予測を関数にする・損失 ／ 入口4 合わせすぎ', goal: '' },
-  { kind: 'meet', no: '5', date: '2026-10-27', title: '候補を全部試す ／ pandas① Titanic の表を読む', goal: '' },
+  {
+    kind: 'meet',
+    no: '1',
+    date: '2026-09-29',
+    title: '入口1 予測と正解率 ／ Python の復習6問',
+    goal: '登録を済ませ、目的を共有する',
+    teach: { lessons: ['python-08q-accuracy'] },
+    together: [{ label: '今週の演習（Python の復習6問）', weekly: 'weekly-2026-09-29' }],
+    practice: [
+      { chapter: '01-python', levels: [1, 2] },
+      { chapter: '02-numbers', levels: [1, 2] },
+    ],
+  },
+  {
+    kind: 'meet',
+    no: '2',
+    date: '2026-10-06',
+    title: 'numpy① 配列・平均・条件で取り出す ／ 入口2 規則で予測する',
+    goal: '',
+    teach: { label: 'numpy① 配列・平均・条件で取り出す', lessons: ['python-07-array', 'python-07-stats', 'python-07-select'] },
+    together: [{ lesson: 'python-08q-rule' }],
+    prep: ['python-07-array'],
+    practice: [
+      { chapter: '03-branch', levels: [1, 2] },
+      { chapter: '04-loop', levels: [1, 2] },
+    ],
+    review: ['weekly-2026-09-29'],
+  },
+  {
+    kind: 'meet',
+    no: '3',
+    date: '2026-10-13',
+    title: 'numpy② 2次元の表・軸・reshape ／ 入口3 規則を自動で探す',
+    goal: '',
+    teach: { label: 'numpy② 2次元の表・軸・reshape', lessons: ['python-07-shape', 'python-08-index', 'python-08-reshape'] },
+    together: [{ lesson: 'python-08q-learn' }],
+    prep: ['python-07-shape'],
+    practice: [
+      { chapter: '05-function', levels: [1, 2] },
+      { chapter: '06-error', levels: [1, 2] },
+    ],
+    review: ['weekly-2026-10-06'],
+  },
+  {
+    kind: 'meet',
+    no: '4',
+    date: '2026-10-20',
+    title: '予測を関数にする・損失 ／ 入口4 合わせすぎ',
+    goal: '',
+    teach: { label: '予測を関数にする・損失', lessons: ['python-12-model', 'python-12-loss'] },
+    together: [{ lesson: 'python-08q-overfit' }],
+    prep: ['python-12-model'],
+    practice: [
+      { chapter: '07-array', levels: [1, 2] },
+      { chapter: '08-table', levels: [1, 2] },
+    ],
+    review: ['weekly-2026-10-13'],
+  },
+  { kind: 'meet', no: '5', date: '2026-10-27', title: '候補を全部試す ／ pandas① Titanic の表を読む', goal: '', review: ['weekly-2026-10-20'] },
   { kind: 'off', date: '2026-11-03', title: '休み（文化の日）' },
   { kind: 'meet', no: '6', date: '2026-11-10', title: '傾き ／ pandas② 欠けた値・文字を数に', goal: '' },
-  { kind: 'meet', no: '7', date: '2026-11-17', title: '勾配降下 ／ scikit-learn① fit と predict', goal: '' },
+  { kind: 'meet', no: '7', date: '2026-11-17', title: '勾配降下法 ／ scikit-learn① fit と predict', goal: '' },
   {
     kind: 'meet',
     no: '8',
     date: '2026-11-24',
-    title: '線形回帰 ／ scikit-learn② 学習用とテスト用',
+    title: '線形回帰 ／ scikit-learn② 訓練データとテストデータ',
     goal: '線形回帰を自分で書ける',
     big: true,
   },
@@ -58,11 +144,11 @@ export const PLAN: PlanRow[] = [
     kind: 'meet',
     no: '9',
     date: '2026-12-01',
-    title: '標準化・学習用とテスト用 ／ Titanic① まず1回提出',
+    title: '標準化・訓練データとテストデータ ／ Titanic① まず1回提出',
     goal: '全員が1回提出する',
     big: true,
   },
-  { kind: 'meet', no: '10', date: '2026-12-08', title: '過学習 ／ Titanic② 特徴を足す・モデルを変える', goal: '' },
+  { kind: 'meet', no: '10', date: '2026-12-08', title: '過学習 ／ Titanic② 特徴量を足す・モデルを変える', goal: '' },
   { kind: 'meet', no: '11', date: '2026-12-15', title: '分類・シグモイド ／ Titanic③ 点数を並べる', goal: '' },
   { kind: 'meet', no: '12', date: '2026-12-22', title: 'ロジスティック回帰 ／ 過去の月例コンペで練習', goal: '1月の段取りを決める' },
   { kind: 'off', date: '2026-12-29', dateLabel: '12/29・1/5', title: '冬休み' },
@@ -155,3 +241,47 @@ export function nextMeeting(rows: PlanRow[], todayJst: string): PlanMeetRow | nu
   }
   return null;
 }
+
+/**
+ * 今週のページ（第25.4節）に出す行。次回（`nextMeeting` と同じ規則）から後ろの行を、
+ * 休みの行も含めて表の順に返す。先頭は必ず集まりの行。全部の回が終わっていれば空。
+ */
+export function upcomingRows(rows: PlanRow[], todayJst: string): PlanRow[] {
+  const next = nextMeeting(rows, todayJst);
+  if (!next) return [];
+  return rows.slice(rows.indexOf(next));
+}
+
+/**
+ * `teach` も `together` も書いていない行の、前半・後半の言葉（第25.2節「／の左が前半、右が後半」）。
+ * 「／」が無い行は、全部を後半（みんなでやる）とみなす。
+ */
+export function titleHalves(row: PlanMeetRow): { teach: string; together: string } {
+  const at = row.title.indexOf('／');
+  if (at < 0) return { teach: '', together: row.title.trim() };
+  return { teach: row.title.slice(0, at).trim(), together: row.title.slice(at + 1).trim() };
+}
+
+/* --- 今週のページ（第25.4節）の1回ぶんの見た目の材料。src/pages/learn/week.astro が組み、
+   src/components/lesson/WeekMeeting.astro が描く --- */
+
+export type WeekLink = {
+  label: string;
+  /** null ならリンクにしない */
+  href: string | null;
+  /** リンクにしないときの札（「準備中」など）や、添える一言 */
+  note?: string;
+  /** 進み具合の棒を出すときの課題の id */
+  exIds?: string[];
+  /** 外のページ */
+  external?: boolean;
+};
+
+export type WeekView = {
+  teachLabel: string;
+  teach: WeekLink[];
+  together: WeekLink[];
+  prep: WeekLink[];
+  practice: WeekLink[];
+  review: WeekLink[];
+};

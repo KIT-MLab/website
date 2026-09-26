@@ -31,22 +31,22 @@ const GROUPS = {
   for: ['for'],
   while: ['while'],
   'リスト': ['リスト', 'append()', 'remove()'],
-  '添字': ['添字 []', 'len()'],
+  'インデックス': ['インデックス []', 'len()'],
   def: ['def'],
   return: ['return'],
   numpy: ['numpy'],
   '2次元配列': ['2次元配列'],
   'スライス': ['スライス'],
   // 第8章
-  '行と列の添字': ['行と列の添字 [i, j]'],
+  '行と列のインデックス': ['行と列のインデックス [i, j]'],
   '転置': ['転置 .T'],
   'arange/linspace/zeros': ['arange / linspace / zeros'],
   reshape: ['reshape'],
 };
 
 /** 「一度も一緒に使われていない組み合わせ」を探す相手。全部の組にすると、当たり前の空きで埋まる */
-const CORE = ['if', 'for', 'while', 'リスト', '添字', 'def', 'return', 'numpy', '2次元配列', 'f文字列', 'and/or',
-  '行と列の添字', 'reshape'];
+const CORE = ['if', 'for', 'while', 'リスト', 'インデックス', 'def', 'return', 'numpy', '2次元配列', 'f文字列', 'and/or',
+  '行と列のインデックス', 'reshape'];
 
 const toolRe = new Map(PYTHON_TOOLS.map((t) => [t.name, t.re]));
 for (const [group, names] of Object.entries(GROUPS)) {

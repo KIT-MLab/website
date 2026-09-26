@@ -17,7 +17,7 @@
 import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { dirname, join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { exampleLeak, parseLesson } from './parse-lesson.mjs';
+import { evalAttribute, exampleLeak, parseLesson } from './parse-lesson.mjs';
 import { execPython } from './pyodide-node.mjs';
 import { buildSectionRefs, sectionHref, sectionLabel } from './section-refs.mjs';
 import { loadGlossary } from './glossary.mjs';
@@ -28,6 +28,9 @@ const LESSONS_DIR = join(ROOT, 'src', 'content', 'lessons');
 /* 「今週の演習」（20-platform.md 第19章）。模範解答は章ごとではなく1か所にまとめる（第19.2節） */
 const WEEKLY_DIR = join(ROOT, 'src', 'content', 'weekly');
 const WEEKLY_SOLUTIONS_DIR = join(WEEKLY_DIR, 'solutions');
+/* 練習問題集（20-platform.md 第25.5節）。模範解答は今週の演習と同じく1か所にまとめる */
+const PRACTICE_DIR = join(ROOT, 'src', 'content', 'practice');
+const PRACTICE_SOLUTIONS_DIR = join(PRACTICE_DIR, 'solutions');
 const OUT_DIR = join(ROOT, 'src', 'generated');
 const OUT_FILE = join(OUT_DIR, 'lesson-data.json');
 /* 「第N章M節」の行き先（20-platform.md 第15.2節）。採点画面の Inline（src/lesson/ui/shared.tsx）が読む。
@@ -63,7 +66,7 @@ const STAGE = { trace: '例題', modify: '練習問題', build: '演習問題', 
 const NEEDS_SOLUTION = new Set(['trace', 'modify', 'build']);
 
 /**
- * 空白と改行を落とす。字下げの深さ・行内の空白の数・空行・改行の位置の違いを無視する。
+ * 空白と改行を落とす。インデントの深さ・行内の空白の数・空行・改行の位置の違いを無視する。
  * 文字列の中の空白まで落ちるので、`"a b"` と `"ab"` は同じと見なす。
  * 写したかどうかを見るための照合なので、そこまで似ていれば拾ってよい。
  */
@@ -79,7 +82,7 @@ function sameCode(a, b) {
 
 /**
  * 新しい形の組む問題（20-platform.md 第23.2節）で、問題文に出力例を手で書いていないか。
- * 出力例は判定の1組目の期待値から画面が作る。check-lessons / check-weekly も
+ * 出力例は判定のケース1の期待値から画面が作る。check-lessons / check-weekly も
  * 生成済みの lesson-data.json で同じことを見るが、そちらはこのスクリプトより先に走るので、
  * いま作った期待値で見るのはここだけである（clone した直後は lesson-data.json が無い）。
  */
@@ -87,7 +90,7 @@ function checkExampleLeak(rel, e, tests) {
   if (e.form !== 'new' || tests.length === 0) return;
   const leak = exampleLeak(e.prompt, tests[0].expect);
   if (leak) {
-    fail(`${rel}:${e.line}`, `${e.id} の問題文に出力例の「${leak}」がそのまま書いてあります。出力例は判定の1組目から自動で出すので、問題文からは消してください（第23.2節）`);
+    fail(`${rel}:${e.line}`, `${e.id} の問題文に出力例の「${leak}」がそのまま書いてあります。出力例は判定のケース1から自動で出すので、問題文からは消してください（第23.2節）`);
   }
 }
 
@@ -343,7 +346,7 @@ for (const file of files) {
   }
 
   /* 文字が違っても、<Run> を貼って通るなら書き写しである。第5.3節の課題が
-     <Run> と関数名・引数・既定値まで同じで、後ろの print 2行のぶんだけ上の照合をすり抜けた。 */
+     <Run> と関数名・引数・デフォルト値まで同じで、後ろの print 2行のぶんだけ上の照合をすり抜けた。 */
   for (const e of lesson.exercises.filter((x) => x.kind === 'build')) {
     const tests = exercises[e.id]?.tests ?? [];
     if (tests.length === 0) continue;
@@ -392,119 +395,156 @@ function normalize(text) {
    数えない（第19.2節）。構造は「はじめに」＋「課題」だけなので <Run> や <Mistake> の
    照合は無い。模範解答は src/content/weekly/solutions/<課題のid>.py に1か所だけ置く。
    構造・道具の台帳・用語集などの規約は scripts/check-weekly.mjs が別に見る。 */
-const weekly = {};
-if (existsSync(WEEKLY_DIR)) {
-  for (const file of listMdx(WEEKLY_DIR).sort()) {
-    const rel = relative(ROOT, file).replace(/\\/g, '/');
-    const lesson = parseLesson(readFileSync(file, 'utf8'), rel);
-    const weeklyId = lesson.data?.id;
-    if (!weeklyId) {
-      fail(rel, 'frontmatter に id がありません');
+/**
+ * 今週の演習と練習問題集（第25.5節）の1問ぶん。模範解答（無ければ null）から期待値を作る。
+ * 節（lessons）の同じ処理は上にそのまま残してある（<Run> や starter の照合が絡むため）。
+ */
+async function buildSetTests(rel, e, solution) {
+  const tests = [];
+  for (let i = 0; i < e.tests.length; i++) {
+    const test = e.tests[i];
+    if (test.kind === 'text') {
+      if (typeof test.expect !== 'string' || test.expect.trim() === '') {
+        fail(`${rel}:${e.line}`, `tests[${i}] の expect に、打つ見本の文字列を書いてください`);
+        continue;
+      }
+      tests.push({ kind: 'text', expect: test.expect });
       continue;
     }
-
-    const exercises = {};
-    const solutions = [];
-    for (const e of lesson.exercises) {
-      let solution = null;
-      /* build に加えて modify も（第6章以降、エラーになるコードを直す練習問題。第24.3節） */
-      if (e.kind === 'build' || e.kind === 'modify') {
-        const solutionPath = join(WEEKLY_SOLUTIONS_DIR, `${e.id}.py`);
-        try {
-          solution = readFileSync(solutionPath, 'utf8');
-        } catch {
-          fail(`${rel}:${e.line}`, `模範解答がありません: ${relative(ROOT, solutionPath).replace(/\\/g, '/')}`);
-          continue;
-        }
-        solutions.push({ id: e.id, line: e.line, code: solution });
-        for (const forbidden of e.forbid) {
-          if (solution.includes(forbidden)) {
-            fail(`${rel}:${e.line}`, `模範解答が、問題文で禁じた書き方「${forbidden}」を使っています`);
-          }
-        }
+    if (test.kind === 'choice') {
+      if (!Number.isInteger(test.correct) || test.correct < 1) {
+        fail(`${rel}:${e.line}`, `tests[${i}] の correct は1から数えた選択肢の番号です: ${test.correct}`);
+        continue;
       }
-
-      const tests = [];
-      for (let i = 0; i < e.tests.length; i++) {
-        const test = e.tests[i];
-        if (test.kind === 'text') {
-          if (typeof test.expect !== 'string' || test.expect.trim() === '') {
-            fail(`${rel}:${e.line}`, `tests[${i}] の expect に、打つ見本の文字列を書いてください`);
-            continue;
-          }
-          tests.push({ kind: 'text', expect: test.expect });
-          continue;
-        }
-        if (test.kind === 'choice') {
-          if (!Number.isInteger(test.correct) || test.correct < 1) {
-            fail(`${rel}:${e.line}`, `tests[${i}] の correct は1から数えた選択肢の番号です: ${test.correct}`);
-            continue;
-          }
-          tests.push({ kind: 'choice', correct: test.correct });
-          continue;
-        }
-        if (!solution) {
-          fail(`${rel}:${e.line}`, `kind="${e.kind}" の tests[${i}] は text か choice です: ${test.kind}`);
-          continue;
-        }
-        if (test.expect !== undefined) {
-          fail(`${rel}:${e.line}`, `tests[${i}] に expect が書かれています。expect はビルド時に模範解答から作ります`);
-          continue;
-        }
-        if (test.kind === 'stdout') {
-          const result = await execPython({ code: solution, stdin: test.stdin });
-          const err = describeError(result);
-          if (err) {
-            fail(`${rel}:${e.line}`, `模範解答が tests[${i}] で動きません: ${err}`);
-            continue;
-          }
-          tests.push({ kind: 'stdout', stdin: test.stdin, expect: result.stdout });
-        } else if (test.kind === 'call') {
-          const result = await execPython({
-            code: solution,
-            stdin: test.stdin,
-            call: { fn: test.fn, args: test.args ?? [] },
-          });
-          const err = describeError(result);
-          if (err) {
-            fail(`${rel}:${e.line}`, `模範解答が tests[${i}] で動きません: ${err}`);
-            continue;
-          }
-          tests.push({ kind: 'call', fn: test.fn, args: test.args ?? [], expect: result.value });
-        } else {
-          fail(`${rel}:${e.line}`, `tests[${i}] の kind は stdout か call です: ${test.kind}`);
-        }
-      }
-
-      checkExampleLeak(rel, e, tests);
-
-      exercises[e.id] = {
-        id: e.id,
-        kind: e.kind,
-        tests,
-        hints: e.hints,
-        mistakes: [],
-        forbid: e.forbid,
-        ...(e.requirePaste ? { requirePaste: true } : {}),
-      };
+      tests.push({ kind: 'choice', correct: test.correct });
+      continue;
     }
+    if (!solution) {
+      fail(`${rel}:${e.line}`, `kind="${e.kind}" の tests[${i}] は text か choice です: ${test.kind}`);
+      continue;
+    }
+    if (test.expect !== undefined) {
+      fail(`${rel}:${e.line}`, `tests[${i}] に expect が書かれています。expect はビルド時に模範解答から作ります`);
+      continue;
+    }
+    if (test.kind === 'stdout') {
+      const result = await execPython({ code: solution, stdin: test.stdin });
+      const err = describeError(result);
+      if (err) {
+        fail(`${rel}:${e.line}`, `模範解答が tests[${i}] で動きません: ${err}`);
+        continue;
+      }
+      tests.push({ kind: 'stdout', stdin: test.stdin, expect: result.stdout });
+    } else if (test.kind === 'call') {
+      const result = await execPython({
+        code: solution,
+        stdin: test.stdin,
+        call: { fn: test.fn, args: test.args ?? [] },
+      });
+      const err = describeError(result);
+      if (err) {
+        fail(`${rel}:${e.line}`, `模範解答が tests[${i}] で動きません: ${err}`);
+        continue;
+      }
+      tests.push({ kind: 'call', fn: test.fn, args: test.args ?? [], expect: result.value });
+    } else {
+      fail(`${rel}:${e.line}`, `tests[${i}] の kind は stdout か call です: ${test.kind}`);
+    }
+  }
+  checkExampleLeak(rel, e, tests);
+  return tests;
+}
 
-    // 模範解答どうしの使い回しの照合（第3.5節と同じ理由）
-    for (let i = 0; i < solutions.length; i++) {
-      for (let j = i + 1; j < solutions.length; j++) {
-        const [a, b] = [solutions[i], solutions[j]];
-        if (!sameCode(a.code, b.code)) continue;
-        fail(`${rel}:${b.line}`, `演習問題 ${b.id} の模範解答が、演習問題 ${a.id} の模範解答と同じです（空白と改行の違いを除いて）`);
+/**
+ * 今週の演習・練習問題集の1回（1つの話題）ぶんを作る。模範解答は solutionsDir に1か所だけ置く。
+ * extra(e) が返すものを課題の判定データに足す（練習問題集の level と name）。
+ */
+async function buildSet(file, solutionsDir, extra = () => ({})) {
+  const rel = relative(ROOT, file).replace(/\\/g, '/');
+  const lesson = parseLesson(readFileSync(file, 'utf8'), rel);
+  const setId = lesson.data?.id;
+  if (!setId) {
+    fail(rel, 'frontmatter に id がありません');
+    return null;
+  }
+
+  const exercises = {};
+  const solutions = [];
+  for (const e of lesson.exercises) {
+    let solution = null;
+    /* build に加えて modify も（第6章以降、エラーになるコードを直す練習問題。第24.3節） */
+    if (e.kind === 'build' || e.kind === 'modify') {
+      const solutionPath = join(solutionsDir, `${e.id}.py`);
+      try {
+        solution = readFileSync(solutionPath, 'utf8');
+      } catch {
+        fail(`${rel}:${e.line}`, `模範解答がありません: ${relative(ROOT, solutionPath).replace(/\\/g, '/')}`);
+        continue;
+      }
+      solutions.push({ id: e.id, line: e.line, code: solution });
+      for (const forbidden of e.forbid) {
+        if (solution.includes(forbidden)) {
+          fail(`${rel}:${e.line}`, `模範解答が、問題文で禁じた書き方「${forbidden}」を使っています`);
+        }
       }
     }
 
-    weekly[weeklyId] = {
-      lessonId: weeklyId,
+    const tests = await buildSetTests(rel, e, solution);
+
+    exercises[e.id] = {
+      id: e.id,
+      kind: e.kind,
+      tests,
+      hints: e.hints,
+      mistakes: [],
+      forbid: e.forbid,
+      ...(e.requirePaste ? { requirePaste: true } : {}),
+      ...extra(e),
+    };
+  }
+
+  // 模範解答どうしの使い回しの照合（第3.5節と同じ理由）
+  for (let i = 0; i < solutions.length; i++) {
+    for (let j = i + 1; j < solutions.length; j++) {
+      const [a, b] = [solutions[i], solutions[j]];
+      if (!sameCode(a.code, b.code)) continue;
+      fail(`${rel}:${b.line}`, `演習問題 ${b.id} の模範解答が、演習問題 ${a.id} の模範解答と同じです（空白と改行の違いを除いて）`);
+    }
+  }
+
+  return {
+    data: lesson.data,
+    set: {
+      lessonId: setId,
       title: lesson.data.title ?? '',
       exerciseIds: lesson.exercises.map((e) => e.id),
       exercises,
       mistakes: [],
-    };
+    },
+  };
+}
+
+const weekly = {};
+if (existsSync(WEEKLY_DIR)) {
+  for (const file of listMdx(WEEKLY_DIR).sort()) {
+    const built = await buildSet(file, WEEKLY_SOLUTIONS_DIR);
+    if (built) weekly[built.set.lessonId] = built.set;
+  }
+}
+
+/* --- 練習問題集（20-platform.md 第25.5節） -------------------------------------------
+   1つの話題（src/content/practice/<章>/<話題>.mdx）を1つの組にする。今週の演習と同じく、教材の
+   進み具合（第17章）には数えない。組には章と話題を、課題には★の段（level）と札の名前（name）を
+   足す（一覧・今週のページが MDX を読み直さずに済むように）。規約は scripts/check-practice.mjs が見る */
+const practice = {};
+if (existsSync(PRACTICE_DIR)) {
+  for (const file of listMdx(PRACTICE_DIR).sort()) {
+    const built = await buildSet(file, PRACTICE_SOLUTIONS_DIR, (e) => ({
+      level: Number(evalAttribute(e.rawAttrs.level)),
+      name: String(evalAttribute(e.rawAttrs.name) ?? ''),
+    }));
+    if (!built) continue;
+    practice[built.set.lessonId] = { ...built.set, chapter: String(built.data.chapter ?? ''), topic: String(built.data.topic ?? '') };
   }
 }
 
@@ -629,7 +669,7 @@ searchEntries.forEach((e, i) => {
 });
 
 mkdirSync(OUT_DIR, { recursive: true });
-writeFileSync(OUT_FILE, `${JSON.stringify({ lessons, weekly }, null, 2)}\n`, 'utf8');
+writeFileSync(OUT_FILE, `${JSON.stringify({ lessons, weekly, practice }, null, 2)}\n`, 'utf8');
 writeFileSync(SECTION_REFS_FILE, `${JSON.stringify(buildSectionRefs(LESSONS_DIR), null, 2)}\n`, 'utf8');
 writeFileSync(SEARCH_INDEX_FILE, `${JSON.stringify({ entries: searchEntries }, null, 2)}\n`, 'utf8');
 if (searchNotes.length > 0) {
@@ -640,4 +680,6 @@ const count = Object.values(lessons).reduce((n, l) => n + l.exerciseIds.length, 
 const weeklyCount = Object.values(weekly).reduce((n, w) => n + w.exerciseIds.length, 0);
 console.log(`build:tests  ${Object.keys(lessons).length}節 / ${count}問の期待値を作りました -> src/generated/lesson-data.json`);
 console.log(`build:tests  今週の演習 ${Object.keys(weekly).length}回 / ${weeklyCount}問の期待値を作りました`);
+const practiceCount = Object.values(practice).reduce((n, p) => n + p.exerciseIds.length, 0);
+console.log(`build:tests  練習問題集 ${Object.keys(practice).length}話題 / ${practiceCount}問の期待値を作りました`);
 process.exit(0);

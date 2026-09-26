@@ -47,7 +47,10 @@ function rowClass(row: PlanMeetRow): string {
           <a href="/learn/">← 学習の一覧へ</a>
         </p>
         <h1 class="page-title">今後の予定</h1>
-        <p class="pl-lead">{PLAN_INTRO}</p>
+        <p class="pl-lead">
+          {PLAN_INTRO}
+          <a class="pl-week" href="/learn/week/">今週のページへ →</a>
+        </p>
         <div class="pl-goal">
           <b>{PLAN_GOAL.headline}</b>
           <p>{PLAN_GOAL.body}</p>
@@ -116,6 +119,16 @@ function rowClass(row: PlanMeetRow): string {
       margin: 10px 0 20px;
       max-width: 70ch;
       color: var(--l-ink-2);
+    }
+    /* 今週のページ（第25.4節）への行き来 */
+    .pl-week {
+      margin-left: 6px;
+      color: var(--l-ink-2);
+      text-underline-offset: 3px;
+      white-space: nowrap;
+    }
+    .pl-week:hover {
+      color: var(--l-shu);
     }
     .pl-goal {
       background: var(--l-card);

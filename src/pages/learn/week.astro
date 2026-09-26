@@ -1,0 +1,355 @@
+---
+/**
+ * 今週のページ（20-platform.md 第25.4節。試作の案B）。`/learn/week/`。
+ *
+ * 今回・次回・その次の3回を横に3列（今回の列に朱の枠）。各列に前半（教える）・後半（みんなでやる）・
+ * それまでに（予習・練習・復習）。その先の回は、3列の下に畳んだ行で並べ、開くと同じ中身が出る。
+ * 「今回」は `/learn/` の「次回」と同じ規則（`nextMeeting`。その日のうちはその日の回。日本時間）。
+ *
+ * 中身は src/lesson/plan.ts の行に書く（第25.4節）。**メンバーだけ**（第13.2節と同じ）: サーバで判じ、
+ * メンバーでない人には1段落だけを返して中身を1文字も送らない。進み具合（練習の範囲・今週の演習）は
+ * 手元の進度にしか無いので、ブラウザで src/lesson/practice-progress.ts が塗る。
+ */
+export const prerender = false;
+
+import { getCollection } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import WeekMeeting from '../../components/lesson/WeekMeeting.astro';
+import { currentUser, serverConfig } from '../../server/auth';
+import { isMember, jstFormValues } from '../../server/member';
+import { publicChapters } from '../../server/lessons-publish';
+import { openWeeklyIds } from '../../server/weekly';
+import { chapterTitle } from '../../lesson/chapters';
+import { practiceProblems, topicTitleText } from '../../lesson/practice';
+import { PLAN, entranceDateLabel, titleHalves, upcomingRows, type PlanMeetRow, type PlanPractice, type WeekLink, type WeekView } from '../../lesson/plan';
+// @ts-expect-error 節への行き先の組み立ては .mjs 側に1つだけ置く（src/lesson/weekly-syntax.ts と同じ理由）
+import { sectionHref, sectionLabel } from '../../../scripts/section-refs.mjs';
+import generated from '../../generated/lesson-data.json';
+import '../../styles/lesson-tokens.css';
+import '../../styles/member.css';
+
+const config = serverConfig();
+const me = config ? await currentUser(Astro.request) : null;
+const member = me !== null && isMember(me);
+const isStaff = me !== null && (me.role === 'staff' || me.role === 'admin');
+
+Astro.response.headers.set('cache-control', 'no-store');
+
+const today = jstFormValues(Date.now()).date;
+const rows = member ? upcomingRows(PLAN, today) : [];
+
+// --- 行き先を引く表（メンバーのときだけ組む） ---
+const publicSet = member && config ? await publicChapters(config.db) : new Set<string>();
+const openWeekly = member && config && me ? await openWeeklyIds(config.db, me.cohort.code) : new Set<string>();
+const lessons = member ? (await getCollection('lessons')).sort((a, b) => a.id.localeCompare(b.id)) : [];
+const weeklySets = member ? await getCollection('weekly') : [];
+const practiceTopics = member ? await getCollection('practice') : [];
+const genWeekly = (generated as { weekly?: Record<string, { exerciseIds?: string[] }> }).weekly ?? {};
+
+const chapterVisible = (chapter: string) => publicSet.has(chapter) || isStaff;
+
+function lessonLink(id: string, label?: string): WeekLink {
+  const l = lessons.find((x) => x.data.id === id);
+  if (!l) return { label: label ?? id, href: null };
+  const siblings = lessons.filter((x) => x.data.chapter === l.data.chapter);
+  const text = label ?? `${sectionLabel(l.data.chapter, siblings.indexOf(l))} ${l.data.title}`;
+  return chapterVisible(l.data.chapter) ? { label: text, href: sectionHref(l.id) } : { label: text, href: null, note: '準備中' };
+}
+
+function shortDate(iso: string): string {
+  const [, m, d] = iso.split('-').map(Number);
+  return `${m}/${d}`;
+}
+
+function weeklyLink(id: string, label?: string): WeekLink {
+  const w = weeklySets.find((x) => x.data.id === id);
+  if (!w) return { label: label ?? id, href: null };
+  const text = label ?? `今週の演習 ${shortDate(w.data.date)}（${w.data.title}）`;
+  // 運営は公開する前の回も開ける（第20.4節）。メンバーには公開した回だけリンクにする（第19.4節）
+  if (!openWeekly.has(id) && !isStaff) return { label: text, href: null, note: 'まだ公開していません' };
+  return { label: text, href: `/learn/weekly/${encodeURIComponent(id)}/`, exIds: genWeekly[id]?.exerciseIds ?? [] };
+}
+
+function practiceLink(p: PlanPractice): WeekLink {
+  const topics = practiceTopics.filter((t) => t.data.chapter === p.chapter && (!p.topics || p.topics.includes(t.data.topic)));
+  const stars = p.levels.map((lv) => `★${lv}`).join('・');
+  const names = p.topics ? `（${topics.sort((a, b) => a.data.order - b.data.order).map((t) => topicTitleText(t.data.title)).join('・')}）` : '';
+  const label = `${chapterTitle(p.chapter)}${names} ${stars}`;
+  if (!chapterVisible(p.chapter)) return { label, href: null, note: '準備中' };
+  const exIds = topics.flatMap((t) => practiceProblems(generated, t.data.id).filter((q) => p.levels.includes(q.level as 1 | 2 | 3)).map((q) => q.id));
+  const href = `/learn/practice/#${p.chapter}`;
+  return exIds.length > 0 ? { label, href, exIds } : { label, href, note: 'まだ問題がありません' };
+}
+
+function viewOf(row: PlanMeetRow): WeekView {
+  const derived = !row.teach && !row.together ? titleHalves(row) : null;
+  return {
+    teachLabel: row.teach?.label ?? derived?.teach ?? '',
+    teach: (row.teach?.lessons ?? []).map((id) => lessonLink(id)),
+    together: derived
+      ? derived.together === ''
+        ? []
+        : [{ label: derived.together, href: null }]
+      : (row.together ?? []).map((t) => {
+          if (t.lesson) return lessonLink(t.lesson, t.label);
+          if (t.weekly) return weeklyLink(t.weekly, t.label);
+          if (t.url) return { label: t.label ?? t.url, href: t.url, external: true };
+          return { label: t.label ?? '', href: null };
+        }),
+    prep: (row.prep ?? []).map((id) => lessonLink(id)),
+    practice: (row.practice ?? []).map(practiceLink),
+    review: (row.review ?? []).map((id) => weeklyLink(id)),
+  };
+}
+
+const meets = rows.filter((r): r is PlanMeetRow => r.kind === 'meet');
+const TAGS = ['今回', '次回', 'その次'];
+const columns = meets.slice(0, 3).map((row, i) => ({ row, tag: TAGS[i], view: viewOf(row) }));
+// 3列より後ろの行（休みの行も、表の順のまま）
+const lastShown = columns.length > 0 ? rows.indexOf(columns[columns.length - 1].row) : rows.length;
+const later = rows.slice(lastShown + 1).map((row) => (row.kind === 'meet' ? { row, view: viewOf(row) } : { row, view: null }));
+// 見出しは「今週（9/29）」（試作の案B）。複数回をまとめた行だけ「3/2〜3/30」
+const nowLabel = columns[0] ? (columns[0].row.until ? entranceDateLabel(columns[0].row) : shortDate(columns[0].row.date)) : '';
+---
+
+<Base title="今週のページ">
+  {
+    !member ? (
+      <p class="member-deny">
+        このページはプロジェクトのメンバー向けです。<a href="/learn/">教材の一覧へ</a>
+      </p>
+    ) : (
+      <div class="wkp">
+        <p class="wkp-back">
+          <a href="/learn/">← 学習の一覧へ</a>
+        </p>
+        <h1 class="page-title">今週{nowLabel !== '' && `（${nowLabel}）`}</h1>
+        <p class="wkp-lead">
+          集まりの前半で教えること・後半にみんなでやること・その回までに家でやることです。
+          <a href="/learn/plan/">予定をすべて見る →</a>
+        </p>
+
+        {columns.length === 0 ? (
+          <p class="wkp-lead">予定の回はすべて終わりました。</p>
+        ) : (
+          <div class="wkp-cols">
+            {columns.map((c, i) => (
+              <section class={i === 0 ? 'wkp-col is-now' : 'wkp-col'}>
+                <h2 class="wkp-col__h">
+                  {entranceDateLabel(c.row)}
+                  <span class={i === 0 ? 'wkp-tag wkp-tag--now' : 'wkp-tag'}>{c.tag}</span>
+                  {c.row.online && <span class="wkp-tag">オンライン</span>}
+                </h2>
+                <p class="wkp-col__no">
+                  第{c.row.no}回{c.row.goal !== '' && <span class={c.row.big ? 'wkp-goal wkp-goal--big' : 'wkp-goal'}>{c.row.goal}</span>}
+                </p>
+                <WeekMeeting view={c.view} />
+              </section>
+            ))}
+          </div>
+        )}
+
+        {later.length > 0 && (
+          <div class="wkp-later">
+            <h2 class="wkp-later__h">その先の回</h2>
+            {later.map((l) =>
+              l.row.kind === 'off' ? (
+                <div class="wkp-off">
+                  <span class="wkp-off__d">{l.row.dateLabel ?? shortDate(l.row.date)}</span>
+                  <span class="wkp-off__t">{l.row.title}</span>
+                </div>
+              ) : (
+                <details class="wkp-row">
+                  <summary>
+                    <span class="wkp-row__tw" aria-hidden="true">
+                      ▶
+                    </span>
+                    <span class="wkp-row__d">{entranceDateLabel(l.row)}</span>
+                    <span class="wkp-row__t">
+                      {l.row.title}
+                      {l.row.online && <span class="wkp-tag">オンライン</span>}
+                    </span>
+                  </summary>
+                  <div class="wkp-row__body">{l.view && <WeekMeeting view={l.view} />}</div>
+                </details>
+              ),
+            )}
+          </div>
+        )}
+      </div>
+    )
+  }
+
+  <script>
+    import { paintPracticeProgress } from '../../lesson/practice-progress';
+    if (document.querySelector('[data-ex-ids]')) {
+      void paintPracticeProgress();
+      window.addEventListener('kit:account', () => void paintPracticeProgress());
+    }
+  </script>
+
+  <style>
+    .wkp {
+      color: var(--l-ink);
+      font-family: var(--font-body);
+      font-size: 15px;
+      line-height: 1.75;
+    }
+    .wkp-back {
+      margin: 0 0 10px;
+      font-size: 13px;
+    }
+    .wkp-back a,
+    .wkp-lead a {
+      color: var(--l-ink-2);
+      text-underline-offset: 3px;
+    }
+    .wkp-back a:hover,
+    .wkp-lead a:hover {
+      color: var(--l-shu);
+    }
+    .wkp-lead {
+      margin: 10px 0 20px;
+      max-width: 70ch;
+      color: var(--l-ink-2);
+    }
+    .wkp-lead a {
+      margin-left: 6px;
+      white-space: nowrap;
+    }
+
+    /* --- 3列（試作の案B）。今回の列に朱の枠 --- */
+    .wkp-cols {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      align-items: start;
+    }
+    .wkp-col {
+      background: var(--l-card);
+      border: 1px solid var(--l-rule);
+      padding: 12px 14px 14px;
+      min-width: 0;
+    }
+    .wkp-col.is-now {
+      border: 2px solid var(--l-shu);
+      padding: 11px 13px 13px;
+    }
+    .wkp-col__h {
+      margin: 0;
+      font-family: var(--font-head);
+      font-size: 17px;
+      font-weight: 700;
+    }
+    .wkp-col__no {
+      margin: 0 0 8px;
+      font-size: 12.5px;
+      color: var(--l-ink-2);
+    }
+    .wkp-goal {
+      margin-left: 8px;
+    }
+    .wkp-goal--big {
+      color: var(--l-ink);
+      font-weight: 700;
+    }
+    .wkp-tag {
+      display: inline-block;
+      margin-left: 8px;
+      font-family: var(--font-body);
+      font-size: 11px;
+      font-weight: 400;
+      border: 1px solid var(--l-rule);
+      border-radius: 3px;
+      padding: 0 5px;
+      color: var(--l-ink-2);
+      white-space: nowrap;
+      vertical-align: middle;
+    }
+    .wkp-tag--now {
+      color: var(--l-shu);
+      border-color: var(--l-shu);
+      font-weight: 700;
+    }
+
+    /* --- その先の回（畳んだ行。開くと同じ中身） --- */
+    .wkp-later {
+      margin-top: 28px;
+      border-bottom: 1px solid var(--l-rule);
+    }
+    .wkp-later__h {
+      margin: 0 0 6px;
+      font-family: var(--font-head);
+      font-size: 17px;
+    }
+    .wkp-row {
+      border-top: 1px solid var(--l-rule);
+    }
+    .wkp-row summary {
+      display: grid;
+      grid-template-columns: 1.1em 6.6em minmax(0, 1fr);
+      gap: 8px;
+      align-items: baseline;
+      padding: 8px 4px;
+      cursor: pointer;
+      list-style: none;
+      font-size: 14px;
+    }
+    .wkp-row summary::-webkit-details-marker {
+      display: none;
+    }
+    .wkp-row summary:hover {
+      background: var(--l-lv1);
+    }
+    .wkp-row__tw {
+      font-size: 11px;
+      color: var(--l-ink-2);
+      transition: transform 160ms var(--ease-out);
+    }
+    .wkp-row[open] .wkp-row__tw {
+      transform: rotate(90deg);
+    }
+    .wkp-row__d {
+      color: var(--l-ink-2);
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+    }
+    .wkp-row__body {
+      padding: 4px 8px 14px calc(1.1em + 8px + 4px);
+      max-width: 640px;
+    }
+    /* 休み（祝日・冬休み・試験）は細い灰色の行（今後の予定の表と同じ。第21.2節） */
+    .wkp-off {
+      display: grid;
+      grid-template-columns: 1.1em 6.6em minmax(0, 1fr);
+      gap: 8px;
+      padding: 4px 4px;
+      border-top: 1px solid var(--l-rule);
+      font-size: 13px;
+      color: var(--l-ink-2);
+    }
+    .wkp-off__d {
+      grid-column: 2;
+      font-variant-numeric: tabular-nums;
+    }
+
+    @media (max-width: 760px) {
+      .wkp-cols {
+        grid-template-columns: 1fr;
+      }
+      .wkp-row summary,
+      .wkp-off {
+        grid-template-columns: 1.1em minmax(0, 1fr);
+      }
+      .wkp-row__d,
+      .wkp-off__d,
+      .wkp-off__t,
+      .wkp-row__t {
+        grid-column: 2;
+      }
+      .wkp-row__body {
+        padding-left: 8px;
+      }
+    }
+  </style>
+</Base>

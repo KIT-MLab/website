@@ -1,0 +1,148 @@
+---
+id: practice-02-round
+chapter: 02-numbers
+topic: round
+title: 数値の丸め
+sections: [python-02-round]
+order: 2
+levels: [1, 2, 3]
+---
+
+<Exercise
+  id="practice-02-round-1"
+  kind="build"
+  level={1}
+  name="小数第1位まで"
+  stdin={`3.14159`}
+  tests={[
+    { kind: 'stdout', stdin: `3.14159\n` },
+    { kind: 'stdout', stdin: `0\n` },
+    { kind: 'stdout', stdin: `-2.46\n` },
+  ]}
+  hints={['`round()` の2つ目の引数は、残す小数点以下の桁数です。第2章2節を見てください。']}
+  mistakes={[]}
+  syntax={['input', 'round-math', 'print']}
+>
+入力された小数を、小数第1位までに丸めて表示してください。
+
+<Input>
+- 1行目: 小数
+</Input>
+
+<Output>
+丸めた数を1行で表示します。
+</Output>
+</Exercise>
+
+<Exercise
+  id="practice-02-round-2"
+  kind="build"
+  level={1}
+  name="整数に丸める"
+  stdin={`2.7`}
+  tests={[
+    { kind: 'stdout', stdin: `2.7\n` },
+    { kind: 'stdout', stdin: `0.4\n` },
+    { kind: 'stdout', stdin: `-1.6\n` },
+  ]}
+  hints={['`round()` に桁数を渡すときと渡さないときで、結果の形が違います。第2章2節の表を見てください。']}
+  mistakes={[]}
+  syntax={['input', 'round-math', 'print']}
+>
+入力された小数を、いちばん近い整数に丸めて表示してください。
+
+<Input>
+- 1行目: 小数
+</Input>
+
+<Output>
+丸めた整数を1行で表示します。小数点は付けません。
+</Output>
+</Exercise>
+
+<Exercise
+  id="practice-02-round-3"
+  kind="build"
+  level={2}
+  name="50m走の平均"
+  stdin={`8.12
+8.05
+7.98`}
+  tests={[
+    { kind: 'stdout', stdin: `8.12\n8.05\n7.98\n` },
+    { kind: 'stdout', stdin: `9.0\n9.0\n9.0\n` },
+    { kind: 'stdout', stdin: `10.33\n9.87\n10.1\n` },
+  ]}
+  hints={['先に3回の合計を求めてから、回数で割ります。丸めるのは最後です。']}
+  mistakes={[]}
+  syntax={['input', 'operators', 'round-math', 'print']}
+>
+50m走を3回走ったタイムから、平均のタイムを求めてください。平均は小数第2位までに丸めます。
+
+<Input>
+- 1行目: 1回目のタイム（秒、小数）
+- 2行目: 2回目のタイム（秒、小数）
+- 3行目: 3回目のタイム（秒、小数）
+</Input>
+
+<Output>
+平均のタイムを、数だけ1行で表示します。
+</Output>
+</Exercise>
+
+<Exercise
+  id="practice-02-round-4"
+  kind="build"
+  level={2}
+  name="割引後の値段"
+  stdin={`1980
+15`}
+  tests={[
+    { kind: 'stdout', stdin: `1980\n15\n` },
+    { kind: 'stdout', stdin: `0\n50\n` },
+    { kind: 'stdout', stdin: `999\n33\n` },
+    { kind: 'stdout', stdin: `500\n0\n` },
+  ]}
+  hints={['割引の率が15なら、値段の15%が引かれます。先に、引かれる額か、残る割合を考えます。', '1円未満を四捨五入するには、`round()` の桁数を省きます。第2章2節を見てください。']}
+  mistakes={[]}
+  syntax={['input', 'operators', 'round-math', 'print']}
+>
+値段と割引の率から、割引したあとの値段を求めてください。1円未満は四捨五入します。
+
+<Input>
+- 1行目: 値段（円、整数）
+- 2行目: 割引の率（%、整数）
+</Input>
+
+<Output>
+割引したあとの値段を、整数で1行に表示します。
+</Output>
+</Exercise>
+
+<Exercise
+  id="practice-02-round-5"
+  kind="build"
+  level={3}
+  name="BMIを求める"
+  stdin={`170
+62`}
+  tests={[
+    { kind: 'stdout', stdin: `170\n62\n` },
+    { kind: 'stdout', stdin: `160\n0\n` },
+    { kind: 'stdout', stdin: `150\n45\n` },
+  ]}
+  hints={['先に、身長をメートルに直して変数に入れます。', '2乗は、同じ数を2回掛けた値です。丸めるのは最後です。']}
+  mistakes={[]}
+  syntax={['input', 'operators', 'round-math', 'print']}
+>
+身長と体重から、BMI を求めてください。BMI は、体重（kg）を、メートルに直した身長の2乗で割った値です。小数第1位までに丸めます。
+
+<Input>
+- 1行目: 身長（cm、整数）
+- 2行目: 体重（kg、小数）
+</Input>
+
+<Output>
+`BMI` と書き、空白をはさんで BMI の値を1行で表示します。形は出力例のとおりです。
+</Output>
+</Exercise>

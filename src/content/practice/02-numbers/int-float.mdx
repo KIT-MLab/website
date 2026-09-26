@@ -1,0 +1,157 @@
+---
+id: practice-02-int-float
+chapter: 02-numbers
+topic: int-float
+title: 整数と浮動小数点数
+sections: [python-02-int-float]
+order: 1
+levels: [1, 2, 3]
+---
+
+<Exercise
+  id="practice-02-int-float-1"
+  kind="build"
+  level={1}
+  name="割り算の結果"
+  stdin={`10
+4`}
+  tests={[
+    { kind: 'stdout', stdin: `10\n4\n` },
+    { kind: 'stdout', stdin: `0\n5\n` },
+    { kind: 'stdout', stdin: `9\n3\n` },
+    { kind: 'stdout', stdin: `-7\n2\n` },
+  ]}
+  hints={['`/` で割った結果は、割り切れるときも浮動小数点数（小数）になります。第2章1節を見てください。']}
+  mistakes={[]}
+  syntax={['input', 'operators', 'print']}
+>
+1つ目の整数を2つ目の整数で割った結果を表示してください。2つ目は0ではないものとします。
+
+<Input>
+- 1行目: 割られる数（整数）
+- 2行目: 割る数（整数）
+</Input>
+
+<Output>
+割った結果を1行で表示します。割り切れるときも、小数の形で表示します。
+</Output>
+</Exercise>
+
+<Exercise
+  id="practice-02-int-float-2"
+  kind="build"
+  level={1}
+  name="給油の合計"
+  stdin={`12.5
+30.25`}
+  tests={[
+    { kind: 'stdout', stdin: `12.5\n30.25\n` },
+    { kind: 'stdout', stdin: `0\n0\n` },
+    { kind: 'stdout', stdin: `7.5\n7.5\n` },
+  ]}
+  hints={['小数点を含む文字列は `int()` では数に直せません。第2章1節を見てください。']}
+  mistakes={[]}
+  syntax={['input', 'operators', 'print']}
+>
+2回に分けて入れたガソリンの量から、入れた量の合計を求めてください。
+
+<Input>
+- 1行目: 1回目に入れた量（L、小数）
+- 2行目: 2回目に入れた量（L、小数）
+</Input>
+
+<Output>
+合計の量を、数だけ1行で表示します。
+</Output>
+</Exercise>
+
+<Exercise
+  id="practice-02-int-float-3"
+  kind="build"
+  level={2}
+  name="リボンを切る"
+  stdin={`5.0
+1.2`}
+  tests={[
+    { kind: 'stdout', stdin: `5.0\n1.2\n` },
+    { kind: 'stdout', stdin: `0\n0.5\n` },
+    { kind: 'stdout', stdin: `3\n1.5\n` },
+    { kind: 'stdout', stdin: `10\n2.5\n` },
+  ]}
+  hints={['先に、全体の長さが1本ぶんの長さの何倍かを求めます。', '`int()` に小数を渡すと、小数点以下を切り捨てた整数になります。第2章1節を見てください。']}
+  mistakes={[]}
+  syntax={['input', 'operators', 'print']}
+>
+長いリボンから、同じ長さのリボンを何本切り取れるかを求めてください。足りない端は捨てます。
+
+<Input>
+- 1行目: リボン全体の長さ（m、小数）
+- 2行目: 1本に使う長さ（m、小数）
+</Input>
+
+<Output>
+切り取れる本数を、整数で1行に表示します。
+</Output>
+</Exercise>
+
+<Exercise
+  id="practice-02-int-float-4"
+  kind="build"
+  level={2}
+  name="燃費と走れる距離"
+  stdin={`450
+30
+20`}
+  tests={[
+    { kind: 'stdout', stdin: `450\n30\n20\n` },
+    { kind: 'stdout', stdin: `0\n12.5\n40\n` },
+    { kind: 'stdout', stdin: `37.5\n2.5\n2.5\n` },
+  ]}
+  hints={['燃費は、走った距離を使ったガソリンの量で割った値です。', 'あと走れる距離は、燃費を変数に入れておくと、そこから求められます。']}
+  mistakes={[]}
+  syntax={['input', 'operators', 'print']}
+>
+走った距離と、使ったガソリンの量から、1Lあたりに走れる距離（燃費）を求めてください。続けて、タンクに残っている量で、あと何km走れるかも求めます。
+
+<Input>
+- 1行目: 走った距離（km、小数）
+- 2行目: 使ったガソリンの量（L、小数）
+- 3行目: タンクに残っている量（L、小数）
+</Input>
+
+<Output>
+燃費と、あと走れる距離を、この順に2行で表示します。数だけを表示します。
+</Output>
+</Exercise>
+
+<Exercise
+  id="practice-02-int-float-5"
+  kind="build"
+  level={3}
+  name="大袋と小袋"
+  stdin={`300
+1200
+250
+500`}
+  tests={[
+    { kind: 'stdout', stdin: `300\n1200\n250\n500\n` },
+    { kind: 'stdout', stdin: `0\n100\n0\n300\n` },
+    { kind: 'stdout', stdin: `150\n200\n150\n200\n` },
+  ]}
+  hints={['先に、1gあたりの値段を考えます。100gあたりは、その100倍です。', '文の中に数を入れる書き方は、第1章4節にあります。']}
+  mistakes={[]}
+  syntax={['input', 'operators', 'print']}
+>
+同じお菓子の大袋と小袋があります。それぞれの値段と重さから、100gあたりの値段を求めてください。
+
+<Input>
+- 1行目: 大袋の値段（円、整数）
+- 2行目: 大袋の重さ（g、整数）
+- 3行目: 小袋の値段（円、整数）
+- 4行目: 小袋の重さ（g、整数）
+</Input>
+
+<Output>
+1行目に大袋、2行目に小袋の100gあたりの値段を表示します。形は出力例のとおりです。
+</Output>
+</Exercise>

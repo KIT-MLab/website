@@ -1,0 +1,151 @@
+---
+id: practice-01-input
+chapter: 01-python
+topic: input
+title: '`input()` による入力'
+sections: [python-01-input]
+order: 2
+levels: [1, 2, 3]
+---
+
+<Exercise
+  id="practice-01-input-1"
+  kind="build"
+  level={1}
+  name="2倍にする"
+  stdin={`21`}
+  tests={[
+    { kind: 'stdout', stdin: `21\n` },
+    { kind: 'stdout', stdin: `0\n` },
+    { kind: 'stdout', stdin: `-8\n` },
+  ]}
+  hints={['`input()` で読み取った値は文字列です。計算する前に整数に直します。第1章2節を見てください。']}
+  mistakes={[]}
+  syntax={['input', 'operators', 'print']}
+>
+入力された整数を2倍にして表示してください。
+
+<Input>
+- 1行目: 整数
+</Input>
+
+<Output>
+2倍にした数を1行で表示します。
+</Output>
+</Exercise>
+
+<Exercise
+  id="practice-01-input-2"
+  kind="build"
+  level={1}
+  name="2つの数の和"
+  stdin={`3
+4`}
+  tests={[
+    { kind: 'stdout', stdin: `3\n4\n` },
+    { kind: 'stdout', stdin: `0\n0\n` },
+    { kind: 'stdout', stdin: `-5\n5\n` },
+  ]}
+  hints={['`input()` は、1回呼ぶごとに入力欄の1行を読み取ります。2行を読むには2回呼びます。']}
+  mistakes={[]}
+  syntax={['input', 'operators', 'print']}
+>
+入力された2つの整数の和を表示してください。
+
+<Input>
+- 1行目: 1つ目の整数
+- 2行目: 2つ目の整数
+</Input>
+
+<Output>
+2つの整数の和を1行で表示します。
+</Output>
+</Exercise>
+
+<Exercise
+  id="practice-01-input-3"
+  kind="build"
+  level={2}
+  name="生まれた年"
+  stdin={`2026
+19`}
+  tests={[
+    { kind: 'stdout', stdin: `2026\n19\n` },
+    { kind: 'stdout', stdin: `2026\n0\n` },
+    { kind: 'stdout', stdin: `2027\n100\n` },
+  ]}
+  hints={['2つの `input()` は、式の左に書いたほうから順に、入力欄の上の行を読み取ります。']}
+  mistakes={[]}
+  syntax={['input', 'operators', 'print']}
+>
+今年の西暦と、今年の誕生日を迎えたあとの年齢から、生まれた年を求めてください。
+
+<Input>
+- 1行目: 今年の西暦（整数）
+- 2行目: 年齢（整数）
+</Input>
+
+<Output>
+生まれた年を、数だけ1行で表示します。
+</Output>
+</Exercise>
+
+<Exercise
+  id="practice-01-input-4"
+  kind="build"
+  level={2}
+  name="3か月後の貯金"
+  stdin={`5000
+3000`}
+  tests={[
+    { kind: 'stdout', stdin: `5000\n3000\n` },
+    { kind: 'stdout', stdin: `0\n0\n` },
+    { kind: 'stdout', stdin: `800\n800\n` },
+  ]}
+  hints={['先に、3か月で貯金がいくら増えるかを考えます。']}
+  mistakes={[]}
+  syntax={['input', 'operators', 'print']}
+>
+いまの貯金の額と、毎月貯める額から、3か月後の貯金の額を求めてください。毎月、同じ額を貯めるものとします。
+
+<Input>
+- 1行目: いまの貯金の額（円、整数）
+- 2行目: 毎月貯める額（円、整数）
+</Input>
+
+<Output>
+3か月後の貯金の額を、数だけ1行で表示します。
+</Output>
+</Exercise>
+
+<Exercise
+  id="practice-01-input-5"
+  kind="build"
+  level={3}
+  name="2人ぶんの代金"
+  stdin={`150
+2
+300
+1`}
+  tests={[
+    { kind: 'stdout', stdin: `150\n2\n300\n1\n` },
+    { kind: 'stdout', stdin: `0\n5\n100\n0\n` },
+    { kind: 'stdout', stdin: `99\n1\n99\n1\n` },
+  ]}
+  hints={['`input()` は、呼んだ順に入力欄の上の行から読み取ります。表示する順と、読み取る順を合わせます。', '1行ぶんの代金を、1つの `print` で表示します。']}
+  mistakes={[]}
+  syntax={['input', 'operators', 'print']}
+>
+姉と弟が、それぞれ品物をいくつか買いました。姉の代金と弟の代金を求めてください。
+
+<Input>
+- 1行目: 姉が買った品物の値段（円、整数）
+- 2行目: 姉が買った個数（整数）
+- 3行目: 弟が買った品物の値段（円、整数）
+- 4行目: 弟が買った個数（整数）
+</Input>
+
+<Output>
+1行目に姉の代金、2行目に弟の代金を、数だけ表示します。
+</Output>
+</Exercise>

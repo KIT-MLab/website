@@ -1,0 +1,364 @@
+---
+/**
+ * `/learn/practice/` 練習問題集の一覧（20-platform.md 第25.5節。試作の案B）。
+ *
+ * 章ごとに畳み（学習の一覧 `/learn/` の章の段と同じ組み）、話題の見出しの下に問題の札
+ * （★の段と短い名前。解いたら緑）を並べる。並びは教材の章と話題の順で、集まりの予定とは
+ * 切り離す（第25.5節）。見せる人は誰でも（公開してよい）。
+ *
+ * **章が準備中（第20.1節）なら、運営でない人には鍵の印だけを出し、話題も問題も送らない。**
+ * 学習の一覧は事前生成で鍵をブラウザで塗るが、ここはサーバで組むので最初から出し分ける。
+ * 解いたかどうかは手元の進度にしか無いので、ブラウザで src/lesson/practice-progress.ts が塗る。
+ */
+export const prerender = false;
+
+import { getCollection } from 'astro:content';
+import Base from '../../../layouts/Base.astro';
+import { chapterTitle } from '../../../lesson/chapters';
+import { practiceHref, practiceProblems, topicTitleHtml, type PracticeProblem } from '../../../lesson/practice';
+import { currentUser, serverConfig } from '../../../server/auth';
+import { publicChapters } from '../../../server/lessons-publish';
+import generated from '../../../generated/lesson-data.json';
+import '../../../styles/lesson-tokens.css';
+
+const config = serverConfig();
+const viewer = config ? await currentUser(Astro.request) : null;
+const isStaff = viewer !== null && (viewer.role === 'staff' || viewer.role === 'admin');
+const open = config ? await publicChapters(config.db) : new Set<string>();
+
+// 運営として見ているときは準備中の章も出すので、共有のキャッシュに載せない
+if (isStaff) Astro.response.headers.set('cache-control', 'no-store');
+
+const topics = (await getCollection('practice')).sort(
+  (a, b) => a.data.chapter.localeCompare(b.data.chapter) || a.data.order - b.data.order,
+);
+
+type TopicView = { id: string; titleHtml: string; href: string; problems: PracticeProblem[] };
+type ChapterView = { chapter: string; title: string; isPublic: boolean; locked: boolean; topics: TopicView[]; ids: string[] };
+
+const chapters: ChapterView[] = [];
+for (const t of topics) {
+  let ch = chapters.find((c) => c.chapter === t.data.chapter);
+  if (!ch) {
+    const isPublic = open.has(t.data.chapter);
+    ch = { chapter: t.data.chapter, title: chapterTitle(t.data.chapter), isPublic, locked: !isPublic && !isStaff, topics: [], ids: [] };
+    chapters.push(ch);
+  }
+  if (ch.locked) continue; // 準備中の章の中身は1文字も出さない（第20.1節）
+  const problems = practiceProblems(generated, t.data.id);
+  ch.topics.push({ id: t.data.id, titleHtml: topicTitleHtml(t.data.title), href: practiceHref(t.data.chapter, t.data.topic), problems });
+  ch.ids.push(...problems.map((p) => p.id));
+}
+
+// 既定で開くのは、問題のある最初の章だけ（学習の一覧と同じく、ほかは閉じる）
+const openChapter = chapters.find((c) => !c.locked && c.ids.length > 0)?.chapter ?? null;
+
+const LOCK_SVG =
+  '<svg class="pp-lock" viewBox="0 0 16 16" aria-hidden="true" focusable="false">' +
+  '<path d="M4.5 7V5a3.5 3.5 0 0 1 7 0v2" fill="none" stroke="currentColor" stroke-width="1.3"/>' +
+  '<rect x="3" y="7" width="10" height="7" rx="1" fill="none" stroke="currentColor" stroke-width="1.3"/>' +
+  '</svg>';
+---
+
+<Base title="練習問題集">
+  <p class="pp-back"><a href="/learn/">← 学習の一覧へ</a></p>
+  <h1 class="page-title">練習問題集</h1>
+  <section class="pp">
+    <p class="lead">
+      教材の章ごとに、学んだことを練習する問題を並べています。★1 は書き方を確かめる短い問題、★2 は1つの話題で組む問題、★3
+      は前の章の話題もまたいで手順を考える問題です。解いた問題は緑になります。
+    </p>
+
+    <div class="pp-chapters">
+      {
+        chapters.map((ch) =>
+          ch.locked ? (
+            <div class="lp-chap lp-chap--locked">
+              <div class="lp-chap__head">
+                <span aria-hidden="true" />
+                <span class="lp-chap__name">
+                  {ch.title}
+                  <span class="pp-lockmark" set:html={LOCK_SVG} />
+                </span>
+                <span class="lp-soon">準備中</span>
+              </div>
+            </div>
+          ) : (
+            <details class="lp-chap" id={ch.chapter} open={ch.chapter === openChapter}>
+              <summary class="lp-chap__head">
+                <span class="lp-chap__tw" aria-hidden="true">
+                  ▶
+                </span>
+                <span class="lp-chap__name">
+                  {ch.title}
+                  {!ch.isPublic && <span class="lp-soon lp-soon--sm">準備中</span>}
+                </span>
+                {ch.ids.length > 0 ? (
+                  <span class="lp-meter lp-meter--sm" data-ex-ids={ch.ids.join(' ')}>
+                    <span class="lp-meter__track">
+                      <span class="lp-meter__fill" data-fill style="width:0%" />
+                    </span>
+                    <span class="lp-meter__pct" data-pct>
+                      0%
+                    </span>
+                    <span class="lp-meter__cnt" data-cnt>
+                      0/{ch.ids.length}問
+                    </span>
+                  </span>
+                ) : (
+                  <span class="lp-soon">まだ問題がありません</span>
+                )}
+              </summary>
+              <div class="pp-body">
+                {ch.topics.map((t) => (
+                  <div class="pp-topic">
+                    <h2 class="pp-topic__h">
+                      <a href={t.href} set:html={t.titleHtml} />
+                    </h2>
+                    {t.problems.length > 0 ? (
+                      <ul class="pp-chips">
+                        {t.problems.map((p) => (
+                          <li>
+                            <a class="pp-chip" href={`${t.href}#${p.id}`} data-ex-id={p.id}>
+                              <span class="pp-chip__star">★{p.level}</span>
+                              {p.name}
+                            </a>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p class="pp-empty">まだ問題がありません。</p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </details>
+          ),
+        )
+      }
+    </div>
+  </section>
+
+  <script>
+    import { paintPracticeProgress } from '../../../lesson/practice-progress';
+
+    // 今週のページの「練習」から #<章> で来たら、その章を開く
+    const hash = decodeURIComponent(location.hash.slice(1));
+    const target = hash ? document.getElementById(hash) : null;
+    if (target instanceof HTMLDetailsElement) target.open = true;
+
+    void paintPracticeProgress();
+    // 入る・出るで手元の進度が入れ替わる（第14.5節）。塗り直す
+    window.addEventListener('kit:account', () => void paintPracticeProgress());
+    window.addEventListener('kit:progress', () => void paintPracticeProgress());
+  </script>
+</Base>
+
+<style>
+  .pp-back {
+    margin: 0 0 10px;
+    font-size: 13px;
+  }
+  .pp-back a {
+    color: var(--color-ink-2);
+    text-underline-offset: 3px;
+  }
+  .lead {
+    margin: 20px 0 28px;
+    max-width: 70ch;
+  }
+
+  /* --- 章の段。学習の一覧（src/pages/learn/index.astro）の .lp-chap と同じ組み --- */
+  .pp-chapters {
+    border-bottom: 1.5px solid var(--color-line);
+  }
+  .lp-chap {
+    border-top: 1.5px solid var(--color-line);
+  }
+  .lp-chap__head {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1.1em minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 6px;
+    cursor: pointer;
+    list-style: none;
+  }
+  .lp-chap__head::-webkit-details-marker {
+    display: none;
+  }
+  .lp-chap__head:hover {
+    background: var(--l-lv1);
+  }
+  /* 準備中の段は押せないので、乗せても色を変えない（第14.6節は押せるものだけ） */
+  .lp-chap--locked .lp-chap__head {
+    cursor: default;
+  }
+  .lp-chap--locked .lp-chap__head:hover {
+    background: transparent;
+  }
+  .lp-chap--locked .lp-chap__name {
+    color: var(--color-ink-2);
+  }
+  .lp-chap__tw {
+    font-size: 11px;
+    color: var(--color-ink-2);
+    transition: transform 160ms var(--ease-out);
+  }
+  .lp-chap[open] > .lp-chap__head .lp-chap__tw {
+    transform: rotate(90deg);
+  }
+  .lp-chap__name {
+    font-family: var(--font-head);
+    font-weight: 900;
+    font-size: 17px;
+  }
+  .lp-soon {
+    font-size: 12px;
+    color: var(--color-ink-2);
+    border: 1px solid var(--l-rule);
+    border-radius: 3px;
+    padding: 0 6px;
+    white-space: nowrap;
+  }
+  .lp-soon--sm {
+    margin-left: 8px;
+    font-family: var(--font-body);
+    font-weight: 400;
+    vertical-align: middle;
+  }
+  .pp-lockmark {
+    display: inline-flex;
+    align-items: center;
+    margin-left: 8px;
+    color: var(--color-ink-2);
+    vertical-align: middle;
+  }
+  .pp-lockmark :global(.pp-lock) {
+    width: 14px;
+    height: 14px;
+  }
+
+  /* --- 進み具合の棒。緑は済んだものだけ（第12.1節・第17.2節） --- */
+  .lp-meter {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+  .lp-meter__track {
+    width: 72px;
+    height: 5px;
+    background: var(--l-lv2);
+    border-radius: 3px;
+    overflow: hidden;
+    flex: none;
+  }
+  .lp-meter__fill {
+    display: block;
+    height: 100%;
+    background: var(--color-ink-2);
+    border-radius: 3px;
+    transition: width 200ms var(--ease-out);
+  }
+  .lp-meter.is-done .lp-meter__fill {
+    background: var(--l-midori);
+  }
+  .lp-meter__pct {
+    min-width: 3.6em;
+    text-align: right;
+    font-weight: 700;
+  }
+  .lp-meter.is-done .lp-meter__pct {
+    color: var(--l-midori);
+  }
+  .lp-meter__cnt {
+    color: var(--color-ink-2);
+  }
+
+  /* --- 話題と問題の札（試作の案B） --- */
+  .pp-body {
+    padding: 0 6px 14px 30px;
+  }
+  .pp-topic {
+    padding: 8px 0 6px;
+  }
+  .pp-topic + .pp-topic {
+    border-top: 1px solid var(--l-rule);
+  }
+  .pp-topic__h {
+    margin: 0 0 8px;
+    font-family: var(--font-body);
+    font-size: 15px;
+    font-weight: 700;
+  }
+  .pp-topic__h a {
+    color: var(--color-ink);
+    text-underline-offset: 3px;
+  }
+  .pp-topic__h a:hover {
+    color: var(--l-shu);
+  }
+  .pp-topic__h :global(code) {
+    font-family: var(--font-mono);
+    font-size: 0.92em;
+    background: var(--l-chip);
+    padding: 0 4px;
+    border-radius: 3px;
+  }
+  .pp-chips {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .pp-chip {
+    display: inline-block;
+    border: 1px solid var(--l-rule);
+    background: var(--l-card);
+    padding: 2px 10px;
+    border-radius: 3px;
+    font-size: 13px;
+    color: var(--l-ink);
+    text-decoration: none;
+    transition: border-color 120ms var(--ease-out);
+  }
+  /* 押せるものは、乗せたら見た目を変える（第14.6節） */
+  .pp-chip:hover {
+    border-color: var(--l-ink);
+  }
+  .pp-chip.is-done {
+    border-color: var(--l-midori);
+    color: var(--l-midori);
+  }
+  .pp-chip__star {
+    margin-right: 4px;
+    font-size: 12px;
+    color: var(--l-kohaku);
+  }
+  .pp-chip.is-done .pp-chip__star {
+    color: var(--l-midori);
+  }
+  .pp-empty {
+    margin: 0;
+    font-size: 13px;
+    color: var(--color-ink-2);
+  }
+
+  @media (max-width: 640px) {
+    .pp-body {
+      padding-left: 10px;
+    }
+    .lp-meter__track {
+      width: 44px;
+    }
+    .lp-meter__cnt {
+      display: none;
+    }
+  }
+</style>

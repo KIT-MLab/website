@@ -92,11 +92,11 @@ export default function CodeEditor({ value, onChange, readOnly = false, label, r
     if (!host.current) return;
     const extensions = [
       basicSetup,
-      /* Tab: 補完の候補が出ていれば選ぶ。出ていなければ字下げ（Shift+Tab で戻す）。
+      /* Tab: 補完の候補が出ていれば選ぶ。出ていなければインデント（Shift+Tab で戻す）。
          コード欄から抜けるときは Esc を押してから Tab（CodeMirror の決まり） */
       Prec.highest(keymap.of([{ key: 'Tab', run: acceptCompletion }])),
       keymap.of([indentWithTab]),
-      indentUnit.of('    '), // 字下げは Python の決まりどおり空白4つ
+      indentUnit.of('    '), // インデントは Python の決まりどおり空白4つ
       python(),
       syntaxHighlighting(HIGHLIGHT),
       THEME,

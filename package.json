@@ -9,10 +9,12 @@
     "dev": "npm run build:tests && astro dev",
     "check:lessons": "node scripts/check-lessons.mjs",
     "check:weekly": "node scripts/check-weekly.mjs",
+    "check:practice": "node scripts/check-practice.mjs",
     "build:tests": "node scripts/build-tests.mjs",
     "report:combos": "node scripts/combos.mjs",
     "report:weekly": "node scripts/report-weekly.mjs",
-    "build": "npm run check:lessons && npm run check:weekly && npm run build:tests && astro build",
+    "report:practice": "node scripts/report-practice.mjs",
+    "build": "npm run check:lessons && npm run check:weekly && npm run check:practice && npm run build:tests && astro build",
     "preview": "astro preview",
     "astro": "astro",
     "deploy": "wrangler deploy -c dist/server/wrangler.json"

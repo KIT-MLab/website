@@ -1,0 +1,218 @@
+---
+/**
+ * 練習問題集の話題のページ（20-platform.md 第25.5節）。`/learn/practice/<章>/<話題>/`。
+ *
+ * 見た目は今週の演習の問題のページ（src/pages/learn/weekly/[id].astro）と同じ組み: 本文の列を
+ * 右の欄（構文の一覧。第22章）の手前まで広げ、組む問題の入力｜出力を左右に並べる（第23.3節）。
+ * 問題は★の段の順（ファイルに書いた順。scripts/check-practice.mjs が並びを守らせる）に通し番号で出す。
+ * 採点・進み具合・模範解答は教材の節と同じ部品（<Exercise>）をそのまま使う。
+ *
+ * **章が準備中（第20.1節）なら、運営でない人には1段落だけを返し、問題も判定データも送らない。**
+ */
+export const prerender = false;
+
+import { getCollection, render } from 'astro:content';
+import Base from '../../../../layouts/Base.astro';
+import Exercise from '../../../../components/lesson/Exercise.astro';
+import Input from '../../../../components/lesson/Input.astro';
+import Output from '../../../../components/lesson/Output.astro';
+import SyntaxPanel from '../../../../components/lesson/SyntaxPanel.astro';
+import { chapterTitle } from '../../../../lesson/chapters';
+import { topicTitleHtml, topicTitleText } from '../../../../lesson/practice';
+import { syntaxCategoriesFor } from '../../../../lesson/weekly-syntax';
+import { currentUser, serverConfig } from '../../../../server/auth';
+import { isChapterPublic } from '../../../../server/lessons-publish';
+// @ts-expect-error 節への行き先の組み立ては .mjs 側に1つだけ置く（src/lesson/weekly-syntax.ts と同じ理由）
+import { sectionHref, sectionLabel } from '../../../../../scripts/section-refs.mjs';
+import generated from '../../../../generated/lesson-data.json';
+import '../../../../styles/lesson.css';
+
+const chapter = Astro.params.chapter ?? '';
+const topic = Astro.params.topic ?? '';
+const entry = (await getCollection('practice')).find((t) => t.data.chapter === chapter && t.data.topic === topic);
+
+const config = serverConfig();
+const viewer = config ? await currentUser(Astro.request) : null;
+const isStaff = viewer !== null && (viewer.role === 'staff' || viewer.role === 'admin');
+const chapterPublic = entry && config ? await isChapterPublic(config.db, entry.data.chapter) : false;
+const canSee = entry !== undefined && (chapterPublic || isStaff);
+
+if (!entry) Astro.response.status = 404;
+// 準備中の章・運営として見ているときはキャッシュしない（節のページと同じ）
+if (!entry || !chapterPublic || isStaff) Astro.response.headers.set('cache-control', 'no-store');
+
+const genPractice = (generated as { practice?: Record<string, unknown> }).practice ?? {};
+const lessonData = canSee && entry ? (genPractice[entry.data.id] ?? null) : null;
+const dataJson = JSON.stringify(lessonData).replace(/</g, '\\u003c');
+const Content = canSee && entry ? (await render(entry)).Content : null;
+const problemCount = canSee && entry ? ((lessonData as { exerciseIds?: string[] } | null)?.exerciseIds?.length ?? 0) : 0;
+
+// この話題を扱う教材の節（第25.5節「各問題から、その話題を扱う教材の節へ戻れる」）
+let sections: { label: string; title: string; href: string }[] = [];
+if (canSee && entry) {
+  const lessons = (await getCollection('lessons')).sort((a, b) => a.id.localeCompare(b.id));
+  sections = entry.data.sections.flatMap((id) => {
+    const l = lessons.find((x) => x.data.id === id);
+    if (!l) return [];
+    const siblings = lessons.filter((x) => x.data.chapter === l.data.chapter);
+    return [{ label: sectionLabel(l.data.chapter, siblings.indexOf(l)), title: l.data.title, href: sectionHref(l.id) }];
+  });
+}
+
+// 構文の一覧（第22章）。この話題の章までに教えた書き方
+const syntaxCategories = canSee && entry ? await syntaxCategoriesFor([entry.data.chapter]) : [];
+---
+
+<Base title={canSee && entry ? topicTitleText(entry.data.title) : '練習問題集'} bar>
+  <div class="lesson-page pp-page">
+    {
+      !entry ? (
+        <p class="pp-notice">
+          見つかりません。<a href="/learn/practice/">練習問題集へ</a>
+        </p>
+      ) : !canSee ? (
+        <p class="pp-notice">
+          この章は準備中です。<a href="/learn/practice/">練習問題集へ</a>
+        </p>
+      ) : (
+        <>
+          {isStaff && !chapterPublic && <p class="pp-staffnote">運営だけに見えています。まだ公開していません。</p>}
+          <div class="pp-grid">
+            <div class="pp-grid__main">
+              <p class="pp-back">
+                <a href={`/learn/practice/#${entry.data.chapter}`}>← 練習問題集へ</a>
+              </p>
+              <div class="lesson-top">
+                <p class="lesson-top__chapter">練習問題集 ・ {chapterTitle(entry.data.chapter)}</p>
+                <h1 class="lesson-title" set:html={topicTitleHtml(entry.data.title)} />
+                <p class="lesson-top__meta">
+                  教材:{' '}
+                  {sections.map((s, i) => (
+                    <>
+                      {i > 0 && '、'}
+                      <a href={s.href}>
+                        {s.label} {s.title}
+                      </a>
+                    </>
+                  ))}
+                  {' ・ '}教材の進み具合（百分率）には数えません
+                </p>
+              </div>
+              <article class="lesson-body">
+                {problemCount === 0 ? (
+                  <p class="pp-empty">この話題の問題はまだありません。</p>
+                ) : (
+                  Content && <Content components={{ Exercise, Input, Output }} />
+                )}
+              </article>
+            </div>
+            {syntaxCategories.length > 0 && (
+              <SyntaxPanel categories={syntaxCategories} sub="この章までに出てきた書き方です。使えそうなものを選んでください。" />
+            )}
+          </div>
+        </>
+      )
+    }
+  </div>
+
+  {canSee && <script type="application/json" id="kit-lesson-data" set:html={dataJson} is:inline />}
+
+  <script>
+    import { getLessonData } from '../../../../lesson/data';
+    import { getProgressStore } from '../../../../lesson/store/progress';
+
+    /* 提出は採点したらすぐ送る（今週の演習のページと同じ。src/pages/learn/weekly/[id].astro）。
+       このページは節のページのような30秒ごとの送信を持たないので、ここで送らないと進度が
+       サーバに残らない。ページを離れるときも送る */
+    const data = getLessonData();
+    if (data) {
+      const store = getProgressStore();
+      void store.openLesson(data.lessonId);
+      window.addEventListener('kit:progress', () => void store.flush());
+      window.addEventListener('pagehide', () => void store.flush());
+    }
+  </script>
+
+  <style is:global>
+    main.wrap {
+      max-width: none;
+      margin: 0;
+      padding: calc(51px + 30px) 32px 120px;
+    }
+
+    @media (max-width: 860px) {
+      main.wrap {
+        padding: 51px 16px 120px;
+      }
+    }
+
+    body {
+      background: var(--l-paper);
+    }
+  </style>
+
+  <style>
+    /* 今週の演習のページ（weekly/[id].astro の .wk-page / .wk-grid）と同じ幅と組み（第23.3節） */
+    .pp-page {
+      margin: 0 auto;
+      max-width: 1240px;
+    }
+    .pp-grid {
+      display: block;
+    }
+    .pp-grid__main,
+    .pp-grid__main :global(.lesson-body) {
+      max-width: none;
+    }
+    @media (min-width: 1280px) {
+      .pp-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 272px;
+        gap: 28px;
+        align-items: start;
+      }
+    }
+    .pp-back {
+      margin: 0 0 10px;
+      font-size: 13px;
+    }
+    .pp-back a {
+      color: var(--l-ink-2);
+      text-underline-offset: 3px;
+    }
+    .pp-back a:hover {
+      color: var(--l-shu);
+    }
+    .lesson-top__meta a {
+      color: var(--l-ai);
+      text-underline-offset: 3px;
+    }
+    .lesson-title :global(code) {
+      font-family: var(--font-mono);
+      font-size: 0.88em;
+    }
+    .pp-notice {
+      max-width: 60ch;
+      font-family: var(--font-body);
+      font-size: 16px;
+      line-height: 1.9;
+    }
+    .pp-notice a {
+      color: var(--l-ai);
+      margin-left: 4px;
+    }
+    .pp-empty {
+      color: var(--l-ink-2);
+    }
+    /* 運営だけに見えている準備中の章（節のページ・今週の演習の帯と同じ） */
+    .pp-staffnote {
+      margin: 0 0 16px;
+      padding: 6px 10px;
+      font-size: 12.5px;
+      line-height: 1.6;
+      color: var(--l-kohaku);
+      background: var(--l-card);
+      border: 1px solid var(--l-kohaku);
+    }
+  </style>
+</Base>

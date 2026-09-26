@@ -1,0 +1,150 @@
+---
+id: practice-02-power
+chapter: 02-numbers
+topic: power
+title: べき乗と演算子の優先順位
+sections: [python-02-operators, python-02-precedence]
+order: 4
+levels: [1, 2, 3]
+---
+
+<Exercise
+  id="practice-02-power-1"
+  kind="build"
+  level={1}
+  name="2のn乗"
+  stdin={`10`}
+  tests={[
+    { kind: 'stdout', stdin: `10\n` },
+    { kind: 'stdout', stdin: `0\n` },
+    { kind: 'stdout', stdin: `1\n` },
+  ]}
+  hints={['べき乗は `**` で書きます。第2章3節を見てください。']}
+  mistakes={[]}
+  syntax={['input', 'operators', 'print']}
+>
+0以上の整数 n を読み取り、2の n 乗を表示してください。
+
+<Input>
+- 1行目: n（0以上の整数）
+</Input>
+
+<Output>
+2の n 乗を1行で表示します。
+</Output>
+</Exercise>
+
+<Exercise
+  id="practice-02-power-2"
+  kind="build"
+  level={1}
+  name="和に掛ける"
+  stdin={`2
+3
+4`}
+  tests={[
+    { kind: 'stdout', stdin: `2\n3\n4\n` },
+    { kind: 'stdout', stdin: `0\n0\n5\n` },
+    { kind: 'stdout', stdin: `-1\n1\n9\n` },
+    { kind: 'stdout', stdin: `1\n2\n-3\n` },
+  ]}
+  hints={['`*` は `+` より先に計算されます。先に計算させたいところを決めます。第2章4節を見てください。']}
+  mistakes={[]}
+  syntax={['input', 'operators', 'print']}
+>
+3つの整数 a、b、c を読み取り、a と b の和に c を掛けた値を表示してください。
+
+<Input>
+- 1行目: a（整数）
+- 2行目: b（整数）
+- 3行目: c（整数）
+</Input>
+
+<Output>
+計算した値を1行で表示します。
+</Output>
+</Exercise>
+
+<Exercise
+  id="practice-02-power-3"
+  kind="build"
+  level={2}
+  name="立方体"
+  stdin={`3`}
+  tests={[
+    { kind: 'stdout', stdin: `3\n` },
+    { kind: 'stdout', stdin: `0\n` },
+    { kind: 'stdout', stdin: `10\n` },
+  ]}
+  hints={['体積は1辺の3乗です。表面積は、正方形の面が何枚あるかを考えます。']}
+  mistakes={[]}
+  syntax={['input', 'operators', 'print']}
+>
+立方体の1辺の長さから、体積と表面積を求めてください。
+
+<Input>
+- 1行目: 1辺の長さ（cm、整数）
+</Input>
+
+<Output>
+体積と表面積を、この順に2行で表示します。数だけを表示します。
+</Output>
+</Exercise>
+
+<Exercise
+  id="practice-02-power-4"
+  kind="build"
+  level={2}
+  name="華氏を摂氏に"
+  stdin={`212`}
+  tests={[
+    { kind: 'stdout', stdin: `212\n` },
+    { kind: 'stdout', stdin: `32\n` },
+    { kind: 'stdout', stdin: `-40\n` },
+    { kind: 'stdout', stdin: `100\n` },
+  ]}
+  hints={['32を引く計算を、掛け算より先にさせます。第2章4節を見てください。', '丸め方は第2章2節にあります。']}
+  mistakes={[]}
+  syntax={['input', 'operators', 'round-math', 'print']}
+>
+華氏で表した温度を、摂氏に直してください。摂氏は、華氏から32を引いた値に5を掛け、9で割った値です。小数第1位までに丸めます。
+
+<Input>
+- 1行目: 華氏の温度（整数）
+</Input>
+
+<Output>
+摂氏の温度を、数だけ1行で表示します。
+</Output>
+</Exercise>
+
+<Exercise
+  id="practice-02-power-5"
+  kind="build"
+  level={3}
+  name="複利の貯金"
+  stdin={`10000
+5
+3`}
+  tests={[
+    { kind: 'stdout', stdin: `10000\n5\n3\n` },
+    { kind: 'stdout', stdin: `0\n3\n10\n` },
+    { kind: 'stdout', stdin: `5000\n0\n7\n` },
+    { kind: 'stdout', stdin: `1000\n10\n0\n` },
+  ]}
+  hints={['年利が5なら、1年で金額が1.05倍になります。2年なら、それをもう1回掛けます。', '同じ数を年数の回だけ掛けるのは、べき乗で書けます。丸めるのは最後です。']}
+  mistakes={[]}
+  syntax={['input', 'operators', 'round-math', 'print']}
+>
+お金を預けると、1年ごとに、そのときの金額に年利を掛けた分だけ増えます。預けた金額・年利・年数から、預けたあとの金額を求めてください。金額は小数第2位までに丸めます。
+
+<Input>
+- 1行目: 預けた金額（円、整数）
+- 2行目: 年利（%、整数）
+- 3行目: 年数（整数）
+</Input>
+
+<Output>
+預けたあとの金額を、数だけ1行で表示します。
+</Output>
+</Exercise>

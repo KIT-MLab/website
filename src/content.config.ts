@@ -29,4 +29,20 @@ const weekly = defineCollection({
   }),
 });
 
-export const collections = { lessons, weekly };
+// 練習問題集（20-platform.md 第25.5節）。1つの話題＝1つの .mdx（src/content/practice/<章>/<話題>.mdx）。
+// 模範解答は src/content/practice/solutions/<課題のid>.py。書き方は 10-lesson-and-writing.md 第3.12節。
+const practice = defineCollection({
+  loader: glob({ pattern: '**/*.mdx', base: './src/content/practice' }),
+  schema: z.object({
+    id: z.string(),
+    chapter: z.string(),
+    topic: z.string(),
+    // 話題の見出し。`…` で囲んだところはコードの字で出す（`print()` による出力）
+    title: z.string(),
+    sections: z.array(z.string()),
+    order: z.number(),
+    levels: z.array(z.number()),
+  }),
+});
+
+export const collections = { lessons, weekly, practice };

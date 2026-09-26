@@ -1,0 +1,151 @@
+---
+id: practice-01-format
+chapter: 01-python
+topic: format
+title: 文字列のフォーマット（f文字列）
+sections: [python-01-fstring]
+order: 4
+levels: [1, 2, 3]
+---
+
+<Exercise
+  id="practice-01-format-1"
+  kind="build"
+  level={1}
+  name="来年の年齢"
+  stdin={`佐藤
+19`}
+  tests={[
+    { kind: 'stdout', stdin: `佐藤\n19\n` },
+    { kind: 'stdout', stdin: `田中\n0\n` },
+    { kind: 'stdout', stdin: `鈴木\n99\n` },
+  ]}
+  hints={['f文字列の `{}` の中には、変数だけでなく計算の式も書けます。第1章4節を見てください。']}
+  mistakes={[]}
+  syntax={['input', 'print']}
+>
+名前と、いまの年齢から、来年の年齢を入れた文を作って表示してください。
+
+<Input>
+- 1行目: 名前（文字列）
+- 2行目: いまの年齢（整数）
+</Input>
+
+<Output>
+`〇〇さんは来年△歳です` の形で1行に表示します。〇〇には名前、△には来年の年齢が入ります。
+</Output>
+</Exercise>
+
+<Exercise
+  id="practice-01-format-2"
+  kind="build"
+  level={1}
+  name="メートルとセンチ"
+  stdin={`15`}
+  tests={[
+    { kind: 'stdout', stdin: `15\n` },
+    { kind: 'stdout', stdin: `0\n` },
+    { kind: 'stdout', stdin: `7\n` },
+  ]}
+  hints={['1mは100cmです。文の中の2か所の数を、f文字列の `{}` で埋めます。']}
+  mistakes={[]}
+  syntax={['input', 'operators', 'print']}
+>
+メートルで表した長さを、センチメートルに直してください。直す前と後の長さを1つの文にして表示します。
+
+<Input>
+- 1行目: 長さ（m、整数）
+</Input>
+
+<Output>
+直す前と後の長さを入れた文を、1行で表示します。形は出力例のとおりです。
+</Output>
+</Exercise>
+
+<Exercise
+  id="practice-01-format-3"
+  kind="build"
+  level={2}
+  name="レシートの1行"
+  stdin={`りんご
+150
+3`}
+  tests={[
+    { kind: 'stdout', stdin: `りんご\n150\n3\n` },
+    { kind: 'stdout', stdin: `水\n0\n2\n` },
+    { kind: 'stdout', stdin: `パン\n200\n0\n` },
+  ]}
+  hints={['品名は文字列のまま使い、値段と個数は整数に直します。', '出力例の中で、入力によって変わるところを探し、そこを `{}` にします。']}
+  mistakes={[]}
+  syntax={['input', 'operators', 'print']}
+>
+品名と、値段と、買った個数から、レシートの1行を作ってください。
+
+<Input>
+- 1行目: 品名（文字列）
+- 2行目: 値段（円、整数）
+- 3行目: 個数（整数）
+</Input>
+
+<Output>
+品名・値段・個数・代金を入れた1行を表示します。形は出力例のとおりです。
+</Output>
+</Exercise>
+
+<Exercise
+  id="practice-01-format-4"
+  kind="build"
+  level={2}
+  name="予定の時刻"
+  stdin={`10
+3`}
+  tests={[
+    { kind: 'stdout', stdin: `10\n3\n` },
+    { kind: 'stdout', stdin: `0\n0\n` },
+    { kind: 'stdout', stdin: `22\n2\n` },
+  ]}
+  hints={['終わる時刻は、始まる時刻にかかる時間を足した数です。変数に入れてから文に入れても、`{}` の中で計算してもかまいません。']}
+  mistakes={[]}
+  syntax={['input', 'operators', 'print']}
+>
+始まる時刻（時）と、かかる時間から、終わる時刻を入れた予定の文を作ってください。終わる時刻は24時を超えないものとします。
+
+<Input>
+- 1行目: 始まる時刻（時、整数）
+- 2行目: かかる時間（時間、整数）
+</Input>
+
+<Output>
+始まる時刻・終わる時刻・かかる時間を入れた文を、1行で表示します。形は出力例のとおりです。
+</Output>
+</Exercise>
+
+<Exercise
+  id="practice-01-format-5"
+  kind="build"
+  level={3}
+  name="自己紹介カード"
+  stdin={`佐藤
+2007
+2026`}
+  tests={[
+    { kind: 'stdout', stdin: `佐藤\n2007\n2026\n` },
+    { kind: 'stdout', stdin: `高橋\n2026\n2026\n` },
+    { kind: 'stdout', stdin: `伊藤\n1990\n2000\n` },
+  ]}
+  hints={['先に年齢を求めて変数に入れます。10年後の年齢は、その変数から求めます。', '3行を、3つの `print` で1行ずつ表示します。']}
+  mistakes={[]}
+  syntax={['input', 'operators', 'print']}
+>
+名前・生まれた年・今年の西暦から、自己紹介のカードを作ってください。年齢は、今年の誕生日を迎えたあとの年齢とします。
+
+<Input>
+- 1行目: 名前（文字列）
+- 2行目: 生まれた年（西暦、整数）
+- 3行目: 今年の西暦（整数）
+</Input>
+
+<Output>
+1行目に名前、2行目に年齢、3行目に10年後の年齢を表示します。形は出力例のとおりです。
+</Output>
+</Exercise>

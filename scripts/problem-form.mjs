@@ -16,7 +16,7 @@
  *   </Output>
  *   </Exercise>
  *
- * 入力例と出力例は書かない。画面が判定の1組目から作る（第23.2節）。
+ * 入力例と出力例は書かない。画面が判定のケース1から作る（第23.2節）。
  */
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -25,7 +25,7 @@ import { exampleLeak, plainText } from './parse-lesson.mjs';
 const GENERATED = fileURLToPath(new URL('../src/generated/lesson-data.json', import.meta.url));
 
 /**
- * 生成済みの lesson-data.json から、課題の id → 判定の1組目の期待値 を引く関数を返す。
+ * 生成済みの lesson-data.json から、課題の id → 判定のケース1の期待値 を引く関数を返す。
  * 検査は build:tests より先に走るので、clone した直後はこのファイルが無い。
  * 無ければ何も引けない（available が false）。そのときは build:tests が同じことを見る。
  */
@@ -35,7 +35,7 @@ export function loadGeneratedExpect() {
   try {
     const g = JSON.parse(readFileSync(GENERATED, 'utf8'));
     available = true;
-    for (const group of [g.lessons ?? {}, g.weekly ?? {}]) {
+    for (const group of [g.lessons ?? {}, g.weekly ?? {}, g.practice ?? {}]) {
       for (const set of Object.values(group)) {
         for (const [id, ex] of Object.entries(set.exercises ?? {})) {
           const first = ex.tests?.[0];
@@ -59,7 +59,7 @@ function plain(text) {
 /**
  * 1つの課題を見て、落とす理由を並べて返す。古い形（<Input>/<Output> なし）は何も見ない。
  * @param {object} e parse-lesson.mjs の exercises の1件
- * @param {unknown} expect 判定の1組目の期待値（引けなければ undefined）
+ * @param {unknown} expect 判定のケース1の期待値（引けなければ undefined）
  * @returns {string[]}
  */
 export function checkProblemForm(e, expect) {
@@ -85,10 +85,10 @@ export function checkProblemForm(e, expect) {
     out.push('判定に入力欄の値が無いので、入力は「なし」と書きます');
   }
 
-  // 出力例を問題文に手で書いていないか（出力例は判定の1組目から画面が作る）
+  // 出力例を問題文に手で書いていないか（出力例は判定のケース1から画面が作る）
   if (expect !== undefined) {
     const leak = exampleLeak(e.prompt, expect);
-    if (leak) out.push(`問題文に出力例の「${leak}」がそのまま書いてあります。出力例は判定の1組目から自動で出すので、問題文からは消してください`);
+    if (leak) out.push(`問題文に出力例の「${leak}」がそのまま書いてあります。出力例は判定のケース1から自動で出すので、問題文からは消してください`);
   }
   return out;
 }

@@ -27,7 +27,7 @@ type Props = {
    */
   nudge?: boolean;
   /**
-   * 「判定に使う入力」（kind="build" だけ）。1組が1行で、行の中は入力欄の各行
+   * 「テストケース」（kind="build" だけ）。1組が1行で、行の中は入力欄の各行
    * （call は呼び出しの形）。Exercise.astro が tests から組んで渡す（10-lesson 第3.1節）。
    * 問題文を見ながら書けるように、コード欄の下に出す（20-platform.md 第23.2節）。
    */
@@ -53,7 +53,7 @@ const AUTO_GRADE_MS = 500;
 const NUDGE_AFTER_MS = 10 * 60 * 1000;
 
 /**
- * 「判定に使う入力」の表。採点のたびに組ごとの状態を塗る（20-platform.md 第22.4節）。
+ * 「テストケース」の表。採点のたびに組ごとの状態を塗る（20-platform.md 第22.4節）。
  *
  * 以前は Exercise.astro がサーバ側で組み、ここから DOM を探して塗っていた。コード欄の下に
  * 移したとき（第23.2節）に、この島の中で描くようにした。
@@ -68,7 +68,7 @@ function CaseTable({ cases, result }: { cases: string[][]; result: GradeResult |
   const columns = Math.max(1, ...cases.map((values) => values.length));
   return (
     <div className="kit-cases">
-      <p className="kit-cases__label">判定に使う入力</p>
+      <p className="kit-cases__label">テストケース</p>
       <table className="kit-cases__table">
         <tbody>
           {cases.map((values, i) => {
@@ -81,7 +81,7 @@ function CaseTable({ cases, result }: { cases: string[][]; result: GradeResult |
                   : 'wait';
             return (
               <tr key={i} data-case={i} className={status ? `is-case-${status}` : undefined}>
-                <th scope="row">{i + 1}組目</th>
+                <th scope="row">ケース{i + 1}</th>
                 {values.length === 0 ? (
                   <td className="kit-cases__none" colSpan={columns}>
                     入力なし
@@ -526,7 +526,7 @@ export default function ExerciseBox({ id, kind, starter, stdin, choices, syntax,
         <p className="kit-ex__nudge">この問題を始めて10分たちました。近くの人や運営に聞いてみましょう。</p>
       ) : null}
 
-      {/* 判定に使う入力（第23.2節でコード欄の下に移した）。組ごとの状態も塗る（第22.4節） */}
+      {/* テストケース（第23.2節でコード欄の下に移した）。組ごとの状態も塗る（第22.4節） */}
       {cases && cases.some((values) => values.length > 0) ? <CaseTable cases={cases} result={result} /> : null}
 
       {runOutput !== null ? (
@@ -604,20 +604,20 @@ function CaseNote({ result, kind, exercise }: { result: GradeResult; kind: Exerc
   if (kind !== 'build' || result.failedTest === null || !exercise) return null;
   const test = exercise.tests[result.failedTest];
   const input = test ? showInput(test) : '';
-  const ordinal = `${result.failedTest + 1}組目`;
+  const ordinal = `ケース${result.failedTest + 1}`;
   const f = result.feedback;
   const paren = input && input !== '（入力なし）' ? `（${input}）` : '';
   if (f.kind === 'mistake' || f.kind === 'error') {
     return (
       <p className="kit-verdict__case">
-        {ordinal}の入力{paren}で、{f.line ? `${f.line}行目で` : ''}エラーになりました。
+        {ordinal}{paren}で、{f.line ? `${f.line}行目で` : ''}エラーになりました。
       </p>
     );
   }
   if (f.kind === 'diff') {
     return (
       <p className="kit-verdict__case">
-        {ordinal}の入力{paren}で、正しい出力と違いました。
+        {ordinal}{paren}で、正しい出力と違いました。
       </p>
     );
   }
@@ -746,7 +746,7 @@ function Verdict({ result, kind, exercise }: { result: GradeResult; kind: Exerci
           <div className="kit-out kit-out--err">
             <pre className="kit-out__text">{f.display}</pre>
           </div>
-          {/* build は上の CaseNote が「N組目の入力で、N行目でエラーになりました。」とまとめて言う */}
+          {/* build は上の CaseNote が「ケースNで、N行目でエラーになりました。」とまとめて言う */}
           {f.line && kind !== 'build' ? <p className="kit-verdict__where">{f.line} 行目で止まりました。</p> : null}
           <div className="kit-verdict__fix">
             <Prose text={f.mistake.fix} />

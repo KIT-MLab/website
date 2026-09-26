@@ -43,6 +43,12 @@ const solutions = {
     import: 'default',
     eager: true,
   }),
+  // 練習問題集（20-platform.md 第25.5節）。置き場所は src/content/practice/solutions/<課題のid>.py
+  ...import.meta.glob('../../../content/practice/solutions/*.py', {
+    query: '?raw',
+    import: 'default',
+    eager: true,
+  }),
 } as Record<string, string>;
 
 /** 課題の id → 模範解答。ファイル名から拡張子を落としたものが課題の id。 */

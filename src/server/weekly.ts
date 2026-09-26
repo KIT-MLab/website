@@ -71,7 +71,7 @@ export type WeeklyBoard = {
   passedCounts: number[];
   people: WeeklyBoardPerson[];
   /**
-   * いちばん詰まっている問題の添字（試作の式: 落ちた回数 − 通した人数 × 2 がいちばん大きい列）。
+   * いちばん詰まっている問題のインデックス（試作の式: 落ちた回数 − 通した人数 × 2 がいちばん大きい列）。
    * 該当なし（問題が無い）なら -1（20-platform.md 第19.5節）。
    */
   hotIndex: number;

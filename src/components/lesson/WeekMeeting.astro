@@ -1,0 +1,215 @@
+---
+/**
+ * 今週のページ（20-platform.md 第25.4節）の1回ぶんの中身: 前半（教える）・後半（みんなでやる）・
+ * それまでに（予習・練習・復習）。3列の列と、その先の回を開いたときの中身の両方で使う。
+ *
+ * 行き先が見られない（章が準備中・今週の演習がまだ公開されていない）ものは、リンクにせず
+ * 言葉だけを出して小さな札を添える（学習の一覧の鍵と同じ考え方。第20.1節・第19.4節）。
+ * 進み具合の棒は `data-ex-ids` を置くだけで、ブラウザで src/lesson/practice-progress.ts が塗る。
+ */
+import type { WeekView } from '../../lesson/plan';
+
+interface Props {
+  view: WeekView;
+}
+const { view } = Astro.props;
+const before = [
+  { k: '予習', items: view.prep },
+  { k: '練習', items: view.practice },
+  { k: '復習', items: view.review },
+].filter((g) => g.items.length > 0);
+---
+
+<div class="wm">
+  <p class="wm__k">前半（教える）</p>
+  {view.teachLabel === '' && view.teach.length === 0 ? <p class="wm__none">―</p> : null}
+  {view.teachLabel !== '' && <p class="wm__label">{view.teachLabel}</p>}
+  {
+    view.teach.length > 0 && (
+      <ul class="wm__list">
+        {view.teach.map((l) => (
+          <li>
+            {l.href ? <a href={l.href}>{l.label}</a> : <span class="wm__off">{l.label}</span>}
+            {l.note && <span class="wm__tag">{l.note}</span>}
+          </li>
+        ))}
+      </ul>
+    )
+  }
+
+  <p class="wm__k">後半（みんなでやる）</p>
+  {
+    view.together.length === 0 ? (
+      <p class="wm__none">―</p>
+    ) : (
+      <ul class="wm__list">
+        {view.together.map((l) => (
+          <li>
+            {l.href ? (
+              <a href={l.href} {...(l.external ? { target: '_blank', rel: 'noopener' } : {})}>
+                {l.label}
+              </a>
+            ) : (
+              <span class={l.note ? 'wm__off' : ''}>{l.label}</span>
+            )}
+            {l.note && <span class="wm__tag">{l.note}</span>}
+            {l.exIds && l.exIds.length > 0 && (
+              <span class="wm-meter" data-ex-ids={l.exIds.join(' ')}>
+                <span class="wm-meter__track">
+                  <span class="wm-meter__fill" data-fill style="width:0%" />
+                </span>
+                <span class="wm-meter__pct" data-pct>
+                  0%
+                </span>
+              </span>
+            )}
+          </li>
+        ))}
+      </ul>
+    )
+  }
+
+  <p class="wm__k">それまでに（予習・練習・復習）</p>
+  {
+    before.length === 0 ? (
+      <p class="wm__none">―</p>
+    ) : (
+      <dl class="wm__before">
+        {before.map((g) => (
+          <>
+            <dt>{g.k}</dt>
+            <dd>
+              <ul class="wm__list">
+                {g.items.map((l) => (
+                  <li>
+                    {l.href ? <a href={l.href}>{l.label}</a> : <span class="wm__off">{l.label}</span>}
+                    {l.note && <span class="wm__tag">{l.note}</span>}
+                    {l.exIds && l.exIds.length > 0 && (
+                      <span class="wm-meter" data-ex-ids={l.exIds.join(' ')}>
+                        <span class="wm-meter__track">
+                          <span class="wm-meter__fill" data-fill style="width:0%" />
+                        </span>
+                        <span class="wm-meter__pct" data-pct>
+                          0%
+                        </span>
+                      </span>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </dd>
+          </>
+        ))}
+      </dl>
+    )
+  }
+</div>
+
+<style>
+  .wm {
+    font-size: 14px;
+    line-height: 1.65;
+  }
+  .wm__k {
+    margin: 12px 0 2px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    color: var(--l-ink-2);
+  }
+  .wm__k:first-child {
+    margin-top: 0;
+  }
+  .wm__label {
+    margin: 0 0 2px;
+    font-weight: 700;
+  }
+  .wm__none {
+    margin: 0;
+    color: var(--l-ink-2);
+  }
+  .wm__list {
+    margin: 0;
+    padding-left: 1.1em;
+  }
+  .wm__list li {
+    margin: 1px 0;
+  }
+  .wm__list a {
+    color: var(--l-ai);
+    text-underline-offset: 3px;
+  }
+  /* 押せるものは、乗せたら見た目を変える（第14.6節） */
+  .wm__list a:hover {
+    color: var(--l-shu);
+  }
+  .wm__off {
+    color: var(--l-ink-2);
+  }
+  .wm__tag {
+    display: inline-block;
+    margin-left: 6px;
+    font-size: 11px;
+    border: 1px solid var(--l-rule);
+    border-radius: 3px;
+    padding: 0 5px;
+    color: var(--l-ink-2);
+    white-space: nowrap;
+    vertical-align: 1px;
+  }
+  .wm__before {
+    display: grid;
+    grid-template-columns: 2.6em minmax(0, 1fr);
+    gap: 2px 6px;
+    margin: 0;
+  }
+  .wm__before dt {
+    font-size: 12.5px;
+    color: var(--l-ink-2);
+    padding-top: 1px;
+  }
+  .wm__before dd {
+    margin: 0;
+  }
+  .wm__before .wm__list {
+    padding-left: 0;
+    list-style: none;
+  }
+
+  /* 進み具合の棒（学習の一覧の今週の演習の棒と同じ形。棒と百分率だけで、分数は出さない。第19.4節） */
+  .wm-meter {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-left: 8px;
+    font-size: 12px;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    vertical-align: middle;
+  }
+  .wm-meter__track {
+    display: inline-block;
+    width: 56px;
+    height: 5px;
+    background: var(--l-lv2);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .wm-meter__fill {
+    display: block;
+    height: 100%;
+    background: var(--l-ink-2);
+    border-radius: 3px;
+    transition: width 200ms var(--ease-out);
+  }
+  .wm-meter.is-done .wm-meter__fill {
+    background: var(--l-midori);
+  }
+  .wm-meter__pct {
+    font-weight: 700;
+    color: var(--l-ink-2);
+  }
+  .wm-meter.is-done .wm-meter__pct {
+    color: var(--l-midori);
+  }
+</style>

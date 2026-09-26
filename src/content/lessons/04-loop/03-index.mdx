@@ -1,9 +1,9 @@
 ---
 id: python-04-index
 chapter: 04-loop
-title: 添字とlen()で位置を指定する
+title: インデックスとlen()で位置を指定する
 minutes: 16
-terms: [添字, len]
+terms: [インデックス, len]
 ---
 
 {/* 困る例 */}
@@ -26,13 +26,13 @@ print(len(numbers))`}
 
 {/* 説明 */}
 
-2行目の `numbers[0]` は添字（index）を使って値を取り出しています。添字は `0` から数えるので、`numbers[0]` は先頭の `3` です。
+2行目の `numbers[0]` はインデックス（添字）を使って値を取り出しています。インデックスは `0` から数えるので、`numbers[0]` は先頭の `3` です。
 
-3行目の `numbers[2]` は、先頭から3つ目の `2` です。`0`、`1`、`2` と数えるので、添字は3つ目でも `2` になります。
+3行目の `numbers[2]` は、先頭から3つ目の `2` です。`0`、`1`、`2` と数えるので、インデックスは3つ目でも `2` になります。
 
 4行目の `len(numbers)` は、リストに入っている値の数を返す関数です。`numbers` には5つの値があるので `5` です。
 
-`range(len(numbers))` と書けば、`0` から `len(numbers) - 1` までの添字を順に作れます。`for i in range(len(numbers)):` とすれば、添字を使って1つずつ処理できます。
+`range(len(numbers))` と書けば、`0` から `len(numbers) - 1` までのインデックスを順に作れます。`for i in range(len(numbers)):` とすれば、インデックスを使って1つずつ処理できます。
 
 {/* よくある間違い */}
 
@@ -42,7 +42,7 @@ print(len(numbers))`}
 print(numbers[5])`}
   error={`IndexError: list index out of range`}
 >
-添字は `0` から数えるので、最後の値の添字は `len(numbers) - 1` です。`numbers[5]` の位置には値がありません。
+インデックスは `0` から数えるので、最後の値のインデックスは `len(numbers) - 1` です。`numbers[5]` の位置には値がありません。
 </Mistake>
 
 <Mistake
@@ -67,7 +67,7 @@ print(len(numbers))`}
   hints={[]}
   mistakes={['index-out-of-range']}
 >
-`7` と `4` と `5` がこの順で表示されるように、2つの添字を決めてください。
+`7` と `4` と `5` がこの順で表示されるように、2つのインデックスを決めてください。
 </Exercise>
 
 <Exercise
@@ -79,7 +79,7 @@ print(numbers[0])
 print(numbers[2])
 print(len(numbers))`}
   tests={[{ kind: 'stdout' }]}
-  hints={['最後の値の添字は `len(numbers) - 1` です。']}
+  hints={['最後の値のインデックスは `len(numbers) - 1` です。']}
   mistakes={['index-out-of-range']}
 >
 `numbers` の最後の値だけを表示してください。`4` と表示されれば合っています。リストの個数が変わっても動くよう、`len()` を使ってください。
@@ -101,8 +101,8 @@ print(len(numbers))`}
     { kind: 'stdout', stdin: `0\n1\n2\n3\n4\n` },
   ]}
   hints={[
-    '添字を `0` から `len(numbers) - 1` まで動かすには、前の節の `range(len(numbers))` を使います。',
-    '添字 `i` のとき、後ろから数えた値の添字は `len(numbers) - 1 - i` です。',
+    'インデックスを `0` から `len(numbers) - 1` まで動かすには、前の節の `range(len(numbers))` を使います。',
+    'インデックス `i` のとき、後ろから数えた値のインデックスは `len(numbers) - 1 - i` です。',
   ]}
   mistakes={['index-out-of-range']}
 >
@@ -111,4 +111,4 @@ print(len(numbers))`}
 
 {/* つながり */}
 
-添字とlen()でリストの値を指定できるようになりました。次の節では、リストに後から値を足したり取り除いたりします。
+インデックスとlen()でリストの値を指定できるようになりました。次の節では、リストに後から値を足したり取り除いたりします。

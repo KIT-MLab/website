@@ -1,0 +1,145 @@
+---
+id: practice-02-math
+chapter: 02-numbers
+topic: math
+title: '`math` モジュール'
+sections: [python-02-math]
+order: 5
+levels: [1, 2, 3]
+---
+
+<Exercise
+  id="practice-02-math-1"
+  kind="build"
+  level={1}
+  name="平方根"
+  stdin={`16`}
+  tests={[
+    { kind: 'stdout', stdin: `16\n` },
+    { kind: 'stdout', stdin: `0\n` },
+    { kind: 'stdout', stdin: `2\n` },
+  ]}
+  hints={['平方根を求める関数は `math` の中にあります。使う前に読み込みます。第2章5節を見てください。']}
+  mistakes={[]}
+  syntax={['input', 'round-math', 'print']}
+>
+0以上の整数を読み取り、その平方根を表示してください。
+
+<Input>
+- 1行目: 0以上の整数
+</Input>
+
+<Output>
+平方根を、丸めずに1行で表示します。
+</Output>
+</Exercise>
+
+<Exercise
+  id="practice-02-math-2"
+  kind="build"
+  level={1}
+  name="円周の長さ"
+  stdin={`1`}
+  tests={[
+    { kind: 'stdout', stdin: `1\n` },
+    { kind: 'stdout', stdin: `0\n` },
+    { kind: 'stdout', stdin: `10\n` },
+  ]}
+  hints={['円周率は `math.pi` です。第2章5節を見てください。']}
+  mistakes={[]}
+  syntax={['input', 'operators', 'round-math', 'print']}
+>
+円の半径から、円周の長さを求めてください。円周は、直径に円周率を掛けた長さです。小数第2位までに丸めます。
+
+<Input>
+- 1行目: 半径（cm、整数）
+</Input>
+
+<Output>
+円周の長さを、数だけ1行で表示します。
+</Output>
+</Exercise>
+
+<Exercise
+  id="practice-02-math-3"
+  kind="build"
+  level={2}
+  name="正方形の1辺"
+  stdin={`25`}
+  tests={[
+    { kind: 'stdout', stdin: `25\n` },
+    { kind: 'stdout', stdin: `0\n` },
+    { kind: 'stdout', stdin: `2\n` },
+  ]}
+  hints={['1辺を2乗すると面積になります。その逆を求める関数を考えます。', '1辺の長さを丸める前の値で変数に入れておき、周りの長さもその変数から求めます。']}
+  mistakes={[]}
+  syntax={['input', 'operators', 'round-math', 'print']}
+>
+正方形の面積から、1辺の長さと、周りの長さを求めてください。周りの長さは、丸める前の1辺の長さから求めます。どちらも小数第2位までに丸めます。
+
+<Input>
+- 1行目: 面積（cm²、整数）
+</Input>
+
+<Output>
+1辺の長さと、周りの長さを、この順に2行で表示します。数だけを表示します。
+</Output>
+</Exercise>
+
+<Exercise
+  id="practice-02-math-4"
+  kind="build"
+  level={2}
+  name="ボールの体積"
+  stdin={`3`}
+  tests={[
+    { kind: 'stdout', stdin: `3\n` },
+    { kind: 'stdout', stdin: `0\n` },
+    { kind: 'stdout', stdin: `1\n` },
+    { kind: 'stdout', stdin: `12\n` },
+  ]}
+  hints={['3乗は `**` で書けます。第2章3節を見てください。', '円周率と丸め方は、第2章5節と第2章2節にあります。']}
+  mistakes={[]}
+  syntax={['input', 'operators', 'round-math', 'print']}
+>
+球の形をしたボールの半径から、体積を求めてください。球の体積は、半径の3乗に円周率と4を掛け、3で割った値です。小数第1位までに丸めます。
+
+<Input>
+- 1行目: 半径（cm、整数）
+</Input>
+
+<Output>
+体積を、数だけ1行で表示します。
+</Output>
+</Exercise>
+
+<Exercise
+  id="practice-02-math-5"
+  kind="build"
+  level={3}
+  name="丸いテーブル"
+  stdin={`120
+60`}
+  tests={[
+    { kind: 'stdout', stdin: `120\n60\n` },
+    { kind: 'stdout', stdin: `0\n50\n` },
+    { kind: 'stdout', stdin: `100\n100\n` },
+    { kind: 'stdout', stdin: `150\n45\n` },
+  ]}
+  hints={['先に円周の長さを求めて、丸める前の値を変数に入れます。', '座れる人数は、円周に1人の幅が何回入るかです。端数を切り捨てる書き方は第2章3節か第2章1節にあります。']}
+  mistakes={[]}
+  syntax={['input', 'operators', 'round-math', 'print']}
+>
+丸いテーブルのまわりに、人が並んで座ります。テーブルの直径と、1人が座るのに要る幅から、円周の長さと、座れる人数を求めてください。
+
+座れる人数は、円周の長さを1人の幅で割り、端数を切り捨てた数です。
+
+<Input>
+- 1行目: テーブルの直径（cm、整数）
+- 2行目: 1人が座るのに要る幅（cm、1以上の整数）
+</Input>
+
+<Output>
+小数第1位までに丸めた円周の長さと、座れる人数（整数）を、この順に2行で表示します。
+</Output>
+</Exercise>

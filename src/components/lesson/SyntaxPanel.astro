@@ -14,14 +14,16 @@ import type { SyntaxCategoryView } from '../../lesson/weekly-syntax';
 
 interface Props {
   categories: SyntaxCategoryView[];
+  /** 見出しの下の1文。練習問題集（第25.5節）は「この章まで」なので言い方を変える */
+  sub?: string;
 }
-const { categories } = Astro.props;
+const { categories, sub = 'この回の範囲で出てきた書き方です。使えそうなものを選んでください。' } = Astro.props;
 ---
 
 <aside class="wk-syntax" id="kit-syntax-panel" aria-label="構文の一覧">
   <div class="syn-panel">
     <p class="syn-panel__title">構文の一覧</p>
-    <p class="syn-panel__sub">この回の範囲で出てきた書き方です。使えそうなものを選んでください。</p>
+    <p class="syn-panel__sub">{sub}</p>
     {
       categories.map((cat) => (
         <details class="syn-cat" data-cat={cat.key}>

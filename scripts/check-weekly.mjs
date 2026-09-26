@@ -89,7 +89,7 @@ for (const file of listMdx(LESSONS_DIR)) {
 }
 
 const glossary = loadGlossary();
-/** 判定の1組目の期待値（生成済みの lesson-data.json から。無ければ build:tests が見る） */
+/** 判定のケース1の期待値（生成済みの lesson-data.json から。無ければ build:tests が見る） */
 const expectOf = loadGeneratedExpect();
 
 const weeklyFiles = listMdx(WEEKLY_DIR).sort();
