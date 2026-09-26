@@ -18,4 +18,20 @@ export default defineConfig({
   markdown: {
     processor: unified({ remarkPlugins: [remarkSectionLinks] }),
   },
+  /* 開発サーバが CodeMirror の部品を別々に下ごしらえすると @codemirror/state が2つ読まれ、
+     キー操作（Enter・Tab）が効かなくなる。まとめて1回で下ごしらえさせる（本番のビルドは1つ） */
+  vite: {
+    optimizeDeps: {
+      include: [
+        'codemirror',
+        '@codemirror/state',
+        '@codemirror/view',
+        '@codemirror/language',
+        '@codemirror/lang-python',
+        '@codemirror/autocomplete',
+        '@codemirror/commands',
+        '@lezer/highlight',
+      ],
+    },
+  },
 });

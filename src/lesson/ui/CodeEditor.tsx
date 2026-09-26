@@ -12,8 +12,12 @@
 import { useEffect, useRef } from 'react';
 import { EditorView, basicSetup } from 'codemirror';
 import { python } from '@codemirror/lang-python';
-import { HighlightStyle, syntaxHighlighting } from '@codemirror/language';
+import { HighlightStyle, indentUnit, syntaxHighlighting } from '@codemirror/language';
 import { tags } from '@lezer/highlight';
+import { Prec } from '@codemirror/state';
+import { keymap } from '@codemirror/view';
+import { acceptCompletion } from '@codemirror/autocomplete';
+import { indentWithTab } from '@codemirror/commands';
 
 /** 黒い面の上の見た目。コードは14px以上（10-lesson 第9.4節 原則7）。 */
 const THEME = EditorView.theme(
@@ -88,6 +92,11 @@ export default function CodeEditor({ value, onChange, readOnly = false, label, r
     if (!host.current) return;
     const extensions = [
       basicSetup,
+      /* Tab: 補完の候補が出ていれば選ぶ。出ていなければ字下げ（Shift+Tab で戻す）。
+         コード欄から抜けるときは Esc を押してから Tab（CodeMirror の決まり） */
+      Prec.highest(keymap.of([{ key: 'Tab', run: acceptCompletion }])),
+      keymap.of([indentWithTab]),
+      indentUnit.of('    '), // 字下げは Python の決まりどおり空白4つ
       python(),
       syntaxHighlighting(HIGHLIGHT),
       THEME,
