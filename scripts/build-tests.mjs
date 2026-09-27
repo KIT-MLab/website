@@ -125,6 +125,9 @@ const chapterCounts = new Map();
    サーバ（src/server/guess.ts）が、この表に無い id を断るのと、答え合わせのあとに答えを返すのに使う。
    lesson-data.json の最上位の `guesses` に書く（節のページに埋め込むのは節ごとの分だけなので、ここは埋め込まれない） */
 const guesses = {};
+/* 規則の正解率ランキング（<RuleBoard>。design/spec/53-ml-intro.md 第9節）。id → どの節か。
+   サーバ（src/server/rule-board.ts）が、この表に無い id を断るのと、章の公開を見るのに使う。`guesses` と同じく最上位に書く */
+const ruleBoards = {};
 
 for (const file of files) {
   const rel = relative(ROOT, file).replace(/\\/g, '/');
@@ -157,6 +160,9 @@ for (const file of files) {
     });
     for (const g of lesson.guesses) {
       guesses[g.id] = { lessonId, chapter, question: g.question, unit: g.unit, answer: g.answer, answerNote: g.answerNote };
+    }
+    for (const b of lesson.ruleBoards) {
+      ruleBoards[b.id] = { lessonId, chapter };
     }
   }
 
@@ -664,7 +670,7 @@ searchEntries.forEach((e, i) => {
 });
 
 mkdirSync(OUT_DIR, { recursive: true });
-writeFileSync(OUT_FILE, `${JSON.stringify({ lessons, weekly, practice, guesses }, null, 2)}\n`, 'utf8');
+writeFileSync(OUT_FILE, `${JSON.stringify({ lessons, weekly, practice, guesses, ruleBoards }, null, 2)}\n`, 'utf8');
 writeFileSync(SECTION_REFS_FILE, `${JSON.stringify(buildSectionRefs(LESSONS_DIR), null, 2)}\n`, 'utf8');
 writeFileSync(SEARCH_INDEX_FILE, `${JSON.stringify({ entries: searchEntries }, null, 2)}\n`, 'utf8');
 if (searchNotes.length > 0) {

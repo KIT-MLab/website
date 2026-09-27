@@ -35,6 +35,7 @@ import NotesPanel from '../../../components/lesson/NotesPanel.astro';
 import SectionSyntax from '../../../components/lesson/SectionSyntax.astro';
 import Compare from '../../../components/lesson/Compare.astro';
 import Guess from '../../../components/lesson/Guess.astro';
+import RuleBoard from '../../../components/lesson/RuleBoard.astro';
 import PlainMembersLink from '../../../components/lesson/PlainMembersLink.astro';
 import { chapterTitle, isIntroChapter, isMembersOnlyChapter, lessonHref, practiceSectionLabel } from '../../../lesson/chapters';
 import { currentUser, serverConfig } from '../../../server/auth';
@@ -191,7 +192,7 @@ const notes = isStaff && entry && config ? await notesForLesson(config.db, entry
         </div>
 
         <article class="lesson-body" data-exq={oneAtATime}>
-          <Content components={{ Run, Exercise, Input, Output, Level0, Keys, Figure, Secant, Descent, FitLine, Boundary, Overfit, Facilitate: FacilitateFor, Guess, SectionSyntax, Compare,...(member ? {} : { a: PlainMembersLink }) }} />
+          <Content components={{ Run, Exercise, Input, Output, Level0, Keys, Figure, Secant, Descent, FitLine, Boundary, Overfit, Facilitate: FacilitateFor, Guess, RuleBoard, SectionSyntax, Compare,...(member ? {} : { a: PlainMembersLink }) }} />
 
           <nav class="lesson-nav" aria-label="節の移動">
             {prev ? <a href={lessonHref(prev.id)}>← 前の節へ　{prev.data.title}</a> : <span class="lesson-nav__spacer" />}

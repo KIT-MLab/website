@@ -156,6 +156,15 @@ npx wrangler d1 migrations apply mlab-course --remote
 npx wrangler d1 migrations apply mlab-course --remote
 ```
 
+### 5.6 規則の正解率ランキングのテーブルを作る（2026-09-27 追加）
+
+`migrations/0011_rule_board.sql`（`rule_submissions` と `rule_reveals`。`53-ml-intro.md` 第9節）。第3.1節と同じ1行で本番にあてる。
+**push する前に**あてること（先に push すると、タイタニック2 のランキングで「出す」を押しても送れず、表も出ない）。
+
+```
+npx wrangler d1 migrations apply mlab-course --remote
+```
+
 ---
 
 ## 6. まだ決めていないこと

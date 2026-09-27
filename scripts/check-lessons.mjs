@@ -9,6 +9,7 @@
  * 検査21（章のディレクトリがどれかの部に属していること）は同 第17.1節で足した。
  * 検査22（組む問題の問題文・入力・出力の形）は同 第23.2節で足した。新しい形で書いた問題だけを見る。
  * 検査23（みんなの予想ボード <Guess> の置き場所と props）は design/spec/53-ml-intro.md 第7節で足した。
+ * 検査24（規則の正解率ランキング <RuleBoard> の置き場所と props）は同 第9節で足した。
  *
  *   node scripts/check-lessons.mjs
  */
@@ -98,6 +99,8 @@ const seenLessonIds = new Map();
 const seenExerciseIds = new Map();
 /** 検査23 用。<Guess> の id → 最初に置いたファイル */
 const seenGuessIds = new Map();
+/** 検査24 用。<RuleBoard> の id → 最初に置いたファイル */
+const seenRuleBoardIds = new Map();
 /** 検査16・17 用。節の並び順に、その節が持つ Python のコードを貯める */
 const codeOf = [];
 /** 検査22 用。判定のケース1の期待値（生成済みの lesson-data.json から。無ければ見ない） */
@@ -597,6 +600,26 @@ for (const file of files) {
       add(23, g.line, `${where}: answerNote は空でない文字列で書きます（例: answerNote="342人 / 891人"）`);
     }
     if (g.children !== '') add(23, g.line, `${where}: <Guess … /> の形で、中身を書きません`);
+  }
+
+  /* --- 検査24 規則の正解率ランキング <RuleBoard>（design/spec/53-ml-intro.md 第9節） ---
+     予想ボードと同じく、メンバーだけの章にしか置けない（規則を出す口と公開の口がメンバーだけのため）。
+     id は出した規則の記録の鍵なので、教材全体で重ならないこと。乗客の記録は部品が持つので、属性は id だけ */
+  for (const b of lesson.ruleBoards) {
+    const where = `<RuleBoard id="${b.id ?? ''}">`;
+    if (!MEMBERS_ONLY_CHAPTERS.includes(String(fm.chapter ?? ''))) {
+      add(24, b.line, `${where}: <RuleBoard> はメンバーだけの章（scripts/parts.mjs の MEMBERS_ONLY_CHAPTERS）にしか置けません`);
+    }
+    if (typeof b.id !== 'string' || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(b.id)) {
+      add(24, b.line, `${where}: id は英小文字・数字とハイフンで書きます（例: intro2-rules）`);
+    } else if (seenRuleBoardIds.has(b.id)) {
+      add(24, b.line, `${where}: id が ${seenRuleBoardIds.get(b.id)} と重複しています`);
+    } else {
+      seenRuleBoardIds.set(b.id, rel);
+    }
+    const extra = b.attrs.filter((a) => a !== 'id');
+    if (extra.length > 0) add(24, b.line, `${where}: 属性は id だけです（${extra.join('・')} は使えません）`);
+    if (b.children !== '') add(24, b.line, `${where}: <RuleBoard … /> の形で、中身を書きません`);
   }
 }
 

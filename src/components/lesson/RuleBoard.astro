@@ -1,0 +1,208 @@
+---
+/**
+ * <RuleBoard> — 規則の正解率ランキング（design/spec/53-ml-intro.md 第9節。試作 c-proto.html の「案C の2」）。
+ *
+ *   <RuleBoard id="intro2-rules" />
+ *
+ * タイタニック2 の後半（集まりの後半にみんなでやる分）に置く。メンバーが1人ぶんの予測を決める if文を書いて
+ * 「出す」を押すと、訓練データの正解率で順位が付く。テストデータの正解率は、運営が「公開」を押すまで伏せる
+ * （Kaggle の順位表と同じ形）。
+ *
+ * **テストデータの答えはこの HTML にもブラウザの JS にも入らない。**サーバ（src/server/rule-board.ts）だけが
+ * 持ち、ブラウザからは予測の並びだけが届く。中身は src/lesson/ui/RuleBoardBox.tsx。
+ * 節のページはメンバーにしか本文を描かない（メンバーだけの章）ので、メンバーでない人の HTML にはこの部品ごと入らない。
+ */
+import RuleBoardBox from '../../lesson/ui/RuleBoardBox';
+
+interface Props {
+  id: string;
+}
+
+const { id } = Astro.props;
+---
+
+<RuleBoardBox client:load id={id} />
+
+<style is:global>
+  /* 中身は React の島が作るので is:global にし、.kit-rules の中だけに効く書き方にする（Guess.astro と同じ）。
+     入力の段は予想ボード（Guess.astro）と同じ見た目: 琥珀の細い枠・明るい地・明朝の太字の見出し。
+     表は試作「案C の2」: 紙の地の上に置き、自分の行は明るい地と左の朱の線、下がった行に朱の ▼ */
+  .kit-rules {
+    margin: 0 0 24px;
+    color: var(--l-ink);
+  }
+
+  .kit-rules__box {
+    padding: 12px 16px;
+    background: var(--l-card);
+    border: 1px solid var(--l-kohaku);
+  }
+
+  .kit-rules__q {
+    margin: 0 0 8px;
+    font-family: var(--font-head);
+    font-weight: 700;
+    font-size: 16px;
+    line-height: 1.6;
+    text-indent: 0;
+  }
+
+  .kit-rules__note {
+    margin: 0 0 8px;
+    font-size: 14px;
+    text-indent: 0;
+  }
+
+  .kit-rules__in {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin: 10px 0;
+  }
+
+  .kit-rules__entry {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    max-width: 100%;
+  }
+
+  .kit-rules[data-revealed='1'] .kit-rules__entry {
+    display: none;
+  }
+
+  .kit-rules__label {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    max-width: 100%;
+    font-size: 14px;
+  }
+
+  .kit-rules__desc {
+    width: 16em;
+    max-width: 100%;
+    font: inherit;
+    line-height: 1.6;
+    padding: 3px 6px;
+    color: var(--l-ink);
+    background: var(--l-card);
+    border: 1px solid var(--l-rule);
+  }
+
+  .kit-rules .kit-rules__staff {
+    border-color: var(--l-kohaku);
+    color: var(--l-kohaku);
+  }
+
+  .kit-rules__confirm {
+    margin: 0 0 10px;
+    font-size: 14px;
+  }
+
+  .kit-rules__confirm p {
+    margin: 0 0 6px;
+    text-indent: 0;
+  }
+
+  .kit-rules__bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .kit-rules__msg {
+    margin: 0 0 6px;
+    font-size: 13.5px;
+    color: var(--l-ink-2);
+    text-indent: 0;
+  }
+
+  .kit-rules__err p {
+    text-indent: 0;
+  }
+
+  .kit-rules__count {
+    margin: 10px 0 6px;
+    font-size: 13px;
+    color: var(--l-ink-2);
+    text-indent: 0;
+  }
+
+  /* 狭い画面で表が収まらないときは、表の中だけを横に動かす（ページは横に動かさない。.kit-cases と同じ） */
+  .kit-rules__scroll {
+    overflow-x: auto;
+  }
+
+  .kit-rules__table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+  }
+
+  .kit-rules__table th {
+    font-size: 12.5px;
+    font-weight: 400;
+    color: var(--l-ink-2);
+    text-align: left;
+    white-space: nowrap;
+    border-bottom: 1px solid var(--l-ink);
+    padding: 5px 8px;
+  }
+
+  .kit-rules__table td {
+    border-bottom: 1px solid rgba(43, 38, 30, 0.22);
+    padding: 6px 8px;
+    overflow-wrap: anywhere;
+  }
+
+  /* 名前（学籍番号など）は途中で折らない。収まらなければ表の中を横に動かす */
+  .kit-rules__table td.kit-rules__name {
+    white-space: nowrap;
+  }
+
+  .kit-rules__table .kit-rules__num {
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  .kit-rules__table td.kit-rules__num {
+    font-family: var(--font-mono);
+  }
+
+  .kit-rules__table td.kit-rules__hid {
+    font-family: inherit;
+    color: var(--l-ink-2);
+  }
+
+  .kit-rules__table tr.is-me td {
+    background: var(--l-card);
+  }
+
+  .kit-rules__table tr.is-me td:first-child {
+    box-shadow: inset 3px 0 0 var(--l-shu);
+  }
+
+  .kit-rules__drop {
+    color: var(--l-shu);
+    font-size: 12px;
+  }
+
+  /* 狭い画面では、規則の列に幅を回す。見出しは「訓練／データ」の切れ目（wbr）でだけ2行に折る */
+  @media (max-width: 480px) {
+    .kit-rules__table th,
+    .kit-rules__table td {
+      padding-left: 5px;
+      padding-right: 5px;
+    }
+
+    .kit-rules__table th {
+      white-space: normal;
+      word-break: keep-all;
+      vertical-align: bottom;
+    }
+  }
+</style>

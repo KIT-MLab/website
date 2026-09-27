@@ -41,7 +41,7 @@ export function isStaffUser(user: CurrentUser): boolean {
  * このボードを見て・出してよいか。メンバーで、かつ章が公開済み（運営・管理者は準備中の章も。
  * 節のページと同じ。20-platform.md 第20.1節）。
  */
-export async function canUseBoard(db: Db, user: CurrentUser, def: GuessDef): Promise<boolean> {
+export async function canUseBoard(db: Db, user: CurrentUser, def: Pick<GuessDef, 'chapter'>): Promise<boolean> {
   if (!isMember(user)) return false;
   if (isStaffUser(user)) return true;
   return isChapterPublic(db, def.chapter);
