@@ -31,26 +31,6 @@ print(f"平均{round(average, 1)}点")`}
 その少し上に `line 3` とあります。3行目で止まったという意味です。3行目は `average` を使っていて、その名前が見つからないと言われています。
 
 見つからないのは、2行目で `avarage` と綴ったからです。**止まった行と、間違えた行は違うことがあります。** 行番号は、探しはじめる場所です。
-{/* よくある間違い */}
-
-<Mistake
-  id="read-name-typo"
-  code={`scores = [40, 55, 50]
-print(totals)`}
-  error={`NameError: name 'totals' is not defined`}
->
-いちばん下の行に `totals` が見つからないと書かれています。作った名前は `scores`、使った名前は `totals` です。名前がそろっていません。
-</Mistake>
-
-<Mistake
-  id="read-index-boundary"
-  code={`scores = [40, 55, 50]
-print(scores[3])`}
-  error={`IndexError: list index out of range`}
->
-いちばん下の行に、指定した位置が範囲の外だと書かれています。`scores` には3つしか値が無いので、インデックスは `0` から `2` までしか使えません。
-</Mistake>
-
 {/* 課題 */}
 
 <Exercise
@@ -61,7 +41,6 @@ mesage = f"ようこそ、{name}さん"
 print(message)`}
   tests={[{ kind: 'stdout' }]}
   hints={['実行して止まったら、いちばん下の行に書かれた名前を確かめてください。']}
-  mistakes={['read-name-typo']}
 >
 `ようこそ、はじめさん` と表示されるように、直してください。
 </Exercise>

@@ -31,17 +31,6 @@ print(f"名前:{name} 点数:{score}")`}
 
 `+` で数値を文字列とつなぐときは、先に `str()` で文字列に変えます。`"点数は" + str(80)` は `"点数は80"` になります。f文字列を使えば、この `str()` を書かずに済みます。
 
-{/* よくある間違い */}
-
-<Mistake id="str-plus-int-literal" code={`print("点数は" + 80)`} error={`TypeError: can only concatenate str (not "int") to str`}>
-文字列と数値は `+` で直接つなげません。`str(80)` のように文字列に変えるか、f文字列を使ってください。
-</Mistake>
-
-<Mistake id="fstring-missing-brace" code={`name = "佐藤"
-print(f"名前:{name")`} error={`SyntaxError: f-string: expecting '}'`}>
-`{` に対応する `}` が抜けています。f文字列の `{}` は開いたら必ず閉じてください。
-</Mistake>
-
 {/* 課題 */}
 
 <Exercise
@@ -52,7 +41,6 @@ score = 95
 print(f"名前:{name} 点数:{score}")`}
   tests={[{ kind: 'stdout' }]}
   hints={[]}
-  mistakes={['fstring-missing-brace']}
 >
 上のコードを書き換えて、`点数:95` の後ろに `点` を付けて `点数:95点` と表示してください。
 </Exercise>
@@ -65,7 +53,6 @@ score = 95
 print(f"名前:{name} 点数:{score}点")`}
   tests={[{ kind: 'stdout' }]}
   hints={[]}
-  mistakes={['fstring-missing-brace']}
 >
 上のコードを書き換えて、`点数:95点 名前:鈴木` のように、点数を先に、名前をあとに表示してください。
 </Exercise>
@@ -86,7 +73,6 @@ print(f"名前:{name} 点数:{score}点")`}
     '2行目は `int(input())` で点数に変えます。',
     '上の「説明」にある、`{}` に計算の式を書けることを思い出してください。',
   ]}
-  mistakes={['str-plus-int-literal']}
 >
 名前と点数を読み取り、100点まであと何点かを求めてください。
 
@@ -114,7 +100,6 @@ print(f"名前:{name} 点数:{score}点")`}
     '上の「説明」にある、文字列を `+` でつなぐ書き方を、もう一度読んでください。',
     'コンマで区切って `print` に渡すと、間に空白が入ります。1行だけ実行して確かめてください。',
   ]}
-  mistakes={['str-plus-int-literal', 'fstring-missing-brace']}
 >
 入力欄の1行をそのまま読み取り、かっこで囲んで表示するプログラムを書いてください。
 

@@ -20,7 +20,7 @@ export type RunError =
       message: string;
       /** 提出したコードの何行目か。分からなければ null */
       line: number | null;
-      /** 'NameError: name 'x' is not defined' の形。<Mistake> の error と照合するのに使う */
+      /** 'NameError: name 'x' is not defined' の形。エラーの型ごとの説明を出すのに使う */
       display: string;
       /** Python が出すそのままの traceback */
       traceback: string;

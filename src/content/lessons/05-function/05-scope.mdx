@@ -40,21 +40,6 @@ print(x)`}
 
 関数の引数として受け取った名前も、その関数の中だけで使える変数です。次の課題に出てくる `total` という名前も、外の `total` とは別の場所に置かれます。
 
-{/* よくある間違い */}
-
-<Mistake
-  id="scope-name-error"
-  code={`def show_local():
-    y = 5
-    print(y)
-
-show_local()
-print(y)`}
-  error={`NameError: name 'y' is not defined`}
->
-`y` は `show_local` の中だけで有効です。関数の外の `print(y)` では見つかりません。外でも使いたい値は `return` で持ち帰ってください。
-</Mistake>
-
 {/* 課題 */}
 
 <Exercise
@@ -73,7 +58,6 @@ print(total)`}
     'まず、いまのコードをそのまま実行して、1行目と2行目に何が表示されるか確かめてください。',
     '関数の中の `total` を外に持ち帰るには、前の節の `return` を使います。',
   ]}
-  mistakes={['scope-name-error']}
 >
 `apply_discount` を呼び出したあと、外側の `total` にも割引後の値が入るように書き換えてください。`80` `80` の順に表示されれば直っています。
 </Exercise>

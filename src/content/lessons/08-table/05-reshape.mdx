@@ -36,18 +36,6 @@ print(table)`}
 
 reshapeが変えるのは形だけです。値の個数と並び順はそのまま残るので、`2 * 3` が元の個数6と一致していないと使えません。第7章5節のように人数ぶんfor文で読み取らなくても、まず1列に読み取ってから、あとで人数×3科目の表に直せます。
 
-{/* よくある間違い */}
-
-<Mistake
-  id="reshape-size-mismatch"
-  code={`import numpy as np
-flat = np.array([80, 70, 90, 60, 50, 40])
-print(flat.reshape(2, 4))`}
-  error={`ValueError: cannot reshape array of size 6 into shape (2,4)`}
->
-`2 * 4` は8で、元の個数6と合っていません。行数と列数の積が、元の個数と同じになるようにしてください。
-</Mistake>
-
 {/* 課題 */}
 
 <Exercise
@@ -59,7 +47,6 @@ table = flat.reshape(2, 3)
 print(table[1])`}
   tests={[{ kind: 'stdout' }]}
   hints={['reshapeは、先頭から順に行へ詰め直します。2行目に入る3つの値を考えてください。']}
-  mistakes={['reshape-size-mismatch']}
 >
 `[40 50 60]` と表示されるように、2行目の `flat` を書き換えてください。
 </Exercise>
@@ -84,7 +71,6 @@ print(table[1])`}
     '先にすべての値を1つのリストに集めてから、reshapeで人数×3の形にします。',
     '人ごとに分けてリストに入れる必要はありません。',
   ]}
-  mistakes={['reshape-size-mismatch']}
 >
 入力欄の1行目を人数として読み取り、続けて人数×3個の点数を読み取ってください。読み取った値をreshapeで人数行3列の表にし、形と中身をこの順で表示してください。人ごとに分けてリストに集めないでください。
 </Exercise>

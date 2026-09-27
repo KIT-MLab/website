@@ -179,8 +179,8 @@ for (const file of files) {
   }
 
   // --- 検査1 要素の順序 ---
-  // 第0章だけ「よくある間違い」を抜いた並びで見る（第11.7節）。ほかの章は SECTION_ORDER のまま
-  // 練習編は「はじめに」「課題」「つながり」の並びで見る（第15.1節）。「課題」は無くてはならない
+  // 第0章は START_SECTION_ORDER で見る（第11.7節。2026-09-27に「よくある間違い」を廃止してからは
+  // SECTION_ORDER と同じ並び）。練習編は「はじめに」「課題」「つながり」の並びで見る（第15.1節）。「課題」は無くてはならない
   const order = isStart ? START_SECTION_ORDER : isPractice ? PRACTICE_SECTION_ORDER : SECTION_ORDER;
   const optional = isPractice ? PRACTICE_SECTION_OPTIONAL : SECTION_OPTIONAL;
   const names = lesson.markers.map((m) => m.name);
@@ -229,23 +229,8 @@ for (const file of files) {
       add(2, run.line, '<Run> に out（実行結果）がありません。エラーが題材の節では error を書きます');
   }
 
-  // --- 検査3 <Mistake> が0〜3個 ---
-  // 第0章には置かない（第11.7節）。実際のエラーメッセージを見せる要素なので、
-  // パソコンの操作を習いに来た人に出す相手がいない
-  if (isStart) {
-    for (const m of lesson.mistakes) add(3, m.line, '第0章に <Mistake> は置きません');
-  } else if (isPractice) {
-    // 練習編は「よくある間違い」を置かない（第15.1節）。参照する節へはヒントのリンクで戻す
-    for (const m of lesson.mistakes) add(3, m.line, '練習編に <Mistake> は置きません（第15.1節）');
-  } else if (lesson.mistakes.length > LIMITS.mistakeMax) {
-    add(3, 1, `<Mistake> は${LIMITS.mistakeMax}個までです。いまは${lesson.mistakes.length}個`);
-  }
-  for (const m of lesson.mistakes) {
-    if (!m.id) add(3, m.line, '<Mistake> に id がありません');
-    if (!m.error) add(3, m.line, '<Mistake> に error（実際に出るエラーメッセージ）がありません');
-    if (!m.code) add(3, m.line, '<Mistake> に code（壊れたコード）がありません');
-    if (!m.fix) add(3, m.line, '<Mistake> に原因と直し方の本文がありません');
-  }
+  // 検査3（<Mistake> が0〜3個）は 2026-09-27 に「よくある間違い」を廃止したため削除した
+  // （design/DECISIONS.md）。エラーの説明はいまエラーの型ごとに src/lesson/grade.ts の ADVICE が出す。
 
   // --- 検査4 <Exercise> が0〜7個。型ごとの書き方が揃っていること ---
   // **節ごとの下限は置かない**（第3.8節）。下限があると、足りない節を厚くするようには
@@ -549,9 +534,9 @@ for (const file of files) {
   /* --- 検査20 学習者が読む文章の、節への参照が「第N章M節」の形で、行き先が実在すること
      （20-platform.md 第15.2節）。旧形式（`第7.1節` / `7.1節` / `[第7.1節 …](04-loop/05-while)`）は
      学習者が読む文章では使わない。新形式は本文（MDX）なら scripts/remark-section-links.mjs、
-     ヒントや <Mistake> の直し方（採点画面で Inline が出す文章）なら src/lesson/ui/shared.tsx の
+     ヒント（採点画面で Inline が出す文章）なら src/lesson/ui/shared.tsx の
      Inline が、自動でリンクにする。ここではその元になる文章だけを見る（本文・課題の問題文・
-     <Level0>・<Mistake> の直し方・ヒント）。MDX のコメント（仕様書の節を引くもの）は、
+     <Level0>・ヒント）。MDX のコメント（仕様書の節を引くもの）は、
      地の文の抽出（parse-lesson.mjs）がすでに落としているので、ここには出てこない。 */
   {
     const places = [

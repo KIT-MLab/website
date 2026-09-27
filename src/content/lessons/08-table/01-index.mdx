@@ -36,18 +36,6 @@ print(scores[1, :])`}
 
 まとめると、列を取り出すのは科目の方向を1つに絞る操作、行を取り出すのは人の方向を1つに絞る操作です。
 
-{/* よくある間違い */}
-
-<Mistake
-  id="index-column-out-of-range"
-  code={`import numpy as np
-scores = np.array([[80, 70, 90], [60, 50, 40]])
-print(scores[:, 3])`}
-  error={`IndexError: index 3 is out of bounds for axis 1 with size 3`}
->
-科目は3つなので、列のインデックスは `0` から `2` までです。`3` はどの列にも当たりません。
-</Mistake>
-
 {/* 課題 */}
 
 <Exercise
@@ -58,7 +46,6 @@ scores = np.array([[80, 70, 90], [60, 50, 40]])
 print(scores[:, 0])`}
   tests={[{ kind: 'stdout' }]}
   hints={['列のインデックスを、上の「やってみる」のコードと見比べてください。']}
-  mistakes={['index-column-out-of-range']}
 >
 `[90 40]` と表示されるように、3行目を書き換えてください。
 </Exercise>
@@ -83,7 +70,6 @@ print(scores[:, 0])`}
     '2人分の点数を1つの2次元配列にまとめます。列の取り出しは、上の「やってみる」の scores[:, 1] と同じ形です。',
     '取り出した列は配列なので、mean() がそのまま使えます。',
   ]}
-  mistakes={['index-column-out-of-range']}
 >
 入力欄から2人分、3科目の点数を読み取ってください（1行に1つの数、1人ずつ3つ）。続けて、取り出したい科目の番号（0が国語、1が数学、2が英語）を読み取ります。
 

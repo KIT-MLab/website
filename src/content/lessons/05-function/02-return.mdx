@@ -33,20 +33,6 @@ print(result + 10)`}
 
 前の節の `show_average` は `print` だけをしていて、値を持ち帰りませんでした。`return` があると、関数の外で値を使い回せます。
 
-{/* よくある間違い */}
-
-<Mistake
-  id="return-none"
-  code={`def average(a, b):
-    print((a + b) / 2)
-
-result = average(80, 90)
-print(result + 10)`}
-  error={`TypeError: unsupported operand type(s) for +: 'NoneType' and 'int'`}
->
-`average` の中が `print` だけで `return` がありません。呼び出した側が受け取る `result` は自動的に `None` になります。値を返すには `return` を書いてください。
-</Mistake>
-
 {/* 課題 */}
 
 <Exercise
@@ -59,7 +45,6 @@ result = average(80, 90)
 print(result + 10)`}
   tests={[{ kind: 'stdout' }]}
   hints={[]}
-  mistakes={['return-none']}
 >
 上のコードを書き換えて、`70.0` と表示されるようにしてください。
 </Exercise>
@@ -81,7 +66,6 @@ print(result + 10)`}
     '先に `a` と `b` を比べて大きいほうを求め、それと `c` を比べます。',
     '値を比べる書き方は、第3章の `if` と `else` を見てください。',
   ]}
-  mistakes={['return-none']}
 >
 入力欄の3行を整数として読み取ってください。そのうち最大の値を返す関数 `largest(a, b, c)` を書いてください。`max` は使わないでください。
 </Exercise>

@@ -31,28 +31,6 @@ ValueErrorは、`int()` に渡した文字列が数として読み取れない�
 
 どちらも、いちばん下の行に型の名前と詳しい値が書かれています。
 
-{/* よくある間違い */}
-
-<Mistake
-  id="type-input-str"
-  code={`age = input()
-print(f"来年は{age + 1}歳です")`}
-  stdin={`10`}
-  error={`TypeError: can only concatenate str (not "int") to str`}
->
-`age` が文字列のままです。`int(input())` のように整数へ変えてから、足し算に使ってください。
-</Mistake>
-
-<Mistake
-  id="type-int-nonnumeric"
-  code={`age = int(input())
-print(f"来年は{age + 1}歳です")`}
-  stdin={`じゅう`}
-  error={`ValueError: invalid literal for int() with base 10: 'じゅう'`}
->
-`int()` に渡した `じゅう` は数字ではありません。入力欄には半角の数字を書いてください。
-</Mistake>
-
 {/* 課題 */}
 
 <Exercise
@@ -64,7 +42,6 @@ print(f"合計{score + bonus}点")`}
   stdin={`70`}
   tests={[{ kind: 'stdout', stdin: `70\n` }]}
   hints={['第1章でint()を使ったときの説明を見てください。']}
-  mistakes={['type-input-str']}
 >
 `合計75点` と表示されるように、直してください。
 </Exercise>
@@ -84,7 +61,6 @@ print(f"合計{score + bonus}点")`}
     '先に2つの数を読み取り、2つ目が0かどうかを第3章のif文で確かめます。',
     '0でなければ、1つ目を2つ目で割った値をそのまま表示します。',
   ]}
-  mistakes={[]}
 >
 2つの数を読み取り、1つ目を2つ目で割った結果を表示するプログラムを書いてください。2つ目が `0` のときは `計算できません` と表示してください。
 </Exercise>

@@ -2,10 +2,10 @@
  * 本文中の「第N章M節」を、その節へのリンクに変える remark プラグイン（20-platform.md 第15.2節）。
  *
  * リンク・インラインコード・コードブロックの中は見ない。行き先が無い参照はそのまま文字で
- * 残す（scripts/check-lessons.mjs の検査20 が落とす）。<Exercise>・<Mistake> の本文（JSX の
+ * 残す（scripts/check-lessons.mjs の検査20 が落とす）。<Exercise> の本文（JSX の
  * 子）も普通の mdast の文章として現れるので、ここを通れば自動でリンクになる。
  *
- * 採点画面の Inline（src/lesson/ui/shared.tsx）で出す文章（ヒント・よくある間違いの直し方）は
+ * 採点画面の Inline（src/lesson/ui/shared.tsx）で出す文章（ヒント）は
  * MDX を通らないので、ここではリンクにならない。あちらは scripts/build-tests.mjs が書き出す
  * src/generated/section-refs.json を読んで、同じ形を自分でリンクにする。
  */

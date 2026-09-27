@@ -1,14 +1,14 @@
 /**
  * 演習の採点（20-platform.md 第4.3節・第4.4節）。
  *
- * 応答の順序（第4.3節）:
- *   1. 実行時にエラーが出た → その節の <Mistake> の error と前方一致で照合し、合えばその説明を出す
- *   2. 合わない → エラーの型ごとの一般的な説明を出す
- *   3. エラーは出ないが結果が違う → 最初に落ちたテストの入力・期待した値・実際の値を並べる
+ * 応答の順序（第4.3節。2026-09-27に「よくある間違い」を廃止してからは1段階になった。
+ * design/DECISIONS.md）:
+ *   1. 実行時にエラーが出た → エラーの型ごとの一般的な説明を出す
+ *   2. エラーは出ないが結果が違う → 最初に落ちたテストの入力・期待した値・実際の値を並べる
  *
  * 単なる「不正解」だけを返してはいけない（00-overview.md 第3.3節）。
  */
-import type { ExerciseData, MistakeData, Test } from './data';
+import type { ExerciseData, Test } from './data';
 import { isDirectKind } from './data';
 import { execPython } from './runtime/runner';
 import type { ExecResult } from './runtime/types';
@@ -22,9 +22,7 @@ export type Feedback =
   | { kind: 'timeout' }
   | { kind: 'input-empty' }
   | { kind: 'no-function'; fn: string }
-  /** 節の <Mistake> に当てはまった */
-  | { kind: 'mistake'; display: string; line: number | null; mistake: MistakeData }
-  /** 当てはまらなかったので、エラーの型ごとの説明 */
+  /** エラーの型ごとの一般的な説明 */
   | { kind: 'error'; display: string; line: number | null; type: string; advice: string }
   /** エラーは出ないが結果が違う */
   | { kind: 'diff'; input: string; expect: string; actual: string }
@@ -51,24 +49,38 @@ export type GradeResult = {
   runs?: { input: string; output: string }[];
 };
 
-/** エラーの型ごとの一般的な説明（第4.3節 4-2）。 */
+/**
+ * エラーの型ごとの一般的な説明（第4.3節 4-2）。
+ * 2026-09-27に「よくある間違い」を廃止し、代わりにこの説明をすべてのエラーで出す
+ * ようにした（design/DECISIONS.md）。どのメッセージも、まずエラーの名前と一般的な言い方を
+ * 添えてから、確かめる箇所を示す（用語は design/spec/10-lesson-and-writing.md 第5.1節に合わせる）。
+ */
 const ADVICE: Record<string, string> = {
-  SyntaxError: 'Python が文として読めない形になっています。かっこの閉じ忘れ、コロンの不足、全角の記号を順に見てください。',
-  IndentationError: '行の左の空白の数が合っていません。同じまとまりの行は、左端をそろえてください。',
-  TabError: 'タブと空白が混ざっています。インデントは空白4つにそろえてください。',
-  NameError: 'その名前が見つかりません。綴りの違い、大文字と小文字の違い、まだ書いていない行がないかを見てください。',
-  TypeError: '型が合っていません。文字列と整数をそのまま足していないか、関数に渡す値の数が合っているかを見てください。',
-  ValueError: '値が受け付けられない形です。int() に数字でない文字列を渡していないかを見てください。',
-  ZeroDivisionError: '0 で割っています。割る側が0にならないか確かめてください。',
-  IndexError: '番号が範囲の外です。並びの長さと、指定した番号を見比べてください。',
-  KeyError: 'その名前の項目がありません。書いた名前と、入れたときの名前を見比べてください。',
-  AttributeError: 'その名前の付いた機能が、その値にはありません。変数に入っている値の型を確かめてください。',
-  ModuleNotFoundError: 'そのライブラリはこの画面では使えません。第1部で使えるのは math と random だけです。',
-  ImportError: 'そのライブラリはこの画面では使えません。第1部で使えるのは math と random だけです。',
-  RecursionError: '関数が自分を呼び続けています。呼び出しを止める条件を書いてください。',
+  SyntaxError: 'SyntaxError（構文エラー）: 書き方が Python の決まりに合っていません。かっこの閉じ忘れ、`:` の付け忘れ、全角の記号がないかを見てください。',
+  IndentationError: 'IndentationError（インデントのエラー）: インデントの深さが合っていません。同じまとまりの行は、左端をそろえてください。',
+  TabError: 'TabError（タブのエラー）: タブと空白が混ざっています。インデントは空白4つにそろえてください。',
+  NameError: 'NameError（名前のエラー）: その名前が見つかりません。綴りの違い、大文字と小文字の違い、まだ定義していない行がないかを見てください。',
+  TypeError: 'TypeError（型のエラー）: 型が合っていません。文字列と整数をそのまま足していないか、関数に渡す値の数が合っているかを見てください。',
+  ValueError: 'ValueError（値のエラー）: 値が受け付けられない形です。int() に数字でない文字列を渡していないかを見てください。',
+  ZeroDivisionError: 'ZeroDivisionError（0で割るエラー）: 0で割っています。割る側が0にならないか確かめてください。',
+  IndexError: 'IndexError（インデックスのエラー）: インデックスが範囲の外です。並びの長さと、指定したインデックスを見比べてください。',
+  KeyError: 'KeyError（キーのエラー）: その名前の項目がありません。書いた名前と、入れたときの名前を見比べてください。',
+  AttributeError: 'AttributeError（属性のエラー）: その名前の付いた機能が、その値にはありません。変数に入っている値の型を確かめてください。',
+  ModuleNotFoundError: 'ModuleNotFoundError（モジュールが見つからないエラー）: 名前の綴りを確かめてください。この画面で使えるのは Python に最初から入っているものと numpy・pandas・scikit-learn などです。',
+  ImportError: 'ImportError（インポートのエラー）: 名前の綴りを確かめてください。この画面で使えるのは Python に最初から入っているものと numpy・pandas・scikit-learn などです。',
+  RecursionError: 'RecursionError（再帰のエラー）: 関数が自分を呼び続けています。呼び出しを止める条件を書いてください。',
 };
 
 const DEFAULT_ADVICE = 'エラーの1行目に出ている型の名前と、何行目で止まったかを手がかりに、その行を読み直してください。';
+
+/**
+ * エラーの型ごとの一般的な説明を引く。<Exercise> の採点（下の fromError）だけでなく、
+ * <Run> の実行結果（src/lesson/ui/RunBox.tsx）からも同じ説明を出すために公開する
+ * （2026-09-27。design/DECISIONS.md）。
+ */
+export function adviceFor(type: string): string {
+  return ADVICE[type] ?? DEFAULT_ADVICE;
+}
 
 /** 出力の比較の緩さ（第4.4節）: 行末の空白と末尾の改行を無視する。 */
 export function normalizeOutput(text: string): string {
@@ -233,40 +245,17 @@ export function gradeDirect(
   return { passed: true, feedback: { kind: 'pass' }, failedTest: null, errorType: null };
 }
 
-/**
- * 節の <Mistake> と照合する（第4.3節 4-1）。
- * 課題に書かれた mistakes の id を先に見て、次にその節のすべてを見る。
- */
-function matchMistake(display: string, exercise: ExerciseData, mistakes: MistakeData[]): MistakeData | null {
-  const ordered = [
-    ...exercise.mistakes.map((id) => mistakes.find((m) => m.id === id)).filter((m): m is MistakeData => !!m),
-    ...mistakes,
-  ];
-  for (const m of ordered) {
-    const lines = m.error.split('\n').map((l) => l.trim()).filter((l) => l.length > 0);
-    const head = lines[lines.length - 1];
-    if (head && display.startsWith(head)) return m;
-  }
-  return null;
-}
-
-function fromError(result: ExecResult, exercise: ExerciseData, mistakes: MistakeData[]): Feedback | null {
+function fromError(result: ExecResult): Feedback | null {
   const e = result.error;
   if (!e) return null;
   if (e.kind === 'timeout') return { kind: 'timeout' };
   if (e.kind === 'input-empty') return { kind: 'input-empty' };
   if (e.kind === 'no-function') return { kind: 'no-function', fn: e.fn };
-  const hit = matchMistake(e.display, exercise, mistakes);
-  if (hit) return { kind: 'mistake', display: e.display, line: e.line, mistake: hit };
-  return { kind: 'error', display: e.display, line: e.line, type: e.type, advice: ADVICE[e.type] ?? DEFAULT_ADVICE };
+  return { kind: 'error', display: e.display, line: e.line, type: e.type, advice: adviceFor(e.type) };
 }
 
 /** 採点を1回走らせる。 */
-export async function gradeExercise(
-  code: string,
-  exercise: ExerciseData,
-  mistakes: MistakeData[],
-): Promise<GradeResult> {
+export async function gradeExercise(code: string, exercise: ExerciseData): Promise<GradeResult> {
   // 第0章の型（type / choose）は Python を動かさない。こちらには来ない（第11.4節）
   if (isDirectKind(exercise.kind)) return gradeDirect(code, exercise);
 
@@ -288,7 +277,7 @@ export async function gradeExercise(
       call: test.kind === 'call' ? { fn: test.fn, args: test.args } : undefined,
     });
 
-    const errorFeedback = fromError(result, exercise, mistakes);
+    const errorFeedback = fromError(result);
     if (errorFeedback) {
       const errorType = result.error?.kind === 'python' ? result.error.type : null;
       return { passed: false, feedback: errorFeedback, failedTest: i, errorType };

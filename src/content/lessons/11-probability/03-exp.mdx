@@ -36,20 +36,6 @@ print(np.round(positive / np.sum(positive), 3))`}
 
 8行目で、正になった値を合計で割ると分布になります。この計算の形には、第4部で名前が付きます。
 
-{/* よくある間違い */}
-
-<Mistake
-  id="exp-math-array"
-  code={`import numpy as np
-import math
-
-scores = np.array([1, -1, 2])
-print(math.exp(scores))`}
-  error={`TypeError: only 0-dimensional arrays can be converted to Python scalars`}
->
-`math.exp` は数を1つずつ受け取る関数で、配列をまとめて渡せません。配列には `np.exp` を使ってください。
-</Mistake>
-
 {/* 課題 */}
 
 <Exercise
@@ -67,7 +53,6 @@ print(np.round(positive / np.sum(positive), 3))`}
   hints={[
     '3つとも同じ数にすると、exp(x)も3つとも同じ値になります。',
   ]}
-  mistakes={['exp-math-array']}
 >
 5行目の `scores` を書き換えてください。`2.718`、`[1. 1. 1.]`、`[0.333 0.333 0.333]` の順に表示させます。
 </Exercise>
@@ -89,7 +74,6 @@ print(np.round(positive / np.sum(positive), 3))`}
     '負の数を含む並びに np.exp を使うと、すべて正の数に変わります。',
     '正になった並びを合計で割ると分布になります(第11章2節)。',
   ]}
-  mistakes={['exp-math-array']}
 >
 負の数を含む並びを受け取り、`np.exp` を使って分布に直す関数 `exp_distribution` を定義してください。
 

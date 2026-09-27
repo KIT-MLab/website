@@ -39,19 +39,6 @@ print(round(np.std(class_b), 1))`}
 
 10行目の `np.std` は分散の平方根で、標準偏差(standard deviation)と呼びます。`np.var` と `np.std` は、数Iと同じくデータの個数で割った値です。
 
-{/* よくある間違い */}
-
-<Mistake
-  id="spread-mean-no-call"
-  code={`import numpy as np
-class_b = np.array([40, 70, 70, 100])
-diff = class_b - class_b.mean ** 2
-print(diff)`}
-  error={`TypeError: unsupported operand type(s) for ** or pow(): 'builtin_function_or_method' and 'int'`}
->
-`class_b.mean` はかっこを付けないと呼び出されず、関数そのものを指します。`class_b.mean() ** 2` のように、かっこを先に付けてください。
-</Mistake>
-
 {/* 課題 */}
 
 <Exercise
@@ -71,7 +58,6 @@ print(round(np.std(class_b), 1))`}
   hints={[
     '平均が70のまま、散らばりだけを小さくする4つの数を探してください。',
   ]}
-  mistakes={['spread-mean-no-call']}
 >
 `70.0 70.0`、`50.0`、`50.0`、`7.1` の順に表示されるように、4行目の `class_b` を書き換えてください。
 </Exercise>
@@ -99,7 +85,6 @@ print(round(np.std(class_b), 1))`}
     '入力はreshapeで人数行3列の表にします(第8章5節)。',
     '科目ごとの標準偏差は、std(axis=0)で一度に出せます(第7章2節・第11章5節)。',
   ]}
-  mistakes={['spread-mean-no-call']}
 >
 入力欄の1行目を人数として読み取り、続けて人数×3科目の点数を読み取ってください。読み取った値はreshapeで人数行3列の表にしてください。
 

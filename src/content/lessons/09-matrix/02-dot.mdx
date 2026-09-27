@@ -35,19 +35,6 @@ print(a @ w)`}
 
 内積は `np.sum(a * w)` と書いても同じ値になります。`@` は、掛けてから足すという2つの操作をまとめた書き方です。
 
-{/* よくある間違い */}
-
-<Mistake
-  id="dot-length-mismatch"
-  code={`import numpy as np
-a = np.array([80, 70, 90])
-w = np.array([0.3, 0.3, 0.4, 0.0])
-print(a @ w)`}
-  error={`ValueError: matmul: Input operand 1 has a mismatch in its core dimension 0, with gufunc signature (n?,k),(k,m?)->(n?,m?) (size 4 is different from 3)`}
->
-`a` は3成分、`w` は4成分です。内積は、同じ数の成分どうしでないと計算できません。重みの数を科目の数に合わせてください。
-</Mistake>
-
 {/* 課題 */}
 
 <Exercise
@@ -63,7 +50,6 @@ print(a @ w)`}
     '内積は、同じ位置の成分どうしを掛けて足した合計です。',
     '3科目の点数はそのままに、重みの組み合わせだけを変えます。',
   ]}
-  mistakes={['dot-length-mismatch']}
 >
 `80.0` と表示されるように、4行目の `w` を書き換えてください。
 </Exercise>
@@ -84,7 +70,6 @@ print(a @ w)`}
     '重みは0.3・0.3・0.4で固定です。読み取った点数とのベクトルを作ります。',
     '重み付きの合計は、上の「やってみる」の a @ w と同じ形で出せます。',
   ]}
-  mistakes={['dot-length-mismatch']}
 >
 入力欄から1人分、3科目の点数を読み取ってください(1行に1つの数)。重みを0.3・0.3・0.4として、内積で重み付きの合計を求め、小数第1位まで丸めて表示してください。
 </Exercise>

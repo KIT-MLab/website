@@ -6,7 +6,7 @@
  */
 import { Fragment, useEffect, useRef, useState } from 'react';
 import CodeEditor from './CodeEditor';
-import { Inline, LoadBar, outputText, Prose, StdinBox } from './shared';
+import { Inline, LoadBar, outputText, StdinBox } from './shared';
 import { getExerciseData, getLessonData, isDirectKind, type ExerciseData, type ExerciseKind, type LessonData } from '../data';
 import { gradeDirect, gradeExercise, showInput, type GradeResult } from '../grade';
 import { execPython } from '../runtime/runner';
@@ -309,7 +309,7 @@ export default function ExerciseBox({ id, kind, starter, stdin, choices, syntax,
     const submitted = direct ? (kind === 'choose' ? String(picked ?? '') : typed) : codeRef.current;
     const graded = direct
       ? gradeDirect(kind === 'choose' ? picked : typed, exercise, pasted)
-      : await gradeExercise(codeRef.current, exercise, lesson.mistakes);
+      : await gradeExercise(codeRef.current, exercise);
     const store = getProgressStore();
     await store.recordSubmission({
       lessonId: lesson.lessonId,
@@ -607,7 +607,7 @@ function CaseNote({ result, kind, exercise }: { result: GradeResult; kind: Exerc
   const ordinal = `ケース${result.failedTest + 1}`;
   const f = result.feedback;
   const paren = input && input !== '（入力なし）' ? `（${input}）` : '';
-  if (f.kind === 'mistake' || f.kind === 'error') {
+  if (f.kind === 'error') {
     return (
       <p className="kit-verdict__case">
         {ordinal}{paren}で、{f.line ? `${f.line}行目で` : ''}エラーになりました。
@@ -741,23 +741,12 @@ function Verdict({ result, kind, exercise }: { result: GradeResult; kind: Exerci
           <code>{f.fn}</code> という名前の関数が見つかりません。名前の綴りを確かめてください。
         </p>
       ) : null}
-      {f.kind === 'mistake' ? (
-        <>
-          <div className="kit-out kit-out--err">
-            <pre className="kit-out__text">{f.display}</pre>
-          </div>
-          {/* build は上の CaseNote が「ケースNで、N行目でエラーになりました。」とまとめて言う */}
-          {f.line && kind !== 'build' ? <p className="kit-verdict__where">{f.line} 行目で止まりました。</p> : null}
-          <div className="kit-verdict__fix">
-            <Prose text={f.mistake.fix} />
-          </div>
-        </>
-      ) : null}
       {f.kind === 'error' ? (
         <>
           <div className="kit-out kit-out--err">
             <pre className="kit-out__text">{f.display}</pre>
           </div>
+          {/* build は上の CaseNote が「ケースNで、N行目でエラーになりました。」とまとめて言う */}
           {f.line && kind !== 'build' ? <p className="kit-verdict__where">{f.line} 行目で止まりました。</p> : null}
           <p>{f.advice}</p>
         </>

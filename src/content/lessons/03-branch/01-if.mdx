@@ -48,38 +48,6 @@ print("判定を終えました")`}
 行の頭に空白を入れるときは、`Tab` キーを押すか、半角空白を4つ続けて入力します。コロンで終わる行の次の行は、多くのエディタが自動で頭をそろえます。
 </Level0>
 
-{/* よくある間違い */}
-
-<Mistake
-  id="if-missing-colon"
-  code={`score = 75
-if score >= 60
-    print("合格です")`}
-  error={`SyntaxError: expected ':'`}
->
-if文の条件の後ろに `:` がありません。行の最後にコロンを付けてください。
-</Mistake>
-
-<Mistake
-  id="if-missing-indent"
-  code={`score = 75
-if score >= 60:
-print("合格です")`}
-  error={`IndentationError: expected an indented block after 'if' statement on line 2`}
->
-if文の中身の行にインデントがありません。`if` の次の行の頭に半角空白を入れてください。
-</Mistake>
-
-<Mistake
-  id="if-arrow"
-  code={`score = 75
-if score => 60:
-    print("合格です")`}
-  error={`SyntaxError: invalid syntax`}
->
-`=>` という書き方はありません。「以上」を表すには `>=` と書きます。
-</Mistake>
-
 {/* 課題 */}
 
 <Exercise
@@ -90,7 +58,6 @@ if number < 0:
     print("負の数です")`}
   tests={[{ kind: 'stdout' }]}
   hints={[]}
-  mistakes={['if-missing-indent']}
 >
 上のコードの `number` の値を、`負の数です` と表示されないように決めてください。
 </Exercise>
@@ -103,7 +70,6 @@ if number > 0:
     print("正の数です")`}
   tests={[{ kind: 'stdout' }]}
   hints={['上の「説明」で見たif文の書き方を、もう1つ下に足します。']}
-  mistakes={['if-missing-colon']}
 >
 上のコードに、`number` が `0` のとき `0です` と表示するif文を1行足してください。
 </Exercise>
@@ -122,7 +88,6 @@ if number > 0:
     '入力欄の1行を読み取るには、第1章で使った `input()` と `int()` を使います。',
     '先に正の場合を確かめ、次に0の場合、次に負の場合を順に確かめます。',
   ]}
-  mistakes={['if-missing-colon', 'if-missing-indent', 'if-arrow']}
 >
 入力欄の1行を読み取り、その数が正か0か負かで出す言葉を変えるプログラムを書いてください。`正の数です` `0です` `負の数です` のいずれかを表示します。
 </Exercise>

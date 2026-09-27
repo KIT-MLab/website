@@ -7,7 +7,8 @@
  *   主 = どこからどこまでがひとまとまりか → 地色の濃さ・枠の太さ・帯の厚み
  *   従 = どこが見出しか                   → 帯（札）。1節につき4種類だけ
  *
- * 札を付けるのは 例題 / 練習問題 / 確認問題 / 演習問題 / よくある間違い だけ（第10.6節。確認問題は 2026-09-24）。
+ * 札を付けるのは 例題 / 練習問題 / 確認問題 / 演習問題 だけ（第10.6節。確認問題は 2026-09-24。
+ * よくある間違いは 2026-09-27 に廃止した）。
  * 例・コードのキャプション・左の欄の各節・レベル0 は素地の小さな文字にする。
  *
  * ・本文は1カラム最大720px、左の欄232px（20-platform.md 第14.2節）
@@ -427,7 +428,6 @@
   border-bottom: 1px solid var(--k-line);
 }
 
-.kit-run--broken .kit-code__label,
 .kit-out--err .kit-out__label {
   color: #e2a98f;
 }
@@ -571,53 +571,6 @@
   height: 100%;
   background: var(--l-strong);
   transition: width 120ms var(--ease-out);
-}
-
-/* ============================================================
- * よくある間違い — 階段には乗らない。地は紙より明るく、枠は琥珀の二重罫。
- * 見出しは全幅の帯ではなく、角を落とした小札（第10.9節）。
- * ============================================================ */
-.kit-mistake {
-  position: relative;
-  margin: 3em 0;
-  padding: 8px 0 0;
-  background: var(--l-card);
-  border: 3px double var(--l-kohaku);
-  border-radius: 0;
-}
-
-.kit-mistake__label {
-  position: absolute;
-  left: 22px;
-  top: 0;
-  transform: translateY(-50%);
-  margin: 0;
-  font-family: "Zen Old Mincho", serif;
-  font-weight: 700;
-  font-size: 14.5px;
-  letter-spacing: 0.18em;
-  background: var(--l-kohaku-bg);
-  color: var(--l-kohaku);
-  border: 1px solid var(--l-kohaku);
-  border-radius: 4px;
-  padding: 3px 16px;
-}
-
-.kit-mistake__in {
-  padding: 20px 22px;
-}
-
-.kit-mistake__fix {
-  margin-top: 14px;
-  font-size: 16.5px;
-}
-
-.kit-mistake__fix p {
-  margin: 0 0 0.6em;
-}
-
-.kit-mistake__fix p:last-child {
-  margin-bottom: 0;
 }
 
 /* ============================================================
@@ -1517,66 +1470,6 @@
   color: var(--l-strong);
   padding-right: 0;
   white-space: nowrap;
-}
-
-/* --- <Mistake> を既定で閉じる（第6章） ------------------------
-   札を summary にして、閉じたままでも押せるようにする。位置は
-   これまでどおり枠の上に跨がせる（第10.5節の札の組み） */
-.kit-mistake {
-  padding-bottom: 0;
-}
-
-.kit-mistake > summary {
-  cursor: pointer;
-  list-style: none;
-  width: max-content;
-}
-
-/* 押せることを見せる（第14.6節） */
-.kit-mistake > summary:hover {
-  text-decoration: underline;
-  text-underline-offset: 3px;
-}
-
-.kit-mistake > summary::-webkit-details-marker {
-  display: none;
-}
-
-.kit-mistake > summary:focus-visible {
-  outline: 2px solid var(--l-kohaku);
-  outline-offset: 2px;
-}
-
-/* 閉じたままでも何の失敗かが分かるように、エラーの種類を添える */
-.kit-mistake__kind {
-  margin-left: 10px;
-  font-family: var(--font-mono);
-  font-size: 12.5px;
-  font-weight: 400;
-  letter-spacing: 0;
-}
-
-/* 開いていないときは、枠の中に余白を作らない */
-.kit-mistake:not([open]) {
-  padding-top: 8px;
-  padding-bottom: 8px;
-}
-
-/* 閉じているときは枠を描かない。中身が無いのに二重罫の帯だけが残ると、
-   何かが抜け落ちているように見える。閉じた「よくある間違い」は、
-   押せる札が1つ置いてあるだけでよい */
-.kit-mistake:not([open]) {
-  border: 0;
-  background: none;
-  padding: 0;
-  margin: 1.8em 0;
-}
-
-.kit-mistake:not([open]) > summary {
-  position: static;
-  transform: none;
-  display: inline-block;
-  margin-left: 22px;
 }
 
 /* 本文の写真（第0章の画面の写真。2026-09-24）。本文の幅に収め、紙の地と分けるため細い罫で囲む */

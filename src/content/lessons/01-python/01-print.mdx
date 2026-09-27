@@ -36,16 +36,6 @@ print(10 + 20)`}
 `Shift` を押しながら数字の `2` のキーを押すと `"` が入ります。日本語入力がオンのときは `”` になります。`半角/全角` キーで日本語入力を切り替えてください。
 </Level0>
 
-{/* よくある間違い */}
-
-<Mistake id="zenkaku-quote" code={`print(“Python”)`} error={`SyntaxError: invalid character '“' (U+201C)`}>
-全角のダブルクォートを使っています。`"` は半角で入力してください。日本語入力がオンになっていると全角になります。
-</Mistake>
-
-<Mistake id="print-typo" code={`prit("Python")`} error={`NameError: name 'prit' is not defined`}>
-`print` の綴りが違います。`prit` という名前は Python にありません。`n` が抜けていないか見てください。
-</Mistake>
-
 {/* 課題 */}
 
 <Exercise
@@ -54,7 +44,6 @@ print(10 + 20)`}
   starter={`print("赤")`}
   tests={[{ kind: 'stdout' }]}
   hints={['`print` をもう1行足します。']}
-  mistakes={['zenkaku-quote']}
 >
 上のコードを書き足して、1行目に `赤`、2行目に `青` と表示されるようにしてください。
 </Exercise>
@@ -66,11 +55,10 @@ print(10 + 20)`}
 print("青")`}
   tests={[{ kind: 'stdout' }]}
   hints={['`print` の引数を `,` で区切ると、間に空白が1つ入って1行に並びます。']}
-  mistakes={['zenkaku-quote']}
 >
 上のコードを1行の `print` に書き換えて、`赤 青` と1行で表示されるようにしてください。引数は2つ渡します。
 </Exercise>
 
 {/* つながり */}
 
-`print` で値を出せるようになりました。次の節では、こちらから値を渡す `input()` を扱います。
+`print` で値を出せるようになりました。次の節では、入力欄に書いた値をプログラムで受け取る `input()` を扱います。

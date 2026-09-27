@@ -165,7 +165,6 @@ for (const file of files) {
   // --- 構造: <Exercise> だけ ---
   for (const m of lesson.markers) add(rel, 1, m.line, `練習問題集に要素のマーカー（${m.name}）は置きません。<Exercise> だけを書きます`);
   for (const r of lesson.runs) add(rel, 2, r.line, '練習問題集に <Run> は置きません');
-  for (const m of lesson.mistakes) add(rel, 3, m.line, '練習問題集に <Mistake> は置きません');
   for (const p of lesson.bodyParagraphs) {
     add(rel, 1, 1, `<Exercise> の外に文章があります。話題の説明は教材の節が受け持ちます: 「${plainText(p.text).slice(0, 24)}…」`);
   }

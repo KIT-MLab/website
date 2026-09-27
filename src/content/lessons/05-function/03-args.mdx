@@ -34,17 +34,6 @@ print(price_with_tax(1000, 0.2))`}
 
 よく使う値をデフォルト値にしておくと、呼び出す側は短く書けます。違う値を使いたいときだけ渡せばよいので、同じ関数を使い回せます。
 
-{/* よくある間違い */}
-
-<Mistake
-  id="args-default-order"
-  code={`def price_with_tax(rate=0.1, amount):
-    return amount * (1 + rate)`}
-  error={`SyntaxError: parameter without a default follows parameter with a default`}
->
-デフォルト値のない引数を、デフォルト引数より後ろに書いています。`amount` を先に、`rate=0.1` をあとに書いてください。
-</Mistake>
-
 {/* 課題 */}
 
 <Exercise
@@ -61,7 +50,6 @@ print(price_with_tax(1000, 0.2))`}
     'デフォルト値の書き方は、この節の `rate=0.1` の説明を見てください。',
     '関数の中で if文を使い、条件に合うときと合わないときで別の文字列を `return` します。',
   ]}
-  mistakes={['args-default-order']}
 >
 関数 `judge(score, border)` を書いてください。`score` は点数、`border` は合格の基準点です。`score` が `border` 以上なら `"合格"`、そうでなければ `"不合格"` を返します。
 

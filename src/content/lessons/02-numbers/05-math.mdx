@@ -32,17 +32,6 @@ print(math.pi)`}
 
 `import` を書き忘れると、`math` という名前が見つからずエラーになります。使う前に必ず1回読み込んでください。
 
-{/* よくある間違い */}
-
-<Mistake id="math-not-imported" code={`print(math.sqrt(4))`} error={`NameError: name 'math' is not defined`}>
-`import math` を書く前に `math` を使っています。ファイルの先頭で1回 `import math` してください。
-</Mistake>
-
-<Mistake id="sqrt-negative" code={`import math
-print(math.sqrt(-4))`} error={`ValueError: expected a nonnegative input, got -4.0`}>
-負の数の平方根は実数の範囲で計算できません。`math.sqrt()` に渡す値が0以上か確認してください。
-</Mistake>
-
 {/* 課題 */}
 
 <Exercise
@@ -52,7 +41,6 @@ print(math.sqrt(-4))`} error={`ValueError: expected a nonnegative input, got -4.
 print(math.sqrt(9))`}
   tests={[{ kind: 'stdout' }]}
   hints={[]}
-  mistakes={['math-not-imported']}
 >
 上のコードを書き換えて、`4.0` が表示されるようにしてください。
 </Exercise>
@@ -71,7 +59,6 @@ print(math.sqrt(9))`}
     '半径の入力には小数もあります。読み取り方を第1節の `float()` の説明で確認してください。',
     '円周率の値を、上の「説明」で確認してください。',
   ]}
-  mistakes={['math-not-imported']}
   forbid={['3.14']}
 >
 入力欄から半径を読み取ってください。円周の長さと面積を、小数第2位までの形で `円周:6.28 面積:3.14` のように1行で表示します。

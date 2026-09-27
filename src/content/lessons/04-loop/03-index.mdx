@@ -34,26 +34,6 @@ print(len(numbers))`}
 
 `range(len(numbers))` と書けば、`0` から `len(numbers) - 1` までのインデックスを順に作れます。`for i in range(len(numbers)):` とすれば、インデックスを使って1つずつ処理できます。
 
-{/* よくある間違い */}
-
-<Mistake
-  id="index-out-of-range"
-  code={`numbers = [3, 7, 2, 9, 4]
-print(numbers[5])`}
-  error={`IndexError: list index out of range`}
->
-インデックスは `0` から数えるので、最後の値のインデックスは `len(numbers) - 1` です。`numbers[5]` の位置には値がありません。
-</Mistake>
-
-<Mistake
-  id="index-len-method"
-  code={`numbers = [3, 7, 2, 9, 4]
-print(numbers.len())`}
-  error={`AttributeError: 'list' object has no attribute 'len'`}
->
-`len` はリストの後ろに `.` を付けて呼ぶ形ではありません。`len(numbers)` のように、かっこの中にリストを渡します。
-</Mistake>
-
 {/* 課題 */}
 
 <Exercise
@@ -65,7 +45,6 @@ print(numbers[2])
 print(len(numbers))`}
   tests={[{ kind: 'stdout' }]}
   hints={[]}
-  mistakes={['index-out-of-range']}
 >
 `7` と `4` と `5` がこの順で表示されるように、2つのインデックスを決めてください。
 </Exercise>
@@ -80,7 +59,6 @@ print(numbers[2])
 print(len(numbers))`}
   tests={[{ kind: 'stdout' }]}
   hints={['最後の値のインデックスは `len(numbers) - 1` です。']}
-  mistakes={['index-out-of-range']}
 >
 `numbers` の最後の値だけを表示してください。`4` と表示されれば合っています。リストの個数が変わっても動くよう、`len()` を使ってください。
 </Exercise>
@@ -104,7 +82,6 @@ print(len(numbers))`}
     'インデックスを `0` から `len(numbers) - 1` まで動かすには、前の節の `range(len(numbers))` を使います。',
     'インデックス `i` のとき、後ろから数えた値のインデックスは `len(numbers) - 1 - i` です。',
   ]}
-  mistakes={['index-out-of-range']}
 >
 入力欄の5行を整数のリストとして読み取り、そのリストを逆順に、1行ずつ表示するプログラムを書いてください。`reversed` と `[::-1]` のような書き方は使わないでください。
 </Exercise>

@@ -3,7 +3,7 @@
  * <Exercise> — 課題（10-lesson-and-writing.md 第3章、20-platform.md 第4章）。
  *
  * 問題文はサーバ側で組み、エディタと採点だけを島にする。
- * hints / mistakes / forbid は scripts/build-tests.mjs が読んで
+ * hints / forbid は scripts/build-tests.mjs が読んで
  * src/generated/lesson-data.json を作る。ここでは受け取るだけで使わない。
  *
  * tests はここでも使う。「組む」の「テストケース」を tests から組んで出す
@@ -39,7 +39,6 @@ interface Props {
   requirePaste?: boolean;
   tests?: Test[];
   hints?: string[];
-  mistakes?: string[];
   forbid?: string[];
   /**
    * 構文の一覧（20-platform.md 第22.1節）で開く分類の key（src/lesson/syntax-list.ts）。

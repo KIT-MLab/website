@@ -17,7 +17,7 @@
  * つまりコード中の「\」は JavaScript の規則で解釈される（`\\n` と書くと Python の `\n`）。
  */
 
-const COMPONENTS = ['Run', 'Mistake', 'Exercise', 'Level0', 'Experiment', 'Keys', 'Figure', 'Secant', 'Descent', 'FitLine', 'Boundary', 'Overfit'];
+const COMPONENTS = ['Run', 'Exercise', 'Level0', 'Experiment', 'Keys', 'Figure', 'Secant', 'Descent', 'FitLine', 'Boundary', 'Overfit'];
 
 export function lineOf(text, index) {
   let line = 1;
@@ -312,7 +312,6 @@ export function parseLesson(source, file) {
   const sectionOf = (index) => sections.find((s) => index >= s.start && index < s.end)?.name ?? null;
 
   const runs = [];
-  const mistakes = [];
   const exercises = [];
   const level0 = [];
   const experiments = [];
@@ -330,17 +329,6 @@ export function parseLesson(source, file) {
         error: evalAttribute(c.attrs.error),
         rawAttrs: c.attrs,
       });
-    } else if (c.name === 'Mistake') {
-      mistakes.push({
-        section,
-        line: c.line,
-        id: evalAttribute(c.attrs.id) ?? '',
-        code: evalAttribute(c.attrs.code) ?? '',
-        stdin: evalAttribute(c.attrs.stdin) ?? '',
-        error: evalAttribute(c.attrs.error) ?? '',
-        fix: c.children.trim(),
-        rawAttrs: c.attrs,
-      });
     } else if (c.name === 'Exercise') {
       /* 組む問題の新しい形（第23.2節）では、prompt は「問題文」だけになる。
          入力・出力は input / output に分ける。古い形では prompt は中身そのまま */
@@ -356,7 +344,6 @@ export function parseLesson(source, file) {
         requirePaste: evalAttribute(c.attrs.requirePaste) === true,
         tests: evalAttribute(c.attrs.tests) ?? [],
         hints: evalAttribute(c.attrs.hints) ?? [],
-        mistakes: evalAttribute(c.attrs.mistakes) ?? [],
         forbid: evalAttribute(c.attrs.forbid) ?? [],
         prompt: parts.statement,
         form: parts.form,
@@ -373,7 +360,7 @@ export function parseLesson(source, file) {
     }
   }
 
-  // 本文（字数を数える対象）= 部品の外の文章 ＋ <Mistake> の直し方。
+  // 本文（字数を数える対象）= 部品の外の文章。
   // <Level0>（レベル別の補助）と「課題」の問題文は本文に数えない。
   const withoutComponents = [];
   let cursor = 0;
@@ -452,13 +439,6 @@ export function parseLesson(source, file) {
     tableChars[section] = (tableChars[section] ?? 0) + (jp ? jp.length : 0);
   }
 
-  for (const m of mistakes) {
-    for (const p of paragraphsOf(m.fix)) {
-      const entry = { section: 'よくある間違い', text: p, where: `<Mistake id="${m.id}">` };
-      allParagraphs.push(entry);
-      bodyParagraphs.push(entry);
-    }
-  }
   for (const e of exercises) {
     for (const p of paragraphsOf(e.prompt)) {
       allParagraphs.push({ section: '課題', text: p, where: `<Exercise id="${e.id}">` });
@@ -484,7 +464,6 @@ export function parseLesson(source, file) {
     sections,
     components,
     runs,
-    mistakes,
     exercises,
     level0,
     experiments,

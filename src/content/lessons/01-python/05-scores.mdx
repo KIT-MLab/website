@@ -32,25 +32,6 @@ print(f"合計{total}点")`}
 
 教科の数がもっと増えると、変数を増やすたびにコードも長くなります。値をまとめて扱うリストは、第4章で扱います。リストを使うと、教科の数が変わっても同じ書き方で処理できます。
 
-{/* よくある間違い */}
-
-<Mistake id="forgot-int" code={`japanese = int(input())
-mathematics = input()
-english = int(input())
-print(japanese + mathematics + english)`} stdin={`80
-70
-90`} error={`TypeError: unsupported operand type(s) for +: 'int' and 'str'`}>
-`mathematics` だけ `int()` を付け忘れています。`input()` の結果は文字列なので、計算する前に必ず整数に変えてください。エラー文の `int` と `str` は、`japanese` が整数、`mathematics` が文字列のままであることを示しています。
-</Mistake>
-
-<Mistake id="total-mismatch" code={`japanese = 80
-mathematics = 70
-english = 90
-total = japanese + mathematics + english
-print(f"合計{totals}点")`} error={`NameError: name 'totals' is not defined`}>
-`total` と `totals` は別の名前です。`totals` は定義されていないため、`NameError` になります。合計を表す変数名をそろえてください。
-</Mistake>
-
 {/* 課題 */}
 
 <Exercise
@@ -62,7 +43,6 @@ total = japanese + mathematics
 print(f"合計{total}点")`}
   tests={[{ kind: 'stdout' }]}
   hints={[]}
-  mistakes={['total-mismatch']}
 >
 上のコードを書き換えて、`english = 70` も合計に加えてください。`合計217点` と表示されれば合っています。
 </Exercise>
@@ -77,7 +57,6 @@ total = japanese + mathematics + english
 print(f"合計{total}点")`}
   tests={[{ kind: 'stdout' }]}
   hints={['上の「説明」に書いた、平均の求め方を確認してください。']}
-  mistakes={['total-mismatch']}
 >
 上のコードを書き換えて、平均も表示してください。`平均70.0点 合計210点` のように、平均を先に、合計をあとに表示してください。
 </Exercise>
@@ -99,7 +78,6 @@ print(f"合計{total}点")`}
     '合計は `+` でつなげます。',
     '上の「説明」に書いた、平均の求め方を確認してください。',
   ]}
-  mistakes={['forgot-int', 'total-mismatch']}
 >
 国語・数学・英語の順に3つの点数を読み取ってください。`合計240点 平均80.0点` のように合計と平均を1行で表示します。
 </Exercise>

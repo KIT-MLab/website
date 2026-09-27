@@ -35,17 +35,6 @@ for value in numbers:
 
 人数が増えても、リストの中に値を並べれば対応できます。変数を1つずつ増やす必要はありません。
 
-{/* よくある間違い */}
-
-<Mistake
-  id="list-missing-comma"
-  code={`numbers = [3 7 2 9 4]
-print(numbers)`}
-  error={`SyntaxError: invalid syntax. Perhaps you forgot a comma?`}
->
-リストの値の間に `,` がありません。値と値の間には必ずコンマを書いてください。
-</Mistake>
-
 {/* 課題 */}
 
 <Exercise
@@ -56,7 +45,6 @@ for value in numbers:
     print(value)`}
   tests={[{ kind: 'stdout' }]}
   hints={[]}
-  mistakes={['list-missing-comma']}
 >
 `numbers` に値を1つ加えて、出力の最後の行が、それより上の5行の合計になるようにしてください。
 </Exercise>
@@ -69,7 +57,6 @@ for value in numbers:
     print(value)`}
   tests={[{ kind: 'stdout' }]}
   hints={['`print` にわたす前に `value` を2倍にします。']}
-  mistakes={[]}
 >
 上のコードを書き換えて、それぞれの値を2倍にして表示してください。
 </Exercise>
@@ -93,7 +80,6 @@ for value in numbers:
     '先に読み取った1つ目の値を、いまのところの最大として使います。',
     '残りの値をリストに集め、for文で1つずつ比べて、大きいほうを残します。',
   ]}
-  mistakes={['list-missing-comma']}
 >
 入力欄の5行を整数として読み取り、その中で最大の値を表示するプログラムを書いてください。`max` は使わないでください。
 </Exercise>

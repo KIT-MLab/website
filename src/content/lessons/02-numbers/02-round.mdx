@@ -42,18 +42,6 @@ print(round(average, 1))`}
 
 `0` を書くと小数の `82.0`、省略すると整数の `82` になり、結果の型が違います。
 
-{/* よくある間違い */}
-
-<Mistake id="round-digits-string" code={`average = 81.666
-print(round(average, "1"))`} error={`TypeError: 'str' object cannot be interpreted as an integer`}>
-第2引数の桁数は整数で書きます。`"1"` のように文字列で渡すとエラーになります。
-</Mistake>
-
-<Mistake id="round-of-string" code={`average = "81.6"
-print(round(average, 1))`} error={`TypeError: type str doesn't define __round__ method`}>
-`round()` は数値にしか使えません。`average` が文字列のままなら、先に `float()` で変えてください。
-</Mistake>
-
 {/* 課題 */}
 
 <Exercise
@@ -63,7 +51,6 @@ print(round(average, 1))`} error={`TypeError: type str doesn't define __round__ 
 print(round(value, 1))`}
   tests={[{ kind: 'stdout' }]}
   hints={[]}
-  mistakes={['round-digits-string']}
 >
 上のコードを書き換えて、小数第2位まで表示してください。`3.17` と表示されれば合っています。
 </Exercise>
@@ -78,7 +65,6 @@ total = japanese + mathematics + english
 print(f"合計{total}点")`}
   tests={[{ kind: 'stdout' }]}
   hints={['平均は合計を教科の数で割れば求まります。']}
-  mistakes={['round-of-string']}
 >
 上のコードを書き換えて、平均を小数第1位まで丸めて表示するようにしてください。`平均70.0点` のように表示します。
 </Exercise>
@@ -99,7 +85,6 @@ print(f"合計{total}点")`}
     '3つの `input()` と `int()` で数を読み取り、変数に入れます。',
     '平均を求めてから `round()` に渡します。',
   ]}
-  mistakes={['round-digits-string', 'round-of-string']}
 >
 3つの数を読み取り、その平均を小数第1位まで丸めて1行で表示するプログラムを書いてください。
 </Exercise>

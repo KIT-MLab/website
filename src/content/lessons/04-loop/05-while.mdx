@@ -38,35 +38,6 @@ c
 
 4行目の `count = count + 1` で、繰り返すたびに数を1つ増やします。最後の `print(count)` で、`終わり` より前に読んだ行の数を表示します。
 
-{/* よくある間違い */}
-
-<Mistake
-  id="while-missing-quotes"
-  code={`line = input()
-while line != 終わり:
-    line = input()`}
-  stdin={`a`}
-  error={`NameError: name '終わり' is not defined`}
->
-`終わり` に `"` が付いていません。文字列として比べるには `"終わり"` のように引用符で囲みます。
-</Mistake>
-
-<Mistake
-  id="while-forgot-int"
-  code={`total = 0
-line = input()
-while line != "終わり":
-    total = total + line
-    line = input()
-print(total)`}
-  stdin={`3
-5
-終わり`}
-  error={`TypeError: unsupported operand type(s) for +: 'int' and 'str'`}
->
-`line` は文字列のままです。数として足すには `int(line)` のように整数へ変えてください。
-</Mistake>
-
 {/* 課題 */}
 
 <Exercise
@@ -80,7 +51,6 @@ while line != "終わり":
 print(count)`}
   tests={[{ kind: 'stdout', stdin: `a\nb\nc\n終わり\n` }]}
   hints={[]}
-  mistakes={['while-missing-quotes']}
 >
 上のコードを書き換えて、数を数える代わりに、読み取った行をそのまま1行ずつ表示するようにしてください。
 </Exercise>
@@ -101,7 +71,6 @@ print(count)`}
     '繰り返しに入る前に、判定に使う1行を先に読んでおきます。',
     '繰り返しの最後でも、次に比べる行をもう一度読みます。',
   ]}
-  mistakes={['while-missing-quotes', 'while-forgot-int']}
 >
 入力欄の行を、`終わり` と入力されるまで整数として読み取り続け、合計を表示するプログラムを書いてください。
 </Exercise>

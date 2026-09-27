@@ -20,7 +20,6 @@ levels: [1, 2, 3]
     { kind: 'stdout', stdin: `-2.46\n` },
   ]}
   hints={['`round()` の2つ目の引数は、残す小数点以下の桁数です。第2章2節を見てください。']}
-  mistakes={[]}
   syntax={['input', 'round-math', 'print']}
 >
 入力された小数を、小数第1位までに丸めて表示してください。
@@ -46,7 +45,6 @@ levels: [1, 2, 3]
     { kind: 'stdout', stdin: `-1.6\n` },
   ]}
   hints={['`round()` に桁数を渡すときと渡さないときで、結果の形が違います。第2章2節の表を見てください。']}
-  mistakes={[]}
   syntax={['input', 'round-math', 'print']}
 >
 入力された小数を、いちばん近い整数に丸めて表示してください。
@@ -74,7 +72,6 @@ levels: [1, 2, 3]
     { kind: 'stdout', stdin: `10.33\n9.87\n10.1\n` },
   ]}
   hints={['先に3回の合計を求めてから、回数で割ります。丸めるのは最後です。']}
-  mistakes={[]}
   syntax={['input', 'operators', 'round-math', 'print']}
 >
 50m走を3回走ったタイムから、平均のタイムを求めてください。平均は小数第2位までに丸めます。
@@ -104,7 +101,6 @@ levels: [1, 2, 3]
     { kind: 'stdout', stdin: `500\n0\n` },
   ]}
   hints={['割引の率が15なら、値段の15%が引かれます。先に、引かれる額か、残る割合を考えます。', '1円未満を四捨五入するには、`round()` の桁数を省きます。第2章2節を見てください。']}
-  mistakes={[]}
   syntax={['input', 'operators', 'round-math', 'print']}
 >
 値段と割引の率から、割引したあとの値段を求めてください。1円未満は四捨五入します。
@@ -132,7 +128,6 @@ levels: [1, 2, 3]
     { kind: 'stdout', stdin: `150\n45\n` },
   ]}
   hints={['先に、身長をメートルに直して変数に入れます。', '2乗は、同じ数を2回掛けた値です。丸めるのは最後です。']}
-  mistakes={[]}
   syntax={['input', 'operators', 'round-math', 'print']}
 >
 身長と体重から、BMI を求めてください。BMI は、体重（kg）を、メートルに直した身長の2乗で割った値です。小数第1位までに丸めます。

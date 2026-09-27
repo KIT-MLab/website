@@ -38,19 +38,6 @@ print(scores[0] @ W[:, 0])`}
 
 行列の積は、行列とベクトルの積を広げたものです。右側の列が増えるほど、結果の列も同じ数だけ増えます。
 
-{/* よくある間違い */}
-
-<Mistake
-  id="matmul-row-vs-col"
-  code={`import numpy as np
-scores = np.array([[80, 70, 90], [60, 50, 40]])
-W = np.array([[0.3, 0.4], [0.3, 0.2], [0.4, 0.4]])
-print(scores[0] @ W[0])`}
-  error={`ValueError: matmul: Input operand 1 has a mismatch in its core dimension 0, with gufunc signature (n?,k),(k,m?)->(n?,m?) (size 2 is different from 3)`}
->
-`W[0]` は0行目(1科目分の2通りの配点)で、列ではありません。列を取り出すには `W[:, 0]` のように書きます。
-</Mistake>
-
 {/* 課題 */}
 
 <Exercise
@@ -67,7 +54,6 @@ print(result.shape)`}
     '結果の行の数は、scoresの行の数と同じです。',
     '1行3列の点数を、行として3つ並べてください。',
   ]}
-  mistakes={['matmul-row-vs-col']}
 >
 `(3, 2)` と表示されるように、3行目の `scores` を書き換えてください。
 </Exercise>
@@ -77,7 +63,6 @@ print(result.shape)`}
   kind="type"
   tests={[{ kind: 'text', expect: `49.0` }]}
   hints={[]}
-  mistakes={['matmul-row-vs-col']}
 >
 上の `scores` の2人目(60・50・40)と、`W` の0列目(理系の配点、0.3・0.3・0.4)を、手で計算してください。`result[1, 0]` の値を、小数第1位まで(例: `12.3`)打ってください。
 </Exercise>
@@ -101,7 +86,6 @@ print(result.shape)`}
     '2人分の点数を、2行3列の行列にまとめます。',
     '理系と文系の配点を、3行2列の行列Wにまとめると、積を1回で計算できます。',
   ]}
-  mistakes={['matmul-row-vs-col']}
 >
 入力欄から2人分、3科目の点数を読み取ってください(1行に1つの数、1人ずつ3つ)。理系の配点0.3・0.3・0.4と文系の配点0.4・0.2・0.4を、3行2列の行列Wにまとめてください。
 

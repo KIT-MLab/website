@@ -32,35 +32,6 @@ terms: [for文, range]
 
 `range(6)` のように数を1つだけ渡すと、`0` から `5` までになります。`1` から始めたいときは、`range(1, 6)` のように開始と終わりの2つを渡します。
 
-{/* よくある間違い */}
-
-<Mistake
-  id="for-typo-range"
-  code={`for i in ragne(1, 6):
-    print(i)`}
-  error={`NameError: name 'ragne' is not defined`}
->
-`range` の綴りが `ragne` になっています。正しく `range` と書いてください。
-</Mistake>
-
-<Mistake
-  id="for-missing-colon"
-  code={`for i in range(1, 6)
-    print(i)`}
-  error={`SyntaxError: expected ':'`}
->
-for文の条件の後ろに `:` がありません。行の最後にコロンを付けてください。
-</Mistake>
-
-<Mistake
-  id="for-missing-indent"
-  code={`for i in range(1, 6):
-print(i)`}
-  error={`IndentationError: expected an indented block after 'for' statement on line 1`}
->
-for文の中身の行にインデントがありません。`for` の次の行の頭に半角空白を入れてください。
-</Mistake>
-
 {/* 課題 */}
 
 <Exercise
@@ -70,7 +41,6 @@ for文の中身の行にインデントがありません。`for` の次の行�
     print(i)`}
   tests={[{ kind: 'stdout' }]}
   hints={[]}
-  mistakes={['for-missing-colon']}
 >
 上のコードを書き換えて、`1` から `10` までを表示してください。
 </Exercise>
@@ -90,7 +60,6 @@ for文の中身の行にインデントがありません。`for` の次の行�
     '合計を入れておく変数を、繰り返しの前に1つ用意します。',
     '`range(1, n + 1)` で生成される数を、1つずつその変数に足していきます。',
   ]}
-  mistakes={['for-typo-range', 'for-missing-colon', 'for-missing-indent']}
 >
 入力欄の1行を整数 `n` として読み取り、`1` から `n` までの合計を表示するプログラムを書いてください。`sum` は使わないでください。
 </Exercise>

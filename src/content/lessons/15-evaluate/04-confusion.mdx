@@ -46,19 +46,6 @@ show_counts(pred_b, passed)`}
 
 モデルAは見逃しが2人、空振りが0人です。モデルBは見逃しが0人、空振りが2人です。どちらの間違いが困るかは、使う場面によって決まります。
 
-{/* よくある間違い */}
-
-<Mistake
-  id="confusion-and"
-  code={`import numpy as np
-pred = np.array([1, 0, 1, 0])
-passed = np.array([1, 1, 0, 0])
-hit = np.sum(pred == 1 & passed == 1)`}
-  error={`ValueError: The truth value of an array with more than one element is ambiguous. Use a.any() or a.all()`}
->
-`&`は`==`より先に計算されます。`pred == (1 & passed) == 1`という意味になり、狙った式になりません。比べる式はそれぞれ`()`で囲んでください。
-</Mistake>
-
 {/* 課題 */}
 
 <Exercise
@@ -86,7 +73,6 @@ show_counts(pred_b, passed)`}
     'まず、いまのコードをそのまま実行して、出力を確かめてください。',
     'pred_aの一部を0から1に変えると、見逃しが減り、空振りが増えます。',
   ]}
-  mistakes={['confusion-and']}
 >
 1行目に`0.625`が表示されるように、4行目の`pred_a`を書き換えてください。当たりが1人、見逃しが2人、空振りが1人、正しく外すが4人になります。
 </Exercise>
@@ -120,7 +106,6 @@ show_counts(pred_b, passed)`}
     '4つの場合の式は、上の「やってみる」の8〜11行目と同じです。',
     '予想を先に、答えをあとに読み取ります。',
   ]}
-  mistakes={['confusion-and']}
 >
 入力欄の1行目を人数として読み取ってください。続けて、予想と答えをこの順に1行ずつ、人数ぶん読み取ってください。
 

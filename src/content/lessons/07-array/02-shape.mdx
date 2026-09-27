@@ -38,18 +38,6 @@ print(scores[1][2])`}
 
 `scores[1]` だけなら1行ぶんの配列、`scores[1][2]` まで書くとその中の1つの値になります。
 
-{/* よくある間違い */}
-
-<Mistake
-  id="shape-inhomogeneous"
-  code={`import numpy as np
-table = np.array([[1, 2, 3], [4, 5]])
-print(table)`}
-  error={`ValueError: setting an array element with a sequence. The requested array has an inhomogeneous shape after 1 dimensions. The detected shape was (2,) + inhomogeneous part.`}
->
-行ごとの要素数がそろっていません。2次元配列にするには、すべての行を同じ長さにしてください。
-</Mistake>
-
 {/* 課題 */}
 
 <Exercise
@@ -60,7 +48,6 @@ table = np.array([[1, 2, 3], [4, 5, 6]])
 print(table[0][1])`}
   tests={[{ kind: 'stdout' }]}
   hints={['行と列のどちらのインデックスを変えれば、その値にたどり着くかを考えてください。']}
-  mistakes={['shape-inhomogeneous']}
 >
 `6` と表示されるように、3行目を書き換えてください。
 </Exercise>
@@ -84,7 +71,6 @@ print(table[0][1])`}
     '先に2行3列の配列を作ります。第4章のfor文とインデックスで、値を1つずつ取り出せます。',
     '新しい配列は、3行2列になります。行と列を入れ替えて集めてください。',
   ]}
-  mistakes={['shape-inhomogeneous']}
 >
 入力欄から2人分、3科目の点数を読み取り、2次元配列にしてください（1行に1つの数、1人ずつ3つ）。行と列を入れ替え、科目が行、人が列になった配列を表示してください。`.T` は使わないでください。
 </Exercise>

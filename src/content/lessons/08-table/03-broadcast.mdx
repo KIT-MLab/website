@@ -36,19 +36,6 @@ print(scores - subject_mean)`}
 
 表から1次元の並びを引けるのは、並びの長さが表の列の数と同じときです。長さが行の数と同じでも、列の数と違えばエラーになります。
 
-{/* よくある間違い */}
-
-<Mistake
-  id="broadcast-shape-mismatch"
-  code={`import numpy as np
-scores = np.array([[80, 70, 90], [60, 50, 40]])
-weights = np.array([1, 2])
-print(scores - weights)`}
-  error={`ValueError: operands could not be broadcast together with shapes (2,3) (2,) `}
->
-`scores` は3列、`weights` は2個の値です。列の数がそろっていないので、引き算できません。
-</Mistake>
-
 {/* 課題 */}
 
 <Exercise
@@ -60,7 +47,6 @@ average = np.array([70, 60, 65])
 print((scores - average)[0])`}
   tests={[{ kind: 'stdout' }]}
   hints={['1人目の点数から average を引いた形を、上の「やってみる」と見比べてください。']}
-  mistakes={['broadcast-shape-mismatch']}
 >
 `[5 5 5]` と表示されるように、3行目の `average` を書き換えてください。
 </Exercise>
@@ -84,7 +70,6 @@ print((scores - average)[0])`}
     '科目ごとの平均は axis=0 で1次元配列にできます。',
     '表からその配列を引くと、ブロードキャストで全員分の差が一度に出ます。',
   ]}
-  mistakes={['broadcast-shape-mismatch']}
 >
 入力欄から2人分、3科目の点数を読み取ってください（1行に1つの数、1人ずつ3つ）。各人の点を、科目ごとの平均との差に直し、小数第1位まで丸めて、2次元配列のまま表示してください。for文は使わないでください。
 </Exercise>

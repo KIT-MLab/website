@@ -41,45 +41,6 @@ for i in range(2):
 
 5〜8行目は第3章のif文とelseをそのまま使い、平均と基準点を比べています。繰り返しの中の変数は、1人判定するたびに読み取り直されます。同じ変数名を、人数ぶん使い回しています。
 
-{/* よくある間違い */}
-
-<Mistake
-  id="scores-loop-count-no-int"
-  code={`count = input()
-threshold = 60
-for i in range(count):
-    scores = [int(input()), int(input()), int(input())]
-    average = (scores[0] + scores[1] + scores[2]) / 3
-    print(average)`}
-  stdin={`1
-60
-60
-60`}
-  error={`TypeError: 'str' object cannot be interpreted as an integer`}
->
-`count` が文字列のままです。`range()` に渡すには `int(input())` で整数に変えてください。
-</Mistake>
-
-<Mistake
-  id="scores-loop-threshold-name"
-  code={`count = int(input())
-threshold = 60
-for i in range(count):
-    scores = [int(input()), int(input()), int(input())]
-    average = (scores[0] + scores[1] + scores[2]) / 3
-    if average >= thresholds:
-        print(f"平均{round(average, 1)}点 合格")
-    else:
-        print(f"平均{round(average, 1)}点 不合格")`}
-  stdin={`1
-60
-60
-60`}
-  error={`NameError: name 'thresholds' is not defined`}
->
-`threshold` と `thresholds` は別の名前です。定義した名前とそろえてください。
-</Mistake>
-
 {/* 課題 */}
 
 <Exercise
@@ -102,7 +63,6 @@ for i in range(count):
     '先に人数を読み取り、`range()` にその人数を渡します。',
     '1人ぶんの3教科は、前の節までのリストとインデックスを使ってまとめます。',
   ]}
-  mistakes={['scores-loop-count-no-int', 'scores-loop-threshold-name']}
 >
 入力欄の1行目を人数として読み取ってください。続けて、人数ぶん3教科の点数を読み取り、1人ずつ平均と合否を表示するプログラムを書いてください。基準点は `60` とし、変数にしてください。
 </Exercise>

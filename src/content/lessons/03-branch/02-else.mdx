@@ -33,32 +33,6 @@ else:
 
 このコードでは `score` が `45` なのでifの条件は成り立たず、elseの中身が実行されて `不合格です` が表示されます。ifとelseは片方しか動かないので、`合格です` と `不合格です` が同時に表示されることはありません。
 
-{/* よくある間違い */}
-
-<Mistake
-  id="else-zenkaku-colon"
-  code={`score = 45
-if score >= 60：
-    print("合格です")
-else:
-    print("不合格です")`}
-  error={`SyntaxError: invalid character '：' (U+FF1A)`}
->
-コロンが全角になっています。`:` は半角で入力してください。日本語入力がオンだと全角になります。
-</Mistake>
-
-<Mistake
-  id="else-eq-mixup"
-  code={`score = 45
-if score = 60:
-    print("ちょうど60点です")
-else:
-    print("60点ではありません")`}
-  error={`SyntaxError: invalid syntax. Maybe you meant '==' or ':=' instead of '='?`}
->
-比べるときは `==` を使います。`=` は変数に値を入れる記号で、比べる記号ではありません。
-</Mistake>
-
 {/* 課題 */}
 
 <Exercise
@@ -71,7 +45,6 @@ else:
     print("不合格です")`}
   tests={[{ kind: 'stdout' }]}
   hints={[]}
-  mistakes={['else-eq-mixup']}
 >
 `合格です` と表示されるように、`score` の値を決めてください。
 </Exercise>
@@ -86,7 +59,6 @@ else:
     print("負の数です")`}
   tests={[{ kind: 'stdout' }]}
   hints={[]}
-  mistakes={['else-zenkaku-colon']}
 >
 `負の数です` と表示されるように、`number` の値を決めてください。
 </Exercise>
@@ -105,7 +77,6 @@ else:
     '偶数かどうかは、2で割った余りが0かどうかで判定します。第2章の `%` を思い出してください。',
     'ifの条件が成り立たない場合の処理を、elseに書きます。',
   ]}
-  mistakes={['else-zenkaku-colon', 'else-eq-mixup']}
 >
 入力欄の1行を読み取り、その数が偶数なら `偶数です`、奇数なら `奇数です` と表示するプログラムを書いてください。
 </Exercise>

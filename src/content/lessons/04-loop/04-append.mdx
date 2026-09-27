@@ -32,17 +32,6 @@ print(numbers)`}
 
 4行目の `print(numbers)` のように、リストをそのまま表示すると `[3, 2, 9]` の形で出ます。値をそのまま並べて確かめられます。
 
-{/* よくある間違い */}
-
-<Mistake
-  id="append-remove-not-found"
-  code={`numbers = [3, 7, 2]
-numbers.remove(100)`}
-  error={`ValueError: list.remove(x): x not in list`}
->
-`remove()` は、リストに無い値を渡すとエラーになります。取り除きたい値が入っているか確かめてください。
-</Mistake>
-
 {/* 課題 */}
 
 <Exercise
@@ -54,7 +43,6 @@ numbers.remove(7)
 print(numbers)`}
   tests={[{ kind: 'stdout' }]}
   hints={['`remove()` の行をもう1つ、4行目に足します。']}
-  mistakes={['append-remove-not-found']}
 >
 `[2, 9]` と表示されるように、4行目に1行足してください。
 </Exercise>
@@ -77,7 +65,6 @@ print(numbers)`}
     '空のリスト `kept = []` を、繰り返しの前に1つ用意します。',
     '偶数かどうかは、前の章の `%` を使って判定します。条件に合う値だけ `append()` します。',
   ]}
-  mistakes={['append-remove-not-found']}
 >
 入力欄の5行を整数として読み取ってください。そのうち偶数だけを、読み取った順のまま1行ずつ表示するプログラムを書いてください。
 </Exercise>

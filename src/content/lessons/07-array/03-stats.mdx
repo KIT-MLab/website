@@ -36,18 +36,6 @@ print(scores.mean(axis=1))`}
 
 `sum()` と `max()` も同じ形で、合計といちばん大きい値を求められます。`axis=` を付けなければ、配列全体でまとめます。
 
-{/* よくある間違い */}
-
-<Mistake
-  id="axis-out-of-bounds"
-  code={`import numpy as np
-scores = np.array([[80, 70, 90], [60, 50, 40]])
-print(scores.mean(axis=2))`}
-  error={`AxisError: axis 2 is out of bounds for array of dimension 2`}
->
-この配列には軸が `0` と `1` の2つしかありません。`axis=2` は存在しない軸です。
-</Mistake>
-
 {/* 課題 */}
 
 <Exercise
@@ -58,7 +46,6 @@ scores = np.array([[80, 70, 90], [60, 50, 40]])
 print(scores.mean(axis=0))`}
   tests={[{ kind: 'stdout' }]}
   hints={['axisの値を、上の「やってみる」のコードと見比べてください。']}
-  mistakes={['axis-out-of-bounds']}
 >
 `[80. 50.]` と表示されるように、3行目を書き換えてください。
 </Exercise>
@@ -82,7 +69,6 @@ print(scores.mean(axis=0))`}
     '2人分、3科目ぶんの点数を、1つの2次元配列にまとめてください。',
     '科目ごとの平均と人ごとの平均は、axisの値だけが違います。',
   ]}
-  mistakes={['axis-out-of-bounds']}
 >
 入力欄から2人分、3科目の点数を読み取ってください（1行に1つの数、1人ずつ3つ）。1行目に科目ごとの平均を、2行目に人ごとの平均を、「やってみる」と同じ配列の形式で、小数第1位まで丸めて表示してください。
 </Exercise>

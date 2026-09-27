@@ -35,19 +35,6 @@ print(price_with_tax(1000, shipping=500))`}
 
 名前を書いて渡す引数を、キーワード引数（keyword argument）と呼びます。名前のない引数と混ぜてもかまいませんが、**名前を書いた引数より後ろに、名前のない引数は書けません。**
 
-{/* よくある間違い */}
-
-<Mistake
-  id="keyword-after-positional"
-  code={`def price_with_tax(amount, rate=0.1, shipping=0):
-    return amount * (1 + rate) + shipping
-
-print(price_with_tax(rate=0.2, 1000))`}
-  error={`SyntaxError: positional argument follows keyword argument`}
->
-名前を書いた `rate=0.2` のあとに、名前のない `1000` を書いています。名前のない引数は、名前を書いた引数より前に置いてください。
-</Mistake>
-
 {/* 課題 */}
 
 <Exercise
@@ -59,7 +46,6 @@ print(price_with_tax(rate=0.2, 1000))`}
 print(price_with_tax(1000, 500))`}
   tests={[{ kind: 'stdout' }]}
   hints={['いまの4行目で、`500` がどの引数に渡っているかを確かめてください。']}
-  mistakes={['keyword-after-positional']}
 >
 `1600.0` と表示されるように、4行目の呼び出し方を直してください。
 </Exercise>

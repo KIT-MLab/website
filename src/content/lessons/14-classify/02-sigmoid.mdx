@@ -34,18 +34,6 @@ print(np.round(sig_form, 3))`}
 
 6〜7行目の出力は、どちらも `[0.48 0.622 0.779]` で一致します。`z` がどんな値でも、シグモイド関数の出力は必ず0から1の間になります。
 
-{/* よくある間違い */}
-
-<Mistake
-  id="sigmoid-list"
-  code={`import numpy as np
-z = [-2, 0, 3]
-print(np.exp(-z))`}
-  error={`TypeError: bad operand type for unary -: 'list'`}
->
-`z` がリストのままだと、`-z` で符号を反転できません。`np.array(z)` で配列に変えてから `np.exp(-z)` を計算してください。
-</Mistake>
-
 {/* 課題 */}
 
 <Exercise
@@ -63,7 +51,6 @@ print(np.round(sig_form, 3))`}
     'まず、いまのコードをそのまま実行して、出力を確かめてください。',
     'z の3つの値を、0を中心にした等間隔の数にしてみてください。',
   ]}
-  mistakes={['sigmoid-list']}
 >
 `[0.269 0.5   0.731]` が2回表示されるように、3行目の `z` を書き換えてください。
 </Exercise>
@@ -84,7 +71,6 @@ print(np.round(sig_form, 3))`}
     'シグモイド関数の式は、上の「やってみる」の5行目と同じ 1 / (1 + np.exp(-z)) です。',
     '0.5以上を1、そうでなければ0にする書き方は、第14章1節の (scores >= 60) * 1 と同じです。',
   ]}
-  mistakes={['sigmoid-list']}
 >
 `z` の配列から、シグモイド関数で合格の確率の配列を返す関数 `sigmoid` を書いてください。
 

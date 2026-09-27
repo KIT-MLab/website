@@ -41,26 +41,6 @@ print(average_score(scores))`}
 
 点数の数が増えても、直すのは `total_score` と `average_score` の中身だけです。呼び出す側の書き方は変わりません。
 
-{/* よくある間違い */}
-
-<Mistake
-  id="scores-func-no-int"
-  code={`def total_score(scores):
-    total = 0
-    for value in scores:
-        total = total + value
-    return total
-
-scores = [input(), input(), input()]
-print(total_score(scores))`}
-  stdin={`40
-55
-50`}
-  error={`TypeError: unsupported operand type(s) for +: 'int' and 'str'`}
->
-`scores` の値が文字列のままです。`int(input())` のように整数へ変えてから、リストに入れてください。
-</Mistake>
-
 {/* 課題 */}
 
 <Exercise
@@ -84,7 +64,6 @@ print(total_score(scores))`}
     '人数を先に読み取り、第4章のfor文で人数ぶん繰り返します。',
     '呼び出す側に計算を書かないでください。合計と平均は2つの関数に任せます。',
   ]}
-  mistakes={['scores-func-no-int']}
 >
 入力欄の1行目を人数として読み取ってください。続けて人数ぶん、3教科の点数を読み取ります。1人ずつ `平均48.3点 不合格` の形で、平均と合否を表示してください。
 

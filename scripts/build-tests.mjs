@@ -158,8 +158,7 @@ for (const file of files) {
     const result = await execPython({ code: run.code, stdin: run.stdin });
     /* エラーそのものが題材の節がある（第6.1節 エラーメッセージの読み方）。
        そこでは <Run> が失敗するのが正しい。読み手は ▶ を押して、説明が指している
-       メッセージを自分の目で見る。<Mistake> に逃がすと既定で閉じているので、
-       **その節の題材が最初から見えない。** */
+       メッセージを自分の目で見る。 */
     if (run.error !== undefined) {
       const e = result.error;
       if (!e || e.kind !== 'python') {
@@ -184,25 +183,6 @@ for (const file of files) {
       fail(
         `${rel}:${run.line}`,
         `<Run> の out が実行結果と違います。out=${JSON.stringify(run.out)} 実際=${JSON.stringify(result.stdout)}`,
-      );
-    }
-  }
-
-  // <Mistake> の error の照合。採点の応答（第4.3節）がこの文字列に前方一致するかで
-  // 決まるので、本当にそのエラーが出るかをここで確かめる。
-  for (const m of lesson.mistakes) {
-    const result = await execPython({ code: m.code, stdin: m.stdin });
-    const e = result.error;
-    if (!e || e.kind !== 'python') {
-      fail(`${rel}:${m.line}`, `<Mistake id="${m.id}"> のコードはエラーになりません`);
-      continue;
-    }
-    const lines = m.error.split('\n').map((l) => l.trim()).filter((l) => l.length > 0);
-    const head = lines[lines.length - 1] ?? '';
-    if (!e.display.startsWith(head)) {
-      fail(
-        `${rel}:${m.line}`,
-        `<Mistake id="${m.id}"> の error が実際と違います。error=${JSON.stringify(head)} 実際=${JSON.stringify(e.display)}`,
       );
     }
   }
@@ -307,7 +287,6 @@ for (const file of files) {
       kind: e.kind,
       tests,
       hints: e.hints,
-      mistakes: e.mistakes,
       forbid: e.forbid,
       /* 付いている課題にだけ載せる。ほかの節の生成物は1文字も変わらない（第11.7節） */
       ...(e.requirePaste ? { requirePaste: true } : {}),
@@ -377,7 +356,6 @@ for (const file of files) {
     title: lesson.data.title ?? '',
     exerciseIds: lesson.exercises.map((e) => e.id),
     exercises,
-    mistakes: lesson.mistakes.map((m) => ({ id: m.id, error: m.error, fix: m.fix })),
   };
 }
 
@@ -392,7 +370,7 @@ function normalize(text) {
 
 /* --- 「今週の演習」（20-platform.md 第19章） -------------------------------------------
    節と同じしくみで期待値を作るが、courseSections（進み具合の百分率。第17章）には
-   数えない（第19.2節）。構造は「はじめに」＋「課題」だけなので <Run> や <Mistake> の
+   数えない（第19.2節）。構造は「はじめに」＋「課題」だけなので <Run> の
    照合は無い。模範解答は src/content/weekly/solutions/<課題のid>.py に1か所だけ置く。
    構造・道具の台帳・用語集などの規約は scripts/check-weekly.mjs が別に見る。 */
 /**
@@ -496,7 +474,6 @@ async function buildSet(file, solutionsDir, extra = () => ({})) {
       kind: e.kind,
       tests,
       hints: e.hints,
-      mistakes: [],
       forbid: e.forbid,
       ...(e.requirePaste ? { requirePaste: true } : {}),
       ...extra(e),
@@ -519,7 +496,6 @@ async function buildSet(file, solutionsDir, extra = () => ({})) {
       title: lesson.data.title ?? '',
       exerciseIds: lesson.exercises.map((e) => e.id),
       exercises,
-      mistakes: [],
     },
   };
 }

@@ -39,17 +39,6 @@ print(10 // 3)`}
 
 `**` は `*` や `/` より先に計算されます。`2 * 3 ** 2` は `2 * 9` として計算され、`18` になります。
 
-{/* よくある間違い */}
-
-<Mistake id="pow-needs-int" code={`n = input()
-print(3 ** n)`} stdin={`5`} error={`TypeError: unsupported operand type(s) for ** or pow(): 'int' and 'str'`}>
-`input()` の結果は文字列です。べき乗の計算に使う前に `int()` で整数に変えてください。
-</Mistake>
-
-<Mistake id="mod-by-zero" code={`print(10 % 0)`} error={`ZeroDivisionError: division by zero`}>
-0で割ることはできません。`%` と `//` のどちらも、右側の数が0だとエラーになります。
-</Mistake>
-
 {/* 課題 */}
 
 <Exercise
@@ -60,7 +49,6 @@ print(13 % 5)
 print(13 // 5)`}
   tests={[{ kind: 'stdout' }]}
   hints={[]}
-  mistakes={['pow-needs-int']}
 >
 上の3行を書き換えて、`1024` と `2` と `3` が表示されるようにしてください。
 </Exercise>
@@ -73,7 +61,6 @@ minutes = seconds // 60
 print(minutes)`}
   tests={[{ kind: 'stdout' }]}
   hints={['余りを求める演算子を、上の「説明」で確認してください。']}
-  mistakes={['mod-by-zero']}
 >
 上のコードを書き換えて、`minutes` の下に、90秒を60で割った余りを表示する行を足してください。
 </Exercise>
@@ -93,7 +80,6 @@ print(minutes)`}
     '入力欄の1行を `int()` で整数に変えて読み取ります。',
     '60で割った商が分、余りが秒です。'
   ]}
-  mistakes={['pow-needs-int', 'mod-by-zero']}
 >
 入力欄の1行から秒数を読み取り、`2分5秒` のように「分」と「秒」に分けて1行で表示するプログラムを書いてください。
 </Exercise>

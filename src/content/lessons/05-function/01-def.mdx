@@ -34,26 +34,6 @@ show_average(50, 70)`}
 
 同じ計算を書く行は、この2行だけで足ります。呼び出す場所がいくつ増えても、直すのは関数の中身1か所です。
 
-{/* よくある間違い */}
-
-<Mistake
-  id="def-missing-colon"
-  code={`def show_average(a, b)
-    print((a + b) / 2)`}
-  error={`SyntaxError: expected ':'`}
->
-`def` の行の最後に `:` がありません。関数を定義する行の最後には、必ずコロンを書いてください。
-</Mistake>
-
-<Mistake
-  id="def-missing-indent"
-  code={`def show_average(a, b):
-print((a + b) / 2)`}
-  error={`IndentationError: expected an indented block after function definition on line 1`}
->
-関数の中身の行にインデントがありません。`def` の次の行の頭に半角空白を入れてください。
-</Mistake>
-
 {/* 課題 */}
 
 <Exercise
@@ -65,7 +45,6 @@ print((a + b) / 2)`}
 show_average(80, 90)`}
   tests={[{ kind: 'stdout' }]}
   hints={[]}
-  mistakes={['def-missing-colon']}
 >
 上のコードに1行足して、`平均85.0` の下に `平均60.0` も表示されるようにしてください。
 </Exercise>
@@ -88,7 +67,6 @@ show_average(80, 90)`}
     '先に、2つの点数を受け取って平均を表示する関数を定義します。人数ぶんの呼び出しはそのあとです。',
     'うまく動かないときは、関数を定義した直後に `show_average(80, 90)` と1行加えて、単体で動くか確かめます。',
   ]}
-  mistakes={['def-missing-colon', 'def-missing-indent']}
 >
 入力欄の1行目を人数として読み取ってください。続けて人数ぶん、2つの点数を読み取ってください。`show_average(a, b)` という関数を定義し、1組ずつ渡して平均を表示するプログラムを書いてください。
 </Exercise>

@@ -39,28 +39,6 @@ else:
 
 `and` は `or` より先に評価されます。複数を組み合わせるときは、`()` で区切ると意図が伝わりやすくなります。
 
-{/* よくある間違い */}
-
-<Mistake
-  id="andor-double-amp"
-  code={`score = 70
-if score >= 60 && score < 80:
-    print("合格ラインです")`}
-  error={`SyntaxError: invalid syntax`}
->
-`&&` という書き方はありません。両方が成り立つ条件には `and` を使います。
-</Mistake>
-
-<Mistake
-  id="andor-missing-colon"
-  code={`score = 70
-if score >= 60 and score < 80
-    print("合格ラインです")`}
-  error={`SyntaxError: expected ':'`}
->
-条件が長くなっても、行の最後に `:` が要ります。コロンが抜けていないか確かめてください。
-</Mistake>
-
 {/* 課題 */}
 
 <Exercise
@@ -73,7 +51,6 @@ else:
     print("合格ラインではありません")`}
   tests={[{ kind: 'stdout' }]}
   hints={[]}
-  mistakes={['andor-missing-colon']}
 >
 `合格ラインではありません` と表示されるように、`score` の値を決めてください。
 </Exercise>
@@ -88,7 +65,6 @@ else:
     print("範囲内です")`}
   tests={[{ kind: 'stdout' }]}
   hints={[]}
-  mistakes={['andor-double-amp']}
 >
 `範囲外です` と表示されるように、`score` の値を決めてください。
 </Exercise>
@@ -109,7 +85,6 @@ else:
     '`%` を使って割り切れるかどうかを確かめます。第2章の内容を思い出してください。',
     '3つの条件をどう組み合わせるか、上の「説明」の `and`・`or` の使い方を見直してください。',
   ]}
-  mistakes={['andor-double-amp', 'andor-missing-colon']}
 >
 入力欄の1行を西暦の年として読み取り、閏年かどうかを判定するプログラムを書いてください。
 閏年なら `うるう年です`、そうでなければ `うるう年ではありません` と表示します。

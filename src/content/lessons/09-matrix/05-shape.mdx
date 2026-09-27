@@ -38,19 +38,6 @@ print((scores @ weights.T).shape)`}
 
 この形の決まりは、行と列の数がいくつであっても同じです。掛ける前に形を確かめる習慣は、あとの章でも役に立ちます。
 
-{/* よくある間違い */}
-
-<Mistake
-  id="matmul-shape-mismatch"
-  code={`import numpy as np
-scores = np.array([[80, 70, 90], [60, 50, 40]])
-weights = np.array([[0.3, 0.3, 0.4], [0.4, 0.2, 0.4]])
-print(scores @ weights)`}
-  error={`ValueError: matmul: Input operand 1 has a mismatch in its core dimension 0, with gufunc signature (n?,k),(k,m?)->(n?,m?) (size 2 is different from 3)`}
->
-`scores` の列の数は3、`weights` の行の数は2です。そろっていないので、`weights.T` で形を `(3, 2)` に変えてから掛けます。
-</Mistake>
-
 {/* 課題 */}
 
 <Exercise
@@ -66,7 +53,6 @@ print((scores @ weights.T).shape)`}
     '結果の列の数は、weights.Tの列の数、つまりweightsの行の数と同じです。',
     'weightsに、3科目分の重みの組を3つ並べてください。',
   ]}
-  mistakes={['matmul-shape-mismatch']}
 >
 `(2, 3)` と表示されるように、4行目の `weights` を書き換えてください。
 </Exercise>
@@ -90,7 +76,6 @@ print((scores @ weights.T).shape)`}
     '2人分の点数を、2行3列の行列にまとめます。',
     '配点は理系0.3・0.3・0.4、文系0.4・0.2・0.4の2行3列の表です。転置してから掛けます。',
   ]}
-  mistakes={['matmul-shape-mismatch']}
 >
 入力欄から2人分、3科目の点数を読み取ってください(1行に1つの数、1人ずつ3つ)。配点は理系0.3・0.3・0.4、文系0.4・0.2・0.4の2行3列の表とします。
 

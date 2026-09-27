@@ -32,37 +32,6 @@ NameErrorは、文の形は正しいのに、実行の途中で使った名前�
 
 どちらの種類でも、いちばん下の行の名前と行番号を読めば、場所が分かります。
 
-{/* よくある間違い */}
-
-<Mistake
-  id="syntax-name-typo"
-  code={`apple = 3
-orange = 5
-print(f"くだものは{aple + orange}個です")`}
-  error={`NameError: name 'aple' is not defined`}
->
-`aple` という名前が見つかりません。1行目で付けた名前は `apple` なので、綴りをそろえてください。
-</Mistake>
-
-<Mistake
-  id="syntax-zenkaku-paren"
-  code={`apple = 3
-orange = 5
-print(f"くだものは{apple + orange}個です"）`}
-  error={`SyntaxError: invalid character '）' (U+FF09)`}
->
-行の最後の `）` が全角です。`print` の閉じかっこは半角の `)` で書いてください。
-</Mistake>
-
-<Mistake
-  id="syntax-indent"
-  code={`for score in [40, 55, 50]:
-print(score)`}
-  error={`IndentationError: expected an indented block after 'for' statement on line 1`}
->
-for文の中身の行にインデントがありません。`for` の次の行の頭に半角空白を入れてください。
-</Mistake>
-
 {/* 課題 */}
 
 <Exercise
@@ -80,7 +49,6 @@ else
     '実行すると出るエラーの、いちばん下の行を読んでください。直してからもう一度実行すると、次のエラーが出ることがあります。',
     '全角の記号は日本語入力がオンのまま打つと出ます。半角に直してください。',
   ]}
-  mistakes={['syntax-name-typo', 'syntax-zenkaku-paren']}
 >
 `はじめさん 合格` と表示されるように、直してください。
 </Exercise>

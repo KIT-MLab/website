@@ -43,16 +43,6 @@ Python は `*` と `/` を、`+` と `-` より先に計算します。この順
 
 式が複雑になったら、かっこで区切ると読みやすくなります。
 
-{/* よくある間違い */}
-
-<Mistake id="missing-close-paren" code={`print((2 + 3) * 4`} error={`SyntaxError: '(' was never closed`}>
-`(` の数だけ `)` が要ります。開いたかっこを閉じ忘れていないか、行の終わりを確認してください。
-</Mistake>
-
-<Mistake id="extra-close-paren" code={`print((2 + 3) * 4))`} error={`SyntaxError: unmatched ')'`}>
-`)` が `(` より1つ多くなっています。対応するかっこの数を数え直してください。
-</Mistake>
-
 {/* 課題 */}
 
 <Exercise
@@ -62,7 +52,6 @@ Python は `*` と `/` を、`+` と `-` より先に計算します。この順
 print((5 + 2) * 3)`}
   tests={[{ kind: 'stdout' }]}
   hints={[]}
-  mistakes={['missing-close-paren']}
 >
 上のコードを書き換えて、`10` と `14` が表示されるようにしてください。
 </Exercise>
@@ -73,7 +62,6 @@ print((5 + 2) * 3)`}
   starter={`print(2 + 3 * 4)`}
   tests={[{ kind: 'stdout' }]}
   hints={['`()` を使うと、中の計算を先に行わせられます。']}
-  mistakes={['extra-close-paren']}
 >
 上のコードを書き換えて、先に `2 + 3` を計算してから `4` を掛けた値を表示してください。`20` と表示されれば合っています。
 </Exercise>
@@ -94,7 +82,6 @@ print((5 + 2) * 3)`}
     '3つの数を読み取るには `input()` と `int()` を3回使います。',
     '「1つ目と2つ目を先に足す」ことを `()` でどう表すか、上の「説明」を見てください。',
   ]}
-  mistakes={['missing-close-paren', 'extra-close-paren']}
 >
 3つの数を読み取ってください。「1つ目と2つ目の和に3つ目を掛けた値」と「1つ目に2つ目と3つ目の積を足した値」を、この順に1行ずつ表示します。
 </Exercise>

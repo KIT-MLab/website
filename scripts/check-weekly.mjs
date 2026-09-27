@@ -154,7 +154,6 @@ for (const file of weeklyFiles) {
     add(rel, 1, lesson.markers.find((m) => m.name === 'はじめに')?.line ?? 1, `「はじめに」は1段落です。いまは${introParas}段落`);
   }
   for (const r of lesson.runs) add(rel, 2, r.line, '今週の演習に <Run> は置きません（第19.2節。練習編と同じ）');
-  for (const m of lesson.mistakes) add(rel, 3, m.line, '今週の演習に <Mistake> は置きません（第19.2節）');
 
   // --- 課題 ---
   const ex = lesson.exercises;

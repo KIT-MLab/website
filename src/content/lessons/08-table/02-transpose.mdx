@@ -38,18 +38,6 @@ print(scores.T)`}
 
 何行何列になるかを実行する前に言えるようにしておくと、形が合わずにエラーで止まったとき、どこで形が食い違ったかを探せます。
 
-{/* よくある間違い */}
-
-<Mistake
-  id="transpose-not-callable"
-  code={`import numpy as np
-scores = np.array([[80, 70, 90], [60, 50, 40]])
-print(scores.T())`}
-  error={`TypeError: 'numpy.ndarray' object is not callable`}
->
-`.T` はかっこを付けずに使います。`scores.T()` ではなく `scores.T` と書いてください。
-</Mistake>
-
 {/* 課題 */}
 
 <Exercise
@@ -63,7 +51,6 @@ print(table.T.shape)`}
     '転置すると、行の数と列の数が入れ替わります。目標の形から、元の表が何行何列かを逆算してください。',
     '行の数と列の数さえ合えば、表の中の値は何でもかまいません。',
   ]}
-  mistakes={['transpose-not-callable']}
 >
 `(2, 4)` と表示されるように、2行目の表を書き換えてください。
 </Exercise>
@@ -87,7 +74,6 @@ print(table.T.shape)`}
     '先に2行3列の配列を作ります。転置は .T をそのまま付けるだけです。',
     '形は shape で確認できます。転置したあとの行数・列数を先に考えてから確かめてください。',
   ]}
-  mistakes={['transpose-not-callable']}
 >
 入力欄から2人分、3科目の点数を読み取り、2次元配列にしてください（1行に1つの数、1人ずつ3つ）。`.T` で転置し、転置したあとの形と中身を、この順で表示してください。for文は使わないでください。
 </Exercise>

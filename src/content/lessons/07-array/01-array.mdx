@@ -32,18 +32,6 @@ print(scores + 10)`}
 
 表示される `[50 65 60]` は、値の間をコンマなしで区切った形です。リストの `[50, 65, 60]` とは表示のされ方が違います。
 
-{/* よくある間違い */}
-
-<Mistake
-  id="array-no-as-np"
-  code={`import numpy
-scores = np.array([40, 55, 50])
-print(scores)`}
-  error={`NameError: name 'np' is not defined`}
->
-`import numpy` だけでは `np` という名前は使えません。`import numpy as np` と書いてください。
-</Mistake>
-
 {/* 課題 */}
 
 <Exercise
@@ -54,7 +42,6 @@ prices = np.array([100, 200, 300])
 print(prices * 2)`}
   tests={[{ kind: 'stdout' }]}
   hints={['3行目の書き方を、上の「やってみる」のコードと見比べてください。']}
-  mistakes={['array-no-as-np']}
 >
 `[110 210 310]` と表示されるように、3行目を書き換えてください。
 </Exercise>
@@ -78,7 +65,6 @@ print(prices * 2)`}
     '予測した3つの値と、実際の3つの値を、それぞれ配列にしてください。',
     '配列どうしを引き算すると、要素ごとの差の配列になります。',
   ]}
-  mistakes={['array-no-as-np']}
 >
 予測した3つの値と、実際の3つの値を、この順で入力欄から読み取ってください。対応する差を2乗して、合計した1つの数を表示してください。for文は使わないでください。
 </Exercise>

@@ -34,19 +34,6 @@ print(scores[1:3])`}
 
 どちらも、for文を書かずに一部の値だけを取り出せます。元の並び順は変わりません。
 
-{/* よくある間違い */}
-
-<Mistake
-  id="select-truth-value"
-  code={`import numpy as np
-scores = np.array([40, 90, 55, 70, 30])
-if scores >= 60:
-    print(scores)`}
-  error={`ValueError: The truth value of an array with more than one element is ambiguous. Use a.any() or a.all()`}
->
-`scores >= 60` は複数の値からなる配列です。if文の条件には使えません。`scores[scores >= 60]` のようにインデックスとして使ってください。
-</Mistake>
-
 {/* 課題 */}
 
 <Exercise
@@ -57,7 +44,6 @@ scores = np.array([40, 90, 55, 70, 30])
 print(scores[scores >= 60])`}
   tests={[{ kind: 'stdout' }]}
   hints={['3行目の比較の向きを見直してください。']}
-  mistakes={['select-truth-value']}
 >
 `[40 55 30]` と表示されるように、3行目を書き換えてください。
 </Exercise>
@@ -70,7 +56,6 @@ scores = np.array([40, 90, 55, 70, 30])
 print(scores[1:3])`}
   tests={[{ kind: 'stdout' }]}
   hints={['開始と終了のインデックスを、上の「説明」で確認してください。']}
-  mistakes={[]}
 >
 `[55 70 30]` と表示されるように、3行目の範囲を書き換えてください。
 </Exercise>
@@ -93,7 +78,6 @@ print(scores[1:3])`}
     '5つの値を配列にしてから、`mean()` で平均を求めます。',
     '平均との比較を、そのままインデックスにしてください。',
   ]}
-  mistakes={['select-truth-value']}
 >
 入力欄から5つの数を読み取ってください。読み取った値の平均を求め、平均を超えた値だけを、この順のまま表示してください。for文は使わないでください。
 </Exercise>
