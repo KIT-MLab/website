@@ -6,6 +6,7 @@
  */
 import searchIndexData from '../generated/search-index.json';
 import { chapterOfHref, fetchPublishStatus, type PublishStatus } from './publish-status';
+import { isMembersOnlyChapter } from './chapters';
 
 export type SearchKind = '用語' | '書き方' | '節';
 
@@ -89,7 +90,17 @@ function escapeHtml(text: string): string {
  * 20-platform.md 第20章の実装メモにこの選択を書いてある）。
  */
 function isLocked(e: SearchEntry, status: PublishStatus): boolean {
-  return !status.staff && !status.publicChapters.has(chapterOfHref(e.section.href));
+  return lockWord(e, status) !== null;
+}
+
+/**
+ * 開けない行き先に添える言葉。メンバーだけの章（design/spec/53-ml-intro.md 第6節）はメンバーでない人に
+ * 「メンバー向け」、準備中の章は運営でない人に「準備中」。開けるなら null。
+ */
+function lockWord(e: SearchEntry, status: PublishStatus): string | null {
+  const chapter = chapterOfHref(e.section.href);
+  if (isMembersOnlyChapter(chapter) && !status.member) return 'メンバー向け';
+  return !status.staff && !status.publicChapters.has(chapter) ? '準備中' : null;
 }
 
 /** 開くべき要素をキーボードでもクリックでも選べるようにする、素朴な状態機械。 */
@@ -150,7 +161,7 @@ export async function setupTermSearch(opts: { currentHref: string }): Promise<vo
         return `<li role="option" id="term-cand-${e.id}" aria-selected="${i === highlighted}">
           <button type="button" class="${i === highlighted ? 'is-hl' : ''}" data-open="${e.id}">
             <span class="term-cands__word">${escapeHtml(e.word)}${e.english ? ` <small>(${escapeHtml(e.english)})</small>` : ''}</span>
-            <span class="term-cands__kind">${e.kind}${locked ? ' ・ 準備中' : ahead ? ' ・ まだ先' : ''}</span>
+            <span class="term-cands__kind">${e.kind}${locked ? ` ・ ${lockWord(e, status)}` : ahead ? ' ・ まだ先' : ''}</span>
           </button>
         </li>`;
       })
@@ -176,7 +187,7 @@ export async function setupTermSearch(opts: { currentHref: string }): Promise<vo
     const locked = isLocked(e, status);
     const ahead = !locked && e.order > currentOrder;
     // 準備中の章への行き先は、20-platform.md 第20.1節どおりリンクにせず「準備中」とだけ添える
-    const linkHtml = locked ? '<p class="term-card__link term-card__link--locked">準備中</p>' : null;
+    const linkHtml = locked ? `<p class="term-card__link term-card__link--locked">${lockWord(e, status)}</p>` : null;
     const kindBadge = `<small class="term-card__kind">${e.kind}</small>`;
     if (e.kind === '節') {
       const chipsHtml = (e.terms ?? [])
@@ -204,7 +215,7 @@ export async function setupTermSearch(opts: { currentHref: string }): Promise<vo
       <div class="term-card__head">${head}<button type="button" class="term-card__x" data-close="${e.id}" aria-label="閉じる">×</button></div>
       ${e.definition ? `<p class="term-card__def">${withCode(e.definition)}</p>` : ''}
       ${example}
-      ${linkHtml ?? `<p class="term-card__link"><a href="${e.section.href}">${e.section.label} ${escapeHtml(e.section.title)} を開く →</a></p>`}
+      ${linkHtml ?? `<p class="term-card__link"><a href="${e.section.href}">${e.section.label}${e.section.title ? ` ${escapeHtml(e.section.title)}` : ''} を開く →</a></p>`}
     </div>`;
   }
 

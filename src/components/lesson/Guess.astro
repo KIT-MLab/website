@@ -1,0 +1,198 @@
+---
+/**
+ * <Guess> — みんなの予想ボード（design/spec/53-ml-intro.md 第6節・第7節。試作 c-proto.html の「案C の1」）。
+ *
+ *   <Guess id="intro1-survived" question="…何%だと思う？" unit="%" answer={38.4} answerNote="342人 / 891人" />
+ *
+ * 機械学習の入口の各節の先頭（<Facilitate> のすぐあと）に置く。メンバーが1人1つ予想を％で入れる。
+ * 答え合わせの前は、ほかの人の予想は数だけ（名前なし）が並ぶ。運営が「答え合わせ」を押すと、本当の数と
+ * 名前が出て、いちばん近かった人に印が付く。
+ *
+ * **答え（answer・answerNote）はこの HTML に書かない。**build:tests が lesson-data.json の `guesses` に
+ * 書き出したものをサーバ（src/server/guess.ts）が持ち、答え合わせのあとにだけ API が返す。
+ * ここで props として受けるのは、MDX に書いた値を検査（check-lessons 検査23）と生成物が読むため。
+ *
+ * 中身はブラウザで src/lesson/guess.ts が /api/guess から塗る（5秒ごとに読み直す）。運営のボタンも
+ * API の答え（`staff`）を見て出す。節のページはメンバーにしか本文を描かない（メンバーだけの章）ので、
+ * メンバーでない人の HTML にはこの部品ごと入らない。
+ */
+interface Props {
+  id: string;
+  question: string;
+  unit: string;
+  answer: number;
+  answerNote?: string;
+}
+
+const { id, question, unit } = Astro.props;
+---
+
+<section class="kit-guess" data-guess={id} data-unit={unit} data-revealed="0" aria-label="みんなの予想">
+  <p class="kit-guess__q">{question}</p>
+  <form class="kit-guess__in" data-guess-form novalidate>
+    <span class="kit-guess__entry">
+      <input
+        class="kit-guess__num"
+        type="number"
+        inputmode="decimal"
+        min="0"
+        max="100"
+        step="0.1"
+        required
+        aria-label={`予想（${unit}）`}
+        data-guess-input
+      />
+      <span>{unit}</span>
+      <button class="kit-btn" type="submit" data-guess-send>送る</button>
+    </span>
+    <button class="kit-btn kit-guess__staff" type="button" data-guess-start hidden>答え合わせ（運営）</button>
+    <button class="kit-btn kit-guess__staff" type="button" data-guess-undo hidden>やり直す（運営）</button>
+  </form>
+  <div class="kit-guess__confirm" data-guess-confirm hidden>
+    <p data-guess-confirm-text></p>
+    <div class="kit-guess__bar">
+      <button class="kit-btn kit-guess__staff" type="button" data-guess-go></button>
+      <button class="kit-btn kit-btn--quiet" type="button" data-guess-cancel>やめる</button>
+    </div>
+  </div>
+  <p class="kit-guess__msg" data-guess-msg aria-live="polite"></p>
+  <p class="kit-guess__count" data-guess-count>読み込んでいます…</p>
+  <ul class="kit-guess__list" data-guess-list></ul>
+  <p class="kit-guess__reveal" data-guess-reveal hidden></p>
+</section>
+
+<script>
+  import { setupGuessBoards } from '../../lesson/guess';
+  setupGuessBoards();
+</script>
+
+<style is:global>
+  /* 予想の札（li）と答えの行は src/lesson/guess.ts が作る。スコープ付きスタイルは当たらないので
+     is:global にし、.kit-guess の中だけに効く書き方にする（NotesPanel.astro と同じ理由）。
+     見た目は試作「案C の1」: 琥珀の細い枠と明るい地、問いは明朝の太字、予想は丸い札、いちばん近いものは緑 */
+  .kit-guess {
+    margin: 0 0 24px;
+    padding: 12px 16px;
+    color: var(--l-ink);
+    background: var(--l-card);
+    border: 1px solid var(--l-kohaku);
+  }
+
+  .kit-guess__q {
+    margin: 0 0 8px;
+    font-family: var(--font-head);
+    font-weight: 700;
+    font-size: 16px;
+    line-height: 1.6;
+    text-indent: 0;
+  }
+
+  .kit-guess__in {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin: 0 0 10px;
+  }
+
+  .kit-guess__entry {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .kit-guess[data-revealed='1'] .kit-guess__entry {
+    display: none;
+  }
+
+  .kit-guess__num {
+    width: 6em;
+    font: inherit;
+    line-height: 1.6;
+    padding: 3px 6px;
+    color: var(--l-ink);
+    background: var(--l-card);
+    border: 1px solid var(--l-rule);
+  }
+
+  .kit-guess .kit-guess__staff {
+    border-color: var(--l-kohaku);
+    color: var(--l-kohaku);
+  }
+
+  .kit-guess__confirm {
+    margin: 0 0 10px;
+    font-size: 14px;
+  }
+
+  .kit-guess__confirm p {
+    margin: 0 0 6px;
+    text-indent: 0;
+  }
+
+  .kit-guess__bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .kit-guess__msg {
+    margin: 0 0 6px;
+    font-size: 13.5px;
+    color: var(--l-ink-2);
+    text-indent: 0;
+  }
+
+  .kit-guess__msg:empty {
+    display: none;
+  }
+
+  .kit-guess__count {
+    margin: 0 0 6px;
+    font-size: 13px;
+    color: var(--l-ink-2);
+    text-indent: 0;
+  }
+
+  /* .lesson-body ul / li（lesson.css）の字下げより強くするために2つ重ねる（.kit-keys と同じ） */
+  .kit-guess .kit-guess__list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .kit-guess .kit-guess__list li {
+    margin: 0;
+    padding: 2px 10px;
+    font-size: 13px;
+    border: 1px solid var(--l-rule);
+    border-radius: 12px;
+    background: var(--l-paper);
+    font-variant-numeric: tabular-nums;
+    overflow-wrap: anywhere;
+  }
+
+  .kit-guess .kit-guess__list li.is-near {
+    border-color: var(--l-midori);
+    color: var(--l-midori);
+    font-weight: 700;
+  }
+
+  .kit-guess__reveal {
+    margin: 10px 0 0;
+    font-size: 14px;
+    text-indent: 0;
+  }
+
+  .kit-guess__reveal b {
+    font-size: 18px;
+  }
+
+  .kit-guess__near {
+    color: var(--l-midori);
+    font-weight: 700;
+  }
+</style>

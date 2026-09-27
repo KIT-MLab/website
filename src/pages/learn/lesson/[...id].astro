@@ -31,8 +31,14 @@ import Facilitate from '../../../components/lesson/Facilitate.astro';
 import FacilitateHidden from '../../../components/lesson/FacilitateHidden.astro';
 import TermPanel from '../../../components/lesson/TermPanel.astro';
 import NotesPanel from '../../../components/lesson/NotesPanel.astro';
-import { chapterTitle, isIntroChapter, lessonHref, practiceSectionLabel } from '../../../lesson/chapters';
+// 「この節の書き方」の表（scripts/remark-section-syntax.mjs が本文に差し込む）と、悪い例・良い例の並び
+import SectionSyntax from '../../../components/lesson/SectionSyntax.astro';
+import Compare from '../../../components/lesson/Compare.astro';
+import Guess from '../../../components/lesson/Guess.astro';
+import PlainMembersLink from '../../../components/lesson/PlainMembersLink.astro';
+import { chapterTitle, isIntroChapter, isMembersOnlyChapter, lessonHref, practiceSectionLabel } from '../../../lesson/chapters';
 import { currentUser, serverConfig } from '../../../server/auth';
+import { isMember } from '../../../server/member';
 import { isChapterPublic, notesForLesson } from '../../../server/lessons-publish';
 import generated from '../../../generated/lesson-data.json';
 import '../../../styles/lesson.css';
@@ -49,14 +55,19 @@ const viewer = config ? await currentUser(Astro.request) : null;
 const isStaff = viewer !== null && (viewer.role === 'staff' || viewer.role === 'admin');
 
 const chapterPublic = entry && config ? await isChapterPublic(config.db, entry.data.chapter) : false;
+/* メンバーだけの章（機械学習の入口。53-ml-intro.md 第6節）。メンバーでない人には、公開していても
+   「このページはプロジェクトのメンバー向けです。」の1段落だけを返す（第13.2節と同じ） */
+const member = viewer !== null && isMember(viewer);
+const membersOnly = entry ? isMembersOnlyChapter(entry.data.chapter) : false;
+const membersBlocked = membersOnly && !member;
 // 運営・管理者は準備中の章も中身まで見られる（第20.1節）
-const canSee = entry !== undefined && (chapterPublic || isStaff);
+const canSee = entry !== undefined && (chapterPublic || isStaff) && !membersBlocked;
 
 if (!entry) Astro.response.status = 404;
 
-// 準備中の章・運営として見ているときはキャッシュしない。運営でない人が公開済みの章を
+// 準備中の章・運営として見ているとき・メンバーだけの章はキャッシュしない。運営でない人が公開済みの章を
 // 見るときは既定のまま（第20章の指示どおり「drafts/staff views」だけ no-store にする）。
-if (!entry || !chapterPublic || isStaff) {
+if (!entry || !chapterPublic || isStaff || membersOnly) {
   Astro.response.headers.set('cache-control', 'no-store');
 }
 
@@ -82,6 +93,7 @@ const nextChapterFirst =
     : null;
 const nextChapterOpen =
   nextChapterFirst !== null &&
+  (member || !isMembersOnlyChapter(nextChapterFirst.data.chapter)) &&
   (isStaff || (config ? await isChapterPublic(config.db, nextChapterFirst.data.chapter) : false));
 
 /* 第0章は課題を1問ずつ出す（20-platform.md 第11.7節）。
@@ -105,7 +117,7 @@ const FacilitateFor = isStaff ? Facilitate : FacilitateHidden;
 const notes = isStaff && entry && config ? await notesForLesson(config.db, entry.data.id) : [];
 ---
 
-<Base title={entry && canSee ? entry.data.title : '準備中'} bar>
+<Base title={entry && canSee ? entry.data.title : membersBlocked ? 'メンバー向け' : '準備中'} bar>
   {
     canSee && (
       <button
@@ -125,6 +137,10 @@ const notes = isStaff && entry && config ? await notesForLesson(config.db, entry
     !entry ? (
       <p class="lesson-notice">
         見つかりません。<a href="/learn/">学習の一覧へ</a>
+      </p>
+    ) : membersBlocked ? (
+      <p class="lesson-notice">
+        このページはプロジェクトのメンバー向けです。<a href="/learn/">学習の一覧へ</a>
       </p>
     ) : !canSee ? (
       <p class="lesson-notice">
@@ -168,7 +184,7 @@ const notes = isStaff && entry && config ? await notesForLesson(config.db, entry
         </div>
 
         <article class="lesson-body" data-exq={oneAtATime}>
-          <Content components={{ Run, Exercise, Input, Output, Level0, Keys, Figure, Secant, Descent, FitLine, Boundary, Overfit, Facilitate: FacilitateFor }} />
+          <Content components={{ Run, Exercise, Input, Output, Level0, Keys, Figure, Secant, Descent, FitLine, Boundary, Overfit, Facilitate: FacilitateFor, Guess, SectionSyntax, Compare,...(member ? {} : { a: PlainMembersLink }) }} />
 
           <nav class="lesson-nav" aria-label="節の移動">
             {prev ? <a href={lessonHref(prev.id)}>← 前の節へ　{prev.data.title}</a> : <span class="lesson-nav__spacer" />}

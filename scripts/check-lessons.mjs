@@ -8,6 +8,7 @@
  * 検査20（節への参照が「第N章M節」（機械学習の入口は「入口2」）の形で行き先が実在すること）は20-platform.md 第15.2節、
  * 検査21（章のディレクトリがどれかの部に属していること）は同 第17.1節で足した。
  * 検査22（組む問題の問題文・入力・出力の形）は同 第23.2節で足した。新しい形で書いた問題だけを見る。
+ * 検査23（みんなの予想ボード <Guess> の置き場所と props）は design/spec/53-ml-intro.md 第7節で足した。
  *
  *   node scripts/check-lessons.mjs
  */
@@ -40,7 +41,7 @@ import {
 } from './lesson-rules.mjs';
 import { PYTHON_TOOLS } from './python-tools.mjs';
 import { buildSectionRefs } from './section-refs.mjs';
-import { partOfChapter } from './parts.mjs';
+import { MEMBERS_ONLY_CHAPTERS, partOfChapter } from './parts.mjs';
 
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const LESSONS_DIR = join(ROOT, 'src', 'content', 'lessons');
@@ -95,6 +96,8 @@ const glossary = loadGlossary();
 const problems = [];
 const seenLessonIds = new Map();
 const seenExerciseIds = new Map();
+/** 検査23 用。<Guess> の id → 最初に置いたファイル */
+const seenGuessIds = new Map();
 /** 検査16・17 用。節の並び順に、その節が持つ Python のコードを貯める */
 const codeOf = [];
 /** 検査22 用。判定のケース1の期待値（生成済みの lesson-data.json から。無ければ見ない） */
@@ -145,7 +148,8 @@ for (const file of files) {
   {
     const parts = [];
     for (const m of source.matchAll(/```python\n([\s\S]*?)```/g)) parts.push(['本文のコード', m[1]]);
-    for (const m of source.matchAll(/(?:code|starter)=\{?`([\s\S]*?)`\}?/g)) parts.push(['部品のコード', m[1]]);
+    // <Compare> の badCode / goodCode も、読み手が真似するコードなので同じく見る
+    for (const m of source.matchAll(/(?:code|starter|badCode|goodCode)=\{?`([\s\S]*?)`\}?/g)) parts.push(['部品のコード', m[1]]);
     const solDir = join(dirname(file), 'solutions');
     if (fm.id && existsSync(solDir)) {
       for (const name of readdirSync(solDir).filter((x) => x.startsWith(fm.id))) {
@@ -565,6 +569,34 @@ for (const file of files) {
         }
       }
     }
+  }
+
+  /* --- 検査23 みんなの予想ボード <Guess>（design/spec/53-ml-intro.md 第7節） ---
+     メンバーだけの章にしか置けない（予想を出す口と答え合わせの口がメンバーだけのため）。
+     id は予想の記録の鍵なので、教材全体で重ならないこと。答えは％で、0〜100 */
+  for (const g of lesson.guesses) {
+    const where = `<Guess id="${g.id ?? ''}">`;
+    if (!MEMBERS_ONLY_CHAPTERS.includes(String(fm.chapter ?? ''))) {
+      add(23, g.line, `${where}: <Guess> はメンバーだけの章（scripts/parts.mjs の MEMBERS_ONLY_CHAPTERS）にしか置けません`);
+    }
+    if (typeof g.id !== 'string' || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(g.id)) {
+      add(23, g.line, `${where}: id は英小文字・数字とハイフンで書きます（例: intro1-survived）`);
+    } else if (seenGuessIds.has(g.id)) {
+      add(23, g.line, `${where}: id が ${seenGuessIds.get(g.id)} と重複しています`);
+    } else {
+      seenGuessIds.set(g.id, rel);
+    }
+    if (typeof g.question !== 'string' || g.question.trim() === '') add(23, g.line, `${where}: question（問い）がありません`);
+    if (g.unit !== '%') add(23, g.line, `${where}: unit は "%" です（予想は％で入れる。53-ml-intro.md 第6節）`);
+    if (typeof g.answer !== 'number' || !Number.isFinite(g.answer) || g.answer < 0 || g.answer > 100) {
+      add(23, g.line, `${where}: answer は 0〜100 の数で書きます（例: answer={38.4}）`);
+    } else if (Math.round(g.answer * 10) / 10 !== g.answer) {
+      add(23, g.line, `${where}: answer は小数第1位までです（予想も小数第1位までで受けるため）`);
+    }
+    if (g.answerNote !== undefined && (typeof g.answerNote !== 'string' || g.answerNote.trim() === '')) {
+      add(23, g.line, `${where}: answerNote は空でない文字列で書きます（例: answerNote="342人 / 891人"）`);
+    }
+    if (g.children !== '') add(23, g.line, `${where}: <Guess … /> の形で、中身を書きません`);
   }
 }
 

@@ -5,26 +5,76 @@
  * （src/lesson/term-search.ts）の両方が使う。どちらも静的な索引を持つだけのページなので、
  * どの章が準備中かは `/api/lessons/status` を読んで初めて分かる。1ページに何回呼ばれても
  * 通信は1回で済むよう、答えをここで覚えておく。
+ *
+ * メンバーかどうか（`member`）と、メンバーだけの章の節の一覧（`membersSections`）も同じ口から
+ * 来る（design/spec/53-ml-intro.md 第7節）。右上からログイン・ログアウトしてメンバーかどうかや
+ * 運営かどうかが変わったら、覚えた答えを捨てて読み直す（下の kit:account）。
  */
 
-export type PublishStatus = { publicChapters: Set<string>; staff: boolean };
+export type MembersSection = {
+  href: string;
+  lessonId: string;
+  chapter: string;
+  label: string;
+  title: string;
+  minutes: number;
+  exerciseIds: string[];
+};
+
+export type PublishStatus = {
+  publicChapters: Set<string>;
+  staff: boolean;
+  member: boolean;
+  membersSections: MembersSection[];
+};
+
+const EMPTY: PublishStatus = { publicChapters: new Set(), staff: false, member: false, membersSections: [] };
 
 let cached: Promise<PublishStatus> | null = null;
+let settled: PublishStatus | null = null;
 
 async function load(): Promise<PublishStatus> {
   try {
     const res = await fetch('/api/lessons/status');
-    if (!res.ok) return { publicChapters: new Set(), staff: false };
-    const data = (await res.json()) as { public?: string[]; staff?: boolean };
-    return { publicChapters: new Set(data.public ?? []), staff: data.staff === true };
+    if (!res.ok) return EMPTY;
+    const data = (await res.json()) as { public?: string[]; staff?: boolean; member?: boolean; membersSections?: MembersSection[] };
+    return {
+      publicChapters: new Set(data.public ?? []),
+      staff: data.staff === true,
+      member: data.member === true,
+      membersSections: Array.isArray(data.membersSections) ? data.membersSections : [],
+    };
   } catch {
-    return { publicChapters: new Set(), staff: false };
+    return EMPTY;
   }
 }
 
 export function fetchPublishStatus(): Promise<PublishStatus> {
-  if (!cached) cached = load();
+  if (!cached) {
+    cached = load().then((s) => {
+      settled = s;
+      return s;
+    });
+  }
   return cached;
+}
+
+/* ログイン・ログアウトでメンバーか運営かが変わったら、次に読むときに取り直す。
+   kit:account は1回の読み込みで2回鳴る（/api/me の答えと、手元の進度を合わせたあと）ので、
+   変わったときだけ捨てる。ログインの応答そのものには member が無い（/api/me の答えで届く）ので、
+   member が書いていない知らせは見ない。このモジュールを読むページのリスナーより先に登録される */
+if (typeof window !== 'undefined') {
+  window.addEventListener('kit:account', (e) => {
+    if (!settled) return;
+    const user = (e as CustomEvent<{ role?: string; member?: boolean } | null>).detail;
+    if (user && user.member === undefined) return;
+    const member = user?.member === true;
+    const staff = user?.role === 'staff' || user?.role === 'admin';
+    if (member !== settled.member || staff !== settled.staff) {
+      cached = null;
+      settled = null;
+    }
+  });
 }
 
 /** href（`/learn/lesson/<章>/<節>/` の形）から章のディレクトリ名を取り出す。 */

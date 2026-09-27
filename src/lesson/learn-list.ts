@@ -108,11 +108,60 @@ function paintPublishLocks(status: PublishStatus): void {
   });
 }
 
+/** `/learn/lesson/<章>/<節>/` → `<章>/<節>`（index.astro が並べる順の鍵。entry の id と同じ） */
+function entryIdOf(href: string): string {
+  return href.replace(/^\/learn\/lesson\//, '').replace(/\/$/, '');
+}
+
+/**
+ * メンバーだけの章の節の行を組む（design/spec/53-ml-intro.md 第6節）。事前生成の HTML には題を書いていない
+ * （部の段は hidden、<ol data-members-chapter> は空）。メンバーなら /api/lessons/status の
+ * membersSections から行を作って段を出し、メンバーでなければ行を消して段を隠す（ログアウトしたとき）。
+ * 行の形は index.astro の節の行と同じ。スコープ付きスタイル（data-astro-cid-*）は <ol> から写す。
+ */
+function paintMembersPart(status: PublishStatus): LearnSection[] {
+  const shown: LearnSection[] = status.member ? status.membersSections : [];
+  document.querySelectorAll<HTMLElement>('[data-members-part]').forEach((part) => {
+    part.hidden = !status.member;
+  });
+  document.querySelectorAll<HTMLOListElement>('ol[data-members-chapter]').forEach((ol) => {
+    const cid = [...ol.attributes].filter((a) => a.name.startsWith('data-astro-cid-')).map((a) => a.name);
+    const make = <K extends keyof HTMLElementTagNameMap>(tag: K, className = ''): HTMLElementTagNameMap[K] => {
+      const el = document.createElement(tag);
+      if (className) el.className = className;
+      for (const name of cid) el.setAttribute(name, '');
+      return el;
+    };
+    const rows = shown
+      .filter((s) => s.chapter === ol.dataset.membersChapter)
+      .map((s) => {
+        const li = make('li');
+        li.dataset.lessonId = s.lessonId;
+        const st = make('span', 'lp-secs__st');
+        st.dataset.state = '';
+        st.textContent = '未';
+        const a = make('a');
+        a.href = s.href;
+        a.textContent = `${s.label} ${s.title}`;
+        const min = make('span', 'lp-secs__min');
+        min.textContent = `${s.minutes}分`;
+        li.append(st, a, min);
+        return li;
+      });
+    ol.replaceChildren(...rows);
+  });
+  return shown;
+}
+
 export async function paintLearnList(): Promise<void> {
-  const sections = readSections();
-  if (sections.length === 0) return;
+  const staticSections = readSections();
+  if (staticSections.length === 0) return;
 
   const status = await fetchPublishStatus();
+  // メンバーだけの章の節を、教材の順（entry の id の順。index.astro と同じ）に差し込む
+  const sections = [...staticSections, ...paintMembersPart(status)].sort((a, b) =>
+    entryIdOf(a.href).localeCompare(entryIdOf(b.href)),
+  );
   paintPublishLocks(status);
 
   const store = getProgressStore();

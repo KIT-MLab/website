@@ -1,0 +1,102 @@
+---
+/**
+ * <Compare> — 悪い例と良い例のコードを左右に並べる（試作「1章3節の悪い例・良い例」）。
+ *
+ *   <Compare
+ *     badTitle="数をそのまま書く"
+ *     badCode={`print(100)`}
+ *     badNote="値段が変わったら、書いた場所を全部直す"
+ *     goodTitle="変数に入れる"
+ *     goodCode={`price = 100
+ *   print(price)`}
+ *     goodNote="1行目だけ直せばよい"
+ *   />
+ *
+ * 読むためのコードで、▶ は付けない（動かす例は <Run>）。見出しは左が朱、右が緑。
+ * 幅640px以下では上下に積む。コードは scripts/check-lessons.mjs の検査16（道具の先取り）に
+ * 入る（badCode / goodCode を「部品のコード」として拾う）。
+ */
+interface Props {
+  badTitle: string;
+  badCode: string;
+  /** 1行の短い説明 */
+  badNote?: string;
+  goodTitle: string;
+  goodCode: string;
+  goodNote?: string;
+}
+
+const { badTitle, badCode, badNote, goodTitle, goodCode, goodNote } = Astro.props;
+const sides = [
+  { kind: 'bad', title: badTitle, code: badCode, note: badNote },
+  { kind: 'good', title: goodTitle, code: goodCode, note: goodNote },
+];
+---
+
+<div class="kit-cmp">
+  {
+    sides.map((s) => (
+      <figure class="kit-cmp__side">
+        <figcaption class:list={['kit-cmp__h', `kit-cmp__h--${s.kind}`]}>{s.title}</figcaption>
+        <pre class="kit-cmp__code">{s.code}</pre>
+        {s.note && <p class="kit-cmp__note">{s.note}</p>}
+      </figure>
+    ))
+  }
+</div>
+
+<style>
+  .kit-cmp {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    margin: 16px 0;
+  }
+
+  .kit-cmp__side {
+    margin: 0;
+    border: 1px solid var(--l-rule);
+    background: var(--l-card);
+    min-width: 0;
+  }
+
+  .kit-cmp__h {
+    padding: 5px 10px;
+    font-size: 13px;
+    font-weight: 700;
+    border-bottom: 1px solid rgba(43, 38, 30, 0.22);
+  }
+
+  .kit-cmp__h--bad {
+    color: var(--l-shu);
+  }
+
+  .kit-cmp__h--good {
+    color: var(--l-midori);
+  }
+
+  .kit-cmp__code {
+    margin: 0;
+    padding: 8px 10px;
+    overflow-x: auto;
+    background: var(--k-bg);
+    color: var(--k-fg);
+    font-family: var(--font-mono);
+    font-size: 13.5px;
+    line-height: 1.7;
+  }
+
+  .kit-cmp__note {
+    margin: 0;
+    padding: 6px 10px;
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--l-ink-2);
+  }
+
+  @media (max-width: 640px) {
+    .kit-cmp {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+</style>

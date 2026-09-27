@@ -17,10 +17,12 @@ import Exercise from '../../../../components/lesson/Exercise.astro';
 import Input from '../../../../components/lesson/Input.astro';
 import Output from '../../../../components/lesson/Output.astro';
 import SyntaxPanel from '../../../../components/lesson/SyntaxPanel.astro';
+import PlainMembersLink from '../../../../components/lesson/PlainMembersLink.astro';
 import { chapterTitle } from '../../../../lesson/chapters';
 import { topicTitleHtml, topicTitleText } from '../../../../lesson/practice';
 import { syntaxCategoriesFor } from '../../../../lesson/weekly-syntax';
 import { currentUser, serverConfig } from '../../../../server/auth';
+import { isMember } from '../../../../server/member';
 import { isChapterPublic } from '../../../../server/lessons-publish';
 // @ts-expect-error 節への行き先の組み立ては .mjs 側に1つだけ置く（src/lesson/weekly-syntax.ts と同じ理由）
 import { sectionHref, sectionLabel } from '../../../../../scripts/section-refs.mjs';
@@ -36,6 +38,8 @@ const viewer = config ? await currentUser(Astro.request) : null;
 const isStaff = viewer !== null && (viewer.role === 'staff' || viewer.role === 'admin');
 const chapterPublic = entry && config ? await isChapterPublic(config.db, entry.data.chapter) : false;
 const canSee = entry !== undefined && (chapterPublic || isStaff);
+// 本文の「入口2」（メンバーだけの章へのリンク）は、メンバーでない人には文字だけにする（53-ml-intro.md 第7節）
+const member = viewer !== null && isMember(viewer);
 
 if (!entry) Astro.response.status = 404;
 // 準備中の章・運営として見ているときはキャッシュしない（節のページと同じ）
@@ -102,7 +106,7 @@ const syntaxCategories = canSee && entry ? await syntaxCategoriesFor([entry.data
                 {problemCount === 0 ? (
                   <p class="pp-empty">この話題の問題はまだありません。</p>
                 ) : (
-                  Content && <Content components={{ Exercise, Input, Output }} />
+                  Content && <Content components={{ Exercise, Input, Output, ...(member ? {} : { a: PlainMembersLink }) }} />
                 )}
               </article>
             </div>

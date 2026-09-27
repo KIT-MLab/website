@@ -34,7 +34,7 @@
 | エラー | error | Python が実行を続けられないときに出す知らせ。種類の名前と場所が出る。 | 01-python |
 | f文字列 | f-string | 文字列の前に `f` を付けた書き方。`{}` の中に変数を書くと値が展開される。 | 01-python |
 | str | | 値を文字列に変える関数。 | 01-python |
-| 型 | type | 値の種類を表すもの。int や float などがある。 | 02-numbers |
+| 型 | type | 値の種類を表すもの。int や float などがある。 | 01-python |
 | float | | 文字列や整数を小数に変える関数。小数を表す型の名前でもある。 | 02-numbers |
 | 浮動小数点数 | floating-point number | コンピュータの中で小数を表す形式。`float` はこの形式で値を持つ。 | 02-numbers |
 | round | | 数値を指定した桁数に丸める関数。第2引数に残す桁数を書く。 | 02-numbers |

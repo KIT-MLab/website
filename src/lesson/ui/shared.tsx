@@ -1,6 +1,6 @@
 /** <Run> と <Exercise> が共に使う小さな部品。 */
 import { useEffect, useState, type ReactNode } from 'react';
-import { lessonHref } from '../chapters';
+import { isMembersOnlyChapter, lessonHref } from '../chapters';
 import { onLoadProgress, pythonStatus } from '../runtime/runner';
 import type { ExecResult, LoadProgress } from '../runtime/types';
 import { INPUT_EMPTY_MESSAGE, TIMEOUT_MESSAGE } from '../runtime/types';
@@ -38,6 +38,18 @@ export function LoadBar() {
 }
 
 /**
+ * 「入口2」（メンバーだけの章。design/spec/53-ml-intro.md 第7節）をリンクにしてよいページか。
+ * この部品はだれが見ているかを知らないので、メンバーでない人が開けないページ（メンバーだけの章の節と
+ * 今週の演習）にいるときだけリンクにする。ほかのページでは文字だけにする。ヒントは押してから出るので、
+ * サーバで組むときにここを通ることは無い
+ */
+function membersPage(): boolean {
+  if (typeof location === 'undefined') return false;
+  const m = /^\/learn\/(lesson|weekly)\/([^/]+)\//.exec(location.pathname);
+  return m !== null && (m[1] === 'weekly' || isMembersOnlyChapter(m[2]));
+}
+
+/**
  * `…` と、節への参照「第N章M節」（機械学習の入口は「入口2」）だけを組む、ごく小さな記法の表示。
  *
  * リンクにするのは src/generated/section-refs.json（scripts/build-tests.mjs が書き出す）に
@@ -56,7 +68,7 @@ export function Inline({ text }: { text: string }) {
     if (m[1] !== undefined) {
       parts.push(<code key={parts.length}>{m[1]}</code>);
     } else {
-      const entry = SECTION_REFS[m[4] !== undefined ? `入口${Number(m[4])}` : `${Number(m[2])}-${Number(m[3])}`];
+      const entry = m[4] !== undefined && !membersPage() ? undefined : SECTION_REFS[m[4] !== undefined ? `入口${Number(m[4])}` : `${Number(m[2])}-${Number(m[3])}`];
       parts.push(
         entry ? (
           <a key={parts.length} className="kit-lessonlink" href={lessonHref(entry)}>

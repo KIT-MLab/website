@@ -1,6 +1,6 @@
 // @ts-expect-error 部の表は .mjs 側に1つだけ置く（scripts/parts.mjs）。TypeScript の型検査は
 // どこでも走っていない（design/HANDOFF.md 第5章）ので、.mjs をそのまま読む
-import { INTRO_CHAPTER as INTRO_CHAPTER_RAW, PARTS as PARTS_RAW, partOfChapter as partOfChapterRaw, writtenParts as writtenPartsRaw } from '../../scripts/parts.mjs';
+import { INTRO_CHAPTER as INTRO_CHAPTER_RAW, MEMBERS_ONLY_CHAPTERS, PARTS as PARTS_RAW, partOfChapter as partOfChapterRaw, writtenParts as writtenPartsRaw } from '../../scripts/parts.mjs';
 
 /**
  * 部（20-platform.md 第17.1節）。書いてある部は chapters、準備中の部は count を持つ。
@@ -60,6 +60,11 @@ export function practiceNo(chapter: string): number | null {
 /** 機械学習の入口の章か（design/spec/53-ml-intro.md）。 */
 export function isIntroChapter(chapter: string): boolean {
   return chapter === INTRO_CHAPTER;
+}
+
+/** メンバーだけの章か（design/spec/53-ml-intro.md 第6節）。表は scripts/parts.mjs の MEMBERS_ONLY_CHAPTERS。 */
+export function isMembersOnlyChapter(chapter: string): boolean {
+  return (MEMBERS_ONLY_CHAPTERS as string[]).includes(chapter);
 }
 
 /**

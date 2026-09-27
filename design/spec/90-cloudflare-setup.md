@@ -147,6 +147,15 @@ npx wrangler d1 migrations apply mlab-course --remote
 
 **これをあてるまで、本番の章はすべて準備中のままになる**（`20-platform.md` 第20.1節「記録が無い章は準備中」）。あてたあとも、管理者が「教材の公開」の画面（`/staff/lessons/`）で章ごとに「公開する」を押すまでは、その章は誰にも（運営以外には）見えない。
 
+### 5.5 みんなの予想ボードのテーブルを作る（2026-09-27 追加）
+
+`migrations/0010_guess.sql`（`guesses` と `guess_reveals`。`53-ml-intro.md` 第7節）。第3.1節と同じ1行で本番にあてる。
+**push する前に**あてること（先に push すると、機械学習の入口の節の予想ボードが「読み込んでいます…」のまま動かない）。
+
+```
+npx wrangler d1 migrations apply mlab-course --remote
+```
+
 ---
 
 ## 6. まだ決めていないこと

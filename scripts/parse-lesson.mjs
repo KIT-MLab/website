@@ -17,7 +17,9 @@
  * つまりコード中の「\」は JavaScript の規則で解釈される（`\\n` と書くと Python の `\n`）。
  */
 
-const COMPONENTS = ['Run', 'Exercise', 'Level0', 'Experiment', 'Keys', 'Figure', 'Secant', 'Descent', 'FitLine', 'Boundary', 'Overfit'];
+// Guess（みんなの予想ボード。design/spec/53-ml-intro.md 第7節）も部品として拾う。部品は本文の字数・文の長さの
+// 検査から外れる（問いは「"女性なら生き残った" と…」のような話し言葉で、地の文の決まりに当てはめない）
+const COMPONENTS = ['Run', 'Exercise', 'Level0', 'Experiment', 'Keys', 'Figure', 'Secant', 'Descent', 'FitLine', 'Boundary', 'Overfit', 'Guess', 'Compare'];
 
 export function lineOf(text, index) {
   let line = 1;
@@ -315,6 +317,7 @@ export function parseLesson(source, file) {
   const exercises = [];
   const level0 = [];
   const experiments = [];
+  const guesses = [];
 
   for (const c of components) {
     const section = sectionOf(c.start);
@@ -357,6 +360,17 @@ export function parseLesson(source, file) {
       level0.push({ section, line: c.line, title: evalAttribute(c.attrs.title) ?? '', text: c.children.trim() });
     } else if (c.name === 'Experiment') {
       experiments.push({ section, line: c.line });
+    } else if (c.name === 'Guess') {
+      guesses.push({
+        section,
+        line: c.line,
+        id: evalAttribute(c.attrs.id),
+        question: evalAttribute(c.attrs.question),
+        unit: evalAttribute(c.attrs.unit),
+        answer: evalAttribute(c.attrs.answer),
+        answerNote: evalAttribute(c.attrs.answerNote),
+        children: c.children.trim(),
+      });
     }
   }
 
@@ -467,6 +481,7 @@ export function parseLesson(source, file) {
     exercises,
     level0,
     experiments,
+    guesses,
     bodyParagraphs,
     allParagraphs,
     tableChars,

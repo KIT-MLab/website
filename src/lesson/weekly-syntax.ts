@@ -12,6 +12,7 @@ import { getCollection } from 'astro:content';
 // src/pages/learn/index.astro と同じ理由）
 import { sectionHref, sectionLabel } from '../../scripts/section-refs.mjs';
 import { SYNTAX_CATEGORIES, type SyntaxEntry } from './syntax-list';
+import { isMembersOnlyChapter } from './chapters';
 
 export type SyntaxEntryView = SyntaxEntry & { sinceLabel: string; sinceHref: string };
 export type SyntaxLink = { label: string; href: string };
@@ -63,6 +64,9 @@ export async function syntaxCategoriesFor(chapters: string[]): Promise<SyntaxCat
       // 台帳（このファイル）が節の id を書き違えていたら、その行だけ静かに落とす
       // （無い節にリンクを張るより安全側。check-lessons.mjs 的な機械検査はここには無い）
       if (!info) continue;
+      // メンバーだけの章（機械学習の入口）の節は、誰でも見る練習問題集にも出るので行き先にしない。
+      // 入口は復習した書き方だけを使う決まり（53-ml-intro.md 第3節）なので、ここで初めて教える書き方は無い
+      if (isMembersOnlyChapter(info.chapter)) continue;
       const chIdx = order.indexOf(info.chapter);
       if (chIdx === -1 || chIdx > maxIdx) continue;
       entries.push({ ...e, sinceLabel: info.label, sinceHref: info.href });

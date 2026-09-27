@@ -1,0 +1,161 @@
+---
+/**
+ * 「この節の書き方」の表（DECISIONS.md「書き方のまとめ（2026-09-27）」。試作の案A）。
+ *
+ * 各節の「説明」の終わり（「課題」の直前）に、その節で教えた書き方を「書き方｜結果｜説明」で並べる。
+ * **書き手は書かない。** 中身は構文の一覧（src/lesson/syntax-list.ts）のうち `since` がこの節の行で、
+ * 置き場所は scripts/remark-section-syntax.mjs が節ごとに自動で差し込む。行が無い節では何も描かない。
+ *
+ * 狭い画面（幅600px以下）では表の行を縦に積む（書き方 → 結果 → 説明）。ページが横に
+ * はみ出さないよう、長いコードはそのセルの中だけで横に送る。
+ */
+import { SYNTAX_CATEGORIES } from '../../lesson/syntax-list';
+
+interface Props {
+  /** 節の frontmatter の id */
+  id: string;
+}
+
+const { id } = Astro.props;
+const rows = SYNTAX_CATEGORIES.flatMap((c) => c.entries.filter((e) => e.since === id));
+---
+
+{
+  rows.length > 0 && (
+    <section class="kit-sum" aria-label="この節の書き方">
+      <p class="kit-sum__h">この節の書き方</p>
+      <table class="kit-sum__t">
+        <thead>
+          <tr>
+            <th scope="col">書き方</th>
+            <th scope="col">結果</th>
+            <th scope="col">説明</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((e) => (
+            <tr>
+              <td class="kit-sum__c">
+                <code>{e.code}</code>
+              </td>
+              <td class="kit-sum__r" data-empty={e.result === '' ? '' : undefined}>
+                {e.result}
+              </td>
+              <td class="kit-sum__n">{e.note}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </section>
+  )
+}
+
+<style>
+  /* 試作の案A。上に墨の2px、見出しは明朝、行の罫は薄く。色は教材のトークンだけ */
+  .kit-sum {
+    margin: 28px 0 8px;
+    border-top: 2px solid var(--l-ink);
+  }
+
+  .kit-sum__h {
+    margin: 8px 0 4px;
+    font-family: var(--font-head);
+    font-weight: 700;
+    font-size: 15px;
+  }
+
+  .kit-sum__t {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+    line-height: 1.7;
+  }
+
+  .kit-sum__t th {
+    padding: 4px 8px;
+    text-align: left;
+    font-size: 12.5px;
+    font-weight: 400;
+    color: var(--l-ink-2);
+    border-bottom: 1px solid var(--l-rule);
+  }
+
+  .kit-sum__t td {
+    padding: 6px 8px;
+    vertical-align: top;
+    border-bottom: 1px solid rgba(43, 38, 30, 0.22);
+  }
+
+  /* 本文の `…` の地（.lesson-body code）を外し、セルごと紙より明るい地にする */
+  .kit-sum__c {
+    background: var(--l-card);
+  }
+
+  .kit-sum__c code,
+  .kit-sum__r {
+    font-family: var(--font-mono);
+    font-size: 13.5px;
+    white-space: pre;
+  }
+
+  .kit-sum__c code {
+    display: block;
+    padding: 0;
+    background: none;
+    line-height: 1.7;
+  }
+
+  .kit-sum__r {
+    color: var(--l-ink-2);
+  }
+
+  @media (min-width: 601px) {
+    /* 広い画面で長いコードが本文の幅を超えたら、コードのセルの中だけで横に送る */
+    .kit-sum__c code {
+      max-width: 34em;
+      overflow-x: auto;
+    }
+  }
+
+  @media (max-width: 600px) {
+    .kit-sum__t thead {
+      display: none;
+    }
+
+    .kit-sum__t,
+    .kit-sum__t tbody,
+    .kit-sum__t tr,
+    .kit-sum__t td {
+      display: block;
+    }
+
+    .kit-sum__t tr {
+      padding: 6px 0;
+      border-bottom: 1px solid rgba(43, 38, 30, 0.22);
+    }
+
+    .kit-sum__t td {
+      border-bottom: 0;
+      padding: 2px 8px;
+    }
+
+    .kit-sum__c {
+      padding: 6px 8px;
+      overflow-x: auto;
+    }
+
+    .kit-sum__r {
+      overflow-x: auto;
+    }
+
+    .kit-sum__r::before {
+      content: '結果 ';
+      font-family: var(--font-body);
+      font-size: 12px;
+    }
+
+    .kit-sum__r[data-empty] {
+      display: none;
+    }
+  }
+</style>

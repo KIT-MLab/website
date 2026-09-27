@@ -3,14 +3,18 @@
  *
  * 今週の演習の問題のページの右の欄に出す早見表のデータ。分類ごとに「書き方・結果・短い説明」を
  * 並べ、分類の最後にその書き方を扱う節（`since`）へのリンクを出す（呼び出し側 = weekly-syntax.ts）。
+ * 同じデータから、各節の説明のあとの「この節の書き方」の表も作る（`since` がその節の行だけ。
+ * src/components/lesson/SectionSyntax.astro。DECISIONS.md「書き方のまとめ（2026-09-27）」）。
  *
- * 中身は第1〜8章で実際に教えたものだけ。`code` を `py`（numpy 入り）で実際に実行し、
+ * 中身は第1〜15章で実際に教えたものだけ。`code` を `py`（numpy 入り）で実際に実行し、
  * `result` がその通りの出力になることを確かめてある（確かめ方は design/HANDOFF.md の引き継ぎに書く
  * 代わりに、このファイルを作った作業のやり取りに残す）。分類名は Python の言葉そのまま（第22.1節）。
+ * numpy の行は `import numpy as np` を済ませた前提で書く（`import numpy as np` の行を除く）。
  *
- * `since` は、その書き方をはじめて教える節の frontmatter の `id`。今週の演習の画面
- * （src/pages/learn/weekly/[id].astro）が、この節の属する章の並び順と、回の frontmatter の
- * `chapters` の最後の章を比べて、範囲外の行を落とす。
+ * `since` は、その書き方をはじめて教える節の frontmatter の `id`。**節の表に出る場所でもある**ので、
+ * 本文でその書き方を扱っている節にする。今週の演習の画面（src/pages/learn/weekly/[id].astro）が、
+ * この節の属する章の並び順と、回の frontmatter の `chapters` の最後の章を比べて、範囲外の行を落とす。
+ * 分類の中は `since` の節の順に並べる（節の表はこの順に出る）。
  */
 
 export type SyntaxEntry = {
@@ -37,10 +41,12 @@ export const SYNTAX_CATEGORIES: SyntaxCategory[] = [
     key: 'operators',
     name: '演算子',
     entries: [
-      { code: '7 + 2', result: '9', note: '足す', since: 'python-01-print' },
-      { code: '7 - 2', result: '5', note: '引く', since: 'python-01-variable' },
-      { code: '7 * 2', result: '14', note: '掛ける', since: 'python-01-input' },
-      { code: '7 / 2', result: '3.5', note: '割る（答えは小数）', since: 'python-02-int-float' },
+      { code: 'print(2 + 3)', result: '5', note: '足し算', since: 'python-01-input' },
+      { code: 'print(7 - 2)', result: '5', note: '引き算', since: 'python-01-input' },
+      { code: 'print(4 * 3)', result: '12', note: '掛け算', since: 'python-01-input' },
+      { code: 'print(7 / 2)', result: '3.5', note: '割り算（答えは小数。詳しくは第2章1節）', since: 'python-01-input' },
+      { code: 'print(9 / 3)', result: '3.0', note: '割り切れても答えは float', since: 'python-02-int-float' },
+      { code: 'print(1 + 2.5)', result: '3.5', note: '整数と小数を混ぜると float になる', since: 'python-02-int-float' },
       { code: '7 // 2', result: '3', note: '割った商（小数点以下を切り捨て）', since: 'python-02-operators' },
       { code: '7 % 2', result: '1', note: '割った余り', since: 'python-02-operators' },
       { code: '7 ** 2', result: '49', note: 'べき乗（7の2乗）', since: 'python-02-operators' },
@@ -62,6 +68,14 @@ export const SYNTAX_CATEGORIES: SyntaxCategory[] = [
       },
       { code: 'x = 5\nprint(f"合計{x}円")', result: '合計5円', note: '{}の中に変数や式を書ける', since: 'python-01-fstring' },
       { code: 'print()', result: '', note: '何も渡さず空の行を出す', since: 'python-01-print' },
+    ],
+  },
+  {
+    key: 'variable',
+    name: '変数',
+    entries: [
+      { code: 'price = 100\nprint(price + 50)', result: '150', note: '名前に値を結び付けて使う', since: 'python-01-variable' },
+      { code: 'a = 1\na = 3\nprint(a)', result: '3', note: '入れ直すと前の値は残らない', since: 'python-01-variable' },
     ],
   },
   {
@@ -210,6 +224,12 @@ export const SYNTAX_CATEGORIES: SyntaxCategory[] = [
         note: '名前を書いて渡す（順番を問わない）',
         since: 'python-05-keyword',
       },
+      {
+        code: 'x = 10\n\ndef show():\n    x = 5\n\nshow()\nprint(x)',
+        result: '10',
+        note: '関数の中で付けた名前は外に出ない（スコープ）',
+        since: 'python-05-scope',
+      },
     ],
   },
   {
@@ -271,6 +291,12 @@ export const SYNTAX_CATEGORIES: SyntaxCategory[] = [
         since: 'python-07-select',
       },
       {
+        code: 'print(np.round(np.array([81.66, 49.24]), 1))',
+        result: '[81.7 49.2]',
+        note: '配列の値をまとめて丸める',
+        since: 'python-07-scores',
+      },
+      {
         code: 'scores = np.array([[80, 70, 90], [60, 50, 40]])\nprint(scores[0, 1])',
         result: '70',
         note: '行と列をまとめて指定 [行, 列]',
@@ -287,6 +313,12 @@ export const SYNTAX_CATEGORIES: SyntaxCategory[] = [
         result: '[[80 60]\n [70 50]\n [90 40]]',
         note: '.Tで行と列を入れ替える',
         since: 'python-08-transpose',
+      },
+      {
+        code: 'scores = np.array([[80, 70, 90], [60, 50, 40]])\nprint(scores - scores.mean(axis=0))',
+        result: '[[ 10.  10.  25.]\n [-10. -10. -25.]]',
+        note: 'どの行からも同じ並びを引く（ブロードキャスト）',
+        since: 'python-08-broadcast',
       },
       {
         code: 'flat = np.array([80, 70, 90, 60, 50, 40])\nprint(flat.reshape(2, 3))',
@@ -307,6 +339,262 @@ export const SYNTAX_CATEGORIES: SyntaxCategory[] = [
         since: 'python-08-range',
       },
       { code: 'print(np.zeros(3))', result: '[0. 0. 0.]', note: '0を指定した個数だけ並べる', since: 'python-08-range' },
+    ],
+  },
+  {
+    key: 'linalg',
+    name: 'ベクトルと行列',
+    entries: [
+      {
+        code: 'v = np.array([3, 4])\nprint(np.sqrt(np.sum(v ** 2)))',
+        result: '5.0',
+        note: 'ベクトルの長さ（2乗の和の平方根）',
+        since: 'python-09-vector',
+      },
+      {
+        code: 'a = np.array([80, 70])\nb = np.array([77, 74])\nprint(np.sqrt(np.sum((a - b) ** 2)))',
+        result: '5.0',
+        note: '2つのベクトルの距離（差の長さ）',
+        since: 'python-09-vector',
+      },
+      {
+        code: 'a = np.array([80, 70, 90])\nw = np.array([0.3, 0.3, 0.4])\nprint(a @ w)',
+        result: '81.0',
+        note: '内積（同じ位置どうし掛けて足す）',
+        since: 'python-09-dot',
+      },
+      {
+        code: 'a = np.array([80, 70, 90])\nw = np.array([0.3, 0.3, 0.4])\nprint(np.sum(a * w))',
+        result: '81.0',
+        note: '@ と同じ値になる',
+        since: 'python-09-dot',
+      },
+      {
+        code: 'scores = np.array([[80, 70, 90], [60, 50, 40]])\nw = np.array([0.3, 0.3, 0.4])\nprint(scores @ w)',
+        result: '[81. 49.]',
+        note: '行列とベクトルの積（各行とwの内積）',
+        since: 'python-09-matvec',
+      },
+      {
+        code: 'A = np.array([[1, 2], [3, 4]])\nB = np.array([[1, 0], [0, 2]])\nprint(A @ B)',
+        result: '[[1 4]\n [3 8]]',
+        note: '行列の積（左の行と右の列の内積）',
+        since: 'python-09-matmul',
+      },
+      {
+        code: 'A = np.array([[1, 2, 3], [4, 5, 6]])\nprint((A @ A.T).shape)',
+        result: '(2, 2)',
+        note: '(n, k) @ (k, m) は (n, m)。合わなければ .T で転置',
+        since: 'python-09-shape',
+      },
+    ],
+  },
+  {
+    key: 'slope',
+    name: '傾きと微分',
+    entries: [
+      { code: 'print((80 - 65) / (6 - 3))', result: '5.0', note: '変化率（傾き）＝縦の変化÷横の変化', since: 'python-10-rate' },
+      {
+        code: 'def f(x):\n    return x ** 2\n\nh = 0.0001\nprint(round((f(3 + h) - f(3)) / h, 2))',
+        result: '6.0',
+        note: '微分を近似する（幅hを小さくした傾き）',
+        since: 'python-10-derivative',
+      },
+      {
+        code: 'def f(a, b):\n    return a ** 2 + 3 * b\n\nh = 0.0001\nprint(round((f(1 + h, 2) - f(1, 2)) / h, 2))',
+        result: '2.0',
+        note: '偏微分を近似する（aだけ動かし、bは止める）',
+        since: 'python-10-partial',
+      },
+    ],
+  },
+  {
+    key: 'probability',
+    name: '確率と散らばり',
+    entries: [
+      {
+        code: 'records = ["雨", "晴れ", "雨", "曇り"]\ncount = 0\nfor day in records:\n    if day == "雨":\n        count = count + 1\nprint(count / len(records))',
+        result: '0.5',
+        note: '当てはまる数÷全体の数（相対度数）',
+        since: 'python-11-frequency',
+      },
+      {
+        code: 'scores = np.array([7, 2, 1])\nprint(scores / np.sum(scores))',
+        result: '[0.7 0.2 0.1]',
+        note: '合計で割って分布にする（合計が1）',
+        since: 'python-11-distribution',
+      },
+      { code: 'print(round(np.exp(1), 3))', result: '2.718', note: 'ネイピア数 e', since: 'python-11-exp' },
+      {
+        code: 'print(np.round(np.exp(np.array([1, -1, 2])), 2))',
+        result: '[2.72 0.37 7.39]',
+        note: '指数関数。どんな数も正の数になる',
+        since: 'python-11-exp',
+      },
+      { code: 'print(1e-3)', result: '0.001', note: '10のマイナス3乗の書き方', since: 'python-11-log' },
+      {
+        code: 'print(round(np.log(2 * 3), 3))\nprint(round(np.log(2) + np.log(3), 3))',
+        result: '1.792\n1.792',
+        note: '対数は掛け算を足し算に変える',
+        since: 'python-11-log',
+      },
+      { code: 'x = np.array([40, 70, 70, 100])\nprint(np.mean(x))', result: '70.0', note: 'x.mean() と同じ平均', since: 'python-11-spread' },
+      {
+        code: 'x = np.array([40, 70, 70, 100])\nprint(np.var(x))',
+        result: '450.0',
+        note: '分散（平均との差の2乗の平均）',
+        since: 'python-11-spread',
+      },
+      {
+        code: 'x = np.array([40, 70, 70, 100])\nprint(round(np.std(x), 1))',
+        result: '21.2',
+        note: '標準偏差（分散の平方根）',
+        since: 'python-11-spread',
+      },
+      {
+        code: 'x = np.array([40, 60, 80])\nz = (x - np.mean(x)) / np.std(x)\nprint(np.round(z, 2))',
+        result: '[-1.22  0.    1.22]',
+        note: '標準化（平均0・標準偏差1にそろえる）',
+        since: 'python-11-scores',
+      },
+    ],
+  },
+  {
+    key: 'regression',
+    name: '予測と損失・勾配降下法',
+    entries: [
+      {
+        code: 'def predict(x, a, b):\n    return a * x + b\n\nprint(predict(np.array([1, 2, 3]), 2, 1))',
+        result: '[3 5 7]',
+        note: '直線のモデルで全員分をまとめて予測する',
+        since: 'python-12-model',
+      },
+      {
+        code: 'pred = np.array([3, 5])\nactual = np.array([4, 7])\nprint(np.mean((pred - actual) ** 2))',
+        result: '2.5',
+        note: '平均二乗誤差（差の2乗の平均）',
+        since: 'python-12-loss',
+      },
+      {
+        code: 'def f(x):\n    return (x - 3) ** 2\n\nbest_x = 0.0\nfor x in np.linspace(0, 4, 9):\n    if f(x) < f(best_x):\n        best_x = x\nprint(best_x)',
+        result: '3.0',
+        note: '候補を全部試し、小さいものが出るたびに覚え直す',
+        since: 'python-12-search',
+      },
+      {
+        code: 'def f(x):\n    return (x - 3) ** 2\n\nx = 0\nh = 0.0001\nfor i in range(20):\n    slope = (f(x + h) - f(x)) / h\n    x = x - 0.3 * slope\nprint(round(x, 2))',
+        result: '3.0',
+        note: '勾配降下法（傾き×歩幅を引く、をくり返す）',
+        since: 'python-13-descent',
+      },
+      {
+        code: 'x = np.array([1.0, 2.0])\ny = np.array([3.0, 5.0])\npred = 1.0 * x + 0.0\nprint(np.mean(2 * (pred - y) * x))\nprint(np.mean(2 * (pred - y)))',
+        result: '-8.0\n-5.0',
+        note: '直線 a * x + b の、a と b の勾配（平均二乗誤差）',
+        since: 'python-13-linear',
+      },
+      {
+        code: 'hours = np.array([2, 3])\nsleep = np.array([6, 7])\nX = np.array([hours, sleep]).T\nprint(X)',
+        result: '[[2 6]\n [3 7]]',
+        note: '入力を並べて転置し、1人ぶんを1行にする',
+        since: 'python-13-multi',
+      },
+      {
+        code: 'X = np.array([[2, 6], [3, 7]])\nw = np.array([1, 10])\nprint(X @ w + 5)',
+        result: '[67 78]',
+        note: '入力が複数のときの予測 X @ w + b',
+        since: 'python-13-multi',
+      },
+      {
+        code: 'X = np.array([[1, 2], [3, 4]])\nerr = np.array([1, -1])\nprint(X.T @ err * 2 / len(err))',
+        result: '[-2. -2.]',
+        note: 'w の勾配 X.T @ (予測 - 答え) * 2 / n',
+        since: 'python-13-multi',
+      },
+      {
+        code: 'x = np.array([2.0, 4.0, 6.0])\nnew = 5.0\nprint(round((new - x.mean()) / x.std(), 2))',
+        result: '0.61',
+        note: '新しい値も、学習に使ったデータの平均・標準偏差で直す',
+        since: 'python-13-standardize',
+      },
+    ],
+  },
+  {
+    key: 'classify',
+    name: '分類',
+    entries: [
+      {
+        code: 'scores = np.array([45, 70, 60])\nprint((scores >= 60) * 1)',
+        result: '[0 1 1]',
+        note: '真偽に1を掛けて、1と0のラベルにする',
+        since: 'python-14-label',
+      },
+      {
+        code: 'def sigmoid(z):\n    return 1 / (1 + np.exp(-z))\n\nprint(sigmoid(0))',
+        result: '0.5',
+        note: 'シグモイド関数（0から1の間の確率に直す）',
+        since: 'python-14-sigmoid',
+      },
+      {
+        code: 'p = np.array([0.5, 0.01])\nprint(np.round(-np.log(p), 2))',
+        result: '[0.69 4.61]',
+        note: '交差エントロピー（p は正解に付けた確率）',
+        since: 'python-14-entropy',
+      },
+      {
+        code: 'y = np.array([1, 0])\np = np.array([0.8, 0.3])\nloss = -(y * np.log(p) + (1 - y) * np.log(1 - p))\nprint(np.round(loss, 3))',
+        result: '[0.223 0.357]',
+        note: '答えが1でも0でも使える交差エントロピー',
+        since: 'python-14-logistic',
+      },
+      {
+        code: 'X = np.array([[1.0, 2.0], [3.0, 4.0]])\ny = np.array([1, 0])\np = np.array([0.8, 0.3])\nprint(np.round(X.T @ (p - y) / len(y), 2))',
+        result: '[0.35 0.4 ]',
+        note: 'w の勾配 X.T @ (確率 - 答え) / n',
+        since: 'python-14-logistic',
+      },
+    ],
+  },
+  {
+    key: 'evaluate',
+    name: '評価',
+    entries: [
+      {
+        code: 'rng = np.random.default_rng(3)\nprint(rng.permutation(5))',
+        result: '[4 2 1 3 0]',
+        note: '種を決めて0〜4をランダムに並べる（何度実行しても同じ並び）',
+        since: 'python-15-split',
+      },
+      {
+        code: 'x = np.array([10, 20, 30, 40])\nprint(x[np.array([3, 0])])',
+        result: '[40 10]',
+        note: 'インデックスの配列で、複数の値をまとめて取り出す',
+        since: 'python-15-split',
+      },
+      {
+        code: 'x = np.array([0, 1, 2])\ny = np.array([1, 3, 5])\nprint(np.round(np.polyfit(x, y, 1), 2))',
+        result: '[2. 1.]',
+        note: 'データに合う次数1の曲線（直線）の係数',
+        since: 'python-15-overfit',
+      },
+      {
+        code: 'print(np.polyval(np.array([2, 1]), 3))',
+        result: '7',
+        note: '係数 [2, 1] の式 2x + 1 に 3 を入れる',
+        since: 'python-15-overfit',
+      },
+      {
+        code: 'pred = np.array([1, 0, 1, 1])\ny = np.array([1, 0, 0, 1])\nprint((pred == y).mean())',
+        result: '0.75',
+        note: '正解率（予想と答えが一致した割合）',
+        since: 'python-15-accuracy',
+      },
+      {
+        code: 'pred = np.array([1, 0, 1, 1])\ny = np.array([1, 0, 0, 1])\nprint(np.sum((pred == 1) & (y == 1)))',
+        result: '2',
+        note: '& は両方に当てはまるか。当たりの数を数える',
+        since: 'python-15-confusion',
+      },
     ],
   },
 ];

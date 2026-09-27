@@ -24,6 +24,12 @@
  */
 export const INTRO_CHAPTER = '08q-mlintro';
 
+/**
+ * メンバーだけの章（design/spec/53-ml-intro.md 第6節）。メンバーでない人には、公開していても節のページは
+ * 1段落だけ、学習の一覧にも用語の検索の索引にも出さない。判定は src/lesson/chapters.ts の isMembersOnlyChapter。
+ */
+export const MEMBERS_ONLY_CHAPTERS = [INTRO_CHAPTER];
+
 /** @type {Part[]} */
 export const PARTS = [
   { name: '第0部 準備', chapters: ['00-start'] },

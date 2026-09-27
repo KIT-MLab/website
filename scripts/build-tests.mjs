@@ -21,6 +21,7 @@ import { evalAttribute, exampleLeak, parseLesson } from './parse-lesson.mjs';
 import { execPython } from './pyodide-node.mjs';
 import { buildSectionRefs, sectionHref, sectionLabel } from './section-refs.mjs';
 import { loadGlossary } from './glossary.mjs';
+import { MEMBERS_ONLY_CHAPTERS } from './parts.mjs';
 import { PYTHON_TOOLS } from './python-tools.mjs';
 
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
@@ -120,6 +121,10 @@ const lessons = {};
    （scripts/check-lessons.mjs の codeOf と同じ前提）。 */
 const courseSections = [];
 const chapterCounts = new Map();
+/* みんなの予想ボード（<Guess>。design/spec/53-ml-intro.md 第7節）。id → 問い・答え・どの節か。
+   サーバ（src/server/guess.ts）が、この表に無い id を断るのと、答え合わせのあとに答えを返すのに使う。
+   lesson-data.json の最上位の `guesses` に書く（節のページに埋め込むのは節ごとの分だけなので、ここは埋め込まれない） */
+const guesses = {};
 
 for (const file of files) {
   const rel = relative(ROOT, file).replace(/\\/g, '/');
@@ -135,17 +140,24 @@ for (const file of files) {
     const indexInChapter = chapterCounts.get(chapter) ?? 0;
     chapterCounts.set(chapter, indexInChapter + 1);
     const entryId = rel.replace(/^src\/content\/lessons\//, '').replace(/\.mdx$/, '');
+    /* メンバーだけの章（design/spec/53-ml-intro.md 第6節）。検索の索引は誰でも読む静的なファイルなので、
+       節の題と「やってみる」のコードを入れない（用語の札の行き先には「入口1」とだけ出る） */
+    const membersOnly = MEMBERS_ONLY_CHAPTERS.includes(chapter);
     courseSections.push({
       order: courseSections.length,
       lessonId,
       chapter,
+      membersOnly,
       href: sectionHref(entryId),
       label: sectionLabel(chapter, indexInChapter),
-      title: String(lesson.data.title ?? ''),
+      title: membersOnly ? '' : String(lesson.data.title ?? ''),
       terms: Array.isArray(lesson.data.terms) ? lesson.data.terms : [],
       // 「やってみる」に置かれた <Run> だけ（第18.3節の「使い方の例」の元）。書き出しはしない
-      tryRuns: lesson.runs.filter((r) => r.section === 'やってみる'),
+      tryRuns: membersOnly ? [] : lesson.runs.filter((r) => r.section === 'やってみる'),
     });
+    for (const g of lesson.guesses) {
+      guesses[g.id] = { lessonId, chapter, question: g.question, unit: g.unit, answer: g.answer, answerNote: g.answerNote };
+    }
   }
 
   // <Run> の out の照合
@@ -559,13 +571,19 @@ const searchNotes = [];
 
   // --- 用語（design/spec/glossary.md） ---
   for (const term of glossary) {
-    const home = courseSections.find((s) => s.terms.includes(term.word)) ?? firstOfChapter.get(term.chapter) ?? null;
+    /* 行き先は、誰でも開ける節を先に探す。メンバーだけの章（機械学習の入口）で初めて出る語
+       （正解率・訓練データなど）も第15章で改めて扱うので、索引（誰でも読む）はそちらを指す */
+    const home =
+      courseSections.find((s) => !s.membersOnly && s.terms.includes(term.word)) ??
+      courseSections.find((s) => s.terms.includes(term.word)) ??
+      firstOfChapter.get(term.chapter) ??
+      null;
     if (!home) {
       searchNotes.push(`用語「${term.word}」: 行き先の節がありません（初出の章 ${term.chapter} がまだ無い）`);
       continue;
     }
     const example = exampleFrom(home.tryRuns);
-    if (!example) searchNotes.push(`用語「${term.word}」: ${home.href} に「やってみる」の <Run> が無く、使い方の例を作れません`);
+    if (!example && !home.membersOnly) searchNotes.push(`用語「${term.word}」: ${home.href} に「やってみる」の <Run> が無く、使い方の例を作れません`);
     searchEntries.push({
       kind: '用語',
       word: term.word,
@@ -610,7 +628,7 @@ const searchNotes = [];
     }
     /* 例は、その書き方が入っている <Run> だけ。無ければ例を出さない（`==` の札に、`==` の無いコードを見せない） */
     const example = matchedExample;
-    if (!example) searchNotes.push(`書き方「${tool.name}」: ${home.href} の「やってみる」の <Run> にこの書き方が無く、使い方の例を出しません`);
+    if (!example && !home.membersOnly) searchNotes.push(`書き方「${tool.name}」: ${home.href} の「やってみる」の <Run> にこの書き方が無く、使い方の例を出しません`);
     searchEntries.push({
       kind: '書き方',
       word: tool.name,
@@ -623,8 +641,9 @@ const searchNotes = [];
     });
   }
 
-  // --- 節 ---
+  // --- 節 ---（メンバーだけの章の節は入れない。題を誰でも読めるファイルに書かないため）
   for (const s of courseSections) {
+    if (s.membersOnly) continue;
     searchEntries.push({
       kind: '節',
       word: s.title,
@@ -645,7 +664,7 @@ searchEntries.forEach((e, i) => {
 });
 
 mkdirSync(OUT_DIR, { recursive: true });
-writeFileSync(OUT_FILE, `${JSON.stringify({ lessons, weekly, practice }, null, 2)}\n`, 'utf8');
+writeFileSync(OUT_FILE, `${JSON.stringify({ lessons, weekly, practice, guesses }, null, 2)}\n`, 'utf8');
 writeFileSync(SECTION_REFS_FILE, `${JSON.stringify(buildSectionRefs(LESSONS_DIR), null, 2)}\n`, 'utf8');
 writeFileSync(SEARCH_INDEX_FILE, `${JSON.stringify({ entries: searchEntries }, null, 2)}\n`, 'utf8');
 if (searchNotes.length > 0) {
