@@ -1,0 +1,200 @@
+---
+/**
+ * プロジェクトの教材（design/spec/53-ml-intro.md 第8節）。`/learn/project/`。
+ *
+ * メンバーだけの章（scripts/parts.mjs の PROJECT_PARTS。いまはタイタニック演習だけ）を、部ごとに
+ * 節の一覧で並べる。学習の一覧（/learn/）には出さない。
+ *
+ * **メンバーだけ**（第13.2節と同じ）: サーバで判じ、メンバーでない人には1段落だけを返して中身を1文字も
+ * 送らない。準備中の章（chapter_status に行が無い章）は、メンバーには「準備中」の札と題だけ
+ * （リンクにしない）、運営・管理者には札とリンクを出す（学習の一覧の第20.1節と同じ）。
+ * 見た目は学習の一覧（src/pages/learn/index.astro）の部の段・節の行と同じ。
+ */
+export const prerender = false;
+
+import { getCollection } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import { currentUser, serverConfig } from '../../server/auth';
+import { isMember } from '../../server/member';
+import { publicChapters } from '../../server/lessons-publish';
+import { PROJECT_PARTS, lessonHref } from '../../lesson/chapters';
+// @ts-expect-error 節の呼び方は .mjs 側に1つだけ置く（src/pages/learn/index.astro と同じ）
+import { sectionLabel } from '../../../scripts/section-refs.mjs';
+
+const config = serverConfig();
+const me = config ? await currentUser(Astro.request) : null;
+const member = me !== null && isMember(me);
+const isStaff = me !== null && (me.role === 'staff' || me.role === 'admin');
+
+Astro.response.headers.set('cache-control', 'no-store');
+
+const publicSet = member && config ? await publicChapters(config.db) : new Set<string>();
+const lessons = member ? (await getCollection('lessons')).sort((a, b) => a.id.localeCompare(b.id)) : [];
+
+const parts = PROJECT_PARTS.map((part) => {
+  const soon = part.chapters.some((chapter) => !publicSet.has(chapter));
+  const sections = part.chapters.flatMap((chapter) =>
+    lessons
+      .filter((l) => l.data.chapter === chapter)
+      .map((l, i) => ({
+        label: sectionLabel(chapter, i),
+        title: l.data.title,
+        minutes: l.data.minutes,
+        // 準備中の章は、運営・管理者にだけリンクにする
+        href: publicSet.has(chapter) || isStaff ? lessonHref(l.id) : null,
+      })),
+  );
+  return { name: part.name, soon, sections };
+});
+---
+
+<Base title="プロジェクトの教材">
+  {
+    !member ? (
+      <p class="member-deny">
+        このページはプロジェクトのメンバー向けです。<a href="/learn/">教材の一覧へ</a>
+      </p>
+    ) : (
+      <section class="learn">
+        <p class="pj-back">
+          <a href="/learn/">← 学習の一覧へ</a>
+        </p>
+        <h1 class="page-title">プロジェクトの教材</h1>
+        <p class="lead">集まりでみんなで取り組む、プロジェクトのメンバー向けの教材です。</p>
+
+        <div class="lp-parts">
+          {parts.map((part) => (
+            <section class="lp-part">
+              <h2 class="lp-part__head">
+                <span aria-hidden="true" />
+                <span class="lp-part__name">
+                  {part.name}
+                  <small>{part.sections.length}節</small>
+                </span>
+                {part.soon && <span class="lp-soon">準備中</span>}
+              </h2>
+              <div class="lp-part__body">
+                <ol class="lp-secs">
+                  {part.sections.map((s) => (
+                    <li>
+                      {s.href ? (
+                        <a href={s.href}>
+                          {s.label} {s.title}
+                        </a>
+                      ) : (
+                        <span class="lp-secs__locked">
+                          {s.label} {s.title}
+                        </span>
+                      )}
+                      <span class="lp-secs__min">{s.minutes}分</span>
+                    </li>
+                  ))}
+                </ol>
+              </div>
+            </section>
+          ))}
+        </div>
+      </section>
+    )
+  }
+</Base>
+
+<style>
+  /* メンバーでない人への1段落（src/styles/member.css の .member-deny と同じ） */
+  .member-deny {
+    margin: 0;
+    font-size: 15px;
+  }
+  /* 戻るリンク（今週のページの .wkp-back と同じ） */
+  .pj-back {
+    margin: 0 0 10px;
+    font-size: 13px;
+  }
+  .pj-back a {
+    color: var(--color-ink-2);
+    text-underline-offset: 3px;
+  }
+  .pj-back a:hover {
+    color: var(--l-shu);
+  }
+
+  /* ここから下は学習の一覧（src/pages/learn/index.astro）の部の段・節の行と同じ。
+     部の段は開け閉めしないので、準備中の部の段（.lp-part--soon）と同じく押せる見た目にしない */
+  .lead {
+    margin: 20px 0 28px;
+    max-width: 70ch;
+  }
+  .lp-parts {
+    margin-top: 4px;
+  }
+  .lp-part {
+    border-top: 1.5px solid var(--color-line);
+  }
+  .lp-part:last-child {
+    border-bottom: 1.5px solid var(--color-line);
+  }
+  .lp-part__head {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1.2em minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 10px;
+    margin: 0;
+    padding: 12px 6px;
+  }
+  .lp-part__name {
+    font-family: var(--font-head);
+    font-weight: 900;
+    font-size: 18px;
+  }
+  .lp-part__name small {
+    font-family: var(--font-body);
+    font-weight: 400;
+    font-size: 13px;
+    color: var(--color-ink-2);
+    margin-left: 10px;
+  }
+  .lp-soon {
+    font-size: 12px;
+    font-weight: 400;
+    color: var(--color-ink-2);
+    border: 1px solid var(--l-rule);
+    border-radius: 3px;
+    padding: 0 6px;
+    white-space: nowrap;
+  }
+  .lp-part__body {
+    padding: 0 6px 12px 28px;
+  }
+  .lp-secs {
+    list-style: none;
+    margin: 0 0 8px;
+    padding: 0;
+    font-size: 14px;
+  }
+  .lp-secs li {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 6px;
+    padding: 3px 0;
+  }
+  .lp-secs a {
+    color: var(--color-ink);
+    text-underline-offset: 3px;
+  }
+  .lp-secs__locked {
+    color: var(--color-ink-2);
+  }
+  .lp-secs__min {
+    font-size: 12px;
+    color: var(--color-ink-2);
+    white-space: nowrap;
+  }
+
+  @media (max-width: 640px) {
+    .lp-part__name small {
+      display: block;
+      margin-left: 0;
+    }
+  }
+</style>

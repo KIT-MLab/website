@@ -9,11 +9,15 @@
  */
 import { getCollection } from 'astro:content';
 import Base from '../../layouts/Base.astro';
-import { PARTS, chapterTitle, isIntroChapter, isMembersOnlyChapter, lessonHref, practiceSectionLabel } from '../../lesson/chapters';
+import { PARTS, chapterTitle, isMembersOnlyChapter, lessonHref, practiceSectionLabel } from '../../lesson/chapters';
 import { sectionLabel } from '../../../scripts/section-refs.mjs';
 import generated from '../../generated/lesson-data.json';
 
-const lessons = (await getCollection('lessons')).sort((a, b) => a.id.localeCompare(b.id));
+/* メンバーだけの章（タイタニック演習など。design/spec/53-ml-intro.md 第8節）は、このページ（事前生成）に
+   題を1つも書かない。メンバーにはプロジェクトの教材（/learn/project/）に並べる */
+const lessons = (await getCollection('lessons', (l) => !isMembersOnlyChapter(l.data.chapter))).sort((a, b) =>
+  a.id.localeCompare(b.id),
+);
 const genLessons = (generated as { lessons: Record<string, { exerciseIds: string[] }> }).lessons;
 
 type SectionView = {
@@ -47,8 +51,7 @@ const sections: SectionView[] = lessons.map((l) => {
     title: l.data.title,
     minutes: l.data.minutes,
     exerciseIds: genLessons[l.data.id]?.exerciseIds ?? [],
-    // 表示は「1. 題」の形（リストの数字）。練習編は「練習1-2」（20-platform.md 第15.4節のまま）、
-    // 機械学習の入口は「入口2」（design/spec/53-ml-intro.md）
+    // 表示は「1. 題」の形（リストの数字）。練習編は「練習1-2」（20-platform.md 第15.4節のまま）
     numberLabel: practiceNumber ?? `${idx + 1}.`,
   };
 });
@@ -57,14 +60,12 @@ type ChapterView = {
   chapter: string;
   title: string;
   isPractice: boolean;
-  /** 機械学習の入口（章の番号を持たない。isPractice と同じく節を「入口2」と呼ぶ） */
-  isIntro: boolean;
   total: number;
   sections: SectionView[];
 };
 
 type PartView =
-  | { kind: 'written'; name: string; chapters: ChapterView[]; total: number; totalChapters: number; sectionCount: number }
+  | { kind: 'written'; name: string; chapters: ChapterView[]; total: number; totalChapters: number }
   | { kind: 'soon'; name: string; count: number };
 
 const partViews: PartView[] = PARTS.map((part) => {
@@ -75,39 +76,34 @@ const partViews: PartView[] = PARTS.map((part) => {
       chapter,
       title: chapterTitle(chapter),
       isPractice: practiceSectionLabel(chapter, 1) !== null,
-      isIntro: isIntroChapter(chapter),
       total: chSections.reduce((n, s) => n + s.exerciseIds.length, 0),
       sections: chSections,
     };
   });
   // totalChapters が無ければ、書けている章だけで全部（chapters.filter の数と同じ）
   const writtenChapterCount = chapters.filter((c) => !c.isPractice).length;
-  // 機械学習の入口の部は章の番号を持たないので、章の数ではなく節の数を添える
-  const sectionCount = chapters.reduce((n, c) => n + c.sections.length, 0);
   return {
     kind: 'written',
     name: part.name,
     chapters,
     total: chapters.reduce((n, c) => n + c.total, 0),
     totalChapters: part.totalChapters ?? writtenChapterCount,
-    sectionCount,
   };
 });
 
 // SSR の既定は「まだ何も進めていない」姿（第17.1節）: 第0部・第0章だけ開き、最初の節を「次」にする
 const firstWrittenPartIndex = partViews.findIndex((p) => p.kind === 'written');
 const first = sections[0];
-
-/* メンバーだけの章（機械学習の入口。design/spec/53-ml-intro.md 第6節）の節は、このページ（事前生成）に
-   題を1つも書かない。部の段は隠して置き、メンバーにだけ src/lesson/learn-list.ts が
-   /api/lessons/status の membersSections から節の行を組んで出す */
-const membersOnlyPart = (part: PartView) => part.kind === 'written' && part.chapters.every((c) => isMembersOnlyChapter(c.chapter));
-const dataJson = JSON.stringify(sections.filter((s) => !isMembersOnlyChapter(s.chapter))).replace(/</g, '\\u003c');
+const dataJson = JSON.stringify(sections).replace(/</g, '\\u003c');
 ---
 
 <Base title="学習">
-  {/* メンバーの画面への入口（20-platform.md 第13.2節）。メンバーにだけ、下の script が出す */}
-  <p class="member-band" hidden><a href="/learn/home/">マイページへ →</a></p>
+  {/* メンバーの画面への入口（20-platform.md 第13.2節）と、プロジェクトの教材（design/spec/53-ml-intro.md 第8節）。
+      メンバーにだけ、下の script が出す */}
+  <p class="member-band" hidden>
+    <a href="/learn/home/">マイページへ →</a>
+    <a href="/learn/project/">プロジェクトの教材へ →</a>
+  </p>
   <h1 class="page-title">学習</h1>
   <section class="learn">
     <p class="lead">
@@ -172,8 +168,6 @@ const dataJson = JSON.stringify(sections.filter((s) => !isMembersOnlyChapter(s.c
               class="lp-part"
               data-part={pi}
               open={pi === firstWrittenPartIndex}
-              hidden={membersOnlyPart(part)}
-              data-members-part={membersOnlyPart(part) ? '' : undefined}
             >
               <summary class="lp-part__head">
                 <span class="lp-part__tw" aria-hidden="true">
@@ -181,9 +175,9 @@ const dataJson = JSON.stringify(sections.filter((s) => !isMembersOnlyChapter(s.c
                 </span>
                 <span class="lp-part__name">
                   {part.name}
-                  <small>{part.chapters.every((c) => c.isIntro) ? `${part.sectionCount}節` : `${part.totalChapters}章${
+                  <small>{part.totalChapters}章{
                     part.chapters.some((c) => c.isPractice) ? `・練習編${part.chapters.filter((c) => c.isPractice).length}` : ''
-                  }`}</small>
+                  }</small>
                 </span>
                 <span class="lp-meter" data-meter-part={pi}>
                   <span class="lp-meter__track">
@@ -209,11 +203,8 @@ const dataJson = JSON.stringify(sections.filter((s) => !isMembersOnlyChapter(s.c
                         <span class="lp-meter__cnt">0/{ch.total}問</span>
                       </span>
                     </summary>
-                    <ol
-                      class={ch.isPractice ? 'lp-secs is-practice' : 'lp-secs'}
-                      data-members-chapter={isMembersOnlyChapter(ch.chapter) ? ch.chapter : undefined}
-                    >
-                      {(isMembersOnlyChapter(ch.chapter) ? [] : ch.sections).map((s, si) => (
+                    <ol class={ch.isPractice ? 'lp-secs is-practice' : 'lp-secs'}>
+                      {ch.sections.map((s, si) => (
                         <li data-lesson-id={s.lessonId} class={pi === 0 && ci === 0 && si === 0 ? 'is-next' : ''}>
                           <span class="lp-secs__st" data-state>
                             {pi === 0 && ci === 0 && si === 0 ? '次' : '未'}
@@ -292,6 +283,9 @@ const dataJson = JSON.stringify(sections.filter((s) => !isMembersOnlyChapter(s.c
     color: var(--color-ink);
     font-weight: 700;
     text-underline-offset: 4px;
+  }
+  .member-band a + a {
+    margin-left: 1.5em;
   }
   .lead {
     margin: 20px 0 28px;

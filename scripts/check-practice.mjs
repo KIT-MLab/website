@@ -12,7 +12,7 @@
  *   - 組む問題は問題文・入力・出力の形（第23章。規則は scripts/problem-form.mjs）
  *   - 判定の数と境界（検査5 と同じ。入力欄を使わない問題は判定が1組でよい）
  *   - 文の長さ・段落の文数・禁止表現・抽象語・感嘆符（検査6・7・9・10・11 と同じ規則）
- *   - 節への参照「第N章M節」「入口N」の行き先（検査20 と同じ規則）
+ *   - 節への参照「第N章M節」「タイタニックN」の行き先（検査20 と同じ規則）
  *   - 書き方の台帳（検査16 の読み替え）: **その話題の章までに教えた書き方だけ**を使うこと
  *   - 用語集（検査18 の読み替え）: その話題の章までに出てきた語だけを地の文で使うこと
  *   - syntax（構文の一覧の分類の key）が src/lesson/syntax-list.ts にあること
@@ -274,8 +274,8 @@ for (const file of files) {
       for (const m of text.matchAll(/第(\d+)章(\d+)節/g)) {
         if (!SECTION_REFS[`${Number(m[1])}-${Number(m[2])}`]) add(rel, 20, line, `${where}: 「第${Number(m[1])}章${Number(m[2])}節」に行き先の節がありません`);
       }
-      for (const m of text.matchAll(/入口(\d+)/g)) {
-        if (!SECTION_REFS[`入口${Number(m[1])}`]) add(rel, 20, line, `${where}: 「入口${Number(m[1])}」に行き先の節がありません`);
+      for (const m of text.matchAll(/タイタニック(\d+)/g)) {
+        if (!SECTION_REFS[`タイタニック${Number(m[1])}`]) add(rel, 20, line, `${where}: 「タイタニック${Number(m[1])}」に行き先の節がありません`);
       }
     }
   }

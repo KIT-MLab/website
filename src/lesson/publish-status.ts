@@ -6,29 +6,17 @@
  * どの章が準備中かは `/api/lessons/status` を読んで初めて分かる。1ページに何回呼ばれても
  * 通信は1回で済むよう、答えをここで覚えておく。
  *
- * メンバーかどうか（`member`）と、メンバーだけの章の節の一覧（`membersSections`）も同じ口から
- * 来る（design/spec/53-ml-intro.md 第7節）。右上からログイン・ログアウトしてメンバーかどうかや
- * 運営かどうかが変わったら、覚えた答えを捨てて読み直す（下の kit:account）。
+ * メンバーかどうか（`member`）も同じ口から来る（design/spec/53-ml-intro.md 第7節）。右上から
+ * ログイン・ログアウトしてメンバーかどうかや運営かどうかが変わったら、覚えた答えを捨てて読み直す（下の kit:account）。
  */
-
-export type MembersSection = {
-  href: string;
-  lessonId: string;
-  chapter: string;
-  label: string;
-  title: string;
-  minutes: number;
-  exerciseIds: string[];
-};
 
 export type PublishStatus = {
   publicChapters: Set<string>;
   staff: boolean;
   member: boolean;
-  membersSections: MembersSection[];
 };
 
-const EMPTY: PublishStatus = { publicChapters: new Set(), staff: false, member: false, membersSections: [] };
+const EMPTY: PublishStatus = { publicChapters: new Set(), staff: false, member: false };
 
 let cached: Promise<PublishStatus> | null = null;
 let settled: PublishStatus | null = null;
@@ -37,12 +25,11 @@ async function load(): Promise<PublishStatus> {
   try {
     const res = await fetch('/api/lessons/status');
     if (!res.ok) return EMPTY;
-    const data = (await res.json()) as { public?: string[]; staff?: boolean; member?: boolean; membersSections?: MembersSection[] };
+    const data = (await res.json()) as { public?: string[]; staff?: boolean; member?: boolean };
     return {
       publicChapters: new Set(data.public ?? []),
       staff: data.staff === true,
       member: data.member === true,
-      membersSections: Array.isArray(data.membersSections) ? data.membersSections : [],
     };
   } catch {
     return EMPTY;

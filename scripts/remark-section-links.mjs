@@ -17,7 +17,7 @@ import { SECTION_REF_RE, buildSectionRefs, sectionHref, sectionRefKey } from './
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const LESSONS_DIR = join(ROOT, 'src', 'content', 'lessons');
 
-// 「第N章M節」と、機械学習の入口の「入口2」（section-refs.mjs）
+// 「第N章M節」と、タイタニック演習の「タイタニック2」（section-refs.mjs）
 const SECTION_RE = SECTION_REF_RE;
 const SKIP_PARENTS = new Set(['link', 'linkReference', 'inlineCode', 'code']);
 

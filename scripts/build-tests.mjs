@@ -141,7 +141,7 @@ for (const file of files) {
     chapterCounts.set(chapter, indexInChapter + 1);
     const entryId = rel.replace(/^src\/content\/lessons\//, '').replace(/\.mdx$/, '');
     /* メンバーだけの章（design/spec/53-ml-intro.md 第6節）。検索の索引は誰でも読む静的なファイルなので、
-       節の題と「やってみる」のコードを入れない（用語の札の行き先には「入口1」とだけ出る） */
+       節の題と「やってみる」のコードを入れない（用語の札の行き先には「タイタニック1」とだけ出る） */
     const membersOnly = MEMBERS_ONLY_CHAPTERS.includes(chapter);
     courseSections.push({
       order: courseSections.length,
@@ -571,7 +571,7 @@ const searchNotes = [];
 
   // --- 用語（design/spec/glossary.md） ---
   for (const term of glossary) {
-    /* 行き先は、誰でも開ける節を先に探す。メンバーだけの章（機械学習の入口）で初めて出る語
+    /* 行き先は、誰でも開ける節を先に探す。メンバーだけの章（タイタニック演習）で初めて出る語
        （正解率・訓練データなど）も第15章で改めて扱うので、索引（誰でも読む）はそちらを指す */
     const home =
       courseSections.find((s) => !s.membersOnly && s.terms.includes(term.word)) ??

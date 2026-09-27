@@ -150,7 +150,7 @@ npx wrangler d1 migrations apply mlab-course --remote
 ### 5.5 みんなの予想ボードのテーブルを作る（2026-09-27 追加）
 
 `migrations/0010_guess.sql`（`guesses` と `guess_reveals`。`53-ml-intro.md` 第7節）。第3.1節と同じ1行で本番にあてる。
-**push する前に**あてること（先に push すると、機械学習の入口の節の予想ボードが「読み込んでいます…」のまま動かない）。
+**push する前に**あてること（先に push すると、タイタニック演習の節の予想ボードが「読み込んでいます…」のまま動かない）。
 
 ```
 npx wrangler d1 migrations apply mlab-course --remote

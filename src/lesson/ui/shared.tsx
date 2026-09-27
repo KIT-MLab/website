@@ -38,7 +38,7 @@ export function LoadBar() {
 }
 
 /**
- * 「入口2」（メンバーだけの章。design/spec/53-ml-intro.md 第7節）をリンクにしてよいページか。
+ * 「タイタニック2」（メンバーだけの章。design/spec/53-ml-intro.md 第7節）をリンクにしてよいページか。
  * この部品はだれが見ているかを知らないので、メンバーでない人が開けないページ（メンバーだけの章の節と
  * 今週の演習）にいるときだけリンクにする。ほかのページでは文字だけにする。ヒントは押してから出るので、
  * サーバで組むときにここを通ることは無い
@@ -50,14 +50,14 @@ function membersPage(): boolean {
 }
 
 /**
- * `…` と、節への参照「第N章M節」（機械学習の入口は「入口2」）だけを組む、ごく小さな記法の表示。
+ * `…` と、節への参照「第N章M節」（タイタニック演習は「タイタニック2」）だけを組む、ごく小さな記法の表示。
  *
  * リンクにするのは src/generated/section-refs.json（scripts/build-tests.mjs が書き出す）に
  * 行き先がある形だけ（20-platform.md 第15.2節）。無ければ文字のまま出す。同じタブで開く。
  * 本文（MDX）側の同じ変換は scripts/remark-section-links.mjs が受け持つ。
  * 同じ形を scripts/check-lessons.mjs（検査20）が見て、リンク先の節が実在することを確かめる。
  */
-const INLINE_RE = /`([^`]*)`|第(\d+)章(\d+)節|入口(\d+)/g;
+const INLINE_RE = /`([^`]*)`|第(\d+)章(\d+)節|タイタニック(\d+)/g;
 
 export function Inline({ text }: { text: string }) {
   const parts: ReactNode[] = [];
@@ -68,7 +68,7 @@ export function Inline({ text }: { text: string }) {
     if (m[1] !== undefined) {
       parts.push(<code key={parts.length}>{m[1]}</code>);
     } else {
-      const entry = m[4] !== undefined && !membersPage() ? undefined : SECTION_REFS[m[4] !== undefined ? `入口${Number(m[4])}` : `${Number(m[2])}-${Number(m[3])}`];
+      const entry = m[4] !== undefined && !membersPage() ? undefined : SECTION_REFS[m[4] !== undefined ? `タイタニック${Number(m[4])}` : `${Number(m[2])}-${Number(m[3])}`];
       parts.push(
         entry ? (
           <a key={parts.length} className="kit-lessonlink" href={lessonHref(entry)}>

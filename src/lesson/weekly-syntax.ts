@@ -64,8 +64,8 @@ export async function syntaxCategoriesFor(chapters: string[]): Promise<SyntaxCat
       // 台帳（このファイル）が節の id を書き違えていたら、その行だけ静かに落とす
       // （無い節にリンクを張るより安全側。check-lessons.mjs 的な機械検査はここには無い）
       if (!info) continue;
-      // メンバーだけの章（機械学習の入口）の節は、誰でも見る練習問題集にも出るので行き先にしない。
-      // 入口は復習した書き方だけを使う決まり（53-ml-intro.md 第3節）なので、ここで初めて教える書き方は無い
+      // メンバーだけの章（タイタニック演習）の節は、誰でも見る練習問題集にも出るので行き先にしない。
+      // タイタニック演習は復習した書き方だけを使う決まり（53-ml-intro.md 第3節）なので、ここで初めて教える書き方は無い
       if (isMembersOnlyChapter(info.chapter)) continue;
       const chIdx = order.indexOf(info.chapter);
       if (chIdx === -1 || chIdx > maxIdx) continue;

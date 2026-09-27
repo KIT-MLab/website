@@ -38,7 +38,7 @@ const viewer = config ? await currentUser(Astro.request) : null;
 const isStaff = viewer !== null && (viewer.role === 'staff' || viewer.role === 'admin');
 const chapterPublic = entry && config ? await isChapterPublic(config.db, entry.data.chapter) : false;
 const canSee = entry !== undefined && (chapterPublic || isStaff);
-// 本文の「入口2」（メンバーだけの章へのリンク）は、メンバーでない人には文字だけにする（53-ml-intro.md 第7節）
+// 本文の「タイタニック2」（メンバーだけの章へのリンク）は、メンバーでない人には文字だけにする（53-ml-intro.md 第7節）
 const member = viewer !== null && isMember(viewer);
 
 if (!entry) Astro.response.status = 404;

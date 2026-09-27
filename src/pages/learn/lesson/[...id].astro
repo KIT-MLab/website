@@ -55,7 +55,7 @@ const viewer = config ? await currentUser(Astro.request) : null;
 const isStaff = viewer !== null && (viewer.role === 'staff' || viewer.role === 'admin');
 
 const chapterPublic = entry && config ? await isChapterPublic(config.db, entry.data.chapter) : false;
-/* メンバーだけの章（機械学習の入口。53-ml-intro.md 第6節）。メンバーでない人には、公開していても
+/* メンバーだけの章（タイタニック演習。53-ml-intro.md 第6節）。メンバーでない人には、公開していても
    「このページはプロジェクトのメンバー向けです。」の1段落だけを返す（第13.2節と同じ） */
 const member = viewer !== null && isMember(viewer);
 const membersOnly = entry ? isMembersOnlyChapter(entry.data.chapter) : false;
@@ -85,16 +85,23 @@ const prev = canSee && at > 0 ? siblings[at - 1] : null;
 const next = canSee && entry && at < siblings.length - 1 ? siblings[at + 1] : null;
 
 /* 章の最後の節では、次の章の最初の節へ進めるようにする（利用者「章の最後の節を下まで
-   スクロールすると行き先がどこにもない」）。次の章が準備中で運営でなければ、学習の一覧へ戻す */
+   スクロールすると行き先がどこにもない」）。次の章が準備中で運営でなければ、学習の一覧へ戻す。
+   メンバーだけの章（プロジェクトの教材の部。53-ml-intro.md 第8節）は章から章への流れに入れない。
+   ほかの章からは飛ばして次の章へ進み、メンバーだけの章の最後の節からはプロジェクトの教材へ戻す */
 const lastSibling = siblings[siblings.length - 1];
 const nextChapterFirst =
-  canSee && entry && !next && lastSibling
-    ? (lessons.find((l) => l.id.localeCompare(lastSibling.id) > 0 && l.data.chapter !== entry.data.chapter) ?? null)
+  canSee && entry && !next && lastSibling && !membersOnly
+    ? (lessons.find(
+        (l) =>
+          l.id.localeCompare(lastSibling.id) > 0 && l.data.chapter !== entry.data.chapter && !isMembersOnlyChapter(l.data.chapter),
+      ) ?? null)
     : null;
 const nextChapterOpen =
   nextChapterFirst !== null &&
-  (member || !isMembersOnlyChapter(nextChapterFirst.data.chapter)) &&
   (isStaff || (config ? await isChapterPublic(config.db, nextChapterFirst.data.chapter) : false));
+/* 戻る先。メンバーだけの章はプロジェクトの教材に並んでいるので、そちらへ戻す */
+const backHref = membersOnly ? '/learn/project/' : '/learn/';
+const backLabel = membersOnly ? 'プロジェクトの教材へ' : '学習の一覧へ';
 
 /* 第0章は課題を1問ずつ出す（20-platform.md 第11.7節）。
    目印を1つ置くだけで、本文の書き方は変えない。第1章以降は属性が付かないので
@@ -105,7 +112,7 @@ const oneAtATime = entry?.data.chapter === '00-start' ? '' : undefined;
    章の番号と節の番号（◯.◯）は付けない。ほかの章では null で、見え方は変わらない */
 const practiceLabel = (n: number) => (entry ? practiceSectionLabel(entry.data.chapter, n) : null);
 const isPractice = practiceLabel(1) !== null;
-/* 機械学習の入口（design/spec/53-ml-intro.md）。節は「入口1」と呼ぶ。練習編と同じく章の番号を付けない */
+/* タイタニック演習（design/spec/53-ml-intro.md）。節は「タイタニック1」と呼ぶ。練習編と同じく章の番号を付けない */
 const isIntro = entry ? isIntroChapter(entry.data.chapter) : false;
 const unitWord = isIntro ? 'この部' : 'この練習編';
 
@@ -144,7 +151,7 @@ const notes = isStaff && entry && config ? await notesForLesson(config.db, entry
       </p>
     ) : !canSee ? (
       <p class="lesson-notice">
-        この章は準備中です。<a href="/learn/">学習の一覧へ</a>
+        この章は準備中です。<a href={backHref}>{backLabel}</a>
       </p>
     ) : (
       <div class="lesson-page">
@@ -193,7 +200,7 @@ const notes = isStaff && entry && config ? await notesForLesson(config.db, entry
             ) : nextChapterFirst && nextChapterOpen ? (
               <a href={lessonHref(nextChapterFirst.id)}>次の章へ　{chapterTitle(nextChapterFirst.data.chapter)} →</a>
             ) : (
-              <a href="/learn/">学習の一覧へ →</a>
+              <a href={backHref}>{backLabel} →</a>
             )}
           </nav>
         </article>

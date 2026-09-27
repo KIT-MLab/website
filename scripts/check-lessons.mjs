@@ -5,7 +5,7 @@
  * 機械判定できる項目（20-platform.md 第2.4節。検査19までがそこにある）を検査する。
  * 1つでも落ちたら終了コード1を返す。この検査はビルドの前に走り、失敗したらビルドを止める。
  *
- * 検査20（節への参照が「第N章M節」（機械学習の入口は「入口2」）の形で行き先が実在すること）は20-platform.md 第15.2節、
+ * 検査20（節への参照が「第N章M節」（タイタニック演習は「タイタニック2」）の形で行き先が実在すること）は20-platform.md 第15.2節、
  * 検査21（章のディレクトリがどれかの部に属していること）は同 第17.1節で足した。
  * 検査22（組む問題の問題文・入力・出力の形）は同 第23.2節で足した。新しい形で書いた問題だけを見る。
  * 検査23（みんなの予想ボード <Guess> の置き場所と props）は design/spec/53-ml-intro.md 第7節で足した。
@@ -557,10 +557,10 @@ for (const file of files) {
           add(20, line, `${where}: 「第${Number(m[1])}章${Number(m[2])}節」に行き先の節がありません`);
         }
       }
-      // 機械学習の入口の節は「入口2」と書く（章の番号を持たないため。scripts/section-refs.mjs）
-      for (const m of text.matchAll(/入口(\d+)/g)) {
-        if (!SECTION_REFS[`入口${Number(m[1])}`]) {
-          add(20, line, `${where}: 「入口${Number(m[1])}」に行き先の節がありません`);
+      // タイタニック演習の節は「タイタニック2」と書く（章の番号を持たないため。scripts/section-refs.mjs）
+      for (const m of text.matchAll(/タイタニック(\d+)/g)) {
+        if (!SECTION_REFS[`タイタニック${Number(m[1])}`]) {
+          add(20, line, `${where}: 「タイタニック${Number(m[1])}」に行き先の節がありません`);
         }
       }
       for (const m of text.matchAll(/(?<!!)\[([^\]\n]+)\]\(([^)\n]*)\)/g)) {

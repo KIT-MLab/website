@@ -4,7 +4,7 @@
 決定そのものは `DECISIONS.md`、書き方の規約は `spec/10-lesson-and-writing.md`、
 仕組みは `spec/20-platform.md`、課程表は `spec/30-python-curriculum.md`。
 
-最終更新: 2026-09-25
+最終更新: 2026-09-27
 
 ---
 
@@ -15,6 +15,9 @@
 **章ごとに公開・準備中がある（`spec/20-platform.md` 第20章）。** 最初は全部準備中で、利用者が全部の課題を自分で解いて確かめてから `/staff/lessons/` で公開する。確かめながら書いたメモ（節ごと・今週の演習ごと・教材全体）は同じ画面に並ぶ。**Claude はそのメモを利用者から受け取って教材に反映する。** 本番のデータベースは利用者が触る（Claude からの `--remote` は断られる）。
 
 **今週の演習（第19章）。** 集まりの日に運営が画面から公開する問題の回。`src/content/weekly/<日付>.mdx`、模範解答は `src/content/weekly/solutions/`、検査は `npm run check:weekly`。1回目は 2026-09-29（第0〜1章、4問）。
+
+**タイタニック演習（メンバーだけ）。** 集まりの後半にみんなでやる Titanic の4節（`08q-mlintro`。節は「タイタニック1〜4」。フォルダ名と id は旧名「機械学習の入口」のころのまま）。学習の一覧には出さず、メンバーだけのページ「プロジェクトの教材」（`/learn/project/`）に並べる。仕組みと決まりは `spec/53-ml-intro.md`。
+
 `main` に push すると自動で本番に出る（https://website.kit-machine-learning.workers.dev ）。
 
 | 章 | 中身 | 節 |
