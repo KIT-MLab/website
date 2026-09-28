@@ -37,6 +37,8 @@ import Compare from '../../../components/lesson/Compare.astro';
 import Guess from '../../../components/lesson/Guess.astro';
 import RuleBoard from '../../../components/lesson/RuleBoard.astro';
 import PlainMembersLink from '../../../components/lesson/PlainMembersLink.astro';
+import Slides from '../../../components/lesson/Slides.astro';
+import { deckById } from '../../../lesson/slides/decks.mjs';
 import { chapterTitle, isIntroChapter, isMembersOnlyChapter, lessonHref, practiceSectionLabel } from '../../../lesson/chapters';
 import { currentUser, serverConfig } from '../../../server/auth';
 import { isMember } from '../../../server/member';
@@ -121,6 +123,11 @@ const unitWord = isIntro ? 'この部' : 'この練習編';
    それ以外の人には中身を描かない部品を渡すので、HTML に1文字も入らない（第13.2節と同じ） */
 const FacilitateFor = isStaff ? Facilitate : FacilitateHidden;
 
+/* スライド（53-ml-intro.md 第10節）。frontmatter の slides で付く。メンバーだけの章の節で、見てよい人
+   （メンバー・運営）にだけ描く。広い画面では右の欄、狭い画面では本文の上の段に出る（src/lesson/slides.ts） */
+const deckId = canSee && membersOnly && entry?.data.slides ? entry.data.slides : null;
+const deck = deckId ? deckById(deckId) : null;
+
 // 気づいたことのメモ（第20.3節）。運営にだけ問い合わせ、運営にだけ埋め込む
 const notes = isStaff && entry && config ? await notesForLesson(config.db, entry.data.id) : [];
 ---
@@ -190,6 +197,12 @@ const notes = isStaff && entry && config ? await notesForLesson(config.db, entry
               : `この章の ${at + 1} / ${siblings.length} 節`} ・ 目安 {entry.data.minutes} 分
           </p>
         </div>
+
+        {deckId && deck && (
+          <div class="kit-slides-band" id="kit-slides-band">
+            <Slides deckId={deckId} deck={deck} staff={isStaff} />
+          </div>
+        )}
 
         <article class="lesson-body" data-exq={oneAtATime}>
           <Content components={{ Run, Exercise, Input, Output, Level0, Keys, Figure, Secant, Descent, FitLine, Boundary, Overfit, Facilitate: FacilitateFor, Guess, RuleBoard, SectionSyntax, Compare,...(member ? {} : { a: PlainMembersLink }) }} />

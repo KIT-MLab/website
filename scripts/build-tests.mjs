@@ -128,6 +128,9 @@ const guesses = {};
 /* 規則の正解率ランキング（<RuleBoard>。design/spec/53-ml-intro.md 第9節）。id → どの節か。
    サーバ（src/server/rule-board.ts）が、この表に無い id を断るのと、章の公開を見るのに使う。`guesses` と同じく最上位に書く */
 const ruleBoards = {};
+/* スライド（frontmatter の slides。design/spec/53-ml-intro.md 第10節）。名前 → どの節か。
+   サーバ（src/server/slides.ts）が、この表に無い名前を断るのと、章の公開を見るのに使う。`guesses` と同じく最上位に書く */
+const slideDecks = {};
 
 for (const file of files) {
   const rel = relative(ROOT, file).replace(/\\/g, '/');
@@ -163,6 +166,9 @@ for (const file of files) {
     }
     for (const b of lesson.ruleBoards) {
       ruleBoards[b.id] = { lessonId, chapter };
+    }
+    if (typeof lesson.data.slides === 'string') {
+      slideDecks[lesson.data.slides] = { lessonId, chapter };
     }
   }
 
@@ -670,7 +676,7 @@ searchEntries.forEach((e, i) => {
 });
 
 mkdirSync(OUT_DIR, { recursive: true });
-writeFileSync(OUT_FILE, `${JSON.stringify({ lessons, weekly, practice, guesses, ruleBoards }, null, 2)}\n`, 'utf8');
+writeFileSync(OUT_FILE, `${JSON.stringify({ lessons, weekly, practice, guesses, ruleBoards, slideDecks }, null, 2)}\n`, 'utf8');
 writeFileSync(SECTION_REFS_FILE, `${JSON.stringify(buildSectionRefs(LESSONS_DIR), null, 2)}\n`, 'utf8');
 writeFileSync(SEARCH_INDEX_FILE, `${JSON.stringify({ entries: searchEntries }, null, 2)}\n`, 'utf8');
 if (searchNotes.length > 0) {

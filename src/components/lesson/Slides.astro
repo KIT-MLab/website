@@ -1,0 +1,338 @@
+---
+/**
+ * スライド（design/spec/53-ml-intro.md 第10節）。節の frontmatter の `slides: intro1` で付く。
+ *
+ * 運営が「前へ」「次へ」を押すと、同じ所属のメンバーの画面も1〜2秒で同じ1枚に切り替わる
+ * （src/lesson/slides.ts が /api/slides を読み直す）。幅1280px以上では右の欄（用語を検索の欄）の
+ * いちばん上、それより狭い画面では本文の上の開け閉めできる段に置く（置き換えも slides.ts）。
+ *
+ * 中身（文字・人の図の人数）はこの HTML にだけ書く。節のページはメンバー・運営にしかこの部品を描かないので、
+ * ほかの人にも、誰でも読むファイル（dist/client）にも入らない。
+ *
+ * 人の図は案B（横一列。2026-09-28 利用者の選択）。人の形1つが約10人、組ごとに横一列、生き残った人を左に寄せる。
+ * 生き残った = 黄緑の塗り、亡くなった = 赤の線（塗らない）。色だけで分けない（塗りと線・ラベルの人数）。
+ */
+import { pictoGroups } from '../../lesson/slides/decks.mjs';
+
+interface Props {
+  deckId: string;
+  deck: {
+    cells: { n: number; s: number }[];
+    slides: ({ kind: 'text'; title: string; lines: string[] } | { kind: 'picto'; title: string; sub?: string; by: string; reveal: boolean })[];
+  };
+  /** 運営・管理者か。押すとみんなの画面が切り替わる */
+  staff: boolean;
+}
+
+const { deckId, deck, staff } = Astro.props;
+const count = deck.slides.length;
+
+// ブラウザのスクリプトに渡すのは人の図の組と人数だけ（文字の1枚は下の HTML にある）
+const payload = {
+  deck: deckId,
+  count,
+  staff,
+  cells: deck.cells.map((c) => ({ n: c.n, s: c.s })),
+  picto: deck.slides.map((s) =>
+    s.kind === 'picto' ? { reveal: s.reveal, groups: pictoGroups(deck as never, s.by as never) } : null,
+  ),
+};
+const payloadJson = JSON.stringify(payload).replace(/</g, '\\u003c');
+
+// 凡例の形（src/lesson/slides.ts の図の形と同じ）
+const person = `<svg width="12" height="18" viewBox="0 0 20 30" aria-hidden="true"><circle class="kit-picto__b" cx="10" cy="6" r="4.6"/><path class="kit-picto__b" d="M3.4 28.5V17.5c0-4.1 2.9-6.6 6.6-6.6s6.6 2.5 6.6 6.6v11z"/></svg>`;
+---
+
+<section class="kit-slides" data-slides={deckId} tabindex="0" aria-label="スライド">
+  <button type="button" class="kit-slides__toggle" aria-expanded="true" aria-controls="kit-slides-in">
+    <span>スライド <span data-slides-no>1 / {count}</span></span>
+    <span data-slides-word>閉じる</span>
+  </button>
+
+  <div class="kit-slides__in" id="kit-slides-in">
+    <div class="kit-slides__view" aria-live="polite">
+      {
+        deck.slides.map((s, i) => (
+          <div class="kit-slide" data-slide={i} hidden={i !== 0}>
+            <p class="kit-slide__title">{s.title}</p>
+            {s.kind === 'text' && s.lines.map((l) => <p class="kit-slide__line">{l}</p>)}
+            {s.kind === 'picto' && s.sub && <p class="kit-slide__sub">{s.sub}</p>}
+          </div>
+        ))
+      }
+      <div class="kit-picto is-plain" data-picto hidden>
+        <p class="kit-picto__key">
+          <span class="kit-picto__k kit-picto__k--n"><Fragment set:html={person} />1つが約10人</span>
+          <span class="kit-picto__k kit-picto__k--s"><Fragment set:html={person} />生き残った</span>
+          <span class="kit-picto__k kit-picto__k--d"><Fragment set:html={person} />亡くなった</span>
+          <span class="kit-picto__k kit-picto__k--u">（1つが約10人）</span>
+        </p>
+        <div class="kit-picto__stage" data-picto-stage></div>
+      </div>
+    </div>
+
+    <div class="kit-slides__bar">
+      <button type="button" class:list={['kit-btn', staff && 'kit-slides__staff']} data-slides-prev disabled>← 前へ</button>
+      <button type="button" class:list={['kit-btn', staff && 'kit-slides__staff']} data-slides-next>次へ →</button>
+      {!staff && <button type="button" class="kit-btn kit-btn--quiet" data-slides-back hidden>いまの頁に戻る</button>}
+    </div>
+    {
+      staff ? (
+        <p class="kit-slides__state">前へ・次へを押すと、この節を開いているメンバー全員の画面も切り替わります。</p>
+      ) : (
+        <p class="kit-slides__state" data-slides-state />
+      )
+    }
+    <p class="kit-slides__msg" data-slides-msg aria-live="polite"></p>
+  </div>
+
+  <script type="application/json" data-slides-json set:html={payloadJson} is:inline />
+</section>
+
+<script>
+  import { setupSlides } from '../../lesson/slides';
+  setupSlides();
+</script>
+
+<style is:global>
+  /* 人の形とラベルは src/lesson/slides.ts が作るので is:global にし、.kit-slides の中だけに効く書き方にする
+     （Guess.astro と同じ理由）。色は lesson-tokens.css のものだけ。ボタンは既存の .kit-btn、運営のボタンは
+     予想ボードの運営のボタンと同じ琥珀の字と枠。開け閉めの段は左の欄の狭い画面の1行のボタン（.rail__toggle）と同じ形 */
+  .kit-slides {
+    font-family: var(--font-body);
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--l-ink);
+  }
+
+  .kit-slides:focus-visible {
+    outline: 2px solid var(--color-focus);
+    outline-offset: 3px;
+  }
+
+  .kit-slides__toggle {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    width: 100%;
+    padding: 6px 12px;
+    font: inherit;
+    font-size: 14px;
+    color: var(--l-ink);
+    text-align: left;
+    background: var(--l-card);
+    border: 1.5px solid var(--color-line);
+    border-radius: var(--radius);
+    cursor: pointer;
+  }
+
+  .kit-slides__toggle:hover {
+    background: var(--l-chip);
+  }
+
+  .kit-slides.is-closed .kit-slides__in {
+    display: none;
+  }
+
+  .kit-slides__in {
+    margin-top: 8px;
+    padding: 12px 12px 10px;
+    background: var(--l-card);
+    border: 1px solid var(--l-rule);
+  }
+
+  .kit-slides__view {
+    container-type: inline-size;
+  }
+
+  .kit-slide[hidden],
+  .kit-picto[hidden] {
+    display: none;
+  }
+
+  /* 文字の1枚。短く、大きな字で */
+  .kit-slide__title {
+    margin: 0 0 8px;
+    font-family: var(--font-head);
+    font-weight: 700;
+    font-size: 21px;
+    line-height: 1.45;
+    text-indent: 0;
+  }
+
+  .kit-slide__line {
+    margin: 0 0 6px;
+    font-size: 16px;
+    line-height: 1.65;
+    text-indent: 0;
+  }
+
+  .kit-slide__sub {
+    margin: 0 0 8px;
+    font-size: 14px;
+    color: var(--l-ink-2);
+    text-indent: 0;
+  }
+
+  @container (min-width: 480px) {
+    .kit-slide__title {
+      font-size: 26px;
+    }
+
+    .kit-slide__line {
+      font-size: 19px;
+    }
+
+    .kit-slide__sub {
+      font-size: 15px;
+    }
+  }
+
+  /* --- 人の図 --- */
+  .kit-picto__key {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px 14px;
+    margin: 0 0 10px;
+    font-size: 13px;
+    color: var(--l-ink-2);
+    text-indent: 0;
+  }
+
+  .kit-picto__k {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .kit-picto.is-plain .kit-picto__k--s,
+  .kit-picto.is-plain .kit-picto__k--d,
+  .kit-picto.is-plain .kit-picto__k--u,
+  .kit-picto:not(.is-plain) .kit-picto__k--n {
+    display: none;
+  }
+
+  .kit-picto__b {
+    fill: none;
+    stroke: var(--l-died);
+    stroke-width: 1.3px;
+    vector-effect: non-scaling-stroke;
+    transition:
+      fill 0.4s,
+      stroke 0.4s;
+  }
+
+  .kit-picto__k--s .kit-picto__b,
+  .kit-picto__ic.is-s .kit-picto__b {
+    fill: var(--l-survived);
+    stroke: var(--l-survived-edge);
+  }
+
+  .kit-picto__k--n .kit-picto__b,
+  .kit-picto.is-plain .kit-picto__ic .kit-picto__b {
+    fill: none;
+    stroke: var(--l-ink-3);
+  }
+
+  .kit-picto__stage {
+    position: relative;
+    transition: height 0.7s cubic-bezier(0.4, 0.1, 0.2, 1);
+  }
+
+  .kit-picto__ic {
+    position: absolute;
+    left: 0;
+    top: 0;
+    transition: transform 0.7s cubic-bezier(0.4, 0.1, 0.2, 1);
+  }
+
+  .kit-picto__ic svg {
+    display: block;
+  }
+
+  .kit-picto__gl {
+    position: absolute;
+    left: 0;
+    top: 0;
+    font-size: 13px;
+    line-height: 1.45;
+  }
+
+  .kit-picto__gl b {
+    font-family: var(--font-head);
+    font-size: 14px;
+  }
+
+  .kit-picto__gl span {
+    white-space: nowrap;
+    color: var(--l-ink-2);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* 幅が変わったとき・文字の1枚から図に移ったときは動かさずに置く */
+  .kit-picto__stage.is-still,
+  .kit-picto__stage.is-still .kit-picto__ic,
+  .kit-picto__stage.is-still .kit-picto__b {
+    transition: none;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .kit-picto__stage,
+    .kit-picto__ic,
+    .kit-picto__b {
+      transition: none;
+    }
+  }
+
+  /* --- ボタンと状態 --- */
+  .kit-slides__bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 12px;
+  }
+
+  .kit-slides__bar .kit-btn {
+    padding: 4px 12px;
+    font-size: 14px;
+  }
+
+  .kit-slides__bar .kit-slides__staff {
+    border-color: var(--l-kohaku);
+    color: var(--l-kohaku);
+  }
+
+  .kit-slides__bar [hidden] {
+    display: none;
+  }
+
+  .kit-slides__state,
+  .kit-slides__msg {
+    margin: 8px 0 0;
+    font-size: 12.5px;
+    line-height: 1.6;
+    color: var(--l-ink-2);
+    text-indent: 0;
+  }
+
+  .kit-slides__state:empty,
+  .kit-slides__msg:empty {
+    display: none;
+  }
+
+  /* 本文の上の段（幅1279px以下）。広い画面では中身を右の欄へ移すので、段は隠す */
+  .kit-slides-band {
+    margin: 0 0 28px;
+  }
+
+  @media (min-width: 1280px) {
+    .kit-slides-band {
+      display: none;
+    }
+  }
+
+  .term-panel__in > .kit-slides {
+    margin: 0 0 20px;
+  }
+</style>

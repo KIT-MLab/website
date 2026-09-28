@@ -14,6 +14,8 @@ const lessons = defineCollection({
     terms: z.array(z.string()).default([]),
     // 「組む」課題を置かない節は、置かない理由をここに書く（検査15。第3.8節）
     nobuild: z.string().optional(),
+    // 右の欄に出すスライドの名前（src/lesson/slides/decks.mjs。検査25。design/spec/53-ml-intro.md 第10節）
+    slides: z.string().optional(),
   }),
 });
 

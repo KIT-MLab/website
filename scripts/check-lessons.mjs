@@ -10,6 +10,7 @@
  * 検査22（組む問題の問題文・入力・出力の形）は同 第23.2節で足した。新しい形で書いた問題だけを見る。
  * 検査23（みんなの予想ボード <Guess> の置き場所と props）は design/spec/53-ml-intro.md 第7節で足した。
  * 検査24（規則の正解率ランキング <RuleBoard> の置き場所と props）は同 第9節で足した。
+ * 検査25（スライド。frontmatter の slides の置き場所と中身の形）は同 第10節で足した。
  *
  *   node scripts/check-lessons.mjs
  */
@@ -43,6 +44,7 @@ import {
 import { PYTHON_TOOLS } from './python-tools.mjs';
 import { buildSectionRefs } from './section-refs.mjs';
 import { MEMBERS_ONLY_CHAPTERS, partOfChapter } from './parts.mjs';
+import { deckById, deckProblems } from '../src/lesson/slides/decks.mjs';
 
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const LESSONS_DIR = join(ROOT, 'src', 'content', 'lessons');
@@ -101,6 +103,8 @@ const seenExerciseIds = new Map();
 const seenGuessIds = new Map();
 /** 検査24 用。<RuleBoard> の id → 最初に置いたファイル */
 const seenRuleBoardIds = new Map();
+/** 検査25 用。スライドの名前 → 最初に付けたファイル */
+const seenDecks = new Map();
 /** 検査16・17 用。節の並び順に、その節が持つ Python のコードを貯める */
 const codeOf = [];
 /** 検査22 用。判定のケース1の期待値（生成済みの lesson-data.json から。無ければ見ない） */
@@ -620,6 +624,28 @@ for (const file of files) {
     const extra = b.attrs.filter((a) => a !== 'id');
     if (extra.length > 0) add(24, b.line, `${where}: 属性は id だけです（${extra.join('・')} は使えません）`);
     if (b.children !== '') add(24, b.line, `${where}: <RuleBoard … /> の形で、中身を書きません`);
+  }
+
+  /* --- 検査25 スライド（frontmatter の slides。design/spec/53-ml-intro.md 第10節） ---
+     節の右の欄に出し、運営の「次へ」でみんなの画面が切り替わる。読む口（/api/slides）がメンバーだけなので、
+     メンバーだけの章にしか付けられない。スライドの位置の記録の鍵なので、1つのスライドは1つの節にだけ付ける */
+  if (fm.slides !== undefined) {
+    const deckId = fm.slides;
+    const where = `slides: ${String(deckId)}`;
+    if (!MEMBERS_ONLY_CHAPTERS.includes(String(fm.chapter ?? ''))) {
+      add(25, 1, `${where}: スライドはメンバーだけの章（scripts/parts.mjs の MEMBERS_ONLY_CHAPTERS）にしか付けられません`);
+    }
+    const deck = typeof deckId === 'string' ? deckById(deckId) : null;
+    if (typeof deckId !== 'string' || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(deckId)) {
+      add(25, 1, `${where}: 名前は英小文字・数字とハイフンで書きます（例: intro1）`);
+    } else if (!deck) {
+      add(25, 1, `${where}: src/lesson/slides/decks.mjs の DECKS にありません`);
+    } else if (seenDecks.has(deckId)) {
+      add(25, 1, `${where}: ${seenDecks.get(deckId)} にも付いています（1つのスライドは1つの節にだけ）`);
+    } else {
+      seenDecks.set(deckId, rel);
+      for (const p of deckProblems(deck)) add(25, 1, `${where}: ${p}`);
+    }
   }
 }
 

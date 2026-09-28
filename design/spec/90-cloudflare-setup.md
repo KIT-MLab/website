@@ -165,6 +165,15 @@ npx wrangler d1 migrations apply mlab-course --remote
 npx wrangler d1 migrations apply mlab-course --remote
 ```
 
+### 5.7 スライドの番号のテーブルを作る（2026-09-28 追加）
+
+`migrations/0012_slides.sql`（`slide_positions`。`53-ml-intro.md` 第10節）。第3.1節と同じ1行で本番にあてる。
+**push する前に**あてること（先に push すると、タイタニック1 のスライドで運営が「次へ」を押しても送れず、メンバーの画面も運営に合わせられない）。
+
+```
+npx wrangler d1 migrations apply mlab-course --remote
+```
+
 ---
 
 ## 6. まだ決めていないこと
