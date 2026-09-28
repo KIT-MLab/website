@@ -172,6 +172,8 @@ export const POST: APIRoute = async ({ request }) => {
       passcode, // これが平文で出る唯一の場所
       displayName,
       role: 'student',
+      realRole: 'student',
+      mode: 'learner',
       level: 0,
       cohort: { code: cohort.code, name: cohort.name, kind: cohort.kind },
     },

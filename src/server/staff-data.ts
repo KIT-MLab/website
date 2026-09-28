@@ -82,7 +82,7 @@ export async function rosterStudents(db: Db, me: CurrentUser): Promise<RosterStu
       `SELECT p.user_id, p.lesson_id, p.state
          FROM progress p
          JOIN users u ON u.id = p.user_id
-        WHERE ${scope.where}`,
+        WHERE ${scope.where} AND p.mode = 'learner'`,
     )
     .bind(...scope.binds)
     .all<ProgressStateRow>();
@@ -170,7 +170,7 @@ export async function stuckItems(
       `SELECT s.user_id, s.exercise_id, COUNT(*) AS fails
          FROM submissions s
          JOIN users u ON u.id = s.user_id
-        WHERE ${scope.where}
+        WHERE ${scope.where} AND s.mode = 'learner'
         GROUP BY s.user_id, s.exercise_id
        HAVING SUM(s.passed) = 0 AND COUNT(*) >= ?`,
     )
@@ -183,7 +183,7 @@ export async function stuckItems(
       `SELECT p.user_id, p.lesson_id, p.seconds
          FROM progress p
          JOIN users u ON u.id = p.user_id
-        WHERE ${scope.where} AND p.seconds > 0`,
+        WHERE ${scope.where} AND p.mode = 'learner' AND p.seconds > 0`,
     )
     .bind(...scope.binds)
     .all<SlowRow>();
@@ -346,7 +346,7 @@ export async function userDetail(
 
   const progress = await db
     .prepare(
-      'SELECT lesson_id, state, opened_at, done_at, seconds FROM progress WHERE user_id = ? ORDER BY lesson_id',
+      "SELECT lesson_id, state, opened_at, done_at, seconds FROM progress WHERE user_id = ? AND mode = 'learner' ORDER BY lesson_id",
     )
     .bind(id)
     .all<ProgressRow>();
@@ -354,7 +354,7 @@ export async function userDetail(
   const submissions = await db
     .prepare(
       `SELECT id, exercise_id, code, passed, failed_test, error_type, created_at
-         FROM submissions WHERE user_id = ? ORDER BY created_at DESC, id DESC LIMIT ?`,
+         FROM submissions WHERE user_id = ? AND mode = 'learner' ORDER BY created_at DESC, id DESC LIMIT ?`,
     )
     .bind(id, MAX_SUBMISSIONS)
     .all<SubmissionRow>();

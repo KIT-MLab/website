@@ -171,7 +171,7 @@ export async function staffQuestions(db: Db, me: CurrentUser): Promise<StaffQues
       `SELECT p.user_id, COUNT(*) AS done
          FROM progress p
          JOIN users u ON u.id = p.user_id
-        WHERE ${scope.where} AND p.state = 'done'
+        WHERE ${scope.where} AND p.mode = 'learner' AND p.state = 'done'
         GROUP BY p.user_id`,
     )
     .bind(...scope.binds)

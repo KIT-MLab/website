@@ -16,6 +16,7 @@ export const prerender = false;
 
 import { getCollection } from 'astro:content';
 import Base from '../../../layouts/Base.astro';
+import StaffDeny from '../../../components/StaffDeny.astro';
 import { serverConfig } from '../../../server/auth';
 import { requireAdmin, requireStaff } from '../../../server/staff';
 import { exerciseLabel, exercisePlaces, MAX_SUBMISSIONS, minutesLabel, sectionNumbers, userDetail, ymd } from '../../../server/staff-data';
@@ -83,7 +84,7 @@ const submissions = detail?.submissions ?? [];
 <Base title={detail ? detail.user.displayName : '管理画面'}>
   {
     !me ? (
-      <p class="staff-deny">この画面は開けません。</p>
+      <StaffDeny />
     ) : !detail ? (
       <p class="staff-deny">見つかりません。</p>
     ) : (

@@ -52,8 +52,8 @@ export const POST: APIRoute = async ({ request }) => {
     const lessonId = typeof item.lessonId === 'string' ? item.lessonId.trim().slice(0, 80) : '';
     statements.push(
       db
-        .prepare('INSERT OR IGNORE INTO activity_minutes (user_id, minute, lesson_id) VALUES (?, ?, ?)')
-        .bind(user.id, minute, lessonId),
+        .prepare('INSERT OR IGNORE INTO activity_minutes (user_id, mode, minute, lesson_id) VALUES (?, ?, ?, ?)')
+        .bind(user.id, user.mode, minute, lessonId),
     );
   }
 

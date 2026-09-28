@@ -57,6 +57,8 @@ export const POST: APIRoute = async ({ request }) => {
   if (!def) return json({ error: '見つかりません。' }, 404);
   if (!(await canUseRuleBoard(config.db, user, def))) return json({ error: 'この章は準備中です。' }, 403);
 
+  // 運営として見ている間は出せない（第26章）。表はメンバーの画面に並ぶので、学習者として出す
+  if (isStaffUser(user)) return json({ error: '運営として見ている間は規則を出せません。' }, 403);
   const description = readDescription(body.description);
   if (description === null) return json({ error: `規則の説明を1〜${DESCRIPTION_MAX}字で書いてください。` }, 400);
   const train = readPreds(body.train, TRAIN_SIZE);

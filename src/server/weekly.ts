@@ -100,7 +100,7 @@ export async function weeklyBoard(db: Db, cohortCode: string, exerciseIds: strin
               SUM(CASE WHEN s.passed = 0 THEN 1 ELSE 0 END) AS fails
          FROM submissions s
          JOIN users u ON u.id = s.user_id
-        WHERE u.cohort_code = ? AND s.exercise_id IN (${placeholders})
+        WHERE u.cohort_code = ? AND s.mode = 'learner' AND s.exercise_id IN (${placeholders})
         GROUP BY s.user_id, s.exercise_id`,
     )
     .bind(cohortCode, ...exerciseIds)

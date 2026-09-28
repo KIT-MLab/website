@@ -180,6 +180,8 @@ export function setupGuessBoards(): void {
       }
       staff = data.staff === true;
       for (const board of boards) {
+        // 運営として見ている間は予想の欄を出さない（20-platform.md 第26章。サーバも断る）
+        board.el.dataset.staffView = staff ? '1' : '0';
         const state = data.boards[board.id];
         if (state) paint(board, state);
       }

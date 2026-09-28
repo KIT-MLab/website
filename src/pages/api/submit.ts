@@ -11,7 +11,7 @@
  * **同じ提出が2行にならないようにする。**応答だけが届かなかったとき、画面は手元に
  * 残した提出を送り直す。そのまま2行になると「同じ課題を5回落とした」の判定
  * （第9章の9）が狂い、詰まっていない人が詰まって見える。
- * `(user_id, exercise_id, created_at)` に UNIQUE が張ってある（migrations/0003）ので、
+ * `(user_id, mode, exercise_id, created_at)` に UNIQUE が張ってある（migrations/0003。mode は 0013）ので、
  * `INSERT OR IGNORE` で入れれば二度目は黙って捨てられる。
  *
  * 時刻はすべてミリ秒（第6章）。
@@ -36,8 +36,8 @@ const CODE_MAX = 20000;
 const CUT_MARK = '…（長すぎるため切りました）';
 
 const INSERT = `
-  INSERT OR IGNORE INTO submissions (user_id, exercise_id, code, passed, failed_test, error_type, created_at)
-  VALUES (?, ?, ?, ?, ?, ?, ?)
+  INSERT OR IGNORE INTO submissions (user_id, mode, exercise_id, code, passed, failed_test, error_type, created_at)
+  VALUES (?, ?, ?, ?, ?, ?, ?, ?)
 `;
 
 /**
@@ -76,6 +76,12 @@ export const POST: APIRoute = async ({ request }) => {
   const body = await readJsonObject(request);
   if (!body) return json({ error: '送信された内容を読み取れませんでした。' }, 400);
 
+  // どちらの側（第26章）に入れるかは Cookie から決める（user.mode）。本文の `mode` は信用せず、
+  // 食い違えば何も書かずに断る（/api/progress と同じ。理由もそちら）
+  if (body.mode !== undefined && body.mode !== user.mode) {
+    return json({ error: '学習者と運営の切り替えが変わりました。ページを読み込み直してください。' }, 409);
+  }
+
   const submissions = body.submissions;
   if (!Array.isArray(submissions)) return json({ error: '送信された内容を読み取れませんでした。' }, 400);
   if (submissions.length > MAX_SUBMISSIONS) {
@@ -104,6 +110,7 @@ export const POST: APIRoute = async ({ request }) => {
         .prepare(INSERT)
         .bind(
           user.id,
+          user.mode,
           exerciseId,
           clampCode(item.code),
           item.passed ? 1 : 0,

@@ -11,6 +11,7 @@ import { getExerciseData, getLessonData, isDirectKind, type ExerciseData, type E
 import { gradeDirect, gradeExercise, showInput, type GradeResult } from '../grade';
 import { execPython } from '../runtime/runner';
 import { getProgressStore } from '../store/progress';
+import { fetchPublishStatus } from '../publish-status';
 
 type Props = {
   id: string;
@@ -168,6 +169,8 @@ export default function ExerciseBox({ id, kind, starter, stdin, choices, syntax,
   const [sealFull, setSealFull] = useState(false);
   const [solution, setSolution] = useState<string | null>(null);
   const [solutionNote, setSolutionNote] = useState<string | null>(null);
+  /** 運営として見ているか（20-platform.md 第26章）。確かめるために、通す前でも模範解答を開ける */
+  const [staffView, setStaffView] = useState(false);
   const [resetSignal, setResetSignal] = useState(0);
   /** 質問の声かけ（20-platform.md 第22.2節）。進んでいく時計は出さず、この1行だけ出す */
   const [nudgeShown, setNudgeShown] = useState(false);
@@ -204,6 +207,9 @@ export default function ExerciseBox({ id, kind, starter, stdin, choices, syntax,
         setPassed(r.passed);
         setFails(r.fails);
       });
+    void fetchPublishStatus().then((s) => {
+      if (alive) setStaffView(s.staff);
+    });
     return () => {
       alive = false;
     };
@@ -552,7 +558,7 @@ export default function ExerciseBox({ id, kind, starter, stdin, choices, syntax,
       ) : null}
 
       {/* 模範解答の .py は type / choose には置かない（第11.4節）ので、開く口も出さない */}
-      {passed && !direct ? (
+      {(passed || staffView) && !direct ? (
         <div className="kit-solution">
           {solution === null ? (
             <button type="button" className="kit-btn kit-btn--quiet" onClick={showSolution}>

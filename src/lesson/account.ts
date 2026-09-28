@@ -17,13 +17,18 @@
  * 節の左の欄（節の一覧）も素の DOM で塗っている。新しい依存は足さない。
  */
 import { getLessonData } from './data';
-import { getProgressStore, type RemoteExercise, type RemoteLesson } from './store/progress';
+import { PROGRESS_KEY, getProgressStore, progressOwner, type RemoteExercise, type RemoteLesson } from './store/progress';
 
 /** `/api/me` `/api/login` `/api/register` が返す利用者の形（src/server/auth.ts の CurrentUser）。 */
 type User = {
   id: string;
   displayName: string;
+  /** いま効いているロール。運営・管理者でも学習者として見ているときは 'student'（第26章） */
   role: string;
+  /** 記録の中のロール。切り替えを出すかどうかだけに使う（第26章） */
+  realRole?: string;
+  /** 'learner' | 'staff'（第26章） */
+  mode?: string;
   level: number;
   cohort: { code: string; name: string; kind: string };
   /** `/api/me` だけが返す（第13.1節）。ログインと登録の応答には無い */
@@ -46,6 +51,14 @@ const FALLBACK_DENY = 'うまくいきませんでした。もう一度お試し
 
 /** 出るときに送りきれなかったときの断り（第6.2節「送りきれなかったら空にしない」）。 */
 const KEPT_NOTE = 'まだ送れていない記録があるので、この端末に残しました。';
+
+/** 切り替える前に送りきれなかったときの断り（第26章。送る側は Cookie で決まるため、先に送りきる） */
+const SWITCH_KEPT_NOTE = 'まだ送れていない記録があるので、切り替えませんでした。通信できるところでもう一度お試しください。';
+
+/** 学習者として・運営としてを切り替えられる人か（記録の中のロール。第26章） */
+function hasModes(user: User): boolean {
+  return user.realRole === 'staff' || user.realRole === 'admin';
+}
 
 async function postJson(path: string, body?: unknown): Promise<{ ok: boolean; data: Record<string, unknown> }> {
   try {
@@ -97,6 +110,81 @@ export function setupAccount(): void {
   let stage: Stage = 'register';
   /** 登録が通ったあと「控えました」を押すまで抱えておく利用者。 */
   let pending: User | null = null;
+  /** いま右上に塗っている利用者（第26章の切り替えと、ほかのタブの切り替えを知るため） */
+  let current: User | null = null;
+
+  /* --- 学習者として・運営として（第26章） -------------------------- */
+
+  /**
+   * 運営として見ている間の帯（Base.astro の #kit-mode-band）。節のページのように上の帯が
+   * 固定されているページでは、帯の高さを --kit-band-h に入れ、固定された帯と欄をその分だけ下げる。
+   */
+  const band = document.getElementById('kit-mode-band');
+  const fitBand = () => {
+    if (band) document.documentElement.style.setProperty('--kit-band-h', band.hidden ? '0px' : `${band.offsetHeight}px`);
+  };
+  if (band && typeof ResizeObserver !== 'undefined') new ResizeObserver(fitBand).observe(band);
+  function paintBand(on: boolean): void {
+    if (!band) return;
+    band.hidden = !on;
+    fitBand();
+  }
+
+  /** 切り替えの断りを右上に1行出す。形はログアウトで送りきれなかったときの1行と同じ */
+  function switchNote(text: string): void {
+    closePopup(false);
+    const note = document.createElement('p');
+    note.className = 'acct__menu acct__kept';
+    note.setAttribute('role', 'status');
+    note.textContent = text;
+    head!.append(note);
+    popup = { panel: note, opener: null };
+  }
+
+  /**
+   * 切り替える。**先に手元の未送信をいまの側として送りきる。**送る側はサーバが Cookie で
+   * 決めるので、切り替えたあとに送ると前の側の記録が次の側に入る。送りきれなければ切り替えない。
+   * 効かせるのはページの読み込み直し（見てよいものはサーバがページを組むときに決めるため）。
+   */
+  async function switchMode(mode: string, button: HTMLButtonElement): Promise<void> {
+    button.disabled = true;
+    const sentAll = await store.flush();
+    if (!sentAll) {
+      button.disabled = false;
+      switchNote(SWITCH_KEPT_NOTE);
+      return;
+    }
+    const { ok, data } = await postJson('/api/mode', { mode });
+    if (!ok) {
+      button.disabled = false;
+      switchNote(typeof data.error === 'string' ? data.error : FALLBACK_DENY);
+      return;
+    }
+    location.reload();
+  }
+
+  // 名前のメニュー・帯の「学習者に戻る」・管理画面の「運営に切り替える」がみな data-mode-switch を持つ
+  document.addEventListener('click', (e) => {
+    const button = (e.target as Element | null)?.closest?.<HTMLButtonElement>('button[data-mode-switch]');
+    if (!button || button.disabled) return;
+    e.stopPropagation();
+    void switchMode(button.dataset.modeSwitch ?? '', button);
+  });
+
+  /* ほかのタブで切り替えたら、このタブも読み込み直す。手元の控えはタブの間で1つなので、
+     切り替える前の画面のまま解き続けると、その記録が切り替えたあとの側の控えに入ってしまう */
+  window.addEventListener('storage', (e) => {
+    if (e.key !== PROGRESS_KEY || !current || !hasModes(current)) return;
+    let owner: unknown = null;
+    try {
+      owner = (JSON.parse(e.newValue ?? 'null') as { owner?: unknown } | null)?.owner ?? null;
+    } catch {
+      return;
+    }
+    if (typeof owner === 'string' && owner.startsWith(`${current.id}:`) && owner !== progressOwner(current)) {
+      location.reload();
+    }
+  });
 
   function deny(name: string, message: string): void {
     const slot = dialog!.querySelector(`[data-acct-deny="${name}"]`);
@@ -167,7 +255,10 @@ export function setupAccount(): void {
     /* 質問の欄は入っている人にだけ出す（第10.1節）。
        送り先が自分のアカウントに紐づくので、入っていない人には置き場所がない。 */
     const ask = document.querySelector<HTMLElement>('[data-rail-ask]');
-    if (ask) ask.hidden = !user;
+    // 運営として見ている間も出さない。運営の画面に学習者の質問として並んでしまうため（第26章）
+    if (ask) ask.hidden = !user || user.mode === 'staff';
+    current = user;
+    paintBand(user !== null && user.mode === 'staff');
 
     popup = null;
     head!.replaceChildren();
@@ -209,6 +300,27 @@ export function setupAccount(): void {
     cohort.className = 'acct__meta';
     cohort.textContent = user.cohort.name;
     menu.append(cohort);
+    // 学習者として・運営として（第26章）。運営・管理者にだけ出す。押すと読み込み直して効かせる
+    if (hasModes(user)) {
+      const modes = document.createElement('div');
+      modes.className = 'acct__modes';
+      modes.setAttribute('role', 'group');
+      modes.setAttribute('aria-label', '見方');
+      for (const [mode, label] of [
+        ['learner', '学習者として'],
+        ['staff', '運営として'],
+      ] as const) {
+        const on = (user.mode === 'staff' ? 'staff' : 'learner') === mode;
+        const item = document.createElement('button');
+        item.type = 'button';
+        item.className = 'acct__item';
+        item.setAttribute('aria-pressed', on ? 'true' : 'false');
+        item.textContent = `${on ? '●' : '○'} ${label}`;
+        if (!on) item.dataset.modeSwitch = mode;
+        modes.append(item);
+      }
+      menu.append(modes);
+    }
     // マイページへの入口（第13.2節）。メンバーにだけ出す
     if (user.member) menu.append(menuLink('マイページ', '/learn/home/'));
     if (user.role === 'staff' || user.role === 'admin') menu.append(menuLink('管理画面', '/staff/'));
@@ -275,8 +387,10 @@ export function setupAccount(): void {
   async function entered(user: User): Promise<void> {
     const owner = await store.owner();
     if (dialog!.open) dialog!.close();
-    if (owner === user.id) await store.flush();
-    else await store.reset(user.id);
+    // 持ち主は運営・管理者なら側ごとに分かれる（第26章）。切り替えたあとは「別の人」の道を通る
+    const mine = progressOwner(user);
+    if (owner === mine) await store.flush();
+    else await store.reset(mine);
     await pull();
   }
 

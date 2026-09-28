@@ -53,7 +53,7 @@ export async function activityList(db: Db, me: CurrentUser, now: number): Promis
               SUM(CASE WHEN a.minute >= ? THEN 1 ELSE 0 END) AS four_weeks
          FROM users u
          JOIN cohorts c ON c.code = u.cohort_code
-         LEFT JOIN activity_minutes a ON a.user_id = u.id
+         LEFT JOIN activity_minutes a ON a.user_id = u.id AND a.mode = 'learner'
         WHERE ${scope.where} AND ${MEMBER_WHERE}
         GROUP BY u.id`,
     )
@@ -71,7 +71,7 @@ export async function activityList(db: Db, me: CurrentUser, now: number): Promis
     .prepare(
       `SELECT p.user_id, COUNT(*) AS done
          FROM progress p ${usersJoin('p')}
-        WHERE ${scope.where} AND ${MEMBER_WHERE} AND p.state = 'done'
+        WHERE ${scope.where} AND ${MEMBER_WHERE} AND p.mode = 'learner' AND p.state = 'done'
         GROUP BY p.user_id`,
     )
     .bind(...scope.binds)
@@ -112,7 +112,7 @@ export async function activityGrid(
               ((a.minute + ${JST_OFFSET_MS}) / 3600000) % 24 AS hour,
               COUNT(*) AS n
          FROM activity_minutes a ${usersJoin('a')}
-        WHERE a.minute >= ? AND ${scope.where} AND ${MEMBER_WHERE}
+        WHERE a.minute >= ? AND a.mode = 'learner' AND ${scope.where} AND ${MEMBER_WHERE}
         GROUP BY a.user_id, dow, hour`,
     )
     .bind(weekBounds(now).fourWeeks, ...scope.binds)
@@ -148,7 +148,7 @@ export async function recentEvents(db: Db, me: CurrentUser, limit: number): Prom
     .prepare(
       `SELECT p.user_id, u.display_name, p.lesson_id, p.done_at AS at
          FROM progress p ${usersJoin('p')}
-        WHERE p.state = 'done' AND p.done_at IS NOT NULL AND ${scope.where} AND ${MEMBER_WHERE}
+        WHERE p.mode = 'learner' AND p.state = 'done' AND p.done_at IS NOT NULL AND ${scope.where} AND ${MEMBER_WHERE}
         ORDER BY p.done_at DESC LIMIT ?`,
     )
     .bind(...scope.binds, limit)
@@ -158,7 +158,7 @@ export async function recentEvents(db: Db, me: CurrentUser, limit: number): Prom
     .prepare(
       `SELECT s.user_id, u.display_name, s.exercise_id, s.passed, s.created_at AS at
          FROM submissions s ${usersJoin('s')}
-        WHERE ${scope.where} AND ${MEMBER_WHERE}
+        WHERE s.mode = 'learner' AND ${scope.where} AND ${MEMBER_WHERE}
         ORDER BY s.created_at DESC, s.id DESC LIMIT ?`,
     )
     .bind(...scope.binds, limit)

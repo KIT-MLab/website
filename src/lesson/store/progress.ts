@@ -13,7 +13,8 @@
  * 手元の控えは2つのものを持つ（第6.2節）。
  *
  *   owner … この控えが誰のものか。null なら「まだ誰のものでもない」。
- *           **null のときは1件も送らない。**入っていない人の進度は受けない（第9章の12）
+ *           **null のときは1件も送らない。**入っていない人の進度は受けない（第9章の12）。
+ *           運営・管理者は「学習者として」と「運営として」で別の持ち主にする（第26章。下の progressOwner）
  *   sent  … 節ごと・提出ごとに付ける「もう送った」の印。付いていないものだけを送るので、
  *           同じものを二度送らない
  *
@@ -98,6 +99,27 @@ type Saved = {
 };
 
 const KEY = 'kit-lesson-progress-v1';
+
+/** 手元の控えの鍵。ほかのタブが控えの持ち主を変えたことを知るために account.ts も見る */
+export const PROGRESS_KEY = KEY;
+
+/**
+ * 控えの持ち主（第26章）。
+ *
+ * 学生はこれまでどおり利用者IDそのもの。運営・管理者（記録の中のロール）は
+ * `<利用者ID>:learner` か `<利用者ID>:staff` にして、学習者として・運営としての記録を
+ * **同じ控えに混ぜない。**切り替えると持ち主が変わるので、入ったときの分岐（account.ts の entered）が
+ * 「別の人」として手元を空にし、その側の記録をサーバから引き写す。
+ */
+export function progressOwner(user: { id: string; realRole?: string; mode?: string }): string {
+  if (user.realRole !== 'staff' && user.realRole !== 'admin') return user.id;
+  return `${user.id}:${user.mode === 'staff' ? 'staff' : 'learner'}`;
+}
+
+/** 持ち主からどちらの側の控えかを読む。送るときに添え、サーバの Cookie と食い違えば断られる */
+function ownerMode(owner: string): 'learner' | 'staff' {
+  return owner.endsWith(':staff') ? 'staff' : 'learner';
+}
 const MAX_SUBMISSIONS = 200;
 
 /** POST には必ず付ける（第7.1節）。付けないと Astro が 403 を返す。 */
@@ -358,6 +380,7 @@ class LocalProgressStore implements ProgressStore {
 
     if (lessons.length > 0) {
       const ok = await post('/api/progress', {
+        mode: ownerMode(me),
         lessons: lessons.map(([lessonId, row]) => ({
           lessonId,
           state: row.state,
@@ -372,6 +395,7 @@ class LocalProgressStore implements ProgressStore {
 
     if (submissions.length > 0) {
       const ok = await post('/api/submit', {
+        mode: ownerMode(me),
         submissions: submissions.map((row) => ({
           lessonId: row.lessonId,
           exerciseId: row.exerciseId,

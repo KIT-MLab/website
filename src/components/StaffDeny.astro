@@ -1,0 +1,26 @@
+---
+/**
+ * 運営の画面を開けないときの1段落（20-platform.md 第8.6節・第26章）。
+ *
+ * 運営・管理者が学習者として見ているときは、中身を出さずに1段落と切り替えのボタンだけを出す
+ * （運営の画面は運営として見ているときだけ開ける）。それ以外の人には、これまでどおり1行だけ。
+ * ボタンは src/lesson/account.ts が拾う（data-mode-switch）。
+ */
+import { currentUser, hasModes } from '../server/auth';
+
+const viewer = await currentUser(Astro.request);
+const canSwitch = viewer !== null && hasModes(viewer.realRole) && viewer.mode === 'learner';
+---
+
+{
+  canSwitch ? (
+    <p class="staff-deny">
+      いまは学習者として見ています。運営の画面は、運営に切り替えると開けます。
+      <button type="button" class="site-btn site-btn--small" data-mode-switch="staff">
+        運営に切り替える
+      </button>
+    </p>
+  ) : (
+    <p class="staff-deny">この画面は開けません。</p>
+  )
+}

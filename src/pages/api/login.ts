@@ -110,5 +110,5 @@ export const POST: APIRoute = async ({ request }) => {
     .run();
 
   const cookie = await startSession(db, secret, user.id, now);
-  return json(toCurrentUser(user), 200, cookie);
+  return json(toCurrentUser(user, request), 200, cookie);
 };

@@ -308,25 +308,30 @@ export default function RuleBoardBox({ id }: { id: string }) {
         <p className="kit-rules__note">
           規則は、上の20人（訓練データ）と、答えを伏せた別の20人（テストデータ）の両方に当てます。順位は訓練データの正解率で決まります。
         </p>
-        <CodeEditor value={code} onChange={changeCode} label="規則" resetSignal={resetSignal} />
+        {/* 運営として見ている間は規則を書く欄を出さず、その場所に理由を1行（20-platform.md 第26章。サーバも断る） */}
+        {staff ? null : <CodeEditor value={code} onChange={changeCode} label="規則" resetSignal={resetSignal} />}
         <form className="kit-rules__in" onSubmit={send} noValidate>
-          <span className="kit-rules__entry">
-            <label className="kit-rules__label">
-              規則の説明
-              <input
-                className="kit-rules__desc"
-                type="text"
-                value={description}
-                maxLength={DESCRIPTION_MAX}
-                placeholder="例: 女性か12歳未満"
-                onChange={(ev) => changeDescription(ev.target.value)}
-              />
-            </label>
-            <button className="kit-btn" type="submit" disabled={busy}>
-              {busy ? '動かしています' : '出す'}
-            </button>
-            {busy ? <LoadBar /> : null}
-          </span>
+          {staff ? (
+            <span className="kit-rules__note">運営として見ている間は規則を出せません（学習者に戻ると出せます）。</span>
+          ) : (
+            <span className="kit-rules__entry">
+              <label className="kit-rules__label">
+                規則の説明
+                <input
+                  className="kit-rules__desc"
+                  type="text"
+                  value={description}
+                  maxLength={DESCRIPTION_MAX}
+                  placeholder="例: 女性か12歳未満"
+                  onChange={(ev) => changeDescription(ev.target.value)}
+                />
+              </label>
+              <button className="kit-btn" type="submit" disabled={busy}>
+                {busy ? '動かしています' : '出す'}
+              </button>
+              {busy ? <LoadBar /> : null}
+            </span>
+          )}
           {staff && pending === null && !revealed ? (
             <button className="kit-btn kit-rules__staff" type="button" onClick={() => setPending(true)}>
               公開（運営）

@@ -16,6 +16,7 @@
 export const prerender = false;
 
 import Base from '../../layouts/Base.astro';
+import StaffDeny from '../../components/StaffDeny.astro';
 import { serverConfig } from '../../server/auth';
 import { requireStaff } from '../../server/staff';
 import { staffMeeting, staffMeetings, writableCohorts, type Meeting } from '../../server/meetings';
@@ -55,7 +56,7 @@ const cohortName = cohorts.find((c) => c.code === cohortNow)?.name ?? cohortNow;
 <Base title="集まり">
   {
     !me ? (
-      <p class="staff-deny">この画面は開けません。</p>
+      <StaffDeny />
     ) : missing ? (
       <p class="staff-deny">見つかりません。</p>
     ) : (

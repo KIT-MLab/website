@@ -24,6 +24,9 @@ export const POST: APIRoute = async ({ request }) => {
   // 入っていない人には送り先が無い（第10.1節）。画面もそもそも欄を出さない。
   const user = await currentUser(request);
   if (!user) return json({ error: 'ログインしていません。' }, 401);
+  // 運営として見ている間の質問は受けない（第26章）。運営の画面に学習者の質問として並んでしまう。
+  // 画面も質問の欄を出さない
+  if (user.mode === 'staff') return json({ error: '運営として見ている間は質問を送れません。' }, 403);
 
   const payload = await readJsonObject(request);
   if (!payload) return json({ error: '送信された内容を読み取れませんでした。' }, 400);
@@ -39,7 +42,9 @@ export const POST: APIRoute = async ({ request }) => {
 
   // 添えるコード（第10.5節）。1件だけ。学習者には選ばせない
   const last = await db
-    .prepare('SELECT code FROM submissions WHERE user_id = ? ORDER BY created_at DESC, id DESC LIMIT 1')
+    .prepare(
+      "SELECT code FROM submissions WHERE user_id = ? AND mode = 'learner' ORDER BY created_at DESC, id DESC LIMIT 1",
+    )
     .bind(user.id)
     .first<{ code: string }>();
 

@@ -54,6 +54,8 @@ export const POST: APIRoute = async ({ request }) => {
   if (!def) return json({ error: '見つかりません。' }, 404);
   if (!(await canUseBoard(config.db, user, def))) return json({ error: 'この章は準備中です。' }, 403);
 
+  // 運営として見ている間は出せない（第26章）。予想はメンバーの画面に並ぶので、学習者として出す
+  if (isStaffUser(user)) return json({ error: '運営として見ている間は予想を出せません。' }, 403);
   const value = normalizeGuess(body.value);
   if (value === null) return json({ error: '0から100までの数を入れてください。' }, 400);
 

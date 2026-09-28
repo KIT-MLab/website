@@ -45,6 +45,8 @@ const { id, question, unit } = Astro.props;
       <span>{unit}</span>
       <button class="kit-btn" type="submit" data-guess-send>送る</button>
     </span>
+    {/* 運営として見ている間は欄の代わりにこの1行（20-platform.md 第26章。src/lesson/guess.ts が出す） */}
+    <span class="kit-guess__staffnote">運営として見ている間は予想を出せません（学習者に戻ると出せます）。</span>
     <button class="kit-btn kit-guess__staff" type="button" data-guess-start hidden>答え合わせ（運営）</button>
     <button class="kit-btn kit-guess__staff" type="button" data-guess-undo hidden>やり直す（運営）</button>
   </form>
@@ -103,6 +105,21 @@ const { id, question, unit } = Astro.props;
 
   .kit-guess[data-revealed='1'] .kit-guess__entry {
     display: none;
+  }
+
+  /* 運営として見ている間（第26章）: 欄を隠して、その場所に理由を1行 */
+  .kit-guess[data-staff-view='1'] .kit-guess__entry {
+    display: none;
+  }
+
+  .kit-guess__staffnote {
+    display: none;
+    font-size: 13.5px;
+    color: var(--l-ink-2);
+  }
+
+  .kit-guess[data-staff-view='1'][data-revealed='0'] .kit-guess__staffnote {
+    display: inline;
   }
 
   .kit-guess__num {

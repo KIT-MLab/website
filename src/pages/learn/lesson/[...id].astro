@@ -368,7 +368,7 @@ const notes = isStaff && entry && config ? await notesForLesson(config.db, entry
     main.wrap {
       max-width: none;
       margin: 0 0 0 232px;
-      padding: calc(51px + 30px) 32px 120px;
+      padding: calc(51px + var(--kit-band-h, 0px) + 30px) 32px 120px;
     }
 
     /* 足もとの行も左の欄の下に潜らないようにする */
@@ -391,7 +391,7 @@ const notes = isStaff && entry && config ? await notesForLesson(config.db, entry
     @media (max-width: 860px) {
       main.wrap {
         margin: 0;
-        padding: 51px 16px 120px;
+        padding: calc(51px + var(--kit-band-h, 0px)) 16px 120px;
       }
 
       .foot {

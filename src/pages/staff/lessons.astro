@@ -12,6 +12,7 @@ export const prerender = false;
 
 import { getCollection } from 'astro:content';
 import Base from '../../layouts/Base.astro';
+import StaffDeny from '../../components/StaffDeny.astro';
 import NotesPanel from '../../components/lesson/NotesPanel.astro';
 import { serverConfig } from '../../server/auth';
 import { requireAdmin, requireStaff } from '../../server/staff';
@@ -140,7 +141,7 @@ const openPlacedCount = placedNotes.filter((n) => n.resolvedAt === null).length;
 <Base title="教材の公開">
   {
     !me ? (
-      <p class="staff-deny">この画面は開けません。</p>
+      <StaffDeny />
     ) : (
       <div class="staff">
         <div class="staff__top">

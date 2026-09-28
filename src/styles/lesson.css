@@ -113,7 +113,7 @@
  * ------------------------------------------------------------ */
 .lesson-rail {
   position: fixed;
-  top: 51px;
+  top: calc(51px + var(--kit-band-h, 0px));
   bottom: 0;
   left: 0;
   z-index: 10;
@@ -210,10 +210,10 @@
 @media (max-width: 860px) {
   .lesson-rail {
     position: sticky;
-    top: 51px;
+    top: calc(51px + var(--kit-band-h, 0px));
     bottom: auto;
     width: auto;
-    max-height: calc(100vh - 51px);
+    max-height: calc(100vh - 51px - var(--kit-band-h, 0px));
     margin: 0 -16px;
     padding: 8px 16px;
     border-right: 0;
@@ -1815,7 +1815,7 @@
  * ============================================================ */
 .term-panel {
   position: fixed;
-  top: 51px;
+  top: calc(51px + var(--kit-band-h, 0px));
   right: 0;
   bottom: 0;
   z-index: 10;
@@ -1905,7 +1905,7 @@
 
   .term-scrim {
     position: fixed;
-    inset: 51px 0 0 0;
+    inset: calc(51px + var(--kit-band-h, 0px)) 0 0 0;
     background: rgba(31, 28, 23, 0.35);
     z-index: 25;
   }

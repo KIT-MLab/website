@@ -35,9 +35,9 @@ const MAX_LESSONS = 200;
  *   seconds   … 大きいほう。**足さない。**同じものを二度送っても増えないため
  */
 const MERGE = `
-  INSERT INTO progress (user_id, lesson_id, state, opened_at, done_at, seconds)
-  VALUES (?, ?, ?, ?, ?, ?)
-  ON CONFLICT (user_id, lesson_id) DO UPDATE SET
+  INSERT INTO progress (user_id, mode, lesson_id, state, opened_at, done_at, seconds)
+  VALUES (?, ?, ?, ?, ?, ?, ?)
+  ON CONFLICT (user_id, mode, lesson_id) DO UPDATE SET
     state     = CASE WHEN progress.state = 'done' OR excluded.state = 'done' THEN 'done' ELSE 'opened' END,
     opened_at = MIN(progress.opened_at, excluded.opened_at),
     done_at   = CASE
@@ -73,6 +73,13 @@ export const POST: APIRoute = async ({ request }) => {
   const body = await readJsonObject(request);
   if (!body) return json({ error: '送信された内容を読み取れませんでした。' }, 400);
 
+  // 学習者として・運営としての側（第26章）は Cookie から決める（user.mode）。本文の `mode` は
+  // 画面が「どちらの側の記録として送ったつもりか」で、食い違えば**何も書かずに断る**。
+  // 別のタブで切り替えた直後に古いタブが送った記録を、反対の側に入れないため
+  if (body.mode !== undefined && body.mode !== user.mode) {
+    return json({ error: '学習者と運営の切り替えが変わりました。ページを読み込み直してください。' }, 409);
+  }
+
   const lessons = body.lessons;
   if (!Array.isArray(lessons)) return json({ error: '送信された内容を読み取れませんでした。' }, 400);
   if (lessons.length > MAX_LESSONS) {
@@ -101,7 +108,7 @@ export const POST: APIRoute = async ({ request }) => {
     // （state と食い違う値を記録に入れないため）。
     const doneAt = state === 'done' ? (toMs(item.doneAt) ?? now) : null;
 
-    statements.push(db.prepare(MERGE).bind(user.id, lessonId, state, openedAt, doneAt, toSeconds(item.seconds)));
+    statements.push(db.prepare(MERGE).bind(user.id, user.mode, lessonId, state, openedAt, doneAt, toSeconds(item.seconds)));
   }
 
   // まとめて1往復で書く。1件ずつ await で回すと200件で200往復になる。

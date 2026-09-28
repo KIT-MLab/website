@@ -326,11 +326,53 @@ export async function startSession(db: Db, secret: string, userId: string, now: 
   return makeCookie(token, secret);
 }
 
+/**
+ * 学習者と運営の切り分け（第26章）。運営・管理者は同じアカウントのまま、ブラウザごとに
+ * 「学習者として」「運営として」を選ぶ。選んだ側はこの Cookie に持つ（署名しない）。
+ *
+ * 署名しないのは、**この Cookie が効くのは記録の中のロールが運営・管理者の人だけ**だからである。
+ * 学生が `mlab_mode=staff` を送っても何も変わらない（下の toCurrentUser が見ない）。
+ * 無いとき・読めないときは学習者として扱う（準備中のものがうっかり見えない側に倒す）。
+ */
+export const MODE_COOKIE = 'mlab_mode';
+
+/** 400日。ブラウザが受け付ける Max-Age の上限（Chrome）。会場に置いたままの PC で選び直させないため */
+const MODE_MAX_AGE_SECONDS = 34560000;
+
+export type Mode = 'learner' | 'staff';
+
+/** 切り替えを持つロールか（記録の中のロールで判じる） */
+export function hasModes(role: string): boolean {
+  return role === 'staff' || role === 'admin';
+}
+
+function readModeCookie(request: Request): Mode {
+  const header = request.headers.get('cookie');
+  if (!header) return 'learner';
+  for (const part of header.split(';')) {
+    if (part.trim() === `${MODE_COOKIE}=staff`) return 'staff';
+  }
+  return 'learner';
+}
+
+/** 切り替えの Set-Cookie。ログアウトしても消さない（人ではなくブラウザに付く選択なので） */
+export function modeCookie(mode: Mode): string {
+  return `${MODE_COOKIE}=${mode}; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=${MODE_MAX_AGE_SECONDS}`;
+}
+
 /** 画面と API が受け取る利用者の形。**パスワードもそのハッシュもここには入れない。** */
 export type CurrentUser = {
   id: string;
   displayName: string;
+  /**
+   * **いま効いているロール。**運営・管理者でも学習者として見ているときは `student`（第26章）。
+   * 見てよいもの・押してよいものの判定は、すべてこの値を見る
+   */
   role: string;
+  /** 記録の中のロール（users.role）。切り替えを出すかと、メンバーかどうかにだけ使う */
+  realRole: string;
+  /** どちらの側の記録に入れるか。学生はいつも `learner` */
+  mode: Mode;
   level: number;
   cohort: { code: string; name: string; kind: string };
 };
@@ -346,11 +388,18 @@ export type UserRow = {
   cohort_kind: string;
 };
 
-export function toCurrentUser(row: UserRow): CurrentUser {
+/**
+ * 1行を利用者の形にする。いま効いているロールと側は、記録の中のロールと、要求に付いた
+ * 切り替えの Cookie から決める（第26章）。**ここ以外で Cookie を見て役を決めない。**
+ */
+export function toCurrentUser(row: UserRow, request: Request): CurrentUser {
+  const mode: Mode = hasModes(row.role) && readModeCookie(request) === 'staff' ? 'staff' : 'learner';
   return {
     id: row.id,
     displayName: row.display_name,
-    role: row.role,
+    role: hasModes(row.role) && mode === 'learner' ? 'student' : row.role,
+    realRole: row.role,
+    mode,
     level: row.level,
     cohort: { code: row.cohort_code, name: row.cohort_name, kind: row.cohort_kind },
   };
@@ -380,7 +429,7 @@ export async function currentUser(request: Request): Promise<CurrentUser | null>
     )
     .bind(token, Date.now())
     .first<UserRow>();
-  return row ? toCurrentUser(row) : null;
+  return row ? toCurrentUser(row, request) : null;
 }
 
 // ---------------------------------------------------------------- 待たせる

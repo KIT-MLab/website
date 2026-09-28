@@ -17,6 +17,7 @@ export const prerender = false;
 
 import { getCollection } from 'astro:content';
 import Base from '../../layouts/Base.astro';
+import StaffDeny from '../../components/StaffDeny.astro';
 import { serverConfig } from '../../server/auth';
 import { requireStaff } from '../../server/staff';
 import { daysAgo, exercisePlaces, minutesLabel, rosterStudents, sectionNumbers, stuckItems, ymd } from '../../server/staff-data';
@@ -129,7 +130,7 @@ const rows = students.map((student) => ({
 <Base title="管理画面">
   {
     !me ? (
-      <p class="staff-deny">この画面は開けません。</p>
+      <StaffDeny />
     ) : (
       <div class="staff">
         <div class="staff__top">

@@ -174,6 +174,18 @@ npx wrangler d1 migrations apply mlab-course --remote
 npx wrangler d1 migrations apply mlab-course --remote
 ```
 
+### 5.8 学習者と運営の切り分け（2026-09-28 追加）
+
+`migrations/0013_staff_mode.sql`（`progress`・`submissions`・`activity_minutes` に `mode` を足す。`20-platform.md` 第26章）。第3.1節と同じ1行で本番にあてる。
+
+```
+npx wrangler d1 migrations apply mlab-course --remote
+```
+
+- **push する前に**あてること。先に push すると、新しい仕組みが無い列（`mode`）を読みにいき、入っている人の `/api/me`・進度・提出・運営の画面が全部止まる
+- あててから push が反映されるまでの間は、古い仕組みの**進度の送信だけ**が断られる（主キーが変わったため）。画面は送れなかった進度を手元に残して次に送り直すので、記録は失われない。**あてたらすぐ push する**
+- ロールが `admin` の人のこれまでの進度・提出・活動した分は、運営の側に移る（学習者の進度からは消えて見える）。行は消えない
+
 ---
 
 ## 6. まだ決めていないこと

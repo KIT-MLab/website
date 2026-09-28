@@ -45,7 +45,8 @@ const index = lessonIndex(
 const doneRows =
   member && config
     ? await config.db
-        .prepare("SELECT lesson_id FROM progress WHERE user_id = ? AND state = 'done'")
+        // 学習者の側の記録だけ（第26章）。運営として解いた分はマイページに出さない
+        .prepare("SELECT lesson_id FROM progress WHERE user_id = ? AND mode = 'learner' AND state = 'done'")
         .bind(me!.id)
         .all<{ lesson_id: string }>()
     : { results: [] };

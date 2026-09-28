@@ -13,6 +13,7 @@
 export const prerender = false;
 
 import Base from '../../../layouts/Base.astro';
+import StaffDeny from '../../../components/StaffDeny.astro';
 import { getCollection } from 'astro:content';
 import { serverConfig } from '../../../server/auth';
 import { requireStaff } from '../../../server/staff';
@@ -66,7 +67,7 @@ const initialJson = JSON.stringify({ exerciseIds, ...board }).replace(/</g, '\\u
 <Base title="今週の演習 表">
   {
     !me ? (
-      <p class="staff-deny">この画面は開けません。</p>
+      <StaffDeny />
     ) : missing ? (
       <p class="staff-deny">見つかりません。</p>
     ) : (

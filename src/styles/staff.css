@@ -99,6 +99,11 @@ main.wrap {
   color: var(--l-ink);
 }
 
+/* 学習者として見ている運営に出す「運営に切り替える」（20-platform.md 第26章。src/components/StaffDeny.astro） */
+.staff-deny .site-btn {
+  margin-left: 8px;
+}
+
 /* --- 内部 / 外部のタブ（第5.2節） ----------------------------- */
 .staff-tabs {
   display: flex;

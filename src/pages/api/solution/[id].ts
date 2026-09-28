@@ -76,11 +76,16 @@ export const GET: APIRoute = async ({ params, request }) => {
     return json({ message: '模範解答は、登録してログインすると読めます。' }, 403);
   }
 
-  // 通した提出が1行でもあるか。無ければ返さない（第4.3.1節）
-  const passed = await config.db
-    .prepare('SELECT 1 AS ok FROM submissions WHERE user_id = ? AND exercise_id = ? AND passed = 1 LIMIT 1')
-    .bind(user.id, id)
-    .first<{ ok: number }>();
+  // 通した提出が1行でもあるか。無ければ返さない（第4.3.1節）。見るのは学習者の側の提出だけ。
+  // 運営として見ているときは、確かめるために通す前でも読める（第26章）
+  const passed =
+    user.mode === 'staff' ||
+    (await config.db
+      .prepare(
+        "SELECT 1 AS ok FROM submissions WHERE user_id = ? AND mode = 'learner' AND exercise_id = ? AND passed = 1 LIMIT 1",
+      )
+      .bind(user.id, id)
+      .first<{ ok: number }>()) !== null;
   if (!passed) {
     return json({ message: 'この課題を通したあとに読めます。' }, 403);
   }

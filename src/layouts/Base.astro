@@ -37,6 +37,13 @@ const here = Astro.url.pathname.replace(/\/?$/, '/');
     />
   </head>
   <body>
+    {/* 運営として見ている間の帯（20-platform.md 第26章）。/api/me の答えを見て src/lesson/account.ts が出す。
+        ページの多くは事前生成で、誰が見ているかを知らないため。上の帯が固定されているページ（bar）では
+        帯も固定し、その高さ（--kit-band-h）だけ上の帯と欄を下げる */}
+    <div class:list={['mode-band', bar && 'mode-band--fixed']} id="kit-mode-band" hidden>
+      <p class="mode-band__text">運営として見ています。ここで解いた記録は、あなたの学習には入りません。</p>
+      <button type="button" class="site-btn site-btn--small" data-mode-switch="learner">学習者に戻る</button>
+    </div>
     {/* 右上のアカウント（第14.1節）。中身は src/lesson/account.ts が /api/me の答えを見てから塗る。
         それまでは空のまま置く（ログインしている人に「新規登録」を一瞬見せないため） */}
     {
@@ -149,7 +156,7 @@ const here = Astro.url.pathname.replace(/\/?$/, '/');
   /* --- 節のページの帯（第14.2節。試作の案A「帯を固定」） --------- */
   .topbar {
     position: fixed;
-    top: 0;
+    top: var(--kit-band-h, 0px);
     left: 0;
     right: 0;
     z-index: 20;

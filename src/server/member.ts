@@ -16,9 +16,12 @@ import { lessonHref, practiceSectionLabel } from '../lesson/chapters';
 /**
  * メンバー = 所属の kind が internal、または ロールが staff か admin（第13.1節）。
  * 画面（/api/me の `member`）とメンバーの画面の判定はこれだけを見る。
+ *
+ * ロールは**記録の中のロール**（realRole）で見る。運営・管理者が学習者として見ているとき
+ * （第26章）もメンバーのままにするため。学習者として見ている運営は、ふつうのメンバーと同じものを見る。
  */
-export function isMember(user: Pick<CurrentUser, 'role' | 'cohort'>): boolean {
-  return user.cohort.kind === 'internal' || user.role === 'staff' || user.role === 'admin';
+export function isMember(user: Pick<CurrentUser, 'realRole' | 'cohort'>): boolean {
+  return user.cohort.kind === 'internal' || user.realRole === 'staff' || user.realRole === 'admin';
 }
 
 /**

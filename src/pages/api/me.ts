@@ -42,9 +42,9 @@ export const GET: APIRoute = async ({ request }) => {
 
   const progress = await config.db
     .prepare(
-      'SELECT lesson_id, state, opened_at, done_at, seconds FROM progress WHERE user_id = ? ORDER BY lesson_id',
+      'SELECT lesson_id, state, opened_at, done_at, seconds FROM progress WHERE user_id = ? AND mode = ? ORDER BY lesson_id',
     )
-    .bind(user.id)
+    .bind(user.id, user.mode)
     .all<ProgressRow>();
 
   // `passed` は1回でもあれば通ったことにする（第6.1節の表）ので MAX。
@@ -55,9 +55,9 @@ export const GET: APIRoute = async ({ request }) => {
       `SELECT exercise_id,
               MAX(passed) AS passed,
               SUM(CASE WHEN passed = 0 THEN 1 ELSE 0 END) AS fails
-         FROM submissions WHERE user_id = ? GROUP BY exercise_id ORDER BY exercise_id`,
+         FROM submissions WHERE user_id = ? AND mode = ? GROUP BY exercise_id ORDER BY exercise_id`,
     )
-    .bind(user.id)
+    .bind(user.id, user.mode)
     .all<ExerciseRow>();
 
   return json(

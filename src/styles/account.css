@@ -317,3 +317,54 @@
   white-space: normal;
   color: var(--l-ink-2);
 }
+
+/* 名前のメニューの「● 学習者として ○ 運営として」（20-platform.md 第26章）。
+   項目は .acct__item のまま。所属の行と同じ細い罫で、下の項目と分ける */
+.acct__modes {
+  margin: 0 0 4px;
+  padding: 0 0 4px;
+  border-bottom: 1px solid var(--l-rule);
+}
+
+.acct__modes .acct__item[aria-pressed='true'] {
+  cursor: default;
+}
+
+.acct__modes .acct__item[aria-pressed='true']:hover {
+  background: transparent;
+}
+
+/* 運営として見ている間の帯（第26章）。色は琥珀（--l-kohaku・--l-kohaku-bg）だけ。新しい色を足さない。
+   ふつうのページはいちばん上に置いてスクロールしても上に残し、上の帯が固定されているページ
+   （節・今週の演習・練習問題集）では固定して、その下に上の帯を下げる（Base.astro の --kit-band-h） */
+.mode-band {
+  position: sticky;
+  top: 0;
+  z-index: 25;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  padding: 6px 16px;
+  background: var(--l-kohaku-bg);
+  border-bottom: 1px solid var(--l-kohaku);
+  color: var(--l-ink);
+  font-family: var(--font-body);
+  font-size: 13.5px;
+  line-height: 1.6;
+}
+
+.mode-band[hidden] {
+  display: none;
+}
+
+.mode-band--fixed {
+  position: fixed;
+  left: 0;
+  right: 0;
+}
+
+.mode-band__text {
+  margin: 0;
+}
