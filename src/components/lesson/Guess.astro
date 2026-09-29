@@ -49,6 +49,7 @@ const { id, question, unit } = Astro.props;
     <span class="kit-guess__staffnote">運営として見ている間は予想を出せません（学習者に戻ると出せます）。</span>
     <button class="kit-btn kit-guess__staff" type="button" data-guess-start hidden>答え合わせ（運営）</button>
     <button class="kit-btn kit-guess__staff" type="button" data-guess-undo hidden>やり直す（運営）</button>
+    <button class="kit-btn kit-guess__staff" type="button" data-guess-reset hidden>予想を消す（運営）</button>
   </form>
   <div class="kit-guess__confirm" data-guess-confirm hidden>
     <p data-guess-confirm-text></p>

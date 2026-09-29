@@ -81,7 +81,13 @@ const syntaxCategories = showContent && entry ? await syntaxCategoriesFor(entry.
                 <h1 class="lesson-title">{entry.data.title}</h1>
                 <p class="lesson-top__meta">{entry.data.date} ・ 教材の進み具合（百分率）には数えません</p>
               </div>
-              <article class="lesson-body">{Content && <Content components={{ Exercise: WeeklyExercise, Input, Output }} />}</article>
+              <article class="lesson-body">
+                {Content && <Content components={{ Exercise: WeeklyExercise, Input, Output }} />}
+                <nav class="lesson-nav" aria-label="ページの移動">
+                  <a href="/learn/week/">← 今週のページへ</a>
+                  <a href="/learn/">学習の一覧へ →</a>
+                </nav>
+              </article>
             </div>
             {syntaxCategories.length > 0 && <SyntaxPanel categories={syntaxCategories} />}
           </div>

@@ -5,11 +5,13 @@
  *   読み直し、裏に回ったら止める（見えたらすぐ1回読んでから再開）。答え合わせが押されると、5秒以内に
  *   全員の画面に答えと名前が出る
  * - 予想を出す: POST /api/guess。答え合わせまでは何度でも書き換えられる
- * - 運営のボタン（答え合わせ・やり直す）は API の `staff` を見て出す。押すと画面の中で確かめてから
+ * - 運営のボタン（答え合わせ・やり直す・予想を消す）は API の `staff` を見て出す。押すと画面の中で確かめてから
  *   POST /api/guess/reveal（window.confirm は使わない。20-platform.md 第19章・第20.2節と同じ）
  */
 
 type Entry = { name: string; value: number; closest: boolean; mine: boolean };
+type StaffAction = 'reveal' | 'undo' | 'reset';
+
 type BoardState =
   | { revealed: false; count: number; values: number[]; mine: number | null }
   | { revealed: true; count: number; answer: number; answerNote: string; entries: Entry[]; mine: number | null };
@@ -43,6 +45,7 @@ type Board = {
   msg: HTMLElement | null;
   start: HTMLButtonElement | null;
   undo: HTMLButtonElement | null;
+  reset: HTMLButtonElement | null;
   confirm: HTMLElement | null;
   confirmText: HTMLElement | null;
   go: HTMLButtonElement | null;
@@ -50,8 +53,10 @@ type Board = {
   /** いま画面に出している様子（同じなら描き直さない） */
   shownKey: string;
   /** 運営が確かめの段で選んだ操作。null なら段は閉じている */
-  pending: boolean | null;
+  pending: StaffAction | null;
   lastRevealed: boolean | null;
+  /** 前に読んだときの自分の予想（運営が消したら欄も空にするため） */
+  lastMine: number | null;
 };
 
 let wired = false;
@@ -71,6 +76,7 @@ export function setupGuessBoards(): void {
     msg: el.querySelector<HTMLElement>('[data-guess-msg]'),
     start: el.querySelector<HTMLButtonElement>('[data-guess-start]'),
     undo: el.querySelector<HTMLButtonElement>('[data-guess-undo]'),
+    reset: el.querySelector<HTMLButtonElement>('[data-guess-reset]'),
     confirm: el.querySelector<HTMLElement>('[data-guess-confirm]'),
     confirmText: el.querySelector<HTMLElement>('[data-guess-confirm-text]'),
     go: el.querySelector<HTMLButtonElement>('[data-guess-go]'),
@@ -78,6 +84,7 @@ export function setupGuessBoards(): void {
     shownKey: '',
     pending: null,
     lastRevealed: null,
+    lastMine: null,
   }));
   if (boards.length === 0) return;
 
@@ -104,6 +111,14 @@ export function setupGuessBoards(): void {
     board.el.dataset.revealed = state.revealed ? '1' : '0';
     if (board.start) board.start.hidden = !staff || state.revealed || board.pending !== null;
     if (board.undo) board.undo.hidden = !staff || !state.revealed || board.pending !== null;
+    if (board.reset) board.reset.hidden = !staff || board.pending !== null;
+
+    // 運営が予想を消したら、欄と「送りました」の1行も空にする（また予想を出せる）
+    if (board.input && board.lastMine !== null && state.mine === null && document.activeElement !== board.input) {
+      board.input.value = '';
+      say(board, '');
+    }
+    board.lastMine = state.mine;
 
     // 自分の予想を欄に入れておく（書いている途中は触らない）
     if (board.input && state.mine !== null && document.activeElement !== board.input && board.input.value === '') {
@@ -237,39 +252,49 @@ export function setupGuessBoards(): void {
       void refresh();
     });
 
-    const openConfirm = (reveal: boolean) => {
-      board.pending = reveal;
+    const openConfirm = (action: StaffAction) => {
+      board.pending = action;
       if (board.confirmText) {
-        board.confirmText.textContent = reveal
-          ? '本当の数と、全員の名前を見せます。このあとは予想を変えられなくなります。'
-          : '答えと名前を隠して、予想を受け付ける状態に戻します。出した予想は消えません。';
+        board.confirmText.textContent =
+          action === 'reveal'
+            ? '本当の数と、全員の名前を見せます。このあとは予想を変えられなくなります。'
+            : action === 'undo'
+              ? '答えと名前を隠して、予想を受け付ける状態に戻します。出した予想は消えません。'
+              : '全員の予想を消します。元に戻せません。';
       }
-      if (board.go) board.go.textContent = reveal ? '答え合わせをする' : 'やり直す';
+      if (board.go) board.go.textContent = action === 'reveal' ? '答え合わせをする' : action === 'undo' ? 'やり直す' : '予想を消す';
       if (board.confirm) board.confirm.hidden = false;
       if (board.start) board.start.hidden = true;
       if (board.undo) board.undo.hidden = true;
+      if (board.reset) board.reset.hidden = true;
     };
-    board.start?.addEventListener('click', () => openConfirm(true));
-    board.undo?.addEventListener('click', () => openConfirm(false));
+    board.start?.addEventListener('click', () => openConfirm('reveal'));
+    board.undo?.addEventListener('click', () => openConfirm('undo'));
+    board.reset?.addEventListener('click', () => openConfirm('reset'));
     board.cancel?.addEventListener('click', () => {
       closeConfirm(board);
       if (board.start) board.start.hidden = board.lastRevealed !== false;
       if (board.undo) board.undo.hidden = board.lastRevealed !== true;
+      if (board.reset) board.reset.hidden = false;
     });
     board.go?.addEventListener('click', async () => {
       if (board.pending === null || !board.go) return;
       board.go.disabled = true;
-      const { ok, data } = await postJson('/api/guess/reveal', { id: board.id, revealed: board.pending });
+      const action = board.pending;
+      const body = action === 'reset' ? { id: board.id, reset: true } : { id: board.id, revealed: action === 'reveal' };
+      const { ok, data } = await postJson('/api/guess/reveal', body);
       board.go.disabled = false;
       if (!ok) {
         say(board, typeof data.error === 'string' ? data.error : '送れませんでした。');
         return;
       }
-      const revealedNow = board.pending;
+      const revealedNow = action === 'reveal';
       closeConfirm(board);
       // 読み直しが走っている最中だと refresh がすぐ戻るので、ボタンはここで先に切り替えておく
       if (board.start) board.start.hidden = revealedNow;
       if (board.undo) board.undo.hidden = !revealedNow;
+      if (board.reset) board.reset.hidden = false;
+      if (action === 'reset') say(board, '予想を消しました。');
       board.shownKey = '';
       await refresh();
     });

@@ -3,12 +3,13 @@
  *
  *   POST /api/rule-board/reveal   { id, revealed: true }  公開する（全員のテストデータの正解率を見せる）
  *                                 { id, revealed: false } やり直す（押し間違えたとき。出した規則は消さない）
+ *                                 { id, reset: true }     出した規則を消す（所属の規則と公開を消し、ボードを使い直す）
  *
  * **運営・管理者だけ。**効くのは押した人の所属のボードだけ（予想ボードの答え合わせと同じ）。
  */
 import type { APIRoute } from 'astro';
 import { json, readJsonObject, serverConfig } from '../../../server/auth';
-import { canUseRuleBoard, ruleBoardDef, setRuleRevealed } from '../../../server/rule-board';
+import { canUseRuleBoard, resetRuleBoard, ruleBoardDef, setRuleRevealed } from '../../../server/rule-board';
 import { requireStaff } from '../../../server/staff';
 
 export const prerender = false;
@@ -27,6 +28,10 @@ export const POST: APIRoute = async ({ request }) => {
   const def = ruleBoardDef(id);
   if (!def) return json({ error: '見つかりません。' }, 404);
   if (!(await canUseRuleBoard(config.db, me, def))) return json({ error: '運営だけが押せます。' }, 403);
+  if (body.reset === true) {
+    await resetRuleBoard(config.db, me.cohort.code, id);
+    return json({ ok: true, reset: true }, 200);
+  }
   if (typeof body.revealed !== 'boolean') return json({ error: '送信された内容を読み取れませんでした。' }, 400);
 
   await setRuleRevealed(config.db, me.cohort.code, id, me.id, body.revealed, Date.now());

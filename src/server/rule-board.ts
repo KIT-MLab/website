@@ -176,3 +176,9 @@ export async function setRuleRevealed(
     await db.prepare('DELETE FROM rule_reveals WHERE cohort_code = ? AND board_id = ?').bind(cohortCode, boardId).run();
   }
 }
+
+/** 出した規則を消す（会のたびにボードを使い直すため）。所属の規則と公開の行を消す。公開の前でもあとでも。 */
+export async function resetRuleBoard(db: Db, cohortCode: string, boardId: string): Promise<void> {
+  await db.prepare('DELETE FROM rule_reveals WHERE cohort_code = ? AND board_id = ?').bind(cohortCode, boardId).run();
+  await db.prepare('DELETE FROM rule_submissions WHERE cohort_code = ? AND board_id = ?').bind(cohortCode, boardId).run();
+}

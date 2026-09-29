@@ -13,8 +13,10 @@
  * @typedef {{ kind: 'picto', title: string, sub?: string, by: 'all' | 'sex' | 'pclass' | 'sex-pclass', reveal: boolean }} PictoSlide
  * @typedef {{ kind: 'map', title: string, lines?: string[], step: 'southampton' | 'queenstown' | 'sink' }} MapSlide
  * @typedef {{ kind: 'image', title: string, src: string, alt: string, credit: string }} ImageSlide
+ * @typedef {{ kind: 'facts', title: string, items: { value: string, label: string }[] }} FactsSlide
+ *   大きな数（value）と短い説明（label）を3〜5つ並べる1枚。運営がそれを見せながら話す
  * どの1枚にも note?: string（運営にだけ見える話すこと）を付けられる。
- * @typedef {{ cells: Cell[], slides: ((TextSlide | PictoSlide | MapSlide | ImageSlide) & { note?: string })[] }} Deck
+ * @typedef {{ cells: Cell[], slides: ((TextSlide | PictoSlide | MapSlide | ImageSlide | FactsSlide) & { note?: string })[] }} Deck
  * @typedef {{ name: string, n: number, s: number, cells: number[] }} PictoGroup
  */
 import intro1 from './intro1.mjs';
@@ -125,12 +127,28 @@ export function deckProblems(deck) {
       }
       if (typeof s.alt !== 'string' || s.alt.trim() === '') out.push(`${at}: alt（画像の説明）がありません`);
       if (typeof s.credit !== 'string' || s.credit.trim() === '') out.push(`${at}: credit（出典）がありません`);
+    } else if (s?.kind === 'facts') {
+      if (!Array.isArray(s.items) || s.items.length < 3 || s.items.length > 5) out.push(`${at}: items は3〜5つです`);
+      else
+        s.items.forEach((it, k) => {
+          const ok =
+            it && typeof it.value === 'string' && it.value.trim() !== '' && typeof it.label === 'string' && it.label.trim() !== '';
+          if (!ok) out.push(`${at}: items[${k}] は空でない value（大きな数）と label（説明）です`);
+          else if (Object.keys(it).some((key) => key !== 'value' && key !== 'label')) {
+            out.push(`${at}: items[${k}] に使えるのは value と label だけです`);
+          }
+        });
     } else {
-      out.push(`${at}: kind は text・picto・map・image のどれかです`);
+      out.push(`${at}: kind は text・picto・map・image・facts のどれかです`);
     }
     if (s && s.note !== undefined && (typeof s.note !== 'string' || s.note.trim() === '')) out.push(`${at}: note は空でない文字列です`);
-    if (s && (s.kind === 'image' || s.kind === 'map')) {
-      const allowed = s.kind === 'image' ? ['kind', 'title', 'src', 'alt', 'credit', 'note'] : ['kind', 'title', 'lines', 'step', 'note'];
+    if (s && (s.kind === 'image' || s.kind === 'map' || s.kind === 'facts')) {
+      const allowed =
+        s.kind === 'image'
+          ? ['kind', 'title', 'src', 'alt', 'credit', 'note']
+          : s.kind === 'map'
+            ? ['kind', 'title', 'lines', 'step', 'note']
+            : ['kind', 'title', 'items', 'note'];
       const extra = Object.keys(s).filter((k) => !allowed.includes(k));
       if (extra.length > 0) out.push(`${at}: ${s.kind} に使えない項目があります（${extra.join('・')}）`);
     }

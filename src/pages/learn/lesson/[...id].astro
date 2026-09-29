@@ -124,7 +124,7 @@ const unitWord = isIntro ? 'この部' : 'この練習編';
 const FacilitateFor = isStaff ? Facilitate : FacilitateHidden;
 
 /* スライド（53-ml-intro.md 第10節）。frontmatter の slides で付く。メンバーだけの章の節で、見てよい人
-   （メンバー・運営）にだけ描く。広い画面では右の欄、狭い画面では本文の上の段に出る（src/lesson/slides.ts） */
+   （メンバー・運営）にだけ描く。どの幅でも本文の上の段に、本文の幅いっぱいに出る（src/lesson/slides.ts） */
 const deckId = canSee && membersOnly && entry?.data.slides ? entry.data.slides : null;
 const deck = deckId ? deckById(deckId) : null;
 

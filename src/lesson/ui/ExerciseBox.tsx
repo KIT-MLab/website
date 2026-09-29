@@ -565,10 +565,15 @@ export default function ExerciseBox({ id, kind, starter, stdin, choices, syntax,
               別の書き方を見る
             </button>
           ) : (
-            <div className="kit-out">
-              <div className="kit-out__label">模範解答（通し方はこれ1つではありません）</div>
-              <pre className="kit-out__text">{solution}</pre>
-            </div>
+            <>
+              <div className="kit-out">
+                <div className="kit-out__label">模範解答（通し方はこれ1つではありません）</div>
+                <pre className="kit-out__text">{solution}</pre>
+              </div>
+              <button type="button" className="kit-btn kit-btn--quiet" onClick={() => setSolution(null)}>
+                模範解答をたたむ
+              </button>
+            </>
           )}
           {solutionNote ? <p className="kit-solution__note">{solutionNote}</p> : null}
         </div>

@@ -1,8 +1,8 @@
 /**
  * スライドの配線（design/spec/53-ml-intro.md 第10節）。部品は src/components/lesson/Slides.astro。
  *
- * - **置き場所**: 幅1280px以上では右の欄（用語を検索の欄 .term-panel__in）のいちばん上へ移す。
- *   それより狭い画面では本文の上の段（#kit-slides-band）に置いたまま。幅が変われば行き来する
+ * - **置き場所**: どの幅でも本文の上の段（#kit-slides-band）。運営が「スライドを見て」と言って進めながら
+ *   話すので、本文の幅いっぱいに大きく出す（2026-09-29。前は幅1280px以上で右の欄へ移していた）
  * - **運営**: 「前へ」「次へ」で POST /api/slides。見ているメンバー全員の画面が切り替わる
  * - **メンバー**: 運営がいま進めていれば（live）その1枚に合わせる。GET /api/slides を**画面が見えている間だけ
  *   1.5秒ごと**に読み直し、裏に回ったら止める（予想ボードの src/lesson/guess.ts と同じ）。自分で前へ・次へを
@@ -28,7 +28,6 @@ type Payload = {
 };
 
 const POLL_MS = 1500;
-const WIDE = '(min-width: 1280px)';
 /** 人の形どうしのすき間と、組と組の間 */
 const GAP = 2;
 const ROW_GAP = 14;
@@ -67,18 +66,6 @@ export function setupSlides(): void {
   const stateEl = root.querySelector<HTMLElement>('[data-slides-state]');
   const msgEl = root.querySelector<HTMLElement>('[data-slides-msg]');
   const toggle = root.querySelector<HTMLButtonElement>('.kit-slides__toggle');
-
-  // ---------------------------------------------------------------- 置き場所
-
-  const band = document.getElementById('kit-slides-band');
-  const dock = document.querySelector<HTMLElement>('.term-panel__in');
-  const wide = window.matchMedia(WIDE);
-  const place = () => {
-    const target = wide.matches && dock ? dock : band;
-    if (target && root.parentElement !== target) target.prepend(root);
-  };
-  wide.addEventListener('change', place);
-  place();
 
   toggle?.addEventListener('click', () => {
     const closed = root.classList.toggle('is-closed');
@@ -138,7 +125,7 @@ export function setupSlides(): void {
     lastW = W;
     if (W === 0) return; // 閉じている・隠れている。見えたときに ResizeObserver がもう一度呼ぶ
 
-    const iw = W < 260 ? 9 : W < 360 ? 11 : W < 560 ? 13 : 15;
+    const iw = W < 260 ? 9 : W < 360 ? 11 : W < 560 ? 13 : W < 640 ? 15 : 18;
     const ih = Math.round(iw * 1.5);
     if (iw !== iconW) {
       iconW = iw;

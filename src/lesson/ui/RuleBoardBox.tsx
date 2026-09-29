@@ -7,7 +7,7 @@
  *   当て、**予測（1 か 0 の並び）と説明だけ**を POST /api/rule-board に送る。正解率はサーバが出す
  * - 表は GET /api/rule-board?id=… を**画面が見えている間だけ5秒ごと**に読み直す（予想ボード
  *   src/lesson/guess.ts と同じ。裏に回ったら止め、見えたらすぐ1回読んでから再開。401/403/404 で止める）
- * - 運営のボタン（公開・やり直す）は API の `staff` を見て出す。押すと画面の中で確かめてから
+ * - 運営のボタン（公開・やり直す・出した規則を消す）は API の `staff` を見て出す。押すと画面の中で確かめてから
  *   POST /api/rule-board/reveal（window.confirm は使わない）
  */
 import { useEffect, useRef, useState, type FormEvent } from 'react';
@@ -110,7 +110,10 @@ export default function RuleBoardBox({ id }: { id: string }) {
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState('');
   const [problem, setProblem] = useState<PyProblem | null>(null);
-  const [pending, setPending] = useState<boolean | null>(null);
+  /** 運営が確かめの段で選んだ操作。true 公開・false やり直す・'reset' 出した規則を消す */
+  const [pending, setPending] = useState<boolean | 'reset' | null>(null);
+  /** 前に読んだとき自分の規則があったか（運営が消したら「出しました」の1行も消すため） */
+  const hadMine = useRef(false);
   const codeRef = useRef(STARTER);
   const descRef = useRef('');
   /** 説明の欄を、自分で書いたか・出した説明で埋めたか。埋めるのは1回だけ */
@@ -158,6 +161,8 @@ export default function RuleBoardBox({ id }: { id: string }) {
         setTable(next);
         if (!next.revealed) setPending((p) => (p === false ? null : p));
         else setPending((p) => (p === true ? null : p));
+        if (hadMine.current && !next.mine) setMsg('');
+        hadMine.current = next.mine !== null;
         if (next.mine && !descTouched.current) {
           descTouched.current = true;
           descRef.current = next.mine.description;
@@ -276,14 +281,15 @@ export default function RuleBoardBox({ id }: { id: string }) {
   async function confirmReveal() {
     if (pending === null) return;
     setBusy(true);
-    const { ok, data } = await postJson('/api/rule-board/reveal', { id, revealed: pending });
+    const body = pending === 'reset' ? { id, reset: true } : { id, revealed: pending };
+    const { ok, data } = await postJson('/api/rule-board/reveal', body);
     setBusy(false);
     if (!ok) {
       setMsg(typeof data.error === 'string' ? data.error : '送れませんでした。');
       return;
     }
+    setMsg(pending === 'reset' ? '出した規則を消しました。' : '');
     setPending(null);
-    setMsg('');
     await refreshRef.current(true);
   }
 
@@ -342,17 +348,24 @@ export default function RuleBoardBox({ id }: { id: string }) {
               やり直す（運営）
             </button>
           ) : null}
+          {staff && pending === null ? (
+            <button className="kit-btn kit-rules__staff" type="button" onClick={() => setPending('reset')}>
+              出した規則を消す（運営）
+            </button>
+          ) : null}
         </form>
         {pending !== null ? (
           <div className="kit-rules__confirm">
             <p>
-              {pending
-                ? '全員のテストデータの正解率を見せます。このあとは規則を出せなくなります。'
-                : 'テストデータの正解率を隠して、規則を受け付ける状態に戻します。出した規則は消えません。'}
+              {pending === 'reset'
+                ? '全員の出した規則を消します。元に戻せません。'
+                : pending
+                  ? '全員のテストデータの正解率を見せます。このあとは規則を出せなくなります。'
+                  : 'テストデータの正解率を隠して、規則を受け付ける状態に戻します。出した規則は消えません。'}
             </p>
             <div className="kit-rules__bar">
               <button className="kit-btn kit-rules__staff" type="button" onClick={confirmReveal} disabled={busy}>
-                {pending ? '公開する' : 'やり直す'}
+                {pending === 'reset' ? '出した規則を消す' : pending ? '公開する' : 'やり直す'}
               </button>
               <button className="kit-btn kit-btn--quiet" type="button" onClick={() => setPending(null)}>
                 やめる

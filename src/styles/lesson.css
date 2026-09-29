@@ -106,6 +106,44 @@
   margin-bottom: 0.3em;
 }
 
+/* 本文の Markdown の表。数の表の見た目（.kit-secant__table）にそろえる。
+   揃えは Markdown の |---:| が付ける text-align に任せ、指定の無い列は左 */
+.lesson-body > table {
+  border-collapse: collapse;
+  border-top: 1px solid var(--l-strong);
+  margin: 0.4em 0 1.2em;
+  font-variant-numeric: tabular-nums;
+}
+
+.lesson-body > table th,
+.lesson-body > table td {
+  padding: 4px 22px 4px 0;
+  border-bottom: 1px solid var(--l-rule);
+  vertical-align: baseline;
+  text-align: left;
+}
+
+.lesson-body > table th {
+  font-family: "Zen Old Mincho", serif;
+  font-weight: 400;
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  color: var(--l-ink-2);
+  white-space: nowrap;
+}
+
+.lesson-body > table th[align='right'],
+.lesson-body > table td[align='right'],
+.lesson-body > table th[style*='right'],
+.lesson-body > table td[style*='right'] {
+  text-align: right;
+}
+
+.lesson-body > table th:last-child,
+.lesson-body > table td:last-child {
+  padding-right: 0;
+}
+
 /* --- 左の欄（20-platform.md 第14.2節。試作の案A「帯を固定」） ---
  * 帯（高さ48px＋二重罫3px、Base.astro の .topbar）の下から画面の下まで固定する。
  * 中身が長ければ欄の中だけでスクロールする。本文と一緒には動かない。

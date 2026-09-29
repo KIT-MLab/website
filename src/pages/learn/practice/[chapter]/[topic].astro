@@ -108,6 +108,10 @@ const syntaxCategories = canSee && entry ? await syntaxCategoriesFor([entry.data
                 ) : (
                   Content && <Content components={{ Exercise, Input, Output, ...(member ? {} : { a: PlainMembersLink }) }} />
                 )}
+                <nav class="lesson-nav" aria-label="ページの移動">
+                  <a href={`/learn/practice/#${chapter}`}>← 練習問題集へ</a>
+                  <a href="/learn/">学習の一覧へ →</a>
+                </nav>
               </article>
             </div>
             {syntaxCategories.length > 0 && (

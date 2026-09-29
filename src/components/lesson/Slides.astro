@@ -3,8 +3,8 @@
  * スライド（design/spec/53-ml-intro.md 第10節）。節の frontmatter の `slides: intro1` で付く。
  *
  * 運営が「前へ」「次へ」を押すと、同じ所属のメンバーの画面も1〜2秒で同じ1枚に切り替わる
- * （src/lesson/slides.ts が /api/slides を読み直す）。幅1280px以上では右の欄（用語を検索の欄）の
- * いちばん上、それより狭い画面では本文の上の開け閉めできる段に置く（置き換えも slides.ts）。
+ * （src/lesson/slides.ts が /api/slides を読み直す）。どの幅でも本文の上の開け閉めできる段に、本文の幅いっぱいに
+ * 置く（2026-09-29。前は幅1280px以上で右の欄に置いていた）。
  *
  * 中身（文字・人の図の人数）はこの HTML にだけ書く。節のページはメンバー・運営にしかこの部品を描かないので、
  * ほかの人にも、誰でも読むファイル（dist/client）にも入らない。
@@ -26,6 +26,7 @@ type Slide = Base &
     | { kind: 'picto'; sub?: string; by: string; reveal: boolean }
     | { kind: 'map'; lines?: string[]; step: 'southampton' | 'queenstown' | 'sink' }
     | { kind: 'image'; src: string; alt: string; credit: string }
+    | { kind: 'facts'; items: { value: string; label: string }[] }
   );
 
 interface Props {
@@ -90,6 +91,16 @@ const person = `<svg width="12" height="18" viewBox="0 0 20 30" aria-hidden="tru
             <p class:list={['kit-slide__title', s.kind === 'image' && 'kit-slide__title--img']}>{s.title}</p>
             {(s.kind === 'text' || s.kind === 'map') && s.lines?.map((l) => <p class="kit-slide__line">{l}</p>)}
             {s.kind === 'picto' && s.sub && <p class="kit-slide__sub">{s.sub}</p>}
+            {s.kind === 'facts' && (
+              <dl class="kit-facts">
+                {s.items.map((it) => (
+                  <div class="kit-facts__item">
+                    <dt class="kit-facts__v">{it.value}</dt>
+                    <dd class="kit-facts__l">{it.label}</dd>
+                  </div>
+                ))}
+              </dl>
+            )}
             {s.kind === 'image' && (
               <>
                 <img class="kit-slide__img" src={s.src} alt={s.alt} decoding="async" />
@@ -277,6 +288,35 @@ const person = `<svg width="12" height="18" viewBox="0 0 20 30" aria-hidden="tru
     }
   }
 
+  /* --- 大きな数の1枚（kind: facts）。数は見出しと同じ明朝の太字、説明は薄い墨の小さな字 --- */
+  .kit-facts {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: 14px 18px;
+    margin: 10px 0 4px;
+  }
+
+  .kit-facts__item {
+    padding-top: 8px;
+    border-top: 1px solid var(--l-rule);
+  }
+
+  .kit-facts__v {
+    margin: 0;
+    font-family: var(--font-head);
+    font-weight: 700;
+    font-size: 28px;
+    line-height: 1.25;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .kit-facts__l {
+    margin: 4px 0 0;
+    font-size: 13.5px;
+    line-height: 1.55;
+    color: var(--l-ink-2);
+  }
+
   /* --- 人の図 --- */
   .kit-picto__key {
     display: flex;
@@ -379,11 +419,14 @@ const person = `<svg width="12" height="18" viewBox="0 0 20 30" aria-hidden="tru
     font-size: 17px;
   }
 
+  /* 1枚が1280×800の画面に収まるように、高さに上限を付ける（横長でない絵は幅いっぱいにしない） */
   .kit-slide__img {
     display: block;
-    width: 100%;
+    max-width: 100%;
+    max-height: 52vh;
+    width: auto;
     height: auto;
-    margin: 4px 0 0;
+    margin: 4px auto 0;
     border: 1px solid var(--l-rule);
   }
 
@@ -529,11 +572,81 @@ const person = `<svg width="12" height="18" viewBox="0 0 20 30" aria-hidden="tru
     }
   }
 
+  /* 本文の幅いっぱい（約700px）。上の決まりより後ろに置くこと（同じ強さなので後ろが勝つ）。みんなで同じ1枚を見るので、字・図をもう一段大きく */
+  @container (min-width: 600px) {
+    .kit-slide__title {
+      font-size: 30px;
+    }
+
+    .kit-slide__line {
+      font-size: 21px;
+    }
+
+    .kit-slide__sub {
+      font-size: 16px;
+    }
+
+    .kit-picto__key {
+      font-size: 15px;
+    }
+
+    .kit-picto__gl {
+      font-size: 15px;
+    }
+
+    .kit-picto__gl b {
+      font-size: 16px;
+    }
+
+    .kit-facts__v {
+      font-size: 34px;
+    }
+
+    .kit-facts__l {
+      font-size: 15px;
+    }
+
+    .kit-slide__title--img {
+      font-size: 24px;
+    }
+
+    .kit-slide__credit {
+      font-size: 12.5px;
+    }
+
+    .kit-map {
+      font-size: 14.5px;
+    }
+
+    .kit-map__dot {
+      width: 9px;
+      height: 9px;
+      margin: -6px 0 0 -6px;
+    }
+
+    .kit-map__ship {
+      width: 36px;
+      height: 21px;
+      margin: -15px 0 0 -18px;
+    }
+
+    .kit-map__ship svg {
+      width: 36px;
+      height: 21px;
+    }
+
+    .kit-map__sink {
+      width: 34px;
+      height: 34px;
+      margin: -17px 0 0 -17px;
+    }
+  }
+
   /* --- 話すこと（運営として見ているときだけ HTML にある） --- */
   .kit-slides__note {
     margin: 10px 0 0;
     padding: 6px 10px;
-    font-size: 13px;
+    font-size: 14px;
     line-height: 1.65;
     color: var(--l-ink);
     background: var(--l-kohaku-bg);
@@ -588,18 +701,8 @@ const person = `<svg width="12" height="18" viewBox="0 0 20 30" aria-hidden="tru
     display: none;
   }
 
-  /* 本文の上の段（幅1279px以下）。広い画面では中身を右の欄へ移すので、段は隠す */
+  /* 本文の上の段（どの幅でも。本文の幅いっぱい） */
   .kit-slides-band {
     margin: 0 0 28px;
-  }
-
-  @media (min-width: 1280px) {
-    .kit-slides-band {
-      display: none;
-    }
-  }
-
-  .term-panel__in > .kit-slides {
-    margin: 0 0 20px;
   }
 </style>

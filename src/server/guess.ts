@@ -141,3 +141,9 @@ export async function setRevealed(db: Db, cohortCode: string, guessId: string, u
     await db.prepare('DELETE FROM guess_reveals WHERE cohort_code = ? AND guess_id = ?').bind(cohortCode, guessId).run();
   }
 }
+
+/** 予想を消す（会のたびにボードを使い直すため）。所属の予想と答え合わせの行を消す。答え合わせの前でもあとでも。 */
+export async function resetGuesses(db: Db, cohortCode: string, guessId: string): Promise<void> {
+  await db.prepare('DELETE FROM guess_reveals WHERE cohort_code = ? AND guess_id = ?').bind(cohortCode, guessId).run();
+  await db.prepare('DELETE FROM guesses WHERE cohort_code = ? AND guess_id = ?').bind(cohortCode, guessId).run();
+}
