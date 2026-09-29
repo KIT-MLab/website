@@ -225,6 +225,11 @@
   text-decoration: none;
 }
 
+/* タイタニック演習の準備中の節（メンバーにはリンクにしない。53-ml-intro.md 第12節） */
+.rail__locked {
+  color: var(--l-ink-2);
+}
+
 /* 質問のブロック。ボタンは決まりのボタン（account.css の .site-btn） */
 .rail__askblock {
   display: grid;
@@ -1969,6 +1974,34 @@
   }
 }
 
+/* 幅1024〜1279px でも、今週の演習・練習問題集は右の欄に並べる（2026-09-29。幅1280px未満の人に欄が見えなかった）。
+   節のページの重なり（drawer）の指定を打ち消す */
+@media (min-width: 1024px) and (max-width: 1279px) {
+  .term-panel--inline {
+    position: static;
+    width: auto;
+    overflow: visible;
+    transform: none;
+    transition: none;
+    box-shadow: none;
+    z-index: auto;
+    background: var(--l-card);
+    border: 1px solid var(--l-rule);
+  }
+
+  .term-panel--inline .term-panel__bar {
+    display: none;
+  }
+
+  .term-panel--inline .term-panel__in {
+    padding: 16px 16px 18px;
+  }
+
+  body:has(.term-panel--inline) #kit-term-toggle {
+    display: none;
+  }
+}
+
 /* --- 検索欄 ---------------------------------------------------- */
 .term-search {
   position: relative;
@@ -2239,7 +2272,7 @@
   margin-top: 40px;
 }
 
-@media (min-width: 1280px) {
+@media (min-width: 1024px) {
   .wk-syntax {
     position: sticky;
     top: 63px;
@@ -2251,7 +2284,7 @@
 
 /* 右の欄（今週の演習・練習問題集。2026-09-29）。用語を検索（幅1280px以上だけここに並ぶ）と構文の一覧を縦に積み、
    欄ごと帯の下に留める。中の構文の一覧は留めない（欄がまとめてスクロールする） */
-@media (min-width: 1280px) {
+@media (min-width: 1024px) {
   .wk-side {
     position: sticky;
     top: calc(63px + var(--kit-band-h, 0px));

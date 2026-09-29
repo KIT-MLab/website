@@ -96,10 +96,14 @@ function isLocked(e: SearchEntry, status: PublishStatus): boolean {
 /**
  * 開けない行き先に添える言葉。メンバーだけの章（design/spec/53-ml-intro.md 第6節）はメンバーでない人に
  * 「メンバー向け」、準備中の章は運営でない人に「準備中」。開けるなら null。
+ * メンバーだけの章は節ごとに公開する（第12節）ので、章ではなく節の行き先で判じる。
  */
 function lockWord(e: SearchEntry, status: PublishStatus): string | null {
   const chapter = chapterOfHref(e.section.href);
-  if (isMembersOnlyChapter(chapter) && !status.member) return 'メンバー向け';
+  if (isMembersOnlyChapter(chapter)) {
+    if (!status.member) return 'メンバー向け';
+    return !status.staff && !status.publicSectionHrefs.has(e.section.href) ? '準備中' : null;
+  }
   return !status.staff && !status.publicChapters.has(chapter) ? '準備中' : null;
 }
 

@@ -44,7 +44,7 @@ import { deckById } from '../../../lesson/slides/decks.mjs';
 import { chapterTitle, isIntroChapter, isMembersOnlyChapter, lessonHref, practiceSectionLabel } from '../../../lesson/chapters';
 import { currentUser, serverConfig } from '../../../server/auth';
 import { isMember } from '../../../server/member';
-import { isChapterPublic, notesForLesson } from '../../../server/lessons-publish';
+import { isChapterPublic, notesForLesson, publicSections } from '../../../server/lessons-publish';
 import generated from '../../../generated/lesson-data.json';
 import '../../../styles/lesson.css';
 
@@ -59,12 +59,17 @@ const config = serverConfig();
 const viewer = config ? await currentUser(Astro.request) : null;
 const isStaff = viewer !== null && (viewer.role === 'staff' || viewer.role === 'admin');
 
-const chapterPublic = entry && config ? await isChapterPublic(config.db, entry.data.chapter) : false;
 /* メンバーだけの章（タイタニック演習。53-ml-intro.md 第6節）。メンバーでない人には、公開していても
    「このページはプロジェクトのメンバー向けです。」の1段落だけを返す（第13.2節と同じ） */
 const member = viewer !== null && isMember(viewer);
 const membersOnly = entry ? isMembersOnlyChapter(entry.data.chapter) : false;
 const membersBlocked = membersOnly && !member;
+/* 公開済みか。タイタニック演習は節ごとに公開する（53-ml-intro.md 第12節。chapter_status の行は見ない）。
+   ほかの章は章ごと（第20.1節） */
+// メンバーには、ほかの章の節の本文からタイタニック演習の節へのリンク（下の lockedSectionHrefs）にも使う
+const openSections = member && config ? await publicSections(config.db) : new Set<string>();
+const sectionOpen = (lessonId: string) => isStaff || openSections.has(lessonId);
+const chapterPublic = !entry || !config ? false : membersOnly ? openSections.has(entry.data.id) : await isChapterPublic(config.db, entry.data.chapter);
 // 運営・管理者は準備中の章も中身まで見られる（第20.1節）
 const canSee = entry !== undefined && (chapterPublic || isStaff) && !membersBlocked;
 
@@ -86,8 +91,17 @@ const lessonData =
 // </script> が本文に混ざっても JSON の埋め込みが切れないようにする
 const dataJson = JSON.stringify(lessonData).replace(/</g, '\\u003c');
 
-const prev = canSee && at > 0 ? siblings[at - 1] : null;
-const next = canSee && entry && at < siblings.length - 1 ? siblings[at + 1] : null;
+/* タイタニック演習では、準備中の節へはメンバーを案内しない（前後の節へのリンクも出さない。53-ml-intro.md 第12節） */
+const prevAny = canSee && at > 0 ? siblings[at - 1] : null;
+const nextAny = canSee && entry && at < siblings.length - 1 ? siblings[at + 1] : null;
+const prev = prevAny && (!membersOnly || sectionOpen(prevAny.data.id)) ? prevAny : null;
+const next = nextAny && (!membersOnly || sectionOpen(nextAny.data.id)) ? nextAny : null;
+/* 本文の「タイタニック2」のリンク（remark-section-links.mjs）も、準備中の節を指すならメンバーには文字だけにする。
+   PlainMembersLink.astro が Astro.locals のこの集合を見る（メンバーでない人には置かない＝この章へのリンクは全部文字） */
+const lockedSectionHrefs = new Set(
+  member && !isStaff ? lessons.filter((l) => isMembersOnlyChapter(l.data.chapter) && !openSections.has(l.data.id)).map((l) => lessonHref(l.id)) : [],
+);
+if (member) (Astro.locals as Record<string, unknown>).lockedSectionHrefs = lockedSectionHrefs;
 
 /* 章の最後の節では、次の章の最初の節へ進めるようにする（利用者「章の最後の節を下まで
    スクロールすると行き先がどこにもない」）。次の章が準備中で運営でなければ、学習の一覧へ戻す。
@@ -95,7 +109,7 @@ const next = canSee && entry && at < siblings.length - 1 ? siblings[at + 1] : nu
    ほかの章からは飛ばして次の章へ進み、メンバーだけの章の最後の節からはプロジェクトの教材へ戻す */
 const lastSibling = siblings[siblings.length - 1];
 const nextChapterFirst =
-  canSee && entry && !next && lastSibling && !membersOnly
+  canSee && entry && !nextAny && lastSibling && !membersOnly
     ? (lessons.find(
         (l) =>
           l.id.localeCompare(lastSibling.id) > 0 && l.data.chapter !== entry.data.chapter && !isMembersOnlyChapter(l.data.chapter),
@@ -162,7 +176,7 @@ const notes = isStaff && entry && config ? await notesForLesson(config.db, entry
       </p>
     ) : !canSee ? (
       <p class="lesson-notice">
-        この章は準備中です。<a href={backHref}>{backLabel}</a>
+        {membersOnly ? 'この節は準備中です。' : 'この章は準備中です。'}<a href={backHref}>{backLabel}</a>
       </p>
     ) : (
       <div class="lesson-page">
@@ -183,7 +197,11 @@ const notes = isStaff && entry && config ? await notesForLesson(config.db, entry
                 {siblings.map((s, i) => (
                   <li data-lesson-id={s.data.id} class={s.id === entry.id ? 'is-now' : ''}>
                     <span class="rail__state">{s.id === entry.id ? 'いま' : '未'}</span>
-                    <a href={lessonHref(s.id)}>{isPractice ? `${practiceLabel(i + 1)} ${s.data.title}` : s.data.title}</a>
+                    {membersOnly && !sectionOpen(s.data.id) ? (
+                      <span class="rail__locked">{practiceLabel(i + 1)} {s.data.title}（準備中）</span>
+                    ) : (
+                      <a href={lessonHref(s.id)}>{isPractice ? `${practiceLabel(i + 1)} ${s.data.title}` : s.data.title}</a>
+                    )}
                   </li>
                 ))}
               </ol>
@@ -211,7 +229,7 @@ const notes = isStaff && entry && config ? await notesForLesson(config.db, entry
         )}
 
         <article class="lesson-body" data-exq={oneAtATime} data-send-now={membersOnly ? '' : undefined}>
-          <Content components={{ Run, Exercise, Input, Output, Level0, Keys, Figure, Secant, Descent, FitLine, Boundary, Overfit, Facilitate: FacilitateFor, Guess, RuleBoard, Slides: SlidesInBody, SectionSyntax, Compare,...(member ? {} : { a: PlainMembersLink }) }} />
+          <Content components={{ Run, Exercise, Input, Output, Level0, Keys, Figure, Secant, Descent, FitLine, Boundary, Overfit, Facilitate: FacilitateFor, Guess, RuleBoard, Slides: SlidesInBody, SectionSyntax, Compare,...(member && lockedSectionHrefs.size === 0 ? {} : { a: PlainMembersLink }) }} />
 
           <nav class="lesson-nav" aria-label="節の移動">
             {prev ? <a href={lessonHref(prev.id)}>← 前の節へ　{prev.data.title}</a> : <span class="lesson-nav__spacer" />}

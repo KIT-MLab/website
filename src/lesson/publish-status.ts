@@ -12,11 +12,13 @@
 
 export type PublishStatus = {
   publicChapters: Set<string>;
+  /** タイタニック演習の公開済みの節の行き先（節ごとに公開する。53-ml-intro.md 第12節）。メンバーにだけ入る */
+  publicSectionHrefs: Set<string>;
   staff: boolean;
   member: boolean;
 };
 
-const EMPTY: PublishStatus = { publicChapters: new Set(), staff: false, member: false };
+const EMPTY: PublishStatus = { publicChapters: new Set(), publicSectionHrefs: new Set(), staff: false, member: false };
 
 let cached: Promise<PublishStatus> | null = null;
 let settled: PublishStatus | null = null;
@@ -25,9 +27,10 @@ async function load(): Promise<PublishStatus> {
   try {
     const res = await fetch('/api/lessons/status');
     if (!res.ok) return EMPTY;
-    const data = (await res.json()) as { public?: string[]; staff?: boolean; member?: boolean };
+    const data = (await res.json()) as { public?: string[]; sections?: string[]; staff?: boolean; member?: boolean };
     return {
       publicChapters: new Set(data.public ?? []),
+      publicSectionHrefs: new Set(data.sections ?? []),
       staff: data.staff === true,
       member: data.member === true,
     };

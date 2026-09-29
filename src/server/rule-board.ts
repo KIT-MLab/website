@@ -38,7 +38,7 @@ export function ruleBoardDef(id: string): RuleBoardDef | null {
   return Object.prototype.hasOwnProperty.call(DEFS, id) ? DEFS[id] : null;
 }
 
-/** 見て・出してよいか。予想ボードと同じ（メンバーで、章が公開済み。運営・管理者は準備中でも）。 */
+/** 見て・出してよいか。予想ボードと同じ（メンバーで、節が公開済み。運営・管理者は準備中でも）。 */
 export function canUseRuleBoard(db: Db, user: CurrentUser, def: RuleBoardDef): Promise<boolean> {
   return canUseBoard(db, user, def);
 }

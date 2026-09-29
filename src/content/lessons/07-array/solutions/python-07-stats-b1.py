@@ -4,5 +4,5 @@ scores = np.array([
     [int(input()), int(input()), int(input())],
     [int(input()), int(input()), int(input())],
 ])
-print(np.round(scores.mean(axis=0), 1))
-print(np.round(scores.mean(axis=1), 1))
+print(scores.mean(axis=0))
+print(scores.max(axis=1))

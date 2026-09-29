@@ -8,7 +8,7 @@
  *                                  1つだけのときは、前と同じく index・live・count も最上位に入れる
  *   POST /api/slides               { deck, index } 番号を変える（運営・管理者だけ）。「最初から」は index 0
  *
- * 読むのは**メンバーだけ**。章が準備中なら運営・管理者だけ（予想ボードと同じ。src/server/guess.ts）。
+ * 読むのは**メンバーだけ**。節が準備中なら運営・管理者だけ（予想ボードと同じ。src/server/guess.ts）。
  * 番号は所属ごと（見ている人・押した人の所属）。
  */
 import type { APIRoute } from 'astro';
@@ -38,7 +38,7 @@ export const GET: APIRoute = async ({ request, url }) => {
   for (const deckId of ids) {
     const def = slideDeckDef(deckId);
     if (!def) return json({ error: '見つかりません。' }, 404);
-    if (!(await canUseBoard(config.db, user, def))) return json({ error: 'この章は準備中です。' }, 403);
+    if (!(await canUseBoard(config.db, user, def))) return json({ error: 'この節は準備中です。' }, 403);
     const pos = await deckPosition(config.db, user.cohort.code, deckId, def.count, now);
     decks[deckId] = { ...pos, count: def.count };
   }

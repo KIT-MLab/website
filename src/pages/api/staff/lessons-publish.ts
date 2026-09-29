@@ -9,6 +9,7 @@ import { getCollection } from 'astro:content';
 import { json, readJsonObject, serverConfig } from '../../../server/auth';
 import { requireAdmin } from '../../../server/staff';
 import { setChapterPublic } from '../../../server/lessons-publish';
+import { isMembersOnlyChapter } from '../../../lesson/chapters';
 
 export const prerender = false;
 
@@ -30,6 +31,8 @@ export const POST: APIRoute = async ({ request }) => {
 
   const lessons = await getCollection('lessons');
   if (!lessons.some((l) => l.data.chapter === chapter)) return json({ error: '見つかりません。' }, 404);
+  // プロジェクトの教材の章は節ごとに公開する（sections-publish.ts。53-ml-intro.md 第12節）。章の行は見ないので作らせない
+  if (isMembersOnlyChapter(chapter)) return json({ error: 'この章は節ごとに公開します。' }, 400);
 
   const now = Date.now();
   await setChapterPublic(db, chapter, isPublic, me.id, now);

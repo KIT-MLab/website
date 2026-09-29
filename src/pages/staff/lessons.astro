@@ -7,6 +7,11 @@
  * （章ごとにまとめる。今週の演習のメモも含む）。解決したものは既定で隠す（第20.3節）。
  *
  * 運営（staff）は見られるだけ、切り替えは管理者だけ（第20.1節）。
+ *
+ * プロジェクトの教材の部（タイタニック演習）は節ごとに公開する（design/spec/53-ml-intro.md 第12節）。
+ * その部だけ、章の行の代わりに節を1行ずつ並べ、節ごとに切り替える（POST /api/staff/sections-publish）。
+ * ほかの章の切り替えの下には、練習問題集にその章の話題があれば「練習問題集のこの章も一緒に公開されます」と添える
+ * （練習問題集は章の公開に従う）。
  */
 export const prerender = false;
 
@@ -16,9 +21,9 @@ import StaffDeny from '../../components/StaffDeny.astro';
 import NotesPanel from '../../components/lesson/NotesPanel.astro';
 import { serverConfig } from '../../server/auth';
 import { requireAdmin, requireStaff } from '../../server/staff';
-import { allPlacedNotes, chapterStatuses, openNoteCountByLesson, wholeCourseNotes } from '../../server/lessons-publish';
+import { allPlacedNotes, chapterStatuses, openNoteCountByLesson, sectionStatuses, wholeCourseNotes } from '../../server/lessons-publish';
 import { sectionNumbers, ymd } from '../../server/staff-data';
-import { chapterTitle, lessonHref, practiceSectionLabel, writtenParts } from '../../lesson/chapters';
+import { chapterTitle, isMembersOnlyChapter, lessonHref, practiceSectionLabel, writtenParts } from '../../lesson/chapters';
 import '../../styles/lesson-tokens.css';
 import '../../styles/staff.css';
 
@@ -42,6 +47,9 @@ for (const l of lessons) {
 }
 
 const statuses = me && config ? await chapterStatuses(config.db) : new Map();
+const sectionStates = me && config ? await sectionStatuses(config.db) : new Map();
+// 練習問題集に話題がある章（章を公開すると練習問題集のその章も出る）
+const practiceChapters = new Set(me ? (await getCollection('practice')).map((t) => t.data.chapter) : []);
 const openCounts = me && config ? await openNoteCountByLesson(config.db) : new Map<string, number>();
 
 function chapterNoteCount(chapter: string): number {
@@ -50,8 +58,10 @@ function chapterNoteCount(chapter: string): number {
   return n;
 }
 
-type ChapterRow = { chapter: string; title: string; isPublic: boolean; noteCount: number; firstHref: string };
-type PartRow = { name: string; chapters: ChapterRow[] };
+type ChapterRow = { chapter: string; title: string; isPublic: boolean; noteCount: number; firstHref: string; hasPractice: boolean };
+/** プロジェクトの教材の節の行（節ごとに公開する。53-ml-intro.md 第12節） */
+type SectionRow = { lessonId: string; title: string; isPublic: boolean; noteCount: number; href: string };
+type PartRow = { name: string; chapters: ChapterRow[]; sections: SectionRow[] | null };
 
 const partRows: PartRow[] = writtenParts()
   .map((part) => ({
@@ -66,8 +76,20 @@ const partRows: PartRow[] = writtenParts()
           isPublic: statuses.get(chapter)?.public ?? false,
           noteCount: chapterNoteCount(chapter),
           firstHref: first ? lessonHref(first.id) : '/learn/',
+          hasPractice: practiceChapters.has(chapter),
         };
       }),
+    sections: part.chapters.every((chapter) => isMembersOnlyChapter(chapter))
+      ? part.chapters.flatMap((chapter) =>
+          (byChapter.get(chapter) ?? []).map((l, i) => ({
+            lessonId: l.data.id,
+            title: `${practiceSectionLabel(chapter, i + 1) ?? ''} ${l.data.title}`.trim(),
+            isPublic: sectionStates.get(l.data.id)?.public ?? false,
+            noteCount: openCounts.get(l.data.id) ?? 0,
+            href: lessonHref(l.id),
+          })),
+        )
+      : null,
   }))
   .filter((part) => part.chapters.length > 0);
 
@@ -91,6 +113,7 @@ const weeklyById = new Map(weeklies.map((w) => [w.data.id, w]));
 
 type NoteView = {
   id: number;
+  lessonId: string;
   body: string;
   createdByName: string;
   createdAt: number;
@@ -111,6 +134,7 @@ for (const n of placedNotes) {
     resolved: n.resolvedAt !== null,
     where: '',
     href: '#',
+    lessonId: n.lessonId ?? '',
   };
   if (n.lessonId) {
     const chapter = chapterOfLesson.get(n.lessonId) ?? '';
@@ -167,6 +191,63 @@ const openPlacedCount = placedNotes.filter((n) => n.resolvedAt === null).length;
         {partRows.map((part) => (
           <>
             <p class="lp2-part">{part.name}</p>
+            {part.sections ? (
+            <>
+            <p class="lp2-part-note">この部は節ごとに公開します（集まりで使う節から）。</p>
+            <table class="roster lp2-table">
+              <thead>
+                <tr>
+                  <th>節</th>
+                  <th>状態</th>
+                  {admin ? <th>切り替え</th> : null}
+                  <th>未解決のメモ</th>
+                  <th>ページ</th>
+                </tr>
+              </thead>
+              <tbody>
+                {part.sections.map((sec) => (
+                  <tr>
+                    <td>{sec.title}</td>
+                    <td>
+                      <span class={sec.isPublic ? 'wk-state wk-state--ok' : 'wk-state'} data-pub-state={sec.lessonId}>
+                        {sec.isPublic ? '公開' : '準備中'}
+                      </span>
+                    </td>
+                    {admin ? (
+                      <td>
+                        <div class="wk-act" data-pub-act={sec.lessonId} data-lesson={sec.lessonId} data-public={String(sec.isPublic)}>
+                          <div data-pub-idle>
+                            <button type="button" class="wk-open-btn" data-pub-start>
+                              {sec.isPublic ? '準備中に戻す' : '公開する'}
+                            </button>
+                          </div>
+                          <div data-pub-confirm hidden>
+                            <p class="mt-note">
+                              {sec.title}を{sec.isPublic ? '準備中に戻します。' : '公開します。公開すると、メンバーが中身を見られます。'}
+                            </p>
+                            <div class="mt-bar">
+                              <button type="button" class="wk-open-btn" data-pub-go>
+                                {sec.isPublic ? '準備中に戻す' : '公開する'}
+                              </button>
+                              <button type="button" class="wk-open-btn wk-open-btn--quiet" data-pub-cancel>
+                                やめる
+                              </button>
+                            </div>
+                          </div>
+                          <p class="mt-msg" data-pub-msg />
+                        </div>
+                      </td>
+                    ) : null}
+                    <td data-note-count={sec.lessonId}>{sec.noteCount > 0 ? `${sec.noteCount}件` : ''}</td>
+                    <td>
+                      <a href={sec.href}>開く →</a>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            </>
+            ) : (
             <table class="roster lp2-table">
               <thead>
                 <tr>
@@ -209,6 +290,7 @@ const openPlacedCount = placedNotes.filter((n) => n.resolvedAt === null).length;
                           </div>
                           <p class="mt-msg" data-pub-msg />
                         </div>
+                        {ch.hasPractice && <p class="lp2-practice">練習問題集のこの章も一緒に公開されます</p>}
                       </td>
                     ) : null}
                     <td data-note-count={ch.chapter}>{ch.noteCount > 0 ? `${ch.noteCount}件` : ''}</td>
@@ -219,6 +301,7 @@ const openPlacedCount = placedNotes.filter((n) => n.resolvedAt === null).length;
                 ))}
               </tbody>
             </table>
+            )}
           </>
         ))}
 
@@ -250,7 +333,7 @@ const openPlacedCount = placedNotes.filter((n) => n.resolvedAt === null).length;
                   <p class="lp2-links">
                     <a href={n.href}>その節を開く →</a>
                     {!n.resolved ? (
-                      <button type="button" class="kit-btn lp2-resolve" data-note-resolve data-note-chapter={group.chapter}>
+                      <button type="button" class="kit-btn lp2-resolve" data-note-resolve data-note-chapter={group.chapter} data-note-lesson={n.lessonId}>
                         解決
                       </button>
                     ) : null}
@@ -302,6 +385,9 @@ const openPlacedCount = placedNotes.filter((n) => n.resolvedAt === null).length;
       const go = box.querySelector<HTMLButtonElement>('[data-pub-go]');
       const cancel = box.querySelector<HTMLButtonElement>('[data-pub-cancel]');
       const chapter = box.dataset.chapter ?? '';
+      // 節ごとに公開する部（タイタニック演習。53-ml-intro.md 第12節）の行は data-lesson を持つ
+      const lesson = box.dataset.lesson ?? '';
+      const key = lesson !== '' ? lesson : chapter;
 
       const show = (which: HTMLElement | null) => {
         for (const el of [idle, confirmStage]) if (el) el.hidden = el !== which;
@@ -323,10 +409,10 @@ const openPlacedCount = placedNotes.filter((n) => n.resolvedAt === null).length;
         go.disabled = true;
         if (msg) msg.textContent = '';
         try {
-          const res = await fetch('/api/staff/lessons-publish', {
+          const res = await fetch(lesson !== '' ? '/api/staff/sections-publish' : '/api/staff/lessons-publish', {
             method: 'POST',
             headers: { 'content-type': 'application/json' },
-            body: JSON.stringify({ chapter, public: wantPublic }),
+            body: JSON.stringify(lesson !== '' ? { lesson, public: wantPublic } : { chapter, public: wantPublic }),
           });
           const body = (await res.json().catch(() => ({}))) as { error?: string; ok?: boolean };
           if (!res.ok || !body.ok) {
@@ -334,7 +420,7 @@ const openPlacedCount = placedNotes.filter((n) => n.resolvedAt === null).length;
             return;
           }
           box.dataset.public = String(wantPublic);
-          const state = document.querySelector(`[data-pub-state="${chapter}"]`);
+          const state = document.querySelector(`[data-pub-state="${key}"]`);
           if (state) {
             state.textContent = wantPublic ? '公開' : '準備中';
             state.classList.toggle('wk-state--ok', wantPublic);
@@ -373,9 +459,10 @@ const openPlacedCount = placedNotes.filter((n) => n.resolvedAt === null).length;
           }
           li.hidden = true;
           li.classList.add('is-resolved');
-          const chapter = button.dataset.noteChapter;
-          if (chapter) {
-            const cell = document.querySelector(`[data-note-count="${chapter}"]`);
+          // 章の行の数と、節ごとに並べる部（タイタニック演習）の節の行の数のどちらか
+          for (const key of [button.dataset.noteChapter, button.dataset.noteLesson]) {
+            if (!key) continue;
+            const cell = document.querySelector(`[data-note-count="${key}"]`);
             if (cell) {
               const n = Math.max(0, Number(cell.textContent?.replace('件', '') || '0') - 1);
               cell.textContent = n > 0 ? `${n}件` : '';
@@ -442,6 +529,19 @@ const openPlacedCount = placedNotes.filter((n) => n.resolvedAt === null).length;
 
     .lp2-table {
       margin-bottom: 6px;
+    }
+
+    .lp2-part-note {
+      margin: 0 0 4px;
+      font-size: 12.5px;
+      color: var(--l-ink-2);
+    }
+
+    /* 章の切り替えの下の「練習問題集のこの章も一緒に公開されます」 */
+    .lp2-practice {
+      margin: 2px 0 0;
+      font-size: 12px;
+      color: var(--l-ink-2);
     }
 
     .lp2-toggle {

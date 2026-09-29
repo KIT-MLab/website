@@ -3,12 +3,14 @@
  *
  * ・章ごとの公開状態（`chapter_status`）。**行が無ければ準備中**（第20.1節）。管理者だけが
  *   切り替えられる。運営・管理者は準備中の章も中身まで見られる（第20.1節）
+ * ・プロジェクトの教材の章（タイタニック演習）だけは節ごと（`section_status`。53-ml-intro.md 第12節）
  * ・気づいたことのメモ（`review_notes`）。lesson_id と weekly_id が両方 NULL なら教材全体の話
  *   （第20.3節）。消す機能は無い。「解決」は resolved_at を立てるだけ
  *
  * 時刻はすべてミリ秒（第6章）。
  */
 import type { Db } from './auth';
+import { isMembersOnlyChapter } from '../lesson/chapters';
 
 // ---------------------------------------------------------------- 章の公開
 
@@ -56,6 +58,76 @@ export async function setChapterPublic(
     )
     .bind(chapter, isPublic ? 1 : 0, now, updatedBy)
     .run();
+}
+
+// ---------------------------------------------------------------- 節の公開（プロジェクトの教材の章）
+
+/*
+ * プロジェクトの教材の章（タイタニック演習。design/spec/53-ml-intro.md 第12節）は、節を1つずつ決まった集まりで
+ * 使うので**節ごと**に公開する（`section_status`。行が無ければ準備中）。この章では chapter_status の行は見ない。
+ * ほかの章は今までどおり章ごと。どちらで判じるかは下の lessonIsPublic / isLessonPublic に1つだけ置く。
+ */
+
+/** その節（lesson の id）が公開済みか。行が無ければ準備中。 */
+export async function isSectionPublic(db: Db, lessonId: string): Promise<boolean> {
+  const row = await db
+    .prepare('SELECT public FROM section_status WHERE lesson_id = ?')
+    .bind(lessonId)
+    .first<{ public: number }>();
+  return row !== null && row.public === 1;
+}
+
+/** 公開済みの節（lesson の id）の集合。 */
+export async function publicSections(db: Db): Promise<Set<string>> {
+  const rows = await db.prepare('SELECT lesson_id FROM section_status WHERE public = 1').all<{ lesson_id: string }>();
+  return new Set(rows.results.map((r) => r.lesson_id));
+}
+
+/** 全部の節の状態を1回で引く。記録の無い節はこの Map に入らない（＝準備中）。 */
+export async function sectionStatuses(db: Db): Promise<Map<string, ChapterStatusRow>> {
+  const rows = await db
+    .prepare('SELECT lesson_id, public, updated_at, updated_by FROM section_status')
+    .all<{ lesson_id: string; public: number; updated_at: number; updated_by: string }>();
+  const out = new Map<string, ChapterStatusRow>();
+  for (const row of rows.results) {
+    out.set(row.lesson_id, { public: row.public === 1, updatedAt: row.updated_at, updatedBy: row.updated_by });
+  }
+  return out;
+}
+
+/** 節の公開・準備中を切り替える（管理者だけ）。呼ぶ側で requireAdmin と、プロジェクトの教材の節であることを確かめること。 */
+export async function setSectionPublic(
+  db: Db,
+  lessonId: string,
+  isPublic: boolean,
+  updatedBy: string,
+  now: number,
+): Promise<void> {
+  await db
+    .prepare(
+      `INSERT INTO section_status (lesson_id, public, updated_at, updated_by) VALUES (?, ?, ?, ?)
+       ON CONFLICT (lesson_id) DO UPDATE SET public = excluded.public, updated_at = excluded.updated_at, updated_by = excluded.updated_by`,
+    )
+    .bind(lessonId, isPublic ? 1 : 0, now, updatedBy)
+    .run();
+}
+
+/** 公開済みの章と節をまとめて引いたもの（一覧のページが節ごとに問い合わせずに済むように）。 */
+export type PublishView = { chapters: Set<string>; sections: Set<string> };
+
+export async function publishView(db: Db): Promise<PublishView> {
+  const [chapters, sections] = await Promise.all([publicChapters(db), publicSections(db)]);
+  return { chapters, sections };
+}
+
+/** その節が公開済みか。プロジェクトの教材の章は節ごと、ほかの章は章ごと。 */
+export function lessonIsPublic(view: PublishView, chapter: string, lessonId: string): boolean {
+  return isMembersOnlyChapter(chapter) ? view.sections.has(lessonId) : view.chapters.has(chapter);
+}
+
+/** lessonIsPublic を1つの節だけデータベースに問い合わせて判じる。 */
+export async function isLessonPublic(db: Db, chapter: string, lessonId: string): Promise<boolean> {
+  return isMembersOnlyChapter(chapter) ? isSectionPublic(db, lessonId) : isChapterPublic(db, chapter);
 }
 
 // ---------------------------------------------------------------- 気づいたことのメモ

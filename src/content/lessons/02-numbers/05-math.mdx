@@ -48,12 +48,12 @@ print(math.sqrt(9))`}
 <Exercise
   id="python-02-math-b1"
   kind="build"
-  stdin={`3`}
+  stdin={`1`}
   tests={[
-    { kind: 'stdout', stdin: `0\n` },
     { kind: 'stdout', stdin: `1\n` },
     { kind: 'stdout', stdin: `2.5\n` },
     { kind: 'stdout', stdin: `10\n` },
+    { kind: 'stdout', stdin: `0\n` },
   ]}
   hints={[
     '半径の入力には小数もあります。読み取り方を第1節の `float()` の説明で確認してください。',
@@ -61,9 +61,17 @@ print(math.sqrt(9))`}
   ]}
   forbid={['3.14']}
 >
-入力欄から半径を読み取ってください。円周の長さと面積を `round()` で小数第2位まで丸め、1行で表示します。半径が `1` のときは `円周:6.28 面積:3.14` と表示されます。
+円の半径から、円周の長さと面積を求めてください。どちらも `round()` で小数第2位まで丸めます。
 
 円周率は `math` から取ってください。`3.14` のように自分で書いた値は使えません。
+
+<Input>
+- 1行目: 半径（小数のこともある）
+</Input>
+
+<Output>
+円周の長さと面積を1行で表示します。形は出力例のとおりです。
+</Output>
 </Exercise>
 
 {/* つながり */}

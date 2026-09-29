@@ -14,7 +14,7 @@
  */
 import type { CurrentUser, Db } from './auth';
 import { isMember } from './member';
-import { isChapterPublic } from './lessons-publish';
+import { isLessonPublic } from './lessons-publish';
 import generated from '../generated/lesson-data.json';
 
 export type GuessDef = {
@@ -38,13 +38,14 @@ export function isStaffUser(user: CurrentUser): boolean {
 }
 
 /**
- * このボードを見て・出してよいか。メンバーで、かつ章が公開済み（運営・管理者は準備中の章も。
- * 節のページと同じ。20-platform.md 第20.1節）。
+ * このボードを見て・出してよいか。メンバーで、かつボードのある節が公開済み（運営・管理者は準備中でも。
+ * 節のページと同じ。20-platform.md 第20.1節）。タイタニック演習は節ごとに公開する（53-ml-intro.md 第12節）ので
+ * 章ではなく節の状態で判じる。規則の正解率ランキングとスライドもここを通る。
  */
-export async function canUseBoard(db: Db, user: CurrentUser, def: Pick<GuessDef, 'chapter'>): Promise<boolean> {
+export async function canUseBoard(db: Db, user: CurrentUser, def: Pick<GuessDef, 'chapter' | 'lessonId'>): Promise<boolean> {
   if (!isMember(user)) return false;
   if (isStaffUser(user)) return true;
-  return isChapterPublic(db, def.chapter);
+  return isLessonPublic(db, def.chapter, def.lessonId);
 }
 
 /** 予想は％で 0〜100。小数第1位までにそろえる（38.38 は 38.4 として受ける）。読めなければ null。 */

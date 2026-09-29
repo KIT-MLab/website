@@ -47,10 +47,10 @@ export const SYNTAX_CATEGORIES: SyntaxCategory[] = [
       { code: 'print(7 / 2)', result: '3.5', note: '割り算（答えは小数。詳しくは第2章1節）', since: 'python-01-print' },
       { code: 'print(9 / 3)', result: '3.0', note: '割り切れても答えは float', since: 'python-02-int-float' },
       { code: 'print(1 + 2.5)', result: '3.5', note: '整数と小数を混ぜると float になる', since: 'python-02-int-float' },
-      { code: '7 // 2', result: '3', note: '割った商（小数点以下を切り捨て）', since: 'python-02-operators' },
-      { code: '7 % 2', result: '1', note: '割った余り', since: 'python-02-operators' },
-      { code: '7 ** 2', result: '49', note: 'べき乗（7の2乗）', since: 'python-02-operators' },
-      { code: '(1 + 2) * 3', result: '9', note: 'かっこの中が先', since: 'python-02-precedence' },
+      { code: 'print(7 // 2)', result: '3', note: '割った商（小数点以下を切り捨て）', since: 'python-02-operators' },
+      { code: 'print(7 % 2)', result: '1', note: '割った余り', since: 'python-02-operators' },
+      { code: 'print(7 ** 2)', result: '49', note: 'べき乗（7の2乗）', since: 'python-02-operators' },
+      { code: 'print((1 + 2) * 3)', result: '9', note: 'かっこの中が先', since: 'python-02-precedence' },
     ],
   },
   {
@@ -76,6 +76,7 @@ export const SYNTAX_CATEGORIES: SyntaxCategory[] = [
     entries: [
       { code: 'price = 100\nprint(price + 50)', result: '150', note: '名前に値を結び付けて使う', since: 'python-01-variable' },
       { code: 'a = 1\na = 3\nprint(a)', result: '3', note: '入れ直すと前の値は残らない', since: 'python-01-variable' },
+      { code: 'a = 1\na = a + 10\nprint(a)', result: '11', note: 'いまの値をもとに入れ直す', since: 'python-01-variable' },
     ],
   },
   {
@@ -86,20 +87,21 @@ export const SYNTAX_CATEGORIES: SyntaxCategory[] = [
       { code: 'name = input()\nprint("こんにちは", name)', result: 'こんにちは 佐藤（入力が佐藤のとき）', note: '読み取った1行を変数に入れて使う', since: 'python-01-input-basic' },
       { code: 'a = input()\nb = input()\nprint(b, a)', result: '青 赤（入力が赤と青の2行のとき）', note: '呼ぶたびに次の行を上から読む', since: 'python-01-input-basic' },
       { code: 'print(input())', result: '佐藤（入力が佐藤のとき）', note: '変数に入れずにそのまま表示', since: 'python-01-input-basic' },
-      { code: 'int("5")', result: '5', note: '整数に直す', since: 'python-01-input' },
-      { code: 'float("2.5")', result: '2.5', note: '小数に直す', since: 'python-02-int-float' },
-      { code: 'int(7.9)', result: '7', note: '小数を整数に（切り捨て）', since: 'python-02-int-float' },
+      { code: 'print(int("5") + 1)', result: '6', note: '整数に直す', since: 'python-01-input' },
+      { code: 'print(float("2.5"))', result: '2.5', note: '小数に直す', since: 'python-02-int-float' },
+      { code: 'print(int(7.9))', result: '7', note: '小数を整数に（切り捨て）', since: 'python-02-int-float' },
     ],
   },
   {
     key: 'round-math',
     name: 'round と math',
     entries: [
-      { code: 'round(3.14159, 2)', result: '3.14', note: '小数第2位まで丸める', since: 'python-02-round' },
-      { code: 'round(2.7)', result: '3', note: '桁数を省略すると整数に丸める', since: 'python-02-round' },
+      { code: 'print(round(3.14159, 2))', result: '3.14', note: '小数第2位まで丸める', since: 'python-02-round' },
+            { code: 'print(round(2.7))', result: '3', note: '桁数を省略すると整数に丸める', since: 'python-02-round' },
+      { code: 'print(round(2.5))', result: '2', note: 'ちょうど真ん中は偶数の側に丸まる', since: 'python-02-round' },
       { code: 'import math', result: '', note: '数学の関数を使う準備', since: 'python-02-math' },
-      { code: 'math.sqrt(16)', result: '4.0', note: '平方根', since: 'python-02-math' },
-      { code: 'math.pi', result: '3.141592653589793', note: '円周率（かっこは付けない）', since: 'python-02-math' },
+      { code: 'print(math.sqrt(16))', result: '4.0', note: '平方根', since: 'python-02-math' },
+      { code: 'print(math.pi)', result: '3.141592653589793', note: '円周率（かっこは付けない）', since: 'python-02-math' },
     ],
   },
   {
@@ -258,6 +260,54 @@ export const SYNTAX_CATEGORIES: SyntaxCategory[] = [
         since: 'python-07-array',
       },
       {
+        code: 'a = np.array([60, 70, 80])\nb = np.array([40, 55, 50])\nprint(a - b)',
+        result: '[20 15 30]',
+        note: '配列どうしは同じ位置の値で計算',
+        since: 'python-07-array',
+      },
+      {
+        code: 'scores = np.array([80, 70, 90])\nprint(scores.mean())',
+        result: '80.0',
+        note: '配列の値すべての平均',
+        since: 'python-07-agg',
+      },
+      {
+        code: 'scores = np.array([80, 70, 90])\nprint(scores.sum())\nprint(scores.max())\nprint(scores.min())',
+        result: '240\n90\n70',
+        note: '合計・最大・最小も同じ形',
+        since: 'python-07-agg',
+      },
+      {
+        code: 'scores = np.array([40, 90, 55, 70, 30])\nprint(scores[scores >= 60])',
+        result: '[90 70]',
+        note: '条件に合う値だけ取り出す',
+        since: 'python-07-select',
+      },
+      {
+        code: 'scores = np.array([40, 90, 55, 70, 30])\nprint(len(scores[scores >= 60]))',
+        result: '2',
+        note: '条件に合う値の個数を数える',
+        since: 'python-07-select',
+      },
+      {
+        code: 'scores = np.array([40, 90, 55, 70, 30])\nprint(scores[1:3])',
+        result: '[90 55]',
+        note: 'スライスで範囲を取り出す（終わりは含まない）',
+        since: 'python-07-slice',
+      },
+      {
+        code: 'scores = np.array([40, 90, 55, 70, 30])\nprint(scores[:3])\nprint(scores[2:])',
+        result: '[40 90 55]\n[55 70 30]',
+        note: '始まりを省くと先頭から、終わりを省くと最後まで',
+        since: 'python-07-slice',
+      },
+      {
+        code: 'table = []\ntable.append([80, 70, 90])\ntable.append([60, 50, 40])\nprint(np.array(table))',
+        result: '[[80 70 90]\n [60 50 40]]',
+        note: 'リストを並べたリストから2次元配列を作る',
+        since: 'python-07-shape',
+      },
+      {
         code: 'scores = np.array([[80, 70, 90], [60, 50, 40]])\nprint(scores.shape)',
         result: '(2, 3)',
         note: '行数と列数を調べる',
@@ -266,7 +316,7 @@ export const SYNTAX_CATEGORIES: SyntaxCategory[] = [
       {
         code: 'scores = np.array([[80, 70, 90], [60, 50, 40]])\nprint(scores.mean())',
         result: '65.0',
-        note: '配列全体の平均',
+        note: '2次元でも配列全体の平均',
         since: 'python-07-stats',
       },
       {
@@ -278,20 +328,8 @@ export const SYNTAX_CATEGORIES: SyntaxCategory[] = [
       {
         code: 'scores = np.array([[80, 70, 90], [60, 50, 40]])\nprint(scores.sum(axis=1))',
         result: '[240 150]',
-        note: 'sum・max・minも同じ形',
+        note: 'sum・max・minにもaxisを付けられる',
         since: 'python-07-stats',
-      },
-      {
-        code: 'scores = np.array([40, 90, 55, 70, 30])\nprint(scores[scores >= 60])',
-        result: '[90 70]',
-        note: '条件に合う値だけ取り出す',
-        since: 'python-07-select',
-      },
-      {
-        code: 'scores = np.array([40, 90, 55, 70, 30])\nprint(scores[1:3])',
-        result: '[90 55]',
-        note: 'スライスで範囲を取り出す（終わりは含まない）',
-        since: 'python-07-select',
       },
       {
         code: 'print(np.round(np.array([81.66, 49.24]), 1))',

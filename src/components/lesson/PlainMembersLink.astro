@@ -1,18 +1,25 @@
 ---
 /**
- * メンバーでない人に渡す、本文のリンク（MDX の `a`）の代わり（design/spec/53-ml-intro.md 第7節）。
+ * 開けない人に渡す、本文のリンク（MDX の `a`）の代わり（design/spec/53-ml-intro.md 第7節・第12節）。
  *
  * 本文の「タイタニック2」は remark-section-links.mjs がリンクにする。行き先がメンバーだけの章
  * （scripts/parts.mjs の MEMBERS_ONLY_CHAPTERS）なら、メンバーでない人には開けないので、
  * リンクにせず文字だけにする。それ以外のリンクは、もとの属性のまま <a> で出す。
  *
- * 節のページと練習問題集の話題のページが、メンバーでない人にだけ `components={{ a: … }}` で渡す。
+ * メンバーでも、行き先の節が準備中なら開けない（タイタニック演習は節ごとに公開する。第12節）。
+ * 節のページがメンバーのときだけ `Astro.locals.lockedSectionHrefs`（準備中の節の href の集合）を置く。
+ * 置いてあればその集合に入っている行き先だけを文字にし、置いていなければ（メンバーでない人）この章への
+ * リンクを全部文字にする。
+ *
+ * 節のページと練習問題集の話題のページが `components={{ a: … }}` で渡す。
  */
 import { isMembersOnlyChapter } from '../../lesson/chapters';
 
 const { href, className, class: cls, ...rest } = Astro.props as Record<string, unknown> & { href?: string };
 const chapter = typeof href === 'string' ? (/^\/learn\/lesson\/([^/]+)\//.exec(href)?.[1] ?? '') : '';
-const plain = chapter !== '' && isMembersOnlyChapter(chapter);
+const locked = (Astro.locals as { lockedSectionHrefs?: Set<string> }).lockedSectionHrefs;
+const path = typeof href === 'string' ? href.split('#')[0] : '';
+const plain = chapter !== '' && isMembersOnlyChapter(chapter) && (locked === undefined || locked.has(path));
 const klass = (cls ?? className) as string | undefined;
 ---
 

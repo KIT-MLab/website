@@ -5,7 +5,7 @@
  *   POST /api/rule-board        { id, description, train: [1 か 0 …], test: [1 か 0 …] }
  *                               規則を出す・出し直す（公開の前だけ）。返すのは訓練データの正解率だけ
  *
- * **メンバーだけ**。章が準備中なら運営・管理者だけ。所属は見ている人の所属（予想ボードと同じ）。
+ * **メンバーだけ**。節が準備中なら運営・管理者だけ。所属は見ている人の所属（予想ボードと同じ）。
  * 公開・やり直すは /api/rule-board/reveal。
  */
 import type { APIRoute } from 'astro';
@@ -36,7 +36,7 @@ export const GET: APIRoute = async ({ request, url }) => {
   const id = url.searchParams.get('id') ?? '';
   const def = ruleBoardDef(id);
   if (!def) return json({ error: '見つかりません。' }, 404);
-  if (!(await canUseRuleBoard(config.db, user, def))) return json({ error: 'この章は準備中です。' }, 403);
+  if (!(await canUseRuleBoard(config.db, user, def))) return json({ error: 'この節は準備中です。' }, 403);
 
   const table = await ruleTable(config.db, user.cohort.code, user.id, id);
   return json({ ...table, staff: isStaffUser(user) }, 200);
@@ -55,7 +55,7 @@ export const POST: APIRoute = async ({ request }) => {
   const id = typeof body.id === 'string' ? body.id : '';
   const def = ruleBoardDef(id);
   if (!def) return json({ error: '見つかりません。' }, 404);
-  if (!(await canUseRuleBoard(config.db, user, def))) return json({ error: 'この章は準備中です。' }, 403);
+  if (!(await canUseRuleBoard(config.db, user, def))) return json({ error: 'この節は準備中です。' }, 403);
 
   // 運営として見ている間は出せない（第26章）。表はメンバーの画面に並ぶので、学習者として出す
   if (isStaffUser(user)) return json({ error: '運営として見ている間は規則を出せません。' }, 403);

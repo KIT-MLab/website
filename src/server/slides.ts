@@ -4,7 +4,7 @@
  *
  * スライドの中身は src/lesson/slides/decks.mjs。どの節に付いているかは節の frontmatter の `slides` にあり、
  * build:tests が lesson-data.json の `slideDecks` に書き出す。**この表に無い名前は断る。**
- * 見てよい人は予想ボードと同じ（メンバーだけ。章が準備中なら運営・管理者だけ。src/server/guess.ts の canUseBoard）。
+ * 見てよい人は予想ボードと同じ（メンバーだけ。節が準備中なら運営・管理者だけ。src/server/guess.ts の canUseBoard）。
  *
  * いまの番号は所属ごと（migrations/0012_slides.sql）。**最後に動かしてから3時間たったら「いま進めていない」**
  * とみなし（live: false）、メンバーは運営に合わせず自由にめくる。

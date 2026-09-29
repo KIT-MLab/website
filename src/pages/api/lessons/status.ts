@@ -9,10 +9,16 @@
  *
  * メンバーかどうか（`member`）も返す。用語の検索の右の欄が、メンバーだけの章（タイタニック演習。
  * design/spec/53-ml-intro.md 第7節）への行き先をリンクにするかを決めるのに使う。
+ *
+ * タイタニック演習は節ごとに公開する（53-ml-intro.md 第12節）ので、その章の公開済みの節の行き先
+ * （`/learn/lesson/<章>/<節>/`）を `sections` で返す。**メンバーにだけ**入れる（メンバーでない人には空。
+ * 節の行き先はメンバーだけのものなので）。この章は `public` の章の一覧では判じない。
  */
 import type { APIRoute } from 'astro';
 import { currentUser, json, serverConfig } from '../../../server/auth';
-import { publicChapters } from '../../../server/lessons-publish';
+import { getCollection } from 'astro:content';
+import { publicChapters, publicSections } from '../../../server/lessons-publish';
+import { isMembersOnlyChapter, lessonHref } from '../../../lesson/chapters';
 import { isMember } from '../../../server/member';
 
 export const prerender = false;
@@ -26,5 +32,12 @@ export const GET: APIRoute = async ({ request }) => {
   const member = user !== null && isMember(user);
 
   const pub = await publicChapters(config.db);
-  return json({ public: [...pub], staff, member }, 200);
+  let sections: string[] = [];
+  if (member) {
+    const open = await publicSections(config.db);
+    sections = (await getCollection('lessons'))
+      .filter((l) => isMembersOnlyChapter(l.data.chapter) && open.has(l.data.id))
+      .map((l) => lessonHref(l.id));
+  }
+  return json({ public: [...pub], sections, staff, member }, 200);
 };

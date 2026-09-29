@@ -17,7 +17,7 @@ import Base from '../../layouts/Base.astro';
 import WeekMeeting from '../../components/lesson/WeekMeeting.astro';
 import { currentUser, serverConfig } from '../../server/auth';
 import { isMember, jstFormValues } from '../../server/member';
-import { publicChapters } from '../../server/lessons-publish';
+import { lessonIsPublic, publishView } from '../../server/lessons-publish';
 import { openWeeklyIds } from '../../server/weekly';
 import { chapterTitle } from '../../lesson/chapters';
 import { practiceProblems, topicTitleText } from '../../lesson/practice';
@@ -39,21 +39,23 @@ const today = jstFormValues(Date.now()).date;
 const rows = member ? upcomingRows(PLAN, today) : [];
 
 // --- 行き先を引く表（メンバーのときだけ組む） ---
-const publicSet = member && config ? await publicChapters(config.db) : new Set<string>();
+const published = member && config ? await publishView(config.db) : { chapters: new Set<string>(), sections: new Set<string>() };
 const openWeekly = member && config && me ? await openWeeklyIds(config.db, me.cohort.code) : new Set<string>();
 const lessons = member ? (await getCollection('lessons')).sort((a, b) => a.id.localeCompare(b.id)) : [];
 const weeklySets = member ? await getCollection('weekly') : [];
 const practiceTopics = member ? await getCollection('practice') : [];
 const genWeekly = (generated as { weekly?: Record<string, { exerciseIds?: string[] }> }).weekly ?? {};
 
-const chapterVisible = (chapter: string) => publicSet.has(chapter) || isStaff;
+const chapterVisible = (chapter: string) => published.chapters.has(chapter) || isStaff;
+// 節へのリンク。タイタニック演習は節ごとに公開する（53-ml-intro.md 第12節）ので、節の状態で判じる
+const lessonVisible = (chapter: string, lessonId: string) => lessonIsPublic(published, chapter, lessonId) || isStaff;
 
 function lessonLink(id: string, label?: string): WeekLink {
   const l = lessons.find((x) => x.data.id === id);
   if (!l) return { label: label ?? id, href: null };
   const siblings = lessons.filter((x) => x.data.chapter === l.data.chapter);
   const text = label ?? `${sectionLabel(l.data.chapter, siblings.indexOf(l))} ${l.data.title}`;
-  return chapterVisible(l.data.chapter) ? { label: text, href: sectionHref(l.id) } : { label: text, href: null, note: '準備中' };
+  return lessonVisible(l.data.chapter, l.data.id) ? { label: text, href: sectionHref(l.id) } : { label: text, href: null, note: '準備中' };
 }
 
 function shortDate(iso: string): string {
