@@ -16,12 +16,15 @@
 
 type PictoGroup = { name: string; n: number; s: number; cells: number[] };
 type PictoStep = { reveal: boolean; groups: PictoGroup[] };
+/** 地図の段。船の位置（図の幅・高さに対する %）と、進んだ道・まだの道（SVG の path の d） */
+type MapStep = { x: string; y: string; done: string; rest: string; sink: boolean };
 type Payload = {
   deck: string;
   count: number;
   staff: boolean;
   cells: { n: number; s: number }[];
   picto: (PictoStep | null)[];
+  map?: (MapStep | null)[];
 };
 
 const POLL_MS = 1500;
@@ -53,7 +56,8 @@ export function setupSlides(): void {
   const count = data.count;
   const staff = data.staff;
 
-  const sections = Array.from(root.querySelectorAll<HTMLElement>('[data-slide]'));
+  const sections = Array.from(root.querySelectorAll<HTMLElement>('[data-slide], [data-slide-note]'));
+  const map = root.querySelector<HTMLElement>('[data-map]');
   const figure = root.querySelector<HTMLElement>('[data-picto]')!;
   const stage = root.querySelector<HTMLElement>('[data-picto-stage]')!;
   const noEl = root.querySelector<HTMLElement>('[data-slides-no]');
@@ -194,6 +198,32 @@ export function setupSlides(): void {
     if (step && stage.clientWidth !== lastW) layout(false);
   }).observe(stage);
 
+  // ---------------------------------------------------------------- 地図
+
+  /** 地図の1枚を出す。地図の1枚から地図の1枚へ移るときだけ船を動かす（ほかの1枚からは動かさずに置く） */
+  function showMap(m: MapStep | null): void {
+    if (!map) return;
+    if (!m) {
+      map.hidden = true;
+      return;
+    }
+    const fromMap = !map.hidden;
+    map.hidden = false;
+    if (!fromMap) map.classList.add('is-still');
+    map.querySelector('[data-map-done]')?.setAttribute('d', m.done);
+    map.querySelector('[data-map-rest]')?.setAttribute('d', m.rest);
+    for (const el of map.querySelectorAll<HTMLElement>('[data-map-sink]')) el.hidden = !m.sink;
+    const ship = map.querySelector<HTMLElement>('[data-map-ship]');
+    if (ship) {
+      ship.style.left = m.x;
+      ship.style.top = m.y;
+    }
+    if (!fromMap) {
+      void map.offsetHeight;
+      map.classList.remove('is-still');
+    }
+  }
+
   // ---------------------------------------------------------------- 1枚を出す
 
   let shown = -1;
@@ -203,10 +233,12 @@ export function setupSlides(): void {
     if (target === shown) return; // 同じ1枚なら何もしない（描き直さない）
     const fromPicto = step !== null && !figure.hidden;
     shown = target;
-    for (const s of sections) s.hidden = Number(s.dataset.slide) !== target;
+    for (const s of sections) s.hidden = Number(s.dataset.slide ?? s.dataset.slideNote) !== target;
     if (noEl) noEl.textContent = `${target + 1} / ${count}`;
     if (prevBtn) prevBtn.disabled = target === 0;
     if (nextBtn) nextBtn.disabled = target === count - 1;
+
+    showMap(data.map?.[target] ?? null);
 
     const st = data.picto[target] ?? null;
     if (!st) {

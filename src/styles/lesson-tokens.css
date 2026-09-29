@@ -37,6 +37,9 @@
   --l-died: #b8322a;
   --l-ink-3: #8b8374;
 
+  /* 航路の地図の海（タイタニック1 のスライド。53-ml-intro.md 第10節）。陸は --l-lv1。紙の色に寄せた薄い青灰 */
+  --l-sea: #dde3e2;
+
   /* 帯の色と文字色 */
   --l-band-trace: #e6dcc5;
   --l-bandink-trace: #4e4638;

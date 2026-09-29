@@ -11,23 +11,51 @@
  *
  * 人の図は案B（横一列。2026-09-28 利用者の選択）。人の形1つが約10人、組ごとに横一列、生き残った人を左に寄せる。
  * 生き残った = 黄緑の塗り、亡くなった = 赤の線（塗らない）。色だけで分けない（塗りと線・ラベルの人数）。
+ *
+ * 写真・絵（kind: image）と航路の地図（kind: map。船は段と段の間を1秒で動く）は 2026-09-29 に足した。
+ * 1枚ごとの note（話すこと）は、運営として見ているとき（staff）だけ描く。メンバー・学習者の HTML には入らない
+ * （<Facilitate> と同じ）。
  */
-import { pictoGroups } from '../../lesson/slides/decks.mjs';
+import { mapStep, pictoGroups } from '../../lesson/slides/decks.mjs';
+import { LAND, MAP_H, MAP_W, POINTS } from '../../lesson/slides/north-atlantic.mjs';
+
+type Base = { title: string; note?: string };
+type Slide = Base &
+  (
+    | { kind: 'text'; lines: string[] }
+    | { kind: 'picto'; sub?: string; by: string; reveal: boolean }
+    | { kind: 'map'; lines?: string[]; step: 'southampton' | 'queenstown' | 'sink' }
+    | { kind: 'image'; src: string; alt: string; credit: string }
+  );
 
 interface Props {
   deckId: string;
   deck: {
     cells: { n: number; s: number }[];
-    slides: ({ kind: 'text'; title: string; lines: string[] } | { kind: 'picto'; title: string; sub?: string; by: string; reveal: boolean })[];
+    slides: Slide[];
   };
-  /** 運営・管理者か。押すとみんなの画面が切り替わる */
+  /** 運営・管理者か（運営として見ているとき）。押すとみんなの画面が切り替わる。note（話すこと）もこのときだけ描く */
   staff: boolean;
 }
 
 const { deckId, deck, staff } = Astro.props;
 const count = deck.slides.length;
 
-// ブラウザのスクリプトに渡すのは人の図の組と人数だけ（文字の1枚は下の HTML にある）
+/* 地図（kind: 'map'）。座標は 640×360 の図の上。港の点・名前・船は、幅が変わっても同じ大きさで読めるように
+   図の上に重ねた HTML にし、位置だけ % で置く。名前の置き場所は右の欄（地図の幅約210px）で重ならないように決めた。
+   side: r = 名前の右端をその点に、l = 左端をその点に。線（lead）は港の点から名前まで */
+const px = (x: number) => `${Math.round((x / MAP_W) * 10000) / 100}%`;
+const py = (y: number) => `${Math.round((y / MAP_H) * 10000) / 100}%`;
+const PORTS = [
+  { name: 'サウサンプトン', at: 'southampton', x: 498, y: 60, side: 'r' },
+  { name: 'クイーンズタウン', at: 'queenstown', x: 498, y: 112, side: 'r' },
+  { name: 'シェルブール', at: 'cherbourg', x: 638, y: 215, side: 'r', lead: [596, 215] },
+  { name: 'ニューヨーク', at: 'newyork', x: 14, y: 285, side: 'l', lead: [22, 285] },
+] as const;
+const SINK_LABEL = { x: 250, y: 262 };
+const hasMap = deck.slides.some((s) => s.kind === 'map');
+
+// ブラウザのスクリプトに渡すのは人の図の組と人数、地図の船の位置と道だけ（文字の1枚は下の HTML にある）
 const payload = {
   deck: deckId,
   count,
@@ -36,6 +64,11 @@ const payload = {
   picto: deck.slides.map((s) =>
     s.kind === 'picto' ? { reveal: s.reveal, groups: pictoGroups(deck as never, s.by as never) } : null,
   ),
+  map: deck.slides.map((s) => {
+    if (s.kind !== 'map') return null;
+    const m = mapStep(s.step);
+    return { x: px(m.ship[0]), y: py(m.ship[1]), done: m.done, rest: m.rest, sink: m.sink };
+  }),
 };
 const payloadJson = JSON.stringify(payload).replace(/</g, '\\u003c');
 
@@ -54,11 +87,54 @@ const person = `<svg width="12" height="18" viewBox="0 0 20 30" aria-hidden="tru
       {
         deck.slides.map((s, i) => (
           <div class="kit-slide" data-slide={i} hidden={i !== 0}>
-            <p class="kit-slide__title">{s.title}</p>
-            {s.kind === 'text' && s.lines.map((l) => <p class="kit-slide__line">{l}</p>)}
+            <p class:list={['kit-slide__title', s.kind === 'image' && 'kit-slide__title--img']}>{s.title}</p>
+            {(s.kind === 'text' || s.kind === 'map') && s.lines?.map((l) => <p class="kit-slide__line">{l}</p>)}
             {s.kind === 'picto' && s.sub && <p class="kit-slide__sub">{s.sub}</p>}
+            {s.kind === 'image' && (
+              <>
+                <img class="kit-slide__img" src={s.src} alt={s.alt} decoding="async" />
+                <p class="kit-slide__credit">{s.credit}</p>
+              </>
+            )}
           </div>
         ))
+      }
+      {
+        hasMap && (
+          <div class="kit-map" data-map hidden>
+            <svg class="kit-map__svg" viewBox={`0 0 ${MAP_W} ${MAP_H}`} aria-hidden="true">
+              <rect class="kit-map__sea" width={MAP_W} height={MAP_H} />
+              <path class="kit-map__land" d={LAND} />
+              {PORTS.map((p) => {
+                const [x1, y1] = POINTS[p.at];
+                const [x2, y2] = 'lead' in p ? p.lead : [p.x, p.y];
+                return <line class="kit-map__lead" x1={x1} y1={y1} x2={x2} y2={y2} />;
+              })}
+              <path class="kit-map__rest" data-map-rest d="" />
+              <path class="kit-map__done" data-map-done d="" />
+            </svg>
+            {PORTS.map((p) => (
+              <span class="kit-map__dot" style={`left:${px(POINTS[p.at][0])};top:${py(POINTS[p.at][1])}`} />
+            ))}
+            {PORTS.map((p) => (
+              <span class={`kit-map__lb kit-map__lb--${p.side}`} style={`left:${px(p.x)};top:${py(p.y)}`}>
+                {p.name}
+              </span>
+            ))}
+            <span class="kit-map__sink" data-map-sink hidden style={`left:${px(POINTS.sink[0])};top:${py(POINTS.sink[1])}`} />
+            <span class="kit-map__lb kit-map__lb--l" data-map-sink hidden style={`left:${px(SINK_LABEL.x)};top:${py(SINK_LABEL.y)}`}>
+              沈んだ所
+            </span>
+            <span class="kit-map__ship" data-map-ship aria-hidden="true">
+              <svg width="26" height="15" viewBox="0 0 26 15">
+                <rect x="10" y="1" width="2.4" height="5" />
+                <rect x="14.5" y="1" width="2.4" height="5" />
+                <rect class="kit-map__deck" x="7" y="5.5" width="13" height="3.5" />
+                <path d="M0.5 9h25l-2.6 5H4.5z" />
+              </svg>
+            </span>
+          </div>
+        )
       }
       <div class="kit-picto is-plain" data-picto hidden>
         <p class="kit-picto__key">
@@ -70,6 +146,19 @@ const person = `<svg width="12" height="18" viewBox="0 0 20 30" aria-hidden="tru
         <div class="kit-picto__stage" data-picto-stage></div>
       </div>
     </div>
+
+    {
+      staff &&
+        deck.slides.map(
+          (s, i) =>
+            s.note && (
+              <p class="kit-slides__note" data-slide-note={i} hidden={i !== 0}>
+                <span class="kit-slides__note-h">話すこと（運営だけ）</span>
+                {s.note}
+              </p>
+            ),
+        )
+    }
 
     <div class="kit-slides__bar">
       <button type="button" class:list={['kit-btn', staff && 'kit-slides__staff']} data-slides-prev disabled>← 前へ</button>
@@ -283,6 +372,184 @@ const person = `<svg width="12" height="18" viewBox="0 0 20 30" aria-hidden="tru
     .kit-picto__b {
       transition: none;
     }
+  }
+
+  /* --- 写真・絵の1枚 --- */
+  .kit-slide__title--img {
+    font-size: 17px;
+  }
+
+  .kit-slide__img {
+    display: block;
+    width: 100%;
+    height: auto;
+    margin: 4px 0 0;
+    border: 1px solid var(--l-rule);
+  }
+
+  .kit-slide__credit {
+    margin: 4px 0 0;
+    font-size: 11.5px;
+    line-height: 1.5;
+    color: var(--l-ink-2);
+    text-indent: 0;
+  }
+
+  @container (min-width: 480px) {
+    .kit-slide__title--img {
+      font-size: 21px;
+    }
+  }
+
+  /* --- 航路の地図（陸 = --l-lv1、海 = --l-sea。進んだ道は朱の実線、まだの道は薄い墨の点線） --- */
+  .kit-map {
+    position: relative;
+    margin-top: 6px;
+    font-size: 11.5px;
+    line-height: 1.3;
+  }
+
+  .kit-map[hidden],
+  .kit-map [hidden] {
+    display: none;
+  }
+
+  .kit-map__svg {
+    display: block;
+    width: 100%;
+    height: auto;
+    border: 1px solid var(--l-rule);
+  }
+
+  .kit-map__sea {
+    fill: var(--l-sea);
+  }
+
+  .kit-map__land {
+    fill: var(--l-lv1);
+    stroke: var(--l-rule);
+    stroke-width: 0.8px;
+    vector-effect: non-scaling-stroke;
+  }
+
+  .kit-map__lead {
+    stroke: var(--l-ink-3);
+    stroke-width: 1px;
+    vector-effect: non-scaling-stroke;
+  }
+
+  .kit-map__rest,
+  .kit-map__done {
+    fill: none;
+    stroke-linejoin: round;
+    stroke-linecap: round;
+    vector-effect: non-scaling-stroke;
+  }
+
+  .kit-map__rest {
+    stroke: var(--l-ink-3);
+    stroke-width: 1.5px;
+    stroke-dasharray: 4 4;
+  }
+
+  .kit-map__done {
+    stroke: var(--l-shu);
+    stroke-width: 2.5px;
+  }
+
+  .kit-map__dot {
+    position: absolute;
+    width: 7px;
+    height: 7px;
+    margin: -5px 0 0 -5px;
+    background: var(--l-ink);
+    border: 1.5px solid var(--l-card);
+    border-radius: 50%;
+    box-sizing: content-box;
+  }
+
+  .kit-map__lb {
+    position: absolute;
+    padding: 0 3px;
+    white-space: nowrap;
+    color: var(--l-ink);
+    background: var(--l-card);
+    border-radius: 2px;
+  }
+
+  .kit-map__lb--r {
+    transform: translate(-100%, -50%);
+  }
+
+  .kit-map__lb--l {
+    transform: translate(0, -50%);
+  }
+
+  .kit-map__sink {
+    position: absolute;
+    width: 26px;
+    height: 26px;
+    margin: -13px 0 0 -13px;
+    border: 1.5px solid var(--l-died);
+    border-radius: 50%;
+    box-sizing: border-box;
+  }
+
+  .kit-map__ship {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 26px;
+    height: 15px;
+    margin: -11px 0 0 -13px;
+    transition:
+      left 1s cubic-bezier(0.4, 0.1, 0.2, 1),
+      top 1s cubic-bezier(0.4, 0.1, 0.2, 1);
+  }
+
+  .kit-map__ship svg {
+    display: block;
+    fill: var(--l-ink);
+    filter: drop-shadow(0 0 1px var(--l-card)) drop-shadow(0 0 1px var(--l-card));
+  }
+
+  .kit-map__ship .kit-map__deck {
+    fill: var(--l-card);
+    stroke: var(--l-ink);
+    stroke-width: 1px;
+  }
+
+  .kit-map.is-still .kit-map__ship {
+    transition: none;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .kit-map__ship {
+      transition: none;
+    }
+  }
+
+  /* --- 話すこと（運営として見ているときだけ HTML にある） --- */
+  .kit-slides__note {
+    margin: 10px 0 0;
+    padding: 6px 10px;
+    font-size: 13px;
+    line-height: 1.65;
+    color: var(--l-ink);
+    background: var(--l-kohaku-bg);
+    border-left: 3px solid var(--l-kohaku);
+    text-indent: 0;
+  }
+
+  .kit-slides__note[hidden] {
+    display: none;
+  }
+
+  .kit-slides__note-h {
+    display: block;
+    font-size: 11.5px;
+    font-weight: 700;
+    color: var(--l-kohaku);
   }
 
   /* --- ボタンと状態 --- */

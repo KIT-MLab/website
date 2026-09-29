@@ -645,6 +645,11 @@ for (const file of files) {
     } else {
       seenDecks.set(deckId, rel);
       for (const p of deckProblems(deck)) add(25, 1, `${where}: ${p}`);
+      deck.slides.forEach((sl, i) => {
+        if (sl?.kind === 'image' && typeof sl.src === 'string' && !existsSync(join(ROOT, 'public', sl.src))) {
+          add(25, 1, `${where}: slides[${i}]: 画像 public${sl.src} がありません`);
+        }
+      });
     }
   }
 }

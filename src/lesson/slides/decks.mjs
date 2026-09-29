@@ -11,15 +11,47 @@
  * @typedef {{ sex: string, pclass: number, n: number, s: number }} Cell
  * @typedef {{ kind: 'text', title: string, lines: string[] }} TextSlide
  * @typedef {{ kind: 'picto', title: string, sub?: string, by: 'all' | 'sex' | 'pclass' | 'sex-pclass', reveal: boolean }} PictoSlide
- * @typedef {{ cells: Cell[], slides: (TextSlide | PictoSlide)[] }} Deck
+ * @typedef {{ kind: 'map', title: string, lines?: string[], step: 'southampton' | 'queenstown' | 'sink' }} MapSlide
+ * @typedef {{ kind: 'image', title: string, src: string, alt: string, credit: string }} ImageSlide
+ * どの1枚にも note?: string（運営にだけ見える話すこと）を付けられる。
+ * @typedef {{ cells: Cell[], slides: ((TextSlide | PictoSlide | MapSlide | ImageSlide) & { note?: string })[] }} Deck
  * @typedef {{ name: string, n: number, s: number, cells: number[] }} PictoGroup
  */
 import intro1 from './intro1.mjs';
+import { POINTS } from './north-atlantic.mjs';
 
 /** @type {Record<string, Deck>} */
 export const DECKS = { intro1 };
 
 export const PICTO_BY = ['all', 'sex', 'pclass', 'sex-pclass'];
+
+/** 地図の1枚の段（船がどこにいるか）。港の順に進む */
+export const MAP_STEPS = ['southampton', 'queenstown', 'sink'];
+
+/** 航路（予定）。沈んだ所はニューヨークへの道の途中にある */
+const ROUTE = ['southampton', 'cherbourg', 'queenstown', 'sink', 'newyork'];
+
+const pathD = (pts) => (pts.length < 2 ? '' : pts.map((p, i) => `${i ? 'L' : 'M'}${p[0]},${p[1]}`).join(''));
+
+/**
+ * 地図の段ごとの船の位置と、進んだ道（実線）・まだの道（点線）。座標は src/lesson/slides/north-atlantic.mjs の図の上。
+ * 「queenstown」はクイーンズタウンを出たところ（沈んだ所へ向かう道の3割）。
+ * @param {'southampton' | 'queenstown' | 'sink'} step
+ * @returns {{ ship: number[], done: string, rest: string, sink: boolean }}
+ */
+export function mapStep(step) {
+  const at = (k) => POINTS[k];
+  if (step === 'southampton') {
+    return { ship: at('southampton'), done: '', rest: pathD(ROUTE.map(at)), sink: false };
+  }
+  if (step === 'queenstown') {
+    const q = at('queenstown');
+    const s = at('sink');
+    const ship = [Math.round((q[0] + (s[0] - q[0]) * 0.3) * 10) / 10, Math.round((q[1] + (s[1] - q[1]) * 0.3) * 10) / 10];
+    return { ship, done: pathD([...ROUTE.slice(0, 3).map(at), ship]), rest: pathD([ship, ...ROUTE.slice(3).map(at)]), sink: false };
+  }
+  return { ship: at('sink'), done: pathD(ROUTE.slice(0, 4).map(at)), rest: pathD(ROUTE.slice(3).map(at)), sink: true };
+}
 
 /** その名前のスライドがあれば返す。 */
 export function deckById(id) {
@@ -81,8 +113,26 @@ export function deckProblems(deck) {
       if (!PICTO_BY.includes(s.by)) out.push(`${at}: by は ${PICTO_BY.join(' / ')} のどれかです`);
       if (typeof s.reveal !== 'boolean') out.push(`${at}: reveal（生き残りを色で見せるか）を true / false で書きます`);
       if (s.sub !== undefined && (typeof s.sub !== 'string' || s.sub.trim() === '')) out.push(`${at}: sub は空でない文字列です`);
+    } else if (s?.kind === 'map') {
+      if (!MAP_STEPS.includes(s.step)) out.push(`${at}: step は ${MAP_STEPS.join(' / ')} のどれかです`);
+      if (s.lines !== undefined && (!Array.isArray(s.lines) || s.lines.some((l) => typeof l !== 'string' || l.trim() === ''))) {
+        out.push(`${at}: lines は空でない文字列の配列です`);
+      }
+    } else if (s?.kind === 'image') {
+      // 画像は public/ の下に置く（ファイルがあるかは検査25 の本体が見る）
+      if (typeof s.src !== 'string' || !/^\/[a-z0-9/_.-]+\.(?:jpg|png|webp)$/.test(s.src)) {
+        out.push(`${at}: src は public/ から見たパス（/ で始まり .jpg・.png・.webp で終わる英小文字）です`);
+      }
+      if (typeof s.alt !== 'string' || s.alt.trim() === '') out.push(`${at}: alt（画像の説明）がありません`);
+      if (typeof s.credit !== 'string' || s.credit.trim() === '') out.push(`${at}: credit（出典）がありません`);
     } else {
-      out.push(`${at}: kind は text か picto です`);
+      out.push(`${at}: kind は text・picto・map・image のどれかです`);
+    }
+    if (s && s.note !== undefined && (typeof s.note !== 'string' || s.note.trim() === '')) out.push(`${at}: note は空でない文字列です`);
+    if (s && (s.kind === 'image' || s.kind === 'map')) {
+      const allowed = s.kind === 'image' ? ['kind', 'title', 'src', 'alt', 'credit', 'note'] : ['kind', 'title', 'lines', 'step', 'note'];
+      const extra = Object.keys(s).filter((k) => !allowed.includes(k));
+      if (extra.length > 0) out.push(`${at}: ${s.kind} に使えない項目があります（${extra.join('・')}）`);
     }
   });
   return out;
