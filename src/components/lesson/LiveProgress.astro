@@ -20,17 +20,30 @@ const { lesson, weekly } = Astro.props;
 const query = lesson ? `lesson=${encodeURIComponent(lesson)}` : `weekly=${encodeURIComponent(weekly ?? '')}`;
 ---
 
-<section class="kit-live" data-live={query} aria-label="みんなの進み具合（運営だけ）">
-  <p class="kit-live__h">みんなの進み具合（運営だけ・10秒ごと）</p>
+<details class="kit-live" data-live={query} aria-label="みんなの進み具合（運営だけ）">
+  <summary class="kit-live__h">みんなの進み具合（運営だけ・10秒ごと）</summary>
   <div class="kit-live__scroll" data-live-table>
     <p class="kit-live__msg">読み込んでいます…</p>
   </div>
   <p class="kit-live__key">（<span class="c-ok">✓</span>通した　<span class="c-ng">×n</span> 落ちた回数　<span class="c-no">–</span> まだ）</p>
-</section>
+</details>
 
 <script>
   import { setupLiveProgress } from '../../lesson/live-progress';
   setupLiveProgress();
+
+  // 前のスクリーンに名前つきで映らないよう、最初は閉じておく。開け閉めはこのブラウザに覚える（2026-09-29 代表の選択）
+  const KEY = 'kit-live-open';
+  document.querySelectorAll<HTMLDetailsElement>('details.kit-live').forEach((el) => {
+    try {
+      if (localStorage.getItem(KEY) === '1') el.open = true;
+    } catch {}
+    el.addEventListener('toggle', () => {
+      try {
+        localStorage.setItem(KEY, el.open ? '1' : '0');
+      } catch {}
+    });
+  });
 </script>
 
 <style is:global>
@@ -45,12 +58,17 @@ const query = lesson ? `lesson=${encodeURIComponent(lesson)}` : `weekly=${encode
   }
 
   .kit-live__h {
-    margin: 0 0 6px;
+    cursor: pointer;
+    margin: 0;
     font-size: 13.5px;
     line-height: 1.6;
     letter-spacing: 0.06em;
     color: var(--l-kohaku);
     text-indent: 0;
+  }
+
+  .kit-live[open] .kit-live__h {
+    margin-bottom: 6px;
   }
 
   /* 狭い画面では表の中だけが横に動く（ページは動かない） */
