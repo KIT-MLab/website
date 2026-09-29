@@ -12,11 +12,16 @@ import Base from '../../layouts/Base.astro';
 import { PARTS, chapterTitle, isMembersOnlyChapter, lessonHref, practiceSectionLabel } from '../../lesson/chapters';
 import { sectionLabel } from '../../../scripts/section-refs.mjs';
 import generated from '../../generated/lesson-data.json';
+import { practiceProblems } from '../../lesson/practice';
 
 /* メンバーだけの章（タイタニック演習など。design/spec/53-ml-intro.md 第8節）は、このページ（事前生成）に
    題を1つも書かない。メンバーにはプロジェクトの教材（/learn/project/）に並べる */
 const lessons = (await getCollection('lessons', (l) => !isMembersOnlyChapter(l.data.chapter))).sort((a, b) =>
   a.id.localeCompare(b.id),
+);
+/* 練習問題がある章（章の中から練習問題集のその章へ行く。20-platform.md 第25.5節） */
+const practiceChapters = new Set(
+  (await getCollection('practice')).filter((t) => practiceProblems(generated, t.data.id).length > 0).map((t) => t.data.chapter),
 );
 const genLessons = (generated as { lessons: Record<string, { exerciseIds: string[] }> }).lessons;
 
@@ -109,6 +114,10 @@ const dataJson = JSON.stringify(sections).replace(/</g, '\\u003c');
     <p class="lead">
       機械学習を初めて学ぶ人のための教材です。Python を書くところから始め、
       ニューラルネットワークの学習と評価まで進みます。コードはこのページの中で動かせます。
+    </p>
+    <p class="lp-links">
+      <a href="/learn/practice/">練習問題集 →</a>
+      <a href="/learn/glossary/">用語集 →</a>
     </p>
 
     {/* 「次回」の入口（20-platform.md 第21.1節）。メンバーにだけ、下の script が出す。行き先は今週のページ（第25.4節） */}
@@ -216,6 +225,11 @@ const dataJson = JSON.stringify(sections).replace(/</g, '\\u003c');
                         </li>
                       ))}
                     </ol>
+                    {practiceChapters.has(ch.chapter) && (
+                      <p class="lp-chap__practice">
+                        <a href={`/learn/practice/#${ch.chapter}`}>この章の練習問題 →</a>
+                      </p>
+                    )}
                   </details>
                 ))}
               </div>
@@ -330,6 +344,23 @@ const dataJson = JSON.stringify(sections).replace(/</g, '\\u003c');
     font-size: 13px;
     color: var(--color-ink-2);
     margin-left: 10px;
+  }
+  .lp-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 24px;
+    margin: -4px 0 20px;
+  }
+  .lp-links a,
+  .lp-chap__practice a {
+    color: var(--color-ink);
+    font-size: 14px;
+    text-underline-offset: 3px;
+    white-space: nowrap;
+  }
+  .lp-chap__practice {
+    margin: 6px 0 4px;
+    padding-left: 2px;
   }
   .pl-entrance a {
     color: var(--color-ink);
