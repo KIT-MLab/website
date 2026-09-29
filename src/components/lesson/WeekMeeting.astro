@@ -21,7 +21,7 @@ const before = [
 ---
 
 <div class="wm">
-  <p class="wm__k">前半（教える）</p>
+  <p class="wm__k">前半（新しく学ぶ）</p>
   {view.teachLabel === '' && view.teach.length === 0 ? <p class="wm__none">―</p> : null}
   {view.teachLabel !== '' && <p class="wm__label">{view.teachLabel}</p>}
   {
@@ -37,7 +37,7 @@ const before = [
     )
   }
 
-  <p class="wm__k">後半（みんなでやる）</p>
+  <p class="wm__k">後半（みんなで取り組む）</p>
   {
     view.together.length === 0 ? (
       <p class="wm__none">―</p>
@@ -69,7 +69,7 @@ const before = [
     )
   }
 
-  <p class="wm__k">それまでに（予習・練習・復習）</p>
+  <p class="wm__k">この回までに家でやること</p>
   {
     before.length === 0 ? (
       <p class="wm__none">―</p>
