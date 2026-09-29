@@ -128,7 +128,7 @@ const guesses = {};
 /* 規則の正解率ランキング（<RuleBoard>。design/spec/53-ml-intro.md 第9節）。id → どの節か。
    サーバ（src/server/rule-board.ts）が、この表に無い id を断るのと、章の公開を見るのに使う。`guesses` と同じく最上位に書く */
 const ruleBoards = {};
-/* スライド（frontmatter の slides。design/spec/53-ml-intro.md 第10節）。名前 → どの節か。
+/* スライド（frontmatter の slides と本文の <Slides deck>。design/spec/53-ml-intro.md 第10節）。名前 → どの節か。
    サーバ（src/server/slides.ts）が、この表に無い名前を断るのと、章の公開を見るのに使う。`guesses` と同じく最上位に書く */
 const slideDecks = {};
 
@@ -169,6 +169,10 @@ for (const file of files) {
     }
     if (typeof lesson.data.slides === 'string') {
       slideDecks[lesson.data.slides] = { lessonId, chapter };
+    }
+    // 本文の中に置いたスライド（<Slides deck="…" />。2026-09-29）
+    for (const m of lesson.slides) {
+      if (typeof m.deck === 'string') slideDecks[m.deck] = { lessonId, chapter };
     }
   }
 

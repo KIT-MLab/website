@@ -1,7 +1,7 @@
 ---
 /**
  * 今週のページ（20-platform.md 第25.4節）の1回ぶんの中身: 前半（教える）・後半（みんなでやる）・
- * それまでに（予習・練習・復習）。3列の列と、その先の回を開いたときの中身の両方で使う。
+ * 練習問題（予習にも復習にも使う。2026-09-29 に予習・復習の分けをやめた）。3列の列と、その先の回を開いたときの中身の両方で使う。
  *
  * 行き先が見られない（章が準備中・今週の演習がまだ公開されていない）ものは、リンクにせず
  * 言葉だけを出して小さな札を添える（学習の一覧の鍵と同じ考え方。第20.1節・第19.4節）。
@@ -13,11 +13,6 @@ interface Props {
   view: WeekView;
 }
 const { view } = Astro.props;
-const before = [
-  { k: '予習', items: view.prep },
-  { k: '練習', items: view.practice },
-  { k: '復習', items: view.review },
-].filter((g) => g.items.length > 0);
 ---
 
 <div class="wm">
@@ -69,18 +64,13 @@ const before = [
     )
   }
 
-  <p class="wm__k">この回までに家でやること</p>
+  <p class="wm__k">練習問題<small>（予習にも復習にも使えます）</small></p>
   {
-    before.length === 0 ? (
+    view.practice.length === 0 ? (
       <p class="wm__none">―</p>
     ) : (
-      <dl class="wm__before">
-        {before.map((g) => (
-          <>
-            <dt>{g.k}</dt>
-            <dd>
-              <ul class="wm__list">
-                {g.items.map((l) => (
+      <ul class="wm__list wm__practice">
+                {view.practice.map((l) => (
                   <li>
                     {l.href ? <a href={l.href}>{l.label}</a> : <span class="wm__off">{l.label}</span>}
                     {l.note && <span class="wm__tag">{l.note}</span>}
@@ -96,11 +86,7 @@ const before = [
                     )}
                   </li>
                 ))}
-              </ul>
-            </dd>
-          </>
-        ))}
-      </dl>
+      </ul>
     )
   }
 </div>
@@ -157,21 +143,12 @@ const before = [
     white-space: nowrap;
     vertical-align: 1px;
   }
-  .wm__before {
-    display: grid;
-    grid-template-columns: 2.6em minmax(0, 1fr);
-    gap: 2px 6px;
-    margin: 0;
-  }
-  .wm__before dt {
-    font-size: 12.5px;
+  .wm__k small {
+    font-weight: 400;
     color: var(--l-ink-2);
-    padding-top: 1px;
+    margin-left: 4px;
   }
-  .wm__before dd {
-    margin: 0;
-  }
-  .wm__before .wm__list {
+  .wm__practice {
     padding-left: 0;
     list-style: none;
   }

@@ -20,7 +20,8 @@
 // Guess（みんなの予想ボード。design/spec/53-ml-intro.md 第7節）も部品として拾う。部品は本文の字数・文の長さの
 // 検査から外れる（問いは「"女性なら生き残った" と…」のような話し言葉で、地の文の決まりに当てはめない）
 // RuleBoard（規則の正解率ランキング。同 第9節）も同じく部品として拾う
-const COMPONENTS = ['Run', 'Exercise', 'Level0', 'Experiment', 'Keys', 'Figure', 'Secant', 'Descent', 'FitLine', 'Boundary', 'Overfit', 'Guess', 'RuleBoard', 'Compare'];
+// Slides（本文の中に置くスライド。同 第10節。2026-09-29）も同じ
+const COMPONENTS = ['Run', 'Exercise', 'Level0', 'Experiment', 'Keys', 'Figure', 'Secant', 'Descent', 'FitLine', 'Boundary', 'Overfit', 'Guess', 'RuleBoard', 'Slides', 'Compare'];
 
 export function lineOf(text, index) {
   let line = 1;
@@ -320,6 +321,7 @@ export function parseLesson(source, file) {
   const experiments = [];
   const guesses = [];
   const ruleBoards = [];
+  const slides = [];
 
   for (const c of components) {
     const section = sectionOf(c.start);
@@ -375,6 +377,8 @@ export function parseLesson(source, file) {
       });
     } else if (c.name === 'RuleBoard') {
       ruleBoards.push({ section, line: c.line, id: evalAttribute(c.attrs.id), attrs: Object.keys(c.attrs), children: c.children.trim() });
+    } else if (c.name === 'Slides') {
+      slides.push({ section, line: c.line, deck: evalAttribute(c.attrs.deck), attrs: Object.keys(c.attrs), children: c.children.trim() });
     }
   }
 
@@ -487,6 +491,7 @@ export function parseLesson(source, file) {
     experiments,
     guesses,
     ruleBoards,
+    slides,
     bodyParagraphs,
     allParagraphs,
     tableChars,

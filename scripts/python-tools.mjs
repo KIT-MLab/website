@@ -20,9 +20,9 @@
 /** 道具の並び。`in` はその道具を導入する節の id。 */
 export const PYTHON_TOOLS = [
   { name: 'print',          in: 'python-01-print',      re: /\bprint\s*\(/ },
-  { name: 'input()',        in: 'python-01-input',      re: /\binput\s*\(/, term: 'input' },
-  { name: 'int()',          in: 'python-01-input',      re: /\bint\s*\(/, term: 'int' },
   { name: '変数',            in: 'python-01-variable',   re: /^[ \t]*[A-Za-z_]\w*\s*=(?!=)/m },
+  { name: 'input()',        in: 'python-01-input-basic', re: /\binput\s*\(/, term: 'input' },
+  { name: 'int()',          in: 'python-01-input',      re: /\bint\s*\(/, term: 'int' },
   { name: 'f文字列',         in: 'python-01-fstring',    re: /f"|f'/ },
   { name: '文字列の連結（+）', in: 'python-01-fstring',    re: /["']\s*\+|\+\s*["']/, desc: '文字列どうしを `+` でつなげて、1つの文字列にする書き方。`"合計" + "点"` は `"合計点"` になる。' },
   { name: 'str()',          in: 'python-01-fstring',    re: /\bstr\s*\(/, term: 'str' },

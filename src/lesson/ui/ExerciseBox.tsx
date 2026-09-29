@@ -326,6 +326,9 @@ export default function ExerciseBox({ id, kind, starter, stdin, choices, syntax,
       errorType: graded.errorType,
       at: Date.now(),
     });
+    // 採点1回ごとの合図（通っても落ちても）。今週の演習とタイタニック演習の節は、これを聞いてすぐ送る
+    // （運営の「みんなの進み具合」のため。design/spec/53-ml-intro.md 第11節）
+    window.dispatchEvent(new CustomEvent('kit:submitted'));
     const after = await store.exerciseResult(id);
     setResult(graded);
     setPassed(after.passed);

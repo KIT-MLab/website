@@ -10,7 +10,7 @@
  * 検査22（組む問題の問題文・入力・出力の形）は同 第23.2節で足した。新しい形で書いた問題だけを見る。
  * 検査23（みんなの予想ボード <Guess> の置き場所と props）は design/spec/53-ml-intro.md 第7節で足した。
  * 検査24（規則の正解率ランキング <RuleBoard> の置き場所と props）は同 第9節で足した。
- * 検査25（スライド。frontmatter の slides の置き場所と中身の形）は同 第10節で足した。
+ * 検査25（スライド。frontmatter の slides と本文の <Slides deck> の置き場所と中身の形）は同 第10節で足した。
  *
  *   node scripts/check-lessons.mjs
  */
@@ -626,28 +626,37 @@ for (const file of files) {
     if (b.children !== '') add(24, b.line, `${where}: <RuleBoard … /> の形で、中身を書きません`);
   }
 
-  /* --- 検査25 スライド（frontmatter の slides。design/spec/53-ml-intro.md 第10節） ---
-     節の右の欄に出し、運営の「次へ」でみんなの画面が切り替わる。読む口（/api/slides）がメンバーだけなので、
-     メンバーだけの章にしか付けられない。スライドの位置の記録の鍵なので、1つのスライドは1つの節にだけ付ける */
-  if (fm.slides !== undefined) {
-    const deckId = fm.slides;
-    const where = `slides: ${String(deckId)}`;
+  /* --- 検査25 スライド（frontmatter の slides と本文の <Slides deck="…" />。design/spec/53-ml-intro.md 第10節） ---
+     frontmatter の slides は節の上の段に、本文の <Slides deck="…" /> はその場所に出す（2026-09-29 に足した。
+     タイタニック1 の人の図を本文の中に置くため）。運営の「次へ」でみんなの画面が切り替わる。読む口（/api/slides）が
+     メンバーだけなので、メンバーだけの章にしか置けない。いまの番号はスライドの名前ごとに1行なので、
+     1つのスライドは教材全体で1か所だけ（同じ節の上の段と本文の両方にも置けない） */
+  const deckRefs = [];
+  if (fm.slides !== undefined) deckRefs.push({ deckId: fm.slides, line: 1, where: `slides: ${String(fm.slides)}` });
+  for (const m of lesson.slides) {
+    const where = `<Slides deck="${String(m.deck ?? '')}">`;
+    deckRefs.push({ deckId: m.deck, line: m.line, where });
+    const extra = m.attrs.filter((a) => a !== 'deck');
+    if (extra.length > 0) add(25, m.line, `${where}: 属性は deck だけです（${extra.join('・')} は使えません）`);
+    if (m.children !== '') add(25, m.line, `${where}: <Slides … /> の形で、中身を書きません`);
+  }
+  for (const { deckId, line, where } of deckRefs) {
     if (!MEMBERS_ONLY_CHAPTERS.includes(String(fm.chapter ?? ''))) {
-      add(25, 1, `${where}: スライドはメンバーだけの章（scripts/parts.mjs の MEMBERS_ONLY_CHAPTERS）にしか付けられません`);
+      add(25, line, `${where}: スライドはメンバーだけの章（scripts/parts.mjs の MEMBERS_ONLY_CHAPTERS）にしか置けません`);
     }
     const deck = typeof deckId === 'string' ? deckById(deckId) : null;
     if (typeof deckId !== 'string' || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(deckId)) {
-      add(25, 1, `${where}: 名前は英小文字・数字とハイフンで書きます（例: intro1）`);
+      add(25, line, `${where}: 名前は英小文字・数字とハイフンで書きます（例: intro1）`);
     } else if (!deck) {
-      add(25, 1, `${where}: src/lesson/slides/decks.mjs の DECKS にありません`);
+      add(25, line, `${where}: src/lesson/slides/decks.mjs の DECKS にありません`);
     } else if (seenDecks.has(deckId)) {
-      add(25, 1, `${where}: ${seenDecks.get(deckId)} にも付いています（1つのスライドは1つの節にだけ）`);
+      add(25, line, `${where}: ${seenDecks.get(deckId)} にも置いています（1つのスライドは1か所だけ）`);
     } else {
       seenDecks.set(deckId, rel);
-      for (const p of deckProblems(deck)) add(25, 1, `${where}: ${p}`);
+      for (const p of deckProblems(deck)) add(25, line, `${where}: ${p}`);
       deck.slides.forEach((sl, i) => {
         if (sl?.kind === 'image' && typeof sl.src === 'string' && !existsSync(join(ROOT, 'public', sl.src))) {
-          add(25, 1, `${where}: slides[${i}]: 画像 public${sl.src} がありません`);
+          add(25, line, `${where}: slides[${i}]: 画像 public${sl.src} がありません`);
         }
       });
     }

@@ -1,0 +1,33 @@
+---
+/**
+ * 本文の中に置くスライド `<Slides deck="intro1-picto" />`（design/spec/53-ml-intro.md 第10節。2026-09-29）。
+ *
+ * 節のページが MDX の `Slides` にこの部品を渡す。置いた場所に Slides.astro を描く（節の上の段と同じ部品・同じ動き。
+ * いまの番号はスライドの名前ごとなので、上の段のスライドとは別々に動く）。
+ *
+ * 置けるのはメンバーだけの章だけ（検査25）。節のページはメンバーでない人に本文を描かないが、念のため
+ * ここでもメンバーでなければ何も描かない（中身は HTML に1文字も入らない）。運営として見ているかどうか
+ * （前へ・次へがみんなの画面を動かすか、話すことを描くか）はここで判じる。
+ */
+import Slides from './Slides.astro';
+import { deckById } from '../../lesson/slides/decks.mjs';
+import { currentUser } from '../../server/auth';
+import { isMember } from '../../server/member';
+
+interface Props {
+  deck: string;
+}
+
+const { deck: deckId } = Astro.props;
+const viewer = await currentUser(Astro.request);
+const deck = viewer && isMember(viewer) ? deckById(deckId) : null;
+const staff = viewer !== null && (viewer.role === 'staff' || viewer.role === 'admin');
+---
+
+{
+  deck && (
+    <div class="kit-slides-band">
+      <Slides deckId={deckId} deck={deck} staff={staff} />
+    </div>
+  )
+}

@@ -1,6 +1,8 @@
 ---
 /**
- * スライド（design/spec/53-ml-intro.md 第10節）。節の frontmatter の `slides: intro1` で付く。
+ * スライド（design/spec/53-ml-intro.md 第10節）。節の frontmatter の `slides: intro1` で本文の上の段に付く。
+ * 本文の中の `<Slides deck="intro1-picto" />` は SlidesInBody.astro を通ってここに来る（2026-09-29）。
+ * 1つのページに2つ以上あってよい（いまの番号はスライドごと。src/lesson/slides.ts）。
  *
  * 運営が「前へ」「次へ」を押すと、同じ所属のメンバーの画面も1〜2秒で同じ1枚に切り替わる
  * （src/lesson/slides.ts が /api/slides を読み直す）。どの幅でも本文の上の開け閉めできる段に、本文の幅いっぱいに
@@ -15,6 +17,10 @@
  * 写真・絵（kind: image）と航路の地図（kind: map。船は段と段の間を1秒で動く）は 2026-09-29 に足した。
  * 1枚ごとの note（話すこと）は、運営として見ているとき（staff）だけ描く。メンバー・学習者の HTML には入らない
  * （<Facilitate> と同じ）。
+ *
+ * **1枚の欄の高さはスライドごとに1つ**（2026-09-29。利用者の依頼「前へ・次へのボタンが動かないように」）。
+ * src/lesson/slides.ts が全部の1枚を測り、いちばん高いものに欄（.kit-slides__view）の高さをそろえる。
+ * 幅が変わったら測り直す。ボタンの段は欄のすぐ下、話すこと（運営だけ・長さが1枚ごとに違う）はボタンの下に置く。
  */
 import { mapStep, pictoGroups } from '../../lesson/slides/decks.mjs';
 import { LAND, MAP_H, MAP_W, POINTS } from '../../lesson/slides/north-atlantic.mjs';
@@ -78,12 +84,12 @@ const person = `<svg width="12" height="18" viewBox="0 0 20 30" aria-hidden="tru
 ---
 
 <section class="kit-slides" data-slides={deckId} tabindex="0" aria-label="スライド">
-  <button type="button" class="kit-slides__toggle" aria-expanded="true" aria-controls="kit-slides-in">
+  <button type="button" class="kit-slides__toggle" aria-expanded="true" aria-controls={`kit-slides-in-${deckId}`}>
     <span>スライド <span data-slides-no>1 / {count}</span></span>
     <span data-slides-word>閉じる</span>
   </button>
 
-  <div class="kit-slides__in" id="kit-slides-in">
+  <div class="kit-slides__in" id={`kit-slides-in-${deckId}`}>
     <div class="kit-slides__view" aria-live="polite">
       {
         deck.slides.map((s, i) => (
@@ -158,6 +164,20 @@ const person = `<svg width="12" height="18" viewBox="0 0 20 30" aria-hidden="tru
       </div>
     </div>
 
+    <div class="kit-slides__bar">
+      <button type="button" class:list={['kit-btn', staff && 'kit-slides__staff']} data-slides-prev disabled>← 前へ</button>
+      <button type="button" class:list={['kit-btn', staff && 'kit-slides__staff']} data-slides-next>次へ →</button>
+      {staff && <button type="button" class="kit-btn kit-slides__staff" data-slides-first disabled>最初から</button>}
+      {!staff && <button type="button" class="kit-btn kit-btn--quiet" data-slides-back hidden>いまの頁に戻る</button>}
+    </div>
+    {
+      staff ? (
+        <p class="kit-slides__state">前へ・次へ・最初からを押すと、この節を開いているメンバー全員の画面も切り替わります。</p>
+      ) : (
+        <p class="kit-slides__state" data-slides-state />
+      )
+    }
+    <p class="kit-slides__msg" data-slides-msg aria-live="polite"></p>
     {
       staff &&
         deck.slides.map(
@@ -170,20 +190,6 @@ const person = `<svg width="12" height="18" viewBox="0 0 20 30" aria-hidden="tru
             ),
         )
     }
-
-    <div class="kit-slides__bar">
-      <button type="button" class:list={['kit-btn', staff && 'kit-slides__staff']} data-slides-prev disabled>← 前へ</button>
-      <button type="button" class:list={['kit-btn', staff && 'kit-slides__staff']} data-slides-next>次へ →</button>
-      {!staff && <button type="button" class="kit-btn kit-btn--quiet" data-slides-back hidden>いまの頁に戻る</button>}
-    </div>
-    {
-      staff ? (
-        <p class="kit-slides__state">前へ・次へを押すと、この節を開いているメンバー全員の画面も切り替わります。</p>
-      ) : (
-        <p class="kit-slides__state" data-slides-state />
-      )
-    }
-    <p class="kit-slides__msg" data-slides-msg aria-live="polite"></p>
   </div>
 
   <script type="application/json" data-slides-json set:html={payloadJson} is:inline />
@@ -241,6 +247,7 @@ const person = `<svg width="12" height="18" viewBox="0 0 20 30" aria-hidden="tru
     border: 1px solid var(--l-rule);
   }
 
+  /* 高さは src/lesson/slides.ts がいちばん高い1枚に合わせて書く（ボタンの段が動かないように）。1枚は上にそろえる */
   .kit-slides__view {
     container-type: inline-size;
   }
@@ -642,7 +649,7 @@ const person = `<svg width="12" height="18" viewBox="0 0 20 30" aria-hidden="tru
     }
   }
 
-  /* --- 話すこと（運営として見ているときだけ HTML にある） --- */
+  /* --- 話すこと（運営として見ているときだけ HTML にある。ボタンの段の下） --- */
   .kit-slides__note {
     margin: 10px 0 0;
     padding: 6px 10px;
@@ -701,7 +708,7 @@ const person = `<svg width="12" height="18" viewBox="0 0 20 30" aria-hidden="tru
     display: none;
   }
 
-  /* 本文の上の段（どの幅でも。本文の幅いっぱい） */
+  /* 本文の上の段（どの幅でも。本文の幅いっぱい）。本文の中に置くもの（SlidesInBody.astro）も同じ間を取る */
   .kit-slides-band {
     margin: 0 0 28px;
   }

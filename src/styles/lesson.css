@@ -1953,6 +1953,22 @@
   }
 }
 
+/* 今週の演習・練習問題集（2026-09-29）。幅1280px以上は右の欄の中（構文の一覧の上）に並べる。
+   箱は構文の一覧（.syn-panel）と同じ地・罫。幅1280px未満は上の重なりのまま */
+@media (min-width: 1280px) {
+  .term-panel--inline {
+    position: static;
+    width: auto;
+    overflow: visible;
+    background: var(--l-card);
+    border: 1px solid var(--l-rule);
+  }
+
+  .term-panel--inline .term-panel__in {
+    padding: 16px 16px 18px;
+  }
+}
+
 /* --- 検索欄 ---------------------------------------------------- */
 .term-search {
   position: relative;
@@ -2230,6 +2246,24 @@
     margin-top: 0;
     max-height: calc(100vh - 75px);
     overflow-y: auto;
+  }
+}
+
+/* 右の欄（今週の演習・練習問題集。2026-09-29）。用語を検索（幅1280px以上だけここに並ぶ）と構文の一覧を縦に積み、
+   欄ごと帯の下に留める。中の構文の一覧は留めない（欄がまとめてスクロールする） */
+@media (min-width: 1280px) {
+  .wk-side {
+    position: sticky;
+    top: calc(63px + var(--kit-band-h, 0px));
+    max-height: calc(100vh - 75px - var(--kit-band-h, 0px));
+    overflow-y: auto;
+  }
+
+  .wk-side .wk-syntax {
+    position: static;
+    max-height: none;
+    overflow: visible;
+    margin-top: 16px;
   }
 }
 

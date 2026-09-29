@@ -17,8 +17,9 @@ import Exercise from '../../../../components/lesson/Exercise.astro';
 import Input from '../../../../components/lesson/Input.astro';
 import Output from '../../../../components/lesson/Output.astro';
 import SyntaxPanel from '../../../../components/lesson/SyntaxPanel.astro';
+import TermPanel from '../../../../components/lesson/TermPanel.astro';
 import PlainMembersLink from '../../../../components/lesson/PlainMembersLink.astro';
-import { chapterTitle } from '../../../../lesson/chapters';
+import { chapterTitle, lessonHref } from '../../../../lesson/chapters';
 import { topicTitleHtml, topicTitleText } from '../../../../lesson/practice';
 import { syntaxCategoriesFor } from '../../../../lesson/weekly-syntax';
 import { currentUser, serverConfig } from '../../../../server/auth';
@@ -65,9 +66,31 @@ if (canSee && entry) {
 
 // 構文の一覧（第22章）。この話題の章までに教えた書き方
 const syntaxCategories = canSee && entry ? await syntaxCategoriesFor([entry.data.chapter]) : [];
+
+// 用語を検索（第18章。2026-09-29）。「まだ先」の判定は、この話題の章の最後の節まで習ったものとして行う
+const lastLesson =
+  canSee && entry
+    ? (await getCollection('lessons')).filter((l) => l.data.chapter === entry.data.chapter).sort((a, b) => a.id.localeCompare(b.id)).pop()
+    : undefined;
+const termHref = lastLesson ? lessonHref(lastLesson.id) : '';
 ---
 
 <Base title={canSee && entry ? topicTitleText(entry.data.title) : '練習問題集'} bar>
+  {
+    /* 用語を検索（20-platform.md 第18章。2026-09-29 に練習問題集にも置いた）。幅1280px未満だけ帯のボタンで開く */
+    canSee && (
+      <button
+        type="button"
+        class="site-btn site-btn--small"
+        id="kit-term-toggle"
+        slot="topbar-extra"
+        aria-expanded="false"
+        aria-controls="kit-term-panel"
+      >
+        用語を検索
+      </button>
+    )
+  }
   <div class="lesson-page pp-page">
     {
       !entry ? (
@@ -114,9 +137,13 @@ const syntaxCategories = canSee && entry ? await syntaxCategoriesFor([entry.data
                 </nav>
               </article>
             </div>
-            {syntaxCategories.length > 0 && (
-              <SyntaxPanel categories={syntaxCategories} sub="この章までに出てきた書き方です。使えそうなものを選んでください。" />
-            )}
+            {/* 右の欄: 用語を検索（幅1280px以上だけここ。狭い画面は帯のボタンで開く重なり）と構文の一覧 */}
+            <div class="wk-side">
+              <TermPanel terms={[]} currentHref={termHref} ask={false} inline />
+              {syntaxCategories.length > 0 && (
+                <SyntaxPanel categories={syntaxCategories} sub="この章までに出てきた書き方です。使えそうなものを選んでください。" />
+              )}
+            </div>
           </div>
         </>
       )

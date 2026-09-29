@@ -1,15 +1,19 @@
 /**
  * スライドの配線（design/spec/53-ml-intro.md 第10節）。部品は src/components/lesson/Slides.astro。
  *
- * - **置き場所**: どの幅でも本文の上の段（#kit-slides-band）。運営が「スライドを見て」と言って進めながら
- *   話すので、本文の幅いっぱいに大きく出す（2026-09-29。前は幅1280px以上で右の欄へ移していた）
- * - **運営**: 「前へ」「次へ」で POST /api/slides。見ているメンバー全員の画面が切り替わる
+ * - **置き場所**: frontmatter の slides は本文の上の段（#kit-slides-band）、本文の `<Slides deck="…" />` はその場所
+ *   （2026-09-29。タイタニック1 の人の図を1つ目の予想ボードのすぐ下に置くため）。**1つのページに2つ以上あってよい。**
+ *   いまの番号はスライドの名前ごとなので、別々に動く
+ * - **運営**: 「前へ」「次へ」「最初から」で POST /api/slides。見ているメンバー全員の画面が切り替わる
  * - **メンバー**: 運営がいま進めていれば（live）その1枚に合わせる。GET /api/slides を**画面が見えている間だけ
- *   1.5秒ごと**に読み直し、裏に回ったら止める（予想ボードの src/lesson/guess.ts と同じ）。自分で前へ・次へを
- *   押すと合わせるのをやめ、「いまの頁に戻る」を出す。運営が3時間動かしていなければ（live でない）、
- *   合わせずに自由にめくる（印も出さない）
+ *   1.5秒ごと**に読み直し、裏に回ったら止める（予想ボードの src/lesson/guess.ts と同じ）。ページの中のスライドは
+ *   1回の GET（?deck=a,b）でまとめて読む。自分で前へ・次へを押すと合わせるのをやめ、「いまの頁に戻る」を出す。
+ *   運営が3時間動かしていなければ（live でない）、合わせずに自由にめくる（印も出さない）
  * - **同じ番号が返ってきたら何もしない**（人の図を描き直さない）
  * - ←・→ のキーは、スライドの欄にフォーカスがあるときだけ効く（ページのスクロールや入力を奪わない）
+ * - **欄の高さはスライドごとに1つ**（2026-09-29。前へ・次へのボタンが1枚ごとに上下しないように）。
+ *   全部の1枚を順に出して測り、いちばん高いものに欄の高さをそろえる。幅・画面の高さが変わったとき、
+ *   字（ウェブフォント）と画像を読み終えたときに測り直す。測る間は動き（人の図・船）を止める
  *
  * 人数はこのファイルに書かない。部品が HTML に埋めたもの（メンバー・運営にだけ描かれる）を読む。
  */
@@ -25,6 +29,16 @@ type Payload = {
   cells: { n: number; s: number }[];
   picto: (PictoStep | null)[];
   map?: (MapStep | null)[];
+};
+type Position = { index: number; live: boolean };
+
+/** ページの中の1つのスライド。読み直しの答えを受け取る口 */
+type Deck = {
+  id: string;
+  /** 運営の書き込みの通し番号（読み直しを出した時点の値を控え、答えが古いかを判じる） */
+  seq: () => number;
+  apply: (pos: Position, startSeq: number) => void;
+  say: (text: string) => void;
 };
 
 const POLL_MS = 1500;
@@ -47,21 +61,91 @@ let wired = false;
 
 export function setupSlides(): void {
   if (wired) return;
-  const root = document.querySelector<HTMLElement>('[data-slides]');
-  const raw = root?.querySelector('script[data-slides-json]')?.textContent;
-  if (!root || !raw) return;
+  const decks: Deck[] = [];
+  for (const root of document.querySelectorAll<HTMLElement>('[data-slides]')) {
+    const deck = setupDeck(root, () => void refresh());
+    if (deck) decks.push(deck);
+  }
+  if (decks.length === 0) return;
   wired = true;
+
+  // ---------------------------------------------------------------- 読み直し（ページの中のスライドをまとめて）
+
+  const query = decks.map((d) => encodeURIComponent(d.id)).join(',');
+  let timer: number | null = null;
+  let loading = false;
+  let stopped = false;
+
+  async function refresh(): Promise<void> {
+    if (loading || stopped) return;
+    loading = true;
+    const starts = decks.map((d) => d.seq());
+    try {
+      const res = await fetch(`/api/slides?deck=${query}`, { cache: 'no-store' });
+      const body = (await res.json().catch(() => ({}))) as { decks?: Record<string, Partial<Position>>; error?: string };
+      if (!res.ok || !body.decks) {
+        // ログアウトした・章が準備中に戻ったなど。読み直しても変わらないので止める
+        if (res.status === 401 || res.status === 403 || res.status === 404) {
+          stopped = true;
+          stopPolling();
+          for (const d of decks) d.say(body.error ?? '読み込めませんでした。');
+        }
+        return;
+      }
+      decks.forEach((d, i) => {
+        const pos = body.decks?.[d.id];
+        if (pos && typeof pos.index === 'number') d.apply({ index: pos.index, live: pos.live === true }, starts[i]);
+      });
+    } catch {
+      /* 通信が切れたときは次の読み直しで */
+    } finally {
+      loading = false;
+    }
+  }
+
+  function startPolling(): void {
+    if (timer !== null || stopped) return;
+    timer = window.setInterval(() => void refresh(), POLL_MS);
+  }
+
+  function stopPolling(): void {
+    if (timer === null) return;
+    window.clearInterval(timer);
+    timer = null;
+  }
+
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+      void refresh();
+      startPolling();
+    } else {
+      stopPolling();
+    }
+  });
+
+  if (document.visibilityState === 'visible') {
+    void refresh();
+    startPolling();
+  }
+}
+
+/** 1つのスライドを配線する。読み直しは呼ぶ側がまとめて行い、答えを apply に渡す。 */
+function setupDeck(root: HTMLElement, requestRefresh: () => void): Deck | null {
+  const raw = root.querySelector('script[data-slides-json]')?.textContent;
+  if (!raw) return null;
   const data = JSON.parse(raw) as Payload;
   const count = data.count;
   const staff = data.staff;
 
   const sections = Array.from(root.querySelectorAll<HTMLElement>('[data-slide], [data-slide-note]'));
+  const view = root.querySelector<HTMLElement>('.kit-slides__view')!;
   const map = root.querySelector<HTMLElement>('[data-map]');
   const figure = root.querySelector<HTMLElement>('[data-picto]')!;
   const stage = root.querySelector<HTMLElement>('[data-picto-stage]')!;
   const noEl = root.querySelector<HTMLElement>('[data-slides-no]');
   const prevBtn = root.querySelector<HTMLButtonElement>('[data-slides-prev]');
   const nextBtn = root.querySelector<HTMLButtonElement>('[data-slides-next]');
+  const firstBtn = root.querySelector<HTMLButtonElement>('[data-slides-first]');
   const backBtn = root.querySelector<HTMLButtonElement>('[data-slides-back]');
   const stateEl = root.querySelector<HTMLElement>('[data-slides-state]');
   const msgEl = root.querySelector<HTMLElement>('[data-slides-msg]');
@@ -97,7 +181,6 @@ export function setupSlides(): void {
   let order: number[][] = [];
   let labels: HTMLElement[] = [];
   let iconW = 0;
-  let lastW = 0;
 
   function buildLabels(st: PictoStep): void {
     for (const l of labels) l.remove();
@@ -122,8 +205,7 @@ export function setupSlides(): void {
   function layout(animate: boolean): void {
     if (!step) return;
     const W = stage.clientWidth;
-    lastW = W;
-    if (W === 0) return; // 閉じている・隠れている。見えたときに ResizeObserver がもう一度呼ぶ
+    if (W === 0) return; // 閉じている・隠れている。見えたときに測り直しがもう一度呼ぶ
 
     const iw = W < 260 ? 9 : W < 360 ? 11 : W < 560 ? 13 : W < 640 ? 15 : 18;
     const ih = Math.round(iw * 1.5);
@@ -181,22 +263,18 @@ export function setupSlides(): void {
     }
   }
 
-  new ResizeObserver(() => {
-    if (step && stage.clientWidth !== lastW) layout(false);
-  }).observe(stage);
-
   // ---------------------------------------------------------------- 地図
 
-  /** 地図の1枚を出す。地図の1枚から地図の1枚へ移るときだけ船を動かす（ほかの1枚からは動かさずに置く） */
-  function showMap(m: MapStep | null): void {
+  /** 地図の1枚を出す。地図の1枚から地図の1枚へ移るときだけ船を動かす（ほかの1枚からと、測るときは動かさずに置く） */
+  function showMap(m: MapStep | null, animate: boolean): void {
     if (!map) return;
     if (!m) {
       map.hidden = true;
       return;
     }
-    const fromMap = !map.hidden;
+    const move = animate && !map.hidden;
     map.hidden = false;
-    if (!fromMap) map.classList.add('is-still');
+    if (!move) map.classList.add('is-still');
     map.querySelector('[data-map-done]')?.setAttribute('d', m.done);
     map.querySelector('[data-map-rest]')?.setAttribute('d', m.rest);
     for (const el of map.querySelectorAll<HTMLElement>('[data-map-sink]')) el.hidden = !m.sink;
@@ -205,7 +283,7 @@ export function setupSlides(): void {
       ship.style.left = m.x;
       ship.style.top = m.y;
     }
-    if (!fromMap) {
+    if (!move) {
       void map.offsetHeight;
       map.classList.remove('is-still');
     }
@@ -215,17 +293,17 @@ export function setupSlides(): void {
 
   let shown = -1;
 
-  function show(i: number): void {
-    const target = Math.min(Math.max(0, i), count - 1);
-    if (target === shown) return; // 同じ1枚なら何もしない（描き直さない）
+  /** i 枚目を描く。animate が false なら人の図も船も動かさずに置く（測るとき） */
+  function render(target: number, animate: boolean): void {
     const fromPicto = step !== null && !figure.hidden;
     shown = target;
     for (const s of sections) s.hidden = Number(s.dataset.slide ?? s.dataset.slideNote) !== target;
     if (noEl) noEl.textContent = `${target + 1} / ${count}`;
     if (prevBtn) prevBtn.disabled = target === 0;
     if (nextBtn) nextBtn.disabled = target === count - 1;
+    if (firstBtn) firstBtn.disabled = target === 0;
 
-    showMap(data.map?.[target] ?? null);
+    showMap(data.map?.[target] ?? null, animate);
 
     const st = data.picto[target] ?? null;
     if (!st) {
@@ -237,14 +315,64 @@ export function setupSlides(): void {
     figure.classList.toggle('is-plain', !st.reveal);
     step = st;
     buildLabels(st);
-    layout(fromPicto);
+    layout(animate && fromPicto);
   }
 
-  show(0);
+  function show(i: number): void {
+    const target = Math.min(Math.max(0, i), count - 1);
+    if (target === shown) return; // 同じ1枚なら何もしない（描き直さない）
+    render(target, true);
+  }
+
+  // ---------------------------------------------------------------- 欄の高さをそろえる
+
+  /* 全部の1枚を順に出して、いちばん高いものに欄の高さを合わせる（ボタンの段が動かないように）。
+     同じ処理の中で描いて測って戻すので、途中の1枚が画面に出ることはない */
+  let measuredW = -1;
+  let measuredH = -1;
+
+  function measure(): void {
+    const W = view.clientWidth;
+    if (W === 0) return; // 閉じている。開いたときに ResizeObserver がもう一度呼ぶ
+    measuredW = W;
+    measuredH = window.innerHeight;
+    const keep = Math.max(0, shown);
+    const live = view.getAttribute('aria-live');
+    view.setAttribute('aria-live', 'off');
+    view.style.height = '';
+    let max = 0;
+    for (let i = 0; i < count; i++) {
+      render(i, false);
+      max = Math.max(max, view.getBoundingClientRect().height);
+    }
+    render(keep, false);
+    view.style.height = `${Math.ceil(max)}px`;
+    if (live !== null) view.setAttribute('aria-live', live);
+  }
+
+  render(0, false);
+  measure();
+
+  new ResizeObserver(() => {
+    // 高さを書いたことで鳴ったとき（幅が同じ）は測り直さない。測り直しは次の描画の前に回す
+    // （通知の中で欄の大きさを変えると「ResizeObserver loop」のエラーになる）
+    requestAnimationFrame(() => {
+      if (view.clientWidth !== measuredW) measure();
+    });
+  }).observe(view);
+  // 写真・絵の高さは画面の高さで決まる（max-height: 52vh）
+  window.addEventListener('resize', () => {
+    if (window.innerHeight !== measuredH) measure();
+  });
+  // 字の形（明朝のウェブフォント）と画像を読み終えると、1枚の高さが変わる
+  void document.fonts?.ready.then(() => measure());
+  for (const img of root.querySelectorAll<HTMLImageElement>('img')) {
+    if (!img.complete) img.addEventListener('load', () => measure(), { once: true });
+  }
 
   // ---------------------------------------------------------------- 運営に合わせる
 
-  let server = { index: 0, live: false };
+  let server: Position = { index: 0, live: false };
   let known = false;
   let following = false;
 
@@ -292,8 +420,8 @@ export function setupSlides(): void {
       });
   }
 
-  function go(delta: number): void {
-    const target = Math.min(Math.max(0, shown + delta), count - 1);
+  function goTo(i: number): void {
+    const target = Math.min(Math.max(0, i), count - 1);
     if (target === shown) return;
     if (staff) {
       show(target);
@@ -305,13 +433,15 @@ export function setupSlides(): void {
     paintFollow();
   }
 
-  prevBtn?.addEventListener('click', () => go(-1));
-  nextBtn?.addEventListener('click', () => go(1));
+  prevBtn?.addEventListener('click', () => goTo(shown - 1));
+  nextBtn?.addEventListener('click', () => goTo(shown + 1));
+  // 運営だけ（部品が運営にしか描かない）。みんなの画面を1枚目に戻す
+  firstBtn?.addEventListener('click', () => goTo(0));
   backBtn?.addEventListener('click', () => {
     following = true;
     show(server.index);
     paintFollow();
-    void refresh();
+    requestRefresh();
   });
 
   root.addEventListener('keydown', (e) => {
@@ -320,76 +450,27 @@ export function setupSlides(): void {
     const t = e.target as HTMLElement | null;
     if (t?.closest('input, textarea, select, [contenteditable]')) return;
     e.preventDefault();
-    go(e.key === 'ArrowLeft' ? -1 : 1);
+    goTo(shown + (e.key === 'ArrowLeft' ? -1 : 1));
   });
 
-  // ---------------------------------------------------------------- 読み直し
-
-  let timer: number | null = null;
-  let loading = false;
-  let stopped = false;
-
-  async function refresh(): Promise<void> {
-    if (loading || stopped) return;
-    loading = true;
-    const startSeq = seq;
-    try {
-      const res = await fetch(`/api/slides?deck=${encodeURIComponent(data.deck)}`, { cache: 'no-store' });
-      const body = (await res.json().catch(() => ({}))) as { index?: number; live?: boolean; error?: string };
-      if (!res.ok || typeof body.index !== 'number') {
-        // ログアウトした・章が準備中に戻ったなど。読み直しても変わらないので止める
-        if (res.status === 401 || res.status === 403 || res.status === 404) {
-          stopped = true;
-          stopPolling();
-          say(body.error ?? '読み込めませんでした。');
-        }
-        return;
-      }
-      const live = body.live === true;
-      if (staff) {
-        if (pending > 0 || seq !== startSeq) return;
-        server = { index: body.index, live };
-        // ほかの運営が動かしたときも合わせる。進めていなければ、手元の1枚のまま
-        if (live) show(body.index);
-        return;
-      }
-      // 運営が進め始めた（または開いたときに進めていた）ら合わせる。自分でめくっている人は、戻るまでそのまま
-      const started = live && (!known || !server.live);
-      server = { index: body.index, live };
-      known = true;
-      if (started) following = true;
-      if (!live) following = false;
-      if (following) show(body.index);
-      paintFollow();
-    } catch {
-      /* 通信が切れたときは次の読み直しで */
-    } finally {
-      loading = false;
+  function apply(pos: Position, startSeq: number): void {
+    const live = pos.live;
+    if (staff) {
+      if (pending > 0 || seq !== startSeq) return;
+      server = { index: pos.index, live };
+      // ほかの運営が動かしたときも合わせる。進めていなければ、手元の1枚のまま
+      if (live) show(pos.index);
+      return;
     }
+    // 運営が進め始めた（または開いたときに進めていた）ら合わせる。自分でめくっている人は、戻るまでそのまま
+    const started = live && (!known || !server.live);
+    server = { index: pos.index, live };
+    known = true;
+    if (started) following = true;
+    if (!live) following = false;
+    if (following) show(pos.index);
+    paintFollow();
   }
 
-  function startPolling(): void {
-    if (timer !== null || stopped) return;
-    timer = window.setInterval(() => void refresh(), POLL_MS);
-  }
-
-  function stopPolling(): void {
-    if (timer === null) return;
-    window.clearInterval(timer);
-    timer = null;
-  }
-
-  document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'visible') {
-      void refresh();
-      startPolling();
-    } else {
-      stopPolling();
-    }
-  });
-
-  if (document.visibilityState === 'visible') {
-    void refresh();
-    startPolling();
-  }
+  return { id: data.deck, seq: () => seq, apply, say };
 }

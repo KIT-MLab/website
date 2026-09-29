@@ -1,8 +1,9 @@
 /**
  * スライドの一覧（design/spec/53-ml-intro.md 第10節）。
  *
- * 節の frontmatter の `slides: intro1` がここの名前を指す。検査25（scripts/check-lessons.mjs）が
- * メンバーだけの章にしか付けられないこと・名前がここにあること・中身の形を見る。
+ * 節の frontmatter の `slides: intro1`（節の上の段に出す）と、本文の中の `<Slides deck="intro1-picto" />`
+ * （その場所に出す）がここの名前を指す。検査25（scripts/check-lessons.mjs）が、メンバーだけの章にしか置けないこと・
+ * 名前がここにあること・1つのスライドは教材全体で1か所だけ・中身の形を見る。
  *
  * **サーバと検査だけが読む。**画面のスクリプト（src/lesson/slides.ts）から import しないこと。
  * 節のページは、メンバー・運営にだけ中身を HTML に書き込む（src/components/lesson/Slides.astro）。
@@ -20,10 +21,11 @@
  * @typedef {{ name: string, n: number, s: number, cells: number[] }} PictoGroup
  */
 import intro1 from './intro1.mjs';
+import intro1Picto from './intro1-picto.mjs';
 import { POINTS } from './north-atlantic.mjs';
 
 /** @type {Record<string, Deck>} */
-export const DECKS = { intro1 };
+export const DECKS = { intro1, 'intro1-picto': intro1Picto };
 
 export const PICTO_BY = ['all', 'sex', 'pclass', 'sex-pclass'];
 

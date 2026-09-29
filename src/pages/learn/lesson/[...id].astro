@@ -38,6 +38,8 @@ import Guess from '../../../components/lesson/Guess.astro';
 import RuleBoard from '../../../components/lesson/RuleBoard.astro';
 import PlainMembersLink from '../../../components/lesson/PlainMembersLink.astro';
 import Slides from '../../../components/lesson/Slides.astro';
+import SlidesInBody from '../../../components/lesson/SlidesInBody.astro';
+import LiveProgress from '../../../components/lesson/LiveProgress.astro';
 import { deckById } from '../../../lesson/slides/decks.mjs';
 import { chapterTitle, isIntroChapter, isMembersOnlyChapter, lessonHref, practiceSectionLabel } from '../../../lesson/chapters';
 import { currentUser, serverConfig } from '../../../server/auth';
@@ -124,7 +126,8 @@ const unitWord = isIntro ? 'この部' : 'この練習編';
 const FacilitateFor = isStaff ? Facilitate : FacilitateHidden;
 
 /* スライド（53-ml-intro.md 第10節）。frontmatter の slides で付く。メンバーだけの章の節で、見てよい人
-   （メンバー・運営）にだけ描く。どの幅でも本文の上の段に、本文の幅いっぱいに出る（src/lesson/slides.ts） */
+   （メンバー・運営）にだけ描く。どの幅でも本文の上の段に、本文の幅いっぱいに出る（src/lesson/slides.ts）。
+   本文の中の <Slides deck="…" /> は SlidesInBody.astro がその場所に描く（2026-09-29） */
 const deckId = canSee && membersOnly && entry?.data.slides ? entry.data.slides : null;
 const deck = deckId ? deckById(deckId) : null;
 
@@ -198,14 +201,17 @@ const notes = isStaff && entry && config ? await notesForLesson(config.db, entry
           </p>
         </div>
 
+        {/* みんなの進み具合（53-ml-intro.md 第11節）。タイタニック演習の節で、運営として見ているときだけ描く */}
+        {isStaff && membersOnly && <LiveProgress lesson={entry.data.id} />}
+
         {deckId && deck && (
           <div class="kit-slides-band" id="kit-slides-band">
             <Slides deckId={deckId} deck={deck} staff={isStaff} />
           </div>
         )}
 
-        <article class="lesson-body" data-exq={oneAtATime}>
-          <Content components={{ Run, Exercise, Input, Output, Level0, Keys, Figure, Secant, Descent, FitLine, Boundary, Overfit, Facilitate: FacilitateFor, Guess, RuleBoard, SectionSyntax, Compare,...(member ? {} : { a: PlainMembersLink }) }} />
+        <article class="lesson-body" data-exq={oneAtATime} data-send-now={membersOnly ? '' : undefined}>
+          <Content components={{ Run, Exercise, Input, Output, Level0, Keys, Figure, Secant, Descent, FitLine, Boundary, Overfit, Facilitate: FacilitateFor, Guess, RuleBoard, Slides: SlidesInBody, SectionSyntax, Compare,...(member ? {} : { a: PlainMembersLink }) }} />
 
           <nav class="lesson-nav" aria-label="節の移動">
             {prev ? <a href={lessonHref(prev.id)}>← 前の節へ　{prev.data.title}</a> : <span class="lesson-nav__spacer" />}
@@ -326,6 +332,13 @@ const notes = isStaff && entry && config ? await notesForLesson(config.db, entry
         });
 
         window.addEventListener('pagehide', send);
+
+        /* タイタニック演習の節（メンバーだけの章。data-send-now）では、採点のたびにすぐ送る
+           （53-ml-intro.md 第11節。運営の「みんなの進み具合」がその場の様子を映すため。今週の演習と同じ）。
+           ほかの節は上の30秒ごとのまま（大勢が一斉に解いても書き込みが走り続けないように） */
+        if (document.querySelector('[data-send-now]')) {
+          window.addEventListener('kit:submitted', () => void store.flush());
+        }
 
         /* 課題が1問も無い節を終わりにする（10-lesson-and-writing.md 第3.8節）。
            通す相手がいないので、ExerciseBox の「全部通したら done」が一度も走らない。

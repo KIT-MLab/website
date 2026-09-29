@@ -1,0 +1,121 @@
+---
+/**
+ * 「みんなの進み具合（運営だけ）」（design/spec/53-ml-intro.md 第11節。2026-09-29 代表の選択「ページの中に」）。
+ *
+ * タイタニック演習の節と今週の演習のページの上に置く。**このコンポーネント自身はロールを見ない。**
+ * ページが運営として見ている運営・管理者にだけ描く（メンバー・学習者として見ている人の HTML には入らない）。
+ * 表は src/lesson/live-progress.ts が GET /api/staff/live-progress から塗り、画面が見えている間だけ10秒ごとに読み直す。
+ *
+ * 見た目は代表が選んだ試作のとおり（題・表・凡例）。枠は運営だけのもの（<Facilitate>）と同じ琥珀、
+ * 表は運営の画面の今週の演習の表（staff.css の .board と .c-ok・.c-ng・.c-no）と同じ書き方を写した
+ * （staff.css は main.wrap の幅なども変えるので、節のページには読み込まない）。
+ */
+interface Props {
+  /** 節の id（lessonId）か、今週の演習の id。どちらか1つ */
+  lesson?: string;
+  weekly?: string;
+}
+
+const { lesson, weekly } = Astro.props;
+const query = lesson ? `lesson=${encodeURIComponent(lesson)}` : `weekly=${encodeURIComponent(weekly ?? '')}`;
+---
+
+<section class="kit-live" data-live={query} aria-label="みんなの進み具合（運営だけ）">
+  <p class="kit-live__h">みんなの進み具合（運営だけ・10秒ごと）</p>
+  <div class="kit-live__scroll" data-live-table>
+    <p class="kit-live__msg">読み込んでいます…</p>
+  </div>
+  <p class="kit-live__key">（<span class="c-ok">✓</span>通した　<span class="c-ng">×n</span> 落ちた回数　<span class="c-no">–</span> まだ）</p>
+</section>
+
+<script>
+  import { setupLiveProgress } from '../../lesson/live-progress';
+  setupLiveProgress();
+</script>
+
+<style is:global>
+  /* 表の中身は src/lesson/live-progress.ts が作るので is:global にし、.kit-live の中だけに効く書き方にする */
+  .kit-live {
+    margin: 0 0 28px;
+    padding: 12px 16px 8px;
+    font-family: var(--font-body);
+    color: var(--l-ink);
+    background: var(--l-card);
+    border: 1px solid var(--l-kohaku);
+  }
+
+  .kit-live__h {
+    margin: 0 0 6px;
+    font-size: 13.5px;
+    line-height: 1.6;
+    letter-spacing: 0.06em;
+    color: var(--l-kohaku);
+    text-indent: 0;
+  }
+
+  /* 狭い画面では表の中だけが横に動く（ページは動かない） */
+  .kit-live__scroll {
+    overflow-x: auto;
+  }
+
+  .kit-live__msg,
+  .kit-live__key {
+    margin: 4px 0 0;
+    font-size: 12.5px;
+    line-height: 1.6;
+    color: var(--l-ink-2);
+    text-indent: 0;
+  }
+
+  .kit-live table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13.5px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .kit-live th,
+  .kit-live td {
+    border-bottom: 1px solid var(--l-rule);
+    padding: 5px 8px;
+    text-align: center;
+    white-space: nowrap;
+  }
+
+  .kit-live th:first-child,
+  .kit-live td:first-child,
+  .kit-live th:last-child,
+  .kit-live td:last-child {
+    text-align: left;
+  }
+
+  .kit-live thead th {
+    font-size: 12.5px;
+    color: var(--l-ink-2);
+    vertical-align: bottom;
+  }
+
+  .kit-live__ago {
+    margin-left: 6px;
+    font-size: 12px;
+    color: var(--l-ink-2);
+  }
+
+  .kit-live .c-ok {
+    color: var(--l-midori);
+    font-weight: 900;
+  }
+
+  .kit-live .c-ng {
+    color: var(--l-shu);
+    font-weight: 700;
+  }
+
+  .kit-live .c-no {
+    color: var(--l-rule);
+  }
+
+  .kit-live__key .c-no {
+    color: var(--l-ink-2);
+  }
+</style>
