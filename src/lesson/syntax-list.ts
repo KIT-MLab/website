@@ -82,7 +82,7 @@ export const SYNTAX_CATEGORIES: SyntaxCategory[] = [
     key: 'input',
     name: 'input と型変換',
     entries: [
-      { code: 'x = input()', result: '"5"（入力が5のとき）', note: '入力欄の1行を文字列で受け取る', since: 'python-01-input' },
+      { code: 'input()', result: '"5"（入力が5のとき）', note: '入力欄の1行を文字列で受け取る', since: 'python-01-input' },
       { code: 'int("5")', result: '5', note: '整数に直す', since: 'python-01-input' },
       { code: 'float("2.5")', result: '2.5', note: '小数に直す', since: 'python-02-int-float' },
       { code: 'int(7.9)', result: '7', note: '小数を整数に（切り捨て）', since: 'python-02-int-float' },
