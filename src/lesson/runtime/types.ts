@@ -32,6 +32,11 @@ export type ExecResult = {
   /** call を指定したときの戻り値 */
   value: unknown;
   hasValue: boolean;
+  /**
+   * 質問の文を渡した input()（`input("年齢は？")`）が読んだ値（末尾に改行を付けたもの）と、それを差し込む stdout の位置（UTF-16 の単位）。
+   * 画面の実行結果で、端末に打ち込んだように薄く見せるためだけに使う。**採点は stdout だけを見る**
+   */
+  echo?: [number, string][];
 };
 
 export type ExecRequest = {

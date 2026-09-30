@@ -77,6 +77,7 @@ export const SYNTAX_CATEGORIES: SyntaxCategory[] = [
       { code: 'price = 100\nprint(price + 50)', result: '150', note: '名前に値を結び付けて使う', since: 'python-01-variable' },
       { code: 'a = 1\na = 3\nprint(a)', result: '3', note: '入れ直すと前の値は残らない', since: 'python-01-variable' },
       { code: 'a = 1\na = a + 10\nprint(a)', result: '11', note: 'いまの値をもとに入れ直す', since: 'python-01-variable' },
+      { code: 'total_price = 120\nprint(total_price)', result: '120', note: '名前は英字・数字・_。数字で始めない', since: 'python-01-variable' },
     ],
   },
   {
@@ -87,6 +88,7 @@ export const SYNTAX_CATEGORIES: SyntaxCategory[] = [
       { code: 'name = input()\nprint("こんにちは", name)', result: 'こんにちは 佐藤（入力が佐藤のとき）', note: '読み取った1行を変数に入れて使う', since: 'python-01-input-basic' },
       { code: 'a = input()\nb = input()\nprint(b, a)', result: '青 赤（入力が赤と青の2行のとき）', note: '呼ぶたびに次の行を上から読む', since: 'python-01-input-basic' },
       { code: 'print(input())', result: '佐藤（入力が佐藤のとき）', note: '変数に入れずにそのまま表示', since: 'python-01-input-basic' },
+      { code: 'name = input("名前は？")\nprint("こんにちは", name)', result: '名前は？こんにちは 佐藤（入力が佐藤のとき）', note: '質問の文も出力に入る（課題では書かない）', since: 'python-01-input-basic' },
       { code: 'print(int("5") + 1)', result: '6', note: '整数に直す', since: 'python-01-input' },
       { code: 'print(float("2.5"))', result: '2.5', note: '小数に直す', since: 'python-02-int-float' },
       { code: 'print(int(7.9))', result: '7', note: '小数を整数に（切り捨て）', since: 'python-02-int-float' },

@@ -495,6 +495,11 @@
   color: var(--k-err);
 }
 
+/* input() が入力欄から読んだ値。端末で打ち込んだ文字のように、読んだ位置に薄く出す（表示だけ。20-platform.md 第3.2節） */
+.kit-out__echo {
+  color: var(--k-dim);
+}
+
 /* ▶ を押す前。結果の枠は残し、文字だけ沈める（10-lesson 第2.2節） */
 .kit-out__text--wait {
   color: var(--k-dim);
@@ -1893,7 +1898,9 @@
   }
 }
 
-@media (max-width: 1279px) {
+/* 1279.98px: 画面の拡大率（Windows の 125%・150% など）で幅が 1279.5px のような小数になると、
+   (max-width: 1279px) と (min-width: 1280px) のどちらにも入らず、欄が本文に重なっていた（2026-09-29） */
+@media (max-width: 1279.98px) {
   #kit-term-toggle {
     display: inline-flex;
   }
@@ -1903,6 +1910,11 @@
     z-index: 30;
     box-shadow: -6px 0 18px rgba(43, 38, 30, 0.18);
     transform: translateX(100%);
+  }
+
+  /* 滑るのは開け閉めのときだけ（is-sliding は src/lesson/term-search.ts が付け外しする）。
+     いつも付けておくと、幅が変わって重なりに切り替わった瞬間に欄が一度見えてから滑って消えた（2026-09-29） */
+  .term-panel.is-sliding {
     transition: transform 200ms var(--ease-out);
   }
 
@@ -1976,13 +1988,12 @@
 
 /* 幅1024〜1279px でも、今週の演習・練習問題集は右の欄に並べる（2026-09-29。幅1280px未満の人に欄が見えなかった）。
    節のページの重なり（drawer）の指定を打ち消す */
-@media (min-width: 1024px) and (max-width: 1279px) {
+@media (min-width: 1024px) and (max-width: 1279.98px) {
   .term-panel--inline {
     position: static;
     width: auto;
     overflow: visible;
     transform: none;
-    transition: none;
     box-shadow: none;
     z-index: auto;
     background: var(--l-card);
@@ -1997,7 +2008,8 @@
     padding: 16px 16px 18px;
   }
 
-  body:has(.term-panel--inline) #kit-term-toggle {
+  body:has(.term-panel--inline) #kit-term-toggle,
+  body:has(.term-panel--inline) .term-scrim {
     display: none;
   }
 }

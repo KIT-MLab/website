@@ -8,6 +8,8 @@
  *   - 実行ごとに新しい名前空間を作る（状態を引き継がない）
  *   - print の出力を集める
  *   - input() は渡された入力欄の中身を上から1行ずつ読む
+ *   - 質問の文を渡された input() が読んだ値を、stdout とは別の echo に記録する（画面で端末の
+ *     打ち込みのように差し込んで見せるためだけ。stdout には入れないので、採点と期待値は本物の Python と同じ）
  *   - 5秒を超えたら止める（sys.settrace で行ごとに時刻を見る）
  *   - 結果を JSON にして返す
  */
@@ -68,6 +70,9 @@ def _kit_run(code, stdin_text, call_json, limit):
     if lines and lines[-1] == "":
         lines.pop()
     pos = [0]
+    # 読んだ値と、それを差し込む stdout の位置。位置は JS の文字列と同じ UTF-16 の単位で数える。
+    # 質問の文が無い input() では記録しない。画面の出力が採点する出力と行までそろったままになる
+    echo = []
 
     def _kit_input(prompt=""):
         if prompt:
@@ -76,10 +81,12 @@ def _kit_run(code, stdin_text, call_json, limit):
             raise _KitInputEmpty()
         value = lines[pos[0]]
         pos[0] += 1
+        if prompt:
+            echo.append([len(out.getvalue().encode("utf-16-le")) // 2, value + chr(10)])
         return value
 
     ns = {"__name__": "__main__", "__builtins__": builtins.__dict__, "input": _kit_input}
-    result = {"stdout": "", "error": None, "value": None, "hasValue": False}
+    result = {"stdout": "", "error": None, "value": None, "hasValue": False, "echo": echo}
     linecache.cache["<program>"] = (len(code), None, code.splitlines(True), "<program>")
     # import する部品（pandas・scikit-learn など）を、時間を数える前に読んでおく。
     # scikit-learn は読むだけで5秒を超え、途中で止めると壊れたまま残るため。

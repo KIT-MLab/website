@@ -10,7 +10,7 @@
  */
 import { useState } from 'react';
 import CodeEditor from './CodeEditor';
-import { LoadBar, outputText, StdinBox } from './shared';
+import { LoadBar, OutputText, StdinBox } from './shared';
 import { execPython } from '../runtime/runner';
 import { adviceFor } from '../grade';
 import type { ExecResult } from '../runtime/types';
@@ -35,7 +35,6 @@ export default function RunBox({ code, stdin, editorId }: Props) {
   }
 
   const done = state === 'done' && result !== null;
-  const showing = done ? outputText(result) : '';
   /** まだ押していない <Run>。結果の枠は残して高さを変えない */
   const waiting = !done;
   const pyError = done && result.error?.kind === 'python' ? result.error : null;
@@ -53,7 +52,7 @@ export default function RunBox({ code, stdin, editorId }: Props) {
       <div className={`kit-out${pyError ? ' kit-out--err' : ''}`}>
         <div className="kit-out__label">{pyError ? '出たエラー' : '実行結果'}</div>
         <pre className={`kit-out__text${waiting ? ' kit-out__text--wait' : ''}`}>
-          {waiting ? '▶ を押すと出ます' : showing}
+          {done ? <OutputText result={result} /> : '▶ を押すと出ます'}
         </pre>
       </div>
       {pyError ? (

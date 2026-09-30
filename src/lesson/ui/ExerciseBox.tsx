@@ -6,10 +6,11 @@
  */
 import { Fragment, useEffect, useRef, useState } from 'react';
 import CodeEditor from './CodeEditor';
-import { Inline, LoadBar, outputText, StdinBox } from './shared';
+import { Inline, LoadBar, OutputText, StdinBox } from './shared';
 import { getExerciseData, getLessonData, isDirectKind, type ExerciseData, type ExerciseKind, type LessonData } from '../data';
 import { gradeDirect, gradeExercise, showInput, type GradeResult } from '../grade';
 import { execPython } from '../runtime/runner';
+import type { ExecResult } from '../runtime/types';
 import { getProgressStore } from '../store/progress';
 import { fetchPublishStatus } from '../publish-status';
 
@@ -157,7 +158,7 @@ export default function ExerciseBox({ id, kind, starter, stdin, choices, syntax,
   const [code, setCode] = useState(initial);
   const [stdinValue, setStdinValue] = useState(stdin ?? '');
   const [busy, setBusy] = useState<'none' | 'run' | 'grade'>('none');
-  const [runOutput, setRunOutput] = useState<string | null>(null);
+  const [runOutput, setRunOutput] = useState<ExecResult | null>(null);
   const [result, setResult] = useState<GradeResult | null>(null);
   const [fails, setFails] = useState(0);
   const [passed, setPassed] = useState(false);
@@ -302,7 +303,7 @@ export default function ExerciseBox({ id, kind, starter, stdin, choices, syntax,
     startNudgeClock();
     setBusy('run');
     const out = await execPython({ code: codeRef.current, stdin: stdinValue });
-    setRunOutput(outputText(out));
+    setRunOutput(out);
     setBusy('none');
   }
 
@@ -541,7 +542,9 @@ export default function ExerciseBox({ id, kind, starter, stdin, choices, syntax,
       {runOutput !== null ? (
         <div className="kit-out">
           <div className="kit-out__label">試した結果</div>
-          <pre className="kit-out__text">{runOutput}</pre>
+          <pre className="kit-out__text">
+            <OutputText result={runOutput} />
+          </pre>
         </div>
       ) : null}
 

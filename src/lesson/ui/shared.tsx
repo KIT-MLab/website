@@ -19,6 +19,28 @@ export function outputText(result: ExecResult): string {
 }
 
 /**
+ * 実行結果の表示。質問の文を渡した input() が読んだ値を、端末で打ち込んだように読んだ位置へ薄く差し込む
+ * （2026-09-29。20-platform.md 第3.2節）。表示だけで、採点と期待値は stdout のまま。
+ */
+export function OutputText({ result }: { result: ExecResult }) {
+  const text = outputText(result);
+  const parts: ReactNode[] = [];
+  let last = 0;
+  for (const [at, value] of result.echo ?? []) {
+    const cut = Math.min(Math.max(at, last), text.length);
+    if (cut > last) parts.push(text.slice(last, cut));
+    parts.push(
+      <span key={parts.length} className="kit-out__echo">
+        {value}
+      </span>,
+    );
+    last = cut;
+  }
+  parts.push(text.slice(last));
+  return <>{parts}</>;
+}
+
+/**
  * Pyodide の読み込みの進捗バー。
  * 20-platform.md 第3.1節「最初の1回だけ、進捗の出るバーを出す」。
  */

@@ -25,9 +25,9 @@ export function setupSyntaxPanel(): void {
       }
     }
     if (!first) return;
-    // 幅1280px以上は欄がその場に固定されているので、欄の中だけでスクロールする。
-    // それより狭い画面では欄が問題の下にあるので、ページごと運ぶ（第22.1節）
-    if (window.matchMedia('(min-width: 1280px)').matches) {
+    // 幅1024px以上は欄がその場に固定されているので、欄の中だけでスクロールする（2026-09-29 に 1280px から下げた。
+    // 右の欄の出る幅 .wk-side / .wk-grid と合わせる）。それより狭い画面では欄が問題の下にあるので、ページごと運ぶ（第22.1節）
+    if (window.matchMedia('(min-width: 1024px)').matches) {
       first.scrollIntoView({ block: 'nearest' });
     } else {
       first.scrollIntoView({ behavior: 'smooth', block: 'start' });

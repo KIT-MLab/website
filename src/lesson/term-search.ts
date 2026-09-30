@@ -301,13 +301,30 @@ export async function setupTermSearch(opts: { currentHref: string }): Promise<vo
 
   /* --- 幅1280px未満: ボタンで開閉するオーバーレイ（第18.1節） --------- */
 
+  /* 滑る動きは、帯のボタン・×・「/」で開け閉めするときだけ付ける（2026-09-29）。いつも付けておくと、
+     幅が変わって常設の欄から重なりに切り替わった瞬間に、欄が一度見えてから右へ滑って消えた */
+  let slideTimer = 0;
+  function slide(): void {
+    panel.classList.add('is-sliding');
+    window.clearTimeout(slideTimer);
+    slideTimer = window.setTimeout(() => panel.classList.remove('is-sliding'), 250);
+  }
+
+  /* いま重なり（drawer）として出しているか。今週の演習・練習問題集（.term-panel--inline）は
+     幅1024px以上で右の欄の中に並ぶので、そのときは開け閉めしない */
+  function isDrawer(): boolean {
+    return window.matchMedia('(max-width: 1279.98px)').matches && getComputedStyle(panel).position === 'fixed';
+  }
+
   function openPanel(): void {
+    slide();
     panel.classList.add('is-open');
     toggle?.setAttribute('aria-expanded', 'true');
     if (scrim) scrim.hidden = false;
     input.focus();
   }
   function closePanel(): void {
+    slide();
     panel.classList.remove('is-open');
     toggle?.setAttribute('aria-expanded', 'false');
     if (scrim) scrim.hidden = true;
@@ -337,7 +354,7 @@ export async function setupTermSearch(opts: { currentHref: string }): Promise<vo
           !!active.closest('.cm-editor'));
       if (typing) return;
       e.preventDefault();
-      if (window.matchMedia('(max-width: 1279px)').matches) openPanel();
+      if (isDrawer()) openPanel();
       else input.focus();
     }
   });
