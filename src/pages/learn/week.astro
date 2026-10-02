@@ -127,8 +127,8 @@ const nowLabel = now ? (now.until ? entranceDateLabel(now) : shortDate(now.date)
 // 章の番号だけの言葉（「第3章」）。帯の「教材 第3章・第4章」のリンクの字
 const chapterNo = (chapter: string) => chapterTitle(chapter).split(' ')[0];
 
-function chapterLessonLink(chapter: string): WeekLink {
-  const first = lessons.find((x) => x.data.chapter === chapter);
+function chapterLessonLink(chapter: string, from?: string): WeekLink {
+  const first = lessons.find((x) => (from ? x.data.id === from : x.data.chapter === chapter));
   const label = chapterNo(chapter);
   if (!first) return { label, href: null };
   return lessonVisible(chapter, first.data.id) ? { label, href: sectionHref(first.id) } : { label, href: null, note: '準備中' };
@@ -146,7 +146,7 @@ const pace = member
         .filter(chapterVisible)
         .flatMap((ch) =>
           practiceTopics
-            .filter((t) => t.data.chapter === ch)
+            .filter((t) => t.data.chapter === ch && (!row.topics || row.topics.includes(t.data.topic)))
             .sort((a, b) => a.data.order - b.data.order)
             .flatMap((t) => practiceProblems(generated, t.data.id).filter((q) => q.level === 1 || q.level === 2).map((q) => q.id)),
         );
@@ -157,7 +157,7 @@ const pace = member
         here,
         overdue,
         exIds,
-        lessons: row.chapters.map(chapterLessonLink),
+        lessons: row.chapters.map((ch) => chapterLessonLink(ch, row.from)),
         practice: row.chapters.map(chapterPracticeLink),
         weekly: row.weekly ? weeklyLink(row.weekly, w ? `今週の演習 ${shortDate(w.data.date)}` : undefined) : null,
       };
@@ -185,13 +185,16 @@ const pace = member
 
         {pace.length > 0 && (
           <section class="wkp-col wkp-pace">
-            <h2 class="wkp-col__h">各自で進める Python の復習</h2>
-            <p class="wkp-col__no">集まりでは扱いません。目安の日までに、練習問題集の★1・★2を解いておきます。</p>
+            <h2 class="wkp-col__h">各自で進める Python の学習</h2>
+            <p class="wkp-col__no">集まりでは扱いません。目安の日までに教材を読み、練習問題集の★1・★2を解いておきます。</p>
             <ul class="wm wkp-pace__rows">
               {pace.map((p) => (
                 <li class="wkp-pace__row">
-                  <span class="wkp-pace__name">{p.label}</span>
-                  <span class="wkp-pace__by">{p.by} まで</span>
+                  <span class="wkp-pace__name">
+                    {p.label}
+                    {p.here && <span class="wkp-tag wkp-tag--now">今週</span>}
+                  </span>
+                  <span class={p.here ? 'wkp-pace__by is-here' : 'wkp-pace__by'}>{p.by} まで</span>
                   <span class="wkp-pace__meter">
                     {p.exIds.length > 0 ? (
                       <span class="wm-meter" data-ex-ids={p.exIds.join(' ')}>
@@ -232,7 +235,6 @@ const pace = member
                       </>
                     )}
                   </span>
-                  <span class="wkp-pace__here">{p.here && '今週はここ'}</span>
                 </li>
               ))}
             </ul>
@@ -388,7 +390,7 @@ const pace = member
     }
     .wkp-pace__rows {
       display: grid;
-      grid-template-columns: max-content max-content max-content minmax(0, 1fr) max-content;
+      grid-template-columns: max-content max-content max-content minmax(0, 1fr);
       gap: 2px 14px;
       margin: 0;
       padding: 0;
@@ -422,10 +424,9 @@ const pace = member
     .wkp-pace__links a:hover {
       color: var(--l-shu);
     }
-    .wkp-pace__here {
+    /* 今週の行は、目安の日を朱に（今回の列の朱と同じ色） */
+    .wkp-pace__by.is-here {
       color: var(--l-shu);
-      font-weight: 700;
-      white-space: nowrap;
     }
 
     /* --- その先の回（畳んだ行。開くと同じ中身） --- */
@@ -506,25 +507,25 @@ const pace = member
       .wkp-row__body {
         padding-left: 8px;
       }
-      /* 帯は行を縦に積む: 名前と目安の日（と印） → 棒 → 行き先 */
+      /* 帯は2段: 名前・目安の日・棒（右） → 行き先 */
       .wkp-pace__rows {
         display: block;
       }
+      /* 棒は1段目の右へ。入りきらないときは、棒だけ次の段へ折り返す */
       .wkp-pace__row {
-        grid-template-columns: max-content max-content minmax(0, 1fr);
+        display: flex;
+        flex-wrap: wrap;
         gap: 2px 10px;
         padding: 6px 0;
+      }
+      .wkp-pace__meter {
+        margin-left: auto;
       }
       .wkp-pace__row + .wkp-pace__row {
         border-top: 1px solid var(--l-rule);
       }
-      .wkp-pace__here {
-        grid-column: 3;
-        grid-row: 1;
-      }
-      .wkp-pace__meter,
       .wkp-pace__links {
-        grid-column: 1 / -1;
+        flex-basis: 100%;
       }
     }
   </style>

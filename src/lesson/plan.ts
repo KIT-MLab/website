@@ -123,7 +123,6 @@ export const PLAN: PlanRow[] = [
     before: { lessons: ['python-12-model'] },
     after: {
       practice: [
-        { chapter: '08-table', topics: ['transpose'], levels: [1, 2] },
         { chapter: '08-table', topics: ['make'], levels: [1, 2] },
       ],
       weekly: ['weekly-2026-10-20'],
@@ -191,12 +190,19 @@ export type SelfReviewRow = {
   chapters: string[];
   /** 仕上げに解く今週の演習の回（weekly の id）。無くてよい */
   weekly?: string;
+  /** 章の途中から読む行のとき、「教材」のリンクの行き先にする節（節の id）。無ければ章の最初の節 */
+  from?: string;
+  /** 進み具合に数える練習問題集の話題。無ければ章の話題ぜんぶ */
+  topics?: string[];
 };
 
 export const SELF_REVIEW: SelfReviewRow[] = [
   { label: '第1〜2章', by: '2026-09-29', chapters: ['01-python', '02-numbers'], weekly: 'weekly-2026-09-29' },
   { label: '第3〜4章', by: '2026-10-06', chapters: ['03-branch', '04-loop'], weekly: 'weekly-2026-10-06' },
-  { label: '第5〜6章', by: '2026-10-13', chapters: ['05-function', '06-error'], weekly: 'weekly-2026-10-13' },
+  // 第6章（エラーを読む）は目安に入れない。練習問題集も作らない（2026-10-03 代表の決定）
+  { label: '第5章', by: '2026-10-13', chapters: ['05-function'], weekly: 'weekly-2026-10-13' },
+  // 集まりで扱わない第8章の節（転置・形の違う配列の計算・並びを作る）。「並びを作る」は 10/27 の回で使う
+  { label: '第8章2〜4節', by: '2026-10-20', chapters: ['08-table'], from: 'python-08-transpose', topics: ['transpose'] },
 ];
 
 /** ページ上の1段落の説明（第21.2節）。 */
