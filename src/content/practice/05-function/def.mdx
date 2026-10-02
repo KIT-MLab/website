@@ -7,3 +7,149 @@ sections: [python-05-def]
 order: 1
 levels: [1, 2, 3]
 ---
+
+<Exercise
+  id="practice-05-def-1"
+  kind="build"
+  level={1}
+  name="文房具の代金"
+  stdin={`120
+3`}
+  tests={[
+    { kind: 'stdout', stdin: `120\n3\n` },
+    { kind: 'stdout', stdin: `0\n5\n` },
+    { kind: 'stdout', stdin: `80\n1\n` },
+    { kind: 'stdout', stdin: `250\n12\n` },
+  ]}
+  hints={['関数の定義と呼び出しの書き方は、第5章1節の最初のコードを見てください。']}
+  syntax={['input', 'function', 'print']}
+>
+ノートを何冊か買ったときの代金を表示する関数 `show_total(price, count)` を定義してください。ノート1冊の値段と冊数を読み取り、その2つの値を渡して、この関数を呼び出します。
+
+<Input>
+- 1行目: ノート1冊の値段（円、0以上の整数）
+- 2行目: 冊数（整数）
+</Input>
+
+<Output>
+代金を1行で表示します。数の前に `合計`、数の後ろに `円` を付けます。形は出力例のとおりです。
+</Output>
+</Exercise>
+
+<Exercise
+  id="practice-05-def-2"
+  kind="build"
+  level={1}
+  name="画用紙の面積と周"
+  stdin={`30
+20`}
+  tests={[
+    { kind: 'stdout', stdin: `30\n20\n` },
+    { kind: 'stdout', stdin: `1\n1\n` },
+    { kind: 'stdout', stdin: `5\n100\n` },
+  ]}
+  hints={['関数の中身は、`def` の行より1段インデントして、関数の中に何行でも書けます。第5章1節の最初のコードを見てください。']}
+  syntax={['input', 'function', 'operators', 'print']}
+>
+画用紙の面積と、ふちを1周した長さを表示する関数 `show_paper(width, height)` を定義してください。横と縦の長さを読み取り、その2つの値を渡して、この関数を呼び出します。
+
+<Input>
+- 1行目: 横の長さ（cm、1以上の整数）
+- 2行目: 縦の長さ（cm、1以上の整数）
+</Input>
+
+<Output>
+面積と、ふちを1周した長さを、この順に2行で表示します。数だけを表示します。
+</Output>
+</Exercise>
+
+<Exercise
+  id="practice-05-def-3"
+  kind="build"
+  level={2}
+  name="電車の運賃表"
+  stdin={`3
+1
+5
+10`}
+  tests={[
+    { kind: 'stdout', stdin: `3\n1\n5\n10\n` },
+    { kind: 'stdout', stdin: `1\n7\n` },
+    { kind: 'stdout', stdin: `4\n100\n2\n2\n30\n` },
+  ]}
+  hints={['1回の乗車ぶんの表示を関数にして、乗車の回数だけ呼び出します。繰り返しの書き方は第4章1節を見てください。']}
+  syntax={['input', 'function', 'for', 'operators', 'print']}
+>
+ある電車の運賃は、基本料金の140円に、乗る距離1kmごとに30円を足した金額です。何回かの乗車について、距離と運賃を1回ごとに表示する関数 `show_fare(km)` を定義してください。距離を1つずつ読み取り、そのたびにこの関数を呼び出します。
+
+<Input>
+- 1行目: 乗車の回数（1以上の整数）
+- 2行目から: 乗車1回につき1行、乗る距離（km、1以上の整数）
+</Input>
+
+<Output>
+乗車1回につき1行、距離と運賃を表示します。距離の数の後ろに `km` を、運賃の数の後ろに `円` を付けます。形は出力例のとおりです。
+</Output>
+</Exercise>
+
+<Exercise
+  id="practice-05-def-4"
+  kind="build"
+  level={2}
+  name="ゆで卵の仕上がり"
+  stdin={`5`}
+  tests={[
+    { kind: 'stdout', stdin: `5\n` },
+    { kind: 'stdout', stdin: `8\n` },
+    { kind: 'stdout', stdin: `7\n` },
+    { kind: 'stdout', stdin: `10\n` },
+    { kind: 'stdout', stdin: `20\n` },
+    { kind: 'stdout', stdin: `1\n` },
+    { kind: 'stdout', stdin: `0\n` },
+  ]}
+  hints={['3通りに分ける書き方は、第3章3節を見てください。']}
+  syntax={['input', 'function', 'if', 'compare', 'print']}
+>
+卵をゆでた時間から、仕上がりを表示する関数 `show_egg(minutes)` を定義してください。ゆでた時間を読み取り、その値を渡して、この関数を呼び出します。ゆでた時間が7分より短いときは半熟、7分以上で10分より短いときは固ゆで、10分以上のときはゆですぎです。
+
+<Input>
+- 1行目: ゆでた時間（分、0以上の整数）
+</Input>
+
+<Output>
+仕上がりを1行で表示します。半熟のときは `半熟`、固ゆでのときは `固ゆで`、ゆですぎのときは `ゆですぎ` と表示します。
+</Output>
+</Exercise>
+
+<Exercise
+  id="practice-05-def-5"
+  kind="build"
+  level={3}
+  name="植物の成長記録"
+  stdin={`10
+3
+13
+15
+15`}
+  tests={[
+    { kind: 'stdout', stdin: `10\n3\n13\n15\n15\n` },
+    { kind: 'stdout', stdin: `5\n1\n8\n` },
+    { kind: 'stdout', stdin: `20\n4\n21\n25\n25\n30\n` },
+  ]}
+  hints={['週ごとの伸びは、いまの高さから、1つ前の週の高さを引いて求めます。1つ前の高さは、繰り返しのたびに入れ直す変数に持っておきます。', '週の番号を1から数えるには、第4章1節の `range(1, 4)` の形を見てください。']}
+  syntax={['input', 'function', 'for', 'operators', 'print']}
+>
+植物を育てて、毎週の高さを測ります。測り始めの高さと毎週の高さから、週ごとの伸びを表示するプログラムを書いてください。
+
+1週ぶんの表示は、関数 `show_growth(week, before, after)` にします。`week` は週の番号、`before` は前の週の高さ、`after` はその週の高さです。
+
+<Input>
+- 1行目: 測り始めの高さ（cm、整数）
+- 2行目: 測った週の数（1以上の整数）
+- 3行目から: 1週につき1行、その週の高さ（cm、整数。前の週の高さと同じか、それより高い）
+</Input>
+
+<Output>
+1週につき1行、週の番号と、その週の伸びを表示します。週の番号は1から数え、最初の週の伸びは、測り始めの高さからの伸びです。形は出力例のとおりです。
+</Output>
+</Exercise>

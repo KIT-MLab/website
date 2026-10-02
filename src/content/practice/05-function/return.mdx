@@ -7,3 +7,142 @@ sections: [python-05-return]
 order: 2
 levels: [1, 2, 3]
 ---
+
+<Exercise
+  id="practice-05-return-1"
+  kind="build"
+  level={1}
+  name="上映時間を分にする"
+  tests={[
+    { kind: 'call', fn: 'to_minutes', args: [1, 30] },
+    { kind: 'call', fn: 'to_minutes', args: [0, 45] },
+    { kind: 'call', fn: 'to_minutes', args: [2, 0] },
+    { kind: 'call', fn: 'to_minutes', args: [3, 5] },
+  ]}
+  hints={['`return` の後ろには、計算の式を書けます。第5章2節の最初のコードを見てください。']}
+  syntax={['function', 'operators']}
+>
+映画の上映時間を、全部で何分かに直して返す関数 `to_minutes(hours, minutes)` を書いてください。
+
+<Input>
+関数に渡す引数です。入力欄は使いません。
+
+- `hours`: 時間（0以上の整数）
+- `minutes`: 分（0以上59以下の整数）
+</Input>
+
+<Output>
+全部で何分かを、整数で返します。
+</Output>
+</Exercise>
+
+<Exercise
+  id="practice-05-return-2"
+  kind="build"
+  level={1}
+  name="おつりの計算"
+  tests={[
+    { kind: 'call', fn: 'change', args: [1000, 640] },
+    { kind: 'call', fn: 'change', args: [500, 500] },
+    { kind: 'call', fn: 'change', args: [1000, 1] },
+    { kind: 'call', fn: 'change', args: [100, 30] },
+  ]}
+  hints={[]}
+  syntax={['function', 'operators']}
+>
+店で払った金額と品物の値段から、おつりを返す関数 `change(paid, price)` を書いてください。
+
+<Input>
+関数に渡す引数です。入力欄は使いません。
+
+- `paid`: 払った金額（円、整数）
+- `price`: 品物の値段（円、整数。`paid` 以下）
+</Input>
+
+<Output>
+おつりの金額（円）を、整数で返します。
+</Output>
+</Exercise>
+
+<Exercise
+  id="practice-05-return-3"
+  kind="build"
+  level={2}
+  name="並べ方の数"
+  tests={[
+    { kind: 'call', fn: 'arrangements', args: [4] },
+    { kind: 'call', fn: 'arrangements', args: [1] },
+    { kind: 'call', fn: 'arrangements', args: [0] },
+    { kind: 'call', fn: 'arrangements', args: [6] },
+  ]}
+  hints={['1から人数までの数を順に掛けていきます。掛け合わせた結果を入れる変数の、最初の値を何にするかを考えます。第4章1節の、足していく形が参考になります。']}
+  syntax={['function', 'for', 'operators']}
+>
+何人かを横一列に並べるとき、並べ方が全部で何通りあるかを返す関数 `arrangements(n)` を書いてください。並べ方の数は、1から `n` までの整数を全部掛け合わせた数で、たとえば3人なら `1 * 2 * 3` で6通りです。0人のときは1通りと数えます。
+
+<Input>
+関数に渡す引数です。入力欄は使いません。
+
+- `n`: 人数（0以上の整数）
+</Input>
+
+<Output>
+並べ方の数を、整数で返します。
+</Output>
+</Exercise>
+
+<Exercise
+  id="practice-05-return-4"
+  kind="build"
+  level={2}
+  name="駐車場の料金"
+  tests={[
+    { kind: 'call', fn: 'parking_fee', args: [20] },
+    { kind: 'call', fn: 'parking_fee', args: [0] },
+    { kind: 'call', fn: 'parking_fee', args: [30] },
+    { kind: 'call', fn: 'parking_fee', args: [45] },
+    { kind: 'call', fn: 'parking_fee', args: [120] },
+  ]}
+  hints={['30分以内のときと、そうでないときで、返す値の計算が変わります。if文の書き方は第3章2節を見てください。', 'どちらの場合にも `return` が実行されるように書きます。`return` が実行されないまま関数が終わると、値が返りません。']}
+  syntax={['function', 'if', 'compare', 'operators']}
+>
+駐車場に止めた時間から、料金を返す関数 `parking_fee(minutes)` を書いてください。止めた時間が30分以内なら無料です。30分を超えたときは、超えた分について1分あたり5円かかります。
+
+<Input>
+関数に渡す引数です。入力欄は使いません。
+
+- `minutes`: 止めた時間（分、0以上の整数）
+</Input>
+
+<Output>
+料金（円）を、整数で返します。
+</Output>
+</Exercise>
+
+<Exercise
+  id="practice-05-return-5"
+  kind="build"
+  level={3}
+  name="数字占い"
+  tests={[
+    { kind: 'call', fn: 'digit_sum', args: [20050607] },
+    { kind: 'call', fn: 'digit_sum', args: [1234] },
+    { kind: 'call', fn: 'digit_sum', args: [7] },
+    { kind: 'call', fn: 'digit_sum', args: [1000] },
+    { kind: 'call', fn: 'digit_sum', args: [0] },
+  ]}
+  hints={['10で割った余りは1の位の数、10で割った商は1の位を取り除いた数です。第2章3節を見てください。', '数が0になるまで繰り返す書き方は、第4章5節を見てください。']}
+  syntax={['function', 'while', 'compare', 'operators']}
+>
+数字占いでは、誕生日を表す数の、各桁の数を全部足した数を使います。たとえば `1234` なら、`1 + 2 + 3 + 4` で10です。整数を受け取り、各桁の数の和を返す関数 `digit_sum(n)` を書いてください。
+
+<Input>
+関数に渡す引数です。入力欄は使いません。
+
+- `n`: 0以上の整数
+</Input>
+
+<Output>
+各桁の数の和を、整数で返します。
+</Output>
+</Exercise>

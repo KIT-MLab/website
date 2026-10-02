@@ -7,3 +7,143 @@ sections: [python-04-for]
 order: 1
 levels: [1, 2, 3]
 ---
+
+<Exercise
+  id="practice-04-for-1"
+  kind="build"
+  level={1}
+  name="整理券を並べる"
+  stdin={`3`}
+  tests={[
+    { kind: 'stdout', stdin: `3\n` },
+    { kind: 'stdout', stdin: `1\n` },
+    { kind: 'stdout', stdin: `0\n` },
+    { kind: 'stdout', stdin: `12\n` },
+  ]}
+  hints={['`range()` に渡した終わりの数は、含まれません。第4章1節の最初のコードを見てください。']}
+  syntax={['input', 'for', 'print']}
+>
+窓口で、1番から順に整理券を配ります。配る枚数がわかっているとき、整理券に書く番号を、配る順に1枚ずつ表示してください。
+
+<Input>
+- 1行目: 配る枚数（0以上の整数）
+</Input>
+
+<Output>
+1番から、配る枚数と同じ番号までを、1行に1枚ずつ、`整理券1番` の形で表示します。枚数が0のときは、何も表示しません。
+</Output>
+</Exercise>
+
+<Exercise
+  id="practice-04-for-2"
+  kind="build"
+  level={1}
+  name="九九の段"
+  stdin={`7`}
+  tests={[
+    { kind: 'stdout', stdin: `7\n` },
+    { kind: 'stdout', stdin: `1\n` },
+    { kind: 'stdout', stdin: `9\n` },
+    { kind: 'stdout', stdin: `0\n` },
+  ]}
+  hints={['掛ける相手は、繰り返しのたびに変わります。変わる値は、`for` の後ろの変数に入ります。']}
+  syntax={['input', 'for', 'operators', 'print']}
+>
+九九の表のうち、入力された段を、上から順に表示してください。
+
+<Input>
+- 1行目: 段の数（0以上9以下の整数）
+</Input>
+
+<Output>
+掛ける数が1から9までの9行を、`7 x 3 = 21` の形で表示します。1つ目の数が段の数、2つ目の数が掛ける数、最後の数が答えです。
+</Output>
+</Exercise>
+
+<Exercise
+  id="practice-04-for-3"
+  kind="build"
+  level={2}
+  name="割り勘の早見表"
+  stdin={`1200
+4`}
+  tests={[
+    { kind: 'stdout', stdin: `1200\n4\n` },
+    { kind: 'stdout', stdin: `1000\n3\n` },
+    { kind: 'stdout', stdin: `0\n3\n` },
+    { kind: 'stdout', stdin: `7\n1\n` },
+    { kind: 'stdout', stdin: `100\n7\n` },
+  ]}
+  hints={['1人から順に人数を変えながら調べるので、繰り返す範囲の決め方は、第4章1節の `range(1, 4)` の形です。終わりの数に何を渡すかを考えます。']}
+  syntax={['input', 'for', 'operators', 'print']}
+>
+食事の代金を、何人かで同じ金額ずつ分けて払います。人数が1人のときから、決めた人数のときまで、1人あたりの金額を並べた表を作ってください。1円未満は切り捨てます。
+
+<Input>
+- 1行目: 食事の代金（円、0以上の整数）
+- 2行目: 人数の上限（1以上の整数）
+</Input>
+
+<Output>
+1人から人数の上限までを、1行に1つずつ、`3人 400円` の形で表示します。数は、人数、1人あたりの金額の順です。
+</Output>
+</Exercise>
+
+<Exercise
+  id="practice-04-for-4"
+  kind="build"
+  level={2}
+  name="読み進めたページ"
+  stdin={`60
+30
+3`}
+  tests={[
+    { kind: 'stdout', stdin: `60\n30\n3\n` },
+    { kind: 'stdout', stdin: `0\n25\n4\n` },
+    { kind: 'stdout', stdin: `120\n0\n2\n` },
+    { kind: 'stdout', stdin: `10\n10\n1\n` },
+  ]}
+  hints={['読んだページ数は、第4章1節の合計を出すコードと同じ形で、繰り返しの前に決めた変数を、繰り返しの中で入れ直します。']}
+  syntax={['input', 'for', 'variable', 'operators', 'print']}
+>
+読みかけの本を、毎日同じページ数ずつ読み進めます。何日かのあいだ、1日ごとに、そこまでに読んだページ数を表示してください。
+
+<Input>
+- 1行目: 読み始める前に、もう読んであるページ数（0以上の整数）
+- 2行目: 1日に読むページ数（0以上の整数）
+- 3行目: 読む日数（1以上の整数）
+</Input>
+
+<Output>
+1日後から、読む日数までを、1行に1日ずつ、`2日後 120ページ` の形で表示します。数は、日数、そこまでに読んだページ数の順です。
+</Output>
+</Exercise>
+
+<Exercise
+  id="practice-04-for-5"
+  kind="build"
+  level={3}
+  name="スタンプカード"
+  stdin={`12`}
+  tests={[
+    { kind: 'stdout', stdin: `12\n` },
+    { kind: 'stdout', stdin: `4\n` },
+    { kind: 'stdout', stdin: `0\n` },
+    { kind: 'stdout', stdin: `20\n` },
+    { kind: 'stdout', stdin: `5\n` },
+  ]}
+  hints={['5回目と10回目のように、両方の条件に当てはまる回があります。どちらを先に確かめるかは、第3章3節の `elif` の順番で決まります。']}
+  syntax={['input', 'for', 'if', 'operators', 'print']}
+>
+カフェのスタンプカードは、来店のたびにスタンプが1つ押されます。5回目、15回目のように、5の倍数の回にはボーナスがもらえます。
+
+10回目、20回目のように、10の倍数の回には、ボーナスではなく割引券がもらえます。1回目から決めた回数まで、来店のたびに、その回の結果を表示してください。
+
+<Input>
+- 1行目: 来店する回数（0以上の整数）
+</Input>
+
+<Output>
+1回目から、来店する回数までを、1行に1回ずつ表示します。ふつうの回は `1回目`、5の倍数の回は `5回目 ボーナス`、10の倍数の回は `10回目 割引券` の形です。回数が0のときは、何も表示しません。
+</Output>
+</Exercise>

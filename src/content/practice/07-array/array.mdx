@@ -7,3 +7,153 @@ sections: [python-07-array, python-07-shape]
 order: 1
 levels: [1, 2, 3]
 ---
+
+<Exercise
+  id="practice-07-array-1"
+  kind="build"
+  level={1}
+  name="3冊ずつ買う"
+  stdin={`300
+450
+520`}
+  tests={[
+    { kind: 'stdout', stdin: `300\n450\n520\n` },
+    { kind: 'stdout', stdin: `0\n100\n0\n` },
+    { kind: 'stdout', stdin: `980\n120\n1\n` },
+  ]}
+  hints={['3つの値の読み取り方は第4章2節に、配列にする書き方は第7章1節にあります。', '配列に数を掛けると、すべての値に掛けた結果になります。']}
+  syntax={['input', 'numpy', 'print']}
+>
+本屋で、3種類の本を、それぞれ3冊ずつ買います。1冊の値段から、種類ごとの代金を求めてください。
+
+<Input>
+- 1〜3行目: 3種類の本の、1冊の値段（円、0以上の整数）
+</Input>
+
+<Output>
+種類ごとの代金（円）を、配列のまま1行で表示します。
+</Output>
+</Exercise>
+
+<Exercise
+  id="practice-07-array-2"
+  kind="build"
+  level={1}
+  name="午前と午後の歩数"
+  stdin={`4000
+6500
+3000
+5200
+3500
+2000
+4100
+3800`}
+  tests={[
+    { kind: 'stdout', stdin: `4000\n6500\n3000\n5200\n3500\n2000\n4100\n3800\n` },
+    { kind: 'stdout', stdin: `0\n5000\n0\n3000\n0\n0\n2000\n1000\n` },
+    { kind: 'stdout', stdin: `100\n200\n300\n400\n400\n300\n200\n100\n` },
+  ]}
+  hints={['配列を2つ作ります。配列どうしの計算は、第7章1節の最初のコードの7行目にあります。']}
+  syntax={['input', 'numpy', 'print']}
+>
+4日間の歩数を、午前と午後に分けて記録しました。日ごとに、午前と午後を合わせた歩数を求めてください。
+
+<Input>
+- 1〜4行目: 1日目から4日目までの、午前の歩数（0以上の整数）
+- 5〜8行目: 1日目から4日目までの、午後の歩数（0以上の整数）
+</Input>
+
+<Output>
+1日目から4日目までの歩数を、配列のまま1行で表示します。
+</Output>
+</Exercise>
+
+<Exercise
+  id="practice-07-array-3"
+  kind="build"
+  level={2}
+  name="摂氏から華氏へ"
+  stdin={`0
+10
+25
+35`}
+  tests={[
+    { kind: 'stdout', stdin: `0\n10\n25\n35\n` },
+    { kind: 'stdout', stdin: `-10\n-5\n0\n5\n` },
+    { kind: 'stdout', stdin: `20\n20\n20\n20\n` },
+  ]}
+  hints={['華氏を求める式を、配列の名前を使って、1行で書いてみます。', '足し算と掛け算と割り算が混ざるときの順番は、第2章4節にあります。']}
+  syntax={['input', 'numpy', 'print']}
+>
+4日間の気温（摂氏）を、華氏に直します。華氏は、摂氏に9を掛けて5で割り、32を足した値です。
+
+<Input>
+- 1〜4行目: 4日間の気温（摂氏、5の倍数の整数）
+</Input>
+
+<Output>
+4日間の華氏の気温を、配列のまま1行で表示します。割り算 `/` を使うので、値は小数になり、`32.` のように点が付いて表示されます。
+</Output>
+</Exercise>
+
+<Exercise
+  id="practice-07-array-4"
+  kind="build"
+  level={2}
+  name="長方形の面積と周"
+  stdin={`3
+5
+8
+2
+4
+10`}
+  tests={[
+    { kind: 'stdout', stdin: `3\n5\n8\n2\n4\n10\n` },
+    { kind: 'stdout', stdin: `0\n1\n7\n5\n0\n2\n` },
+    { kind: 'stdout', stdin: `1\n1\n1\n1\n1\n1\n` },
+  ]}
+  hints={['横の3つの値と、縦の3つの値を、別々の配列にします。', '周の長さは、縦と横の和の2倍です。']}
+  syntax={['input', 'numpy', 'print']}
+>
+3つの長方形について、面積と、周の長さを求めてください。
+
+<Input>
+- 1〜3行目: 3つの長方形の横の長さ（cm、0以上の整数）
+- 4〜6行目: 3つの長方形の縦の長さ（cm、0以上の整数）
+</Input>
+
+<Output>
+1行目に3つの面積を、2行目に3つの周の長さを、どちらも配列のまま表示します。数は、1つ目の長方形から順に並べます。
+</Output>
+</Exercise>
+
+<Exercise
+  id="practice-07-array-5"
+  kind="build"
+  level={3}
+  name="2店の売上個数"
+  stdin={`12
+8
+15
+9
+14
+11`}
+  tests={[
+    { kind: 'stdout', stdin: `12\n8\n15\n9\n14\n11\n` },
+    { kind: 'stdout', stdin: `0\n0\n0\n0\n0\n0\n` },
+    { kind: 'stdout', stdin: `5\n0\n3\n0\n7\n20\n` },
+  ]}
+  hints={['1店ぶんの3日の個数をリストにして `append` し、2店ぶん並べてから配列にします。第7章5節を見てください。', '1店ぶんの行は `sales[0]` のように取り出せます。']}
+  syntax={['input', 'list', 'numpy', 'print']}
+>
+2つの店が、3日間に売ったパンの個数を記録しました。6つの値を2行3列の2次元配列にまとめてから、日ごとの2店の合計個数と、2店目の3日目の個数を求めてください。
+
+<Input>
+- 1〜3行目: 1店目の、1日目から3日目までの個数（0以上の整数）
+- 4〜6行目: 2店目の、1日目から3日目までの個数（0以上の整数）
+</Input>
+
+<Output>
+1行目に、1日目から3日目までの2店の合計個数を、配列のまま表示します。2行目に、2店目の3日目の個数を表示します。
+</Output>
+</Exercise>

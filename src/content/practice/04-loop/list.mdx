@@ -7,3 +7,145 @@ sections: [python-04-list]
 order: 2
 levels: [1, 2, 3]
 ---
+
+<Exercise
+  id="practice-04-list-1"
+  kind="build"
+  level={1}
+  name="50円引きのクーポン"
+  stdin={`100
+80
+150`}
+  tests={[
+    { kind: 'stdout', stdin: `100\n80\n150\n` },
+    { kind: 'stdout', stdin: `50\n50\n50\n` },
+    { kind: 'stdout', stdin: `65\n51\n300\n` },
+    { kind: 'stdout', stdin: `999\n1000\n50\n` },
+  ]}
+  hints={['3つの値をまとめてリストにする書き方は、第4章2節の2つ目のコードの2行目を見てください。']}
+  syntax={['input', 'list', 'for', 'operators', 'print']}
+>
+3つの商品を買います。どの商品にも、50円引きのクーポンが使えます。商品ごとに、クーポンを使ったあとの値段を求めてください。
+
+<Input>
+- 1〜3行目: 商品の値段（円、50以上の整数）
+</Input>
+
+<Output>
+クーポンを使ったあとの値段を、入力と同じ順に、1行に1つずつ表示します。数だけを表示します。
+</Output>
+</Exercise>
+
+<Exercise
+  id="practice-04-list-2"
+  kind="build"
+  level={1}
+  name="硬貨ごとの金額"
+  stdin={`3`}
+  tests={[
+    { kind: 'stdout', stdin: `3\n` },
+    { kind: 'stdout', stdin: `1\n` },
+    { kind: 'stdout', stdin: `0\n` },
+    { kind: 'stdout', stdin: `20\n` },
+  ]}
+  hints={['硬貨の種類は、プログラムの中でリストに書いておきます。リストの書き方は、第4章2節の最初のコードを見てください。']}
+  syntax={['input', 'list', 'for', 'operators', 'print']}
+>
+日本の硬貨のうち、1円玉、5円玉、10円玉、50円玉、100円玉、500円玉の6種類を、どれも同じ枚数ずつ持っています。硬貨の種類ごとに、持っている金額を求めてください。硬貨の種類は、リストにまとめて書いてください。
+
+<Input>
+- 1行目: 1種類あたりの枚数（0以上の整数）
+</Input>
+
+<Output>
+1円玉から500円玉までを、小さい金額から順に、1行に1種類ずつ、`5円玉 3枚で 15円` の形で表示します。数は、硬貨の金額、枚数、その種類の合計金額の順です。
+</Output>
+</Exercise>
+
+<Exercise
+  id="practice-04-list-3"
+  kind="build"
+  level={2}
+  name="1000円以上は値引き"
+  stdin={`1500
+800
+2005
+300`}
+  tests={[
+    { kind: 'stdout', stdin: `1500\n800\n2005\n300\n` },
+    { kind: 'stdout', stdin: `1000\n999\n0\n1100\n` },
+    { kind: 'stdout', stdin: `100\n200\n300\n400\n` },
+    { kind: 'stdout', stdin: `5000\n3000\n1000\n1000\n` },
+  ]}
+  hints={['リストの値を1つずつ取り出す `for` の中に、割引するかどうかを分ける `if` を書きます。']}
+  syntax={['input', 'list', 'for', 'if', 'operators', 'print']}
+>
+雑貨店のセールで、4つの商品を買います。1000円以上の商品は100円引きになり、1000円未満の商品は値引きされません。商品ごとに、支払う金額を求めてください。
+
+<Input>
+- 1〜4行目: 商品の値段（円、0以上の整数）
+</Input>
+
+<Output>
+支払う金額を、入力と同じ順に、1行に1つずつ表示します。数だけを表示します。
+</Output>
+</Exercise>
+
+<Exercise
+  id="practice-04-list-4"
+  kind="build"
+  level={2}
+  name="貯金の増減"
+  stdin={`30000
+32000
+31500
+31500`}
+  tests={[
+    { kind: 'stdout', stdin: `30000\n32000\n31500\n31500\n` },
+    { kind: 'stdout', stdin: `50000\n50000\n50000\n50000\n` },
+    { kind: 'stdout', stdin: `0\n1200\n800\n2000\n` },
+    { kind: 'stdout', stdin: `10000\n7000\n4000\n1000\n` },
+  ]}
+  hints={['1つ前の月の残高は、繰り返しの中で、次の月の残高と比べたあとに入れ直します。']}
+  syntax={['input', 'list', 'for', 'variable', 'operators', 'print']}
+>
+4か月ぶんの、月末の貯金の残高が記録されています。2か月目から4か月目まで、それぞれ前の月の残高から何円増えたかを求めてください。減ったときは、負の数になります。
+
+<Input>
+- 1〜4行目: 1か月目から4か月目までの月末の残高（円、整数）
+</Input>
+
+<Output>
+2か月目、3か月目、4か月目の増えた金額を、この順に1行に1つずつ、3行で表示します。数だけを表示します。
+</Output>
+</Exercise>
+
+<Exercise
+  id="practice-04-list-5"
+  kind="build"
+  level={3}
+  name="体力テストの判定"
+  stdin={`90
+65
+30
+80
+50`}
+  tests={[
+    { kind: 'stdout', stdin: `90\n65\n30\n80\n50\n` },
+    { kind: 'stdout', stdin: `100\n95\n80\n80\n85\n` },
+    { kind: 'stdout', stdin: `0\n10\n49\n20\n30\n` },
+    { kind: 'stdout', stdin: `79\n50\n80\n49\n0\n` },
+  ]}
+  hints={['人ごとの判定を表示する処理と、A の人数を数える処理を、繰り返しの中のどこに書くかを分けて考えます。第3章3節の `elif` と、第4章1節の合計を出すコードが使えます。']}
+  syntax={['input', 'list', 'for', 'if', 'variable', 'operators', 'print']}
+>
+体力テストを5人が受けました。点数が80点以上なら `A`、50点以上80点未満なら `B`、50点未満なら `C` と判定します。5人の判定を表示し、そのあと、`A` だった人が何人いたかも表示してください。
+
+<Input>
+- 1〜5行目: 5人の点数（0以上100以下の整数）
+</Input>
+
+<Output>
+判定を、入力と同じ順に1行に1人ずつ、5行で表示します。続けて、`A` だった人数を、6行目に数だけで表示します。
+</Output>
+</Exercise>

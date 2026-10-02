@@ -7,3 +7,172 @@ sections: [python-04-for, python-04-scores]
 order: 6
 levels: [1, 2, 3]
 ---
+
+<Exercise
+  id="practice-04-total-1"
+  kind="build"
+  level={1}
+  name="売店の売上合計"
+  stdin={`4
+3200
+0
+4150
+2800`}
+  forbid={['sum(']}
+  tests={[
+    { kind: 'stdout', stdin: `4\n3200\n0\n4150\n2800\n` },
+    { kind: 'stdout', stdin: `0\n` },
+    { kind: 'stdout', stdin: `1\n999\n` },
+    { kind: 'stdout', stdin: `3\n500\n500\n500\n` },
+  ]}
+  hints={['合計を入れる変数を、繰り返しの前に決めておく書き方は、第4章1節の2つ目のコードを見てください。']}
+  syntax={['input', 'for', 'variable', 'operators', 'print']}
+>
+学校の売店で、毎日の売上を記録しています。何日ぶんかの売上を、すべて足した合計を求めてください。`sum()` という関数を知っている人も、ここでは使わず、繰り返しで求めてください。
+
+<Input>
+- 1行目: 記録した日数（0以上の整数）
+- 2行目から: 1日の売上（円、0以上の整数）。日数ぶんの行があります
+</Input>
+
+<Output>
+売上の合計を、数だけで1行に表示します。日数が0のときは、0です。
+</Output>
+</Exercise>
+
+<Exercise
+  id="practice-04-total-2"
+  kind="build"
+  level={1}
+  name="にぎわった日の数"
+  stdin={`5
+120
+80
+100
+95
+230`}
+  tests={[
+    { kind: 'stdout', stdin: `5\n120\n80\n100\n95\n230\n` },
+    { kind: 'stdout', stdin: `0\n` },
+    { kind: 'stdout', stdin: `3\n0\n40\n99\n` },
+    { kind: 'stdout', stdin: `2\n100\n100\n` },
+  ]}
+  hints={['第4章1節の2つ目のコードでは、`i` を足していました。条件に合う日だけ数えるには、何を足せばよいかを考えます。']}
+  syntax={['input', 'for', 'if', 'variable', 'operators', 'print']}
+>
+図書館で、毎日の来館者の人数を記録しています。来館者が100人以上の日を、にぎわった日と呼びます。記録した日のうち、にぎわった日が何日あったかを数えてください。
+
+<Input>
+- 1行目: 記録した日数（0以上の整数）
+- 2行目から: 1日の来館者の人数（0以上の整数）。日数ぶんの行があります
+</Input>
+
+<Output>
+にぎわった日の数を、数だけで1行に表示します。
+</Output>
+</Exercise>
+
+<Exercise
+  id="practice-04-total-3"
+  kind="build"
+  level={2}
+  name="投てきの最長と最短"
+  stdin={`5
+680
+720
+655
+720
+701`}
+  forbid={['max(', 'min(']}
+  tests={[
+    { kind: 'stdout', stdin: `5\n680\n720\n655\n720\n701\n` },
+    { kind: 'stdout', stdin: `1\n500\n` },
+    { kind: 'stdout', stdin: `3\n0\n0\n0\n` },
+    { kind: 'stdout', stdin: `4\n900\n450\n0\n600\n` },
+  ]}
+  hints={['一番大きい値を探す書き方は、第4章2節の2つ目のコードを見てください。最小を探すときは、比べる向きが逆になります。出発値を 0 にすると、最小が正しく出ません。']}
+  syntax={['input', 'for', 'if', 'list', 'variable', 'print']}
+>
+砲丸投げで、何回か投げた記録が入力されます。いちばん遠くまで飛んだ記録と、いちばん近かった記録を求めてください。`max()` や `min()` という関数を知っている人も、ここでは使わず、繰り返しで求めてください。
+
+<Input>
+- 1行目: 投げた回数（1以上の整数）
+- 2行目から: 各回の記録（cm、0以上の整数）。回数ぶんの行があります
+</Input>
+
+<Output>
+いちばん遠い記録、いちばん近い記録を、この順に2行で表示します。数だけを表示します。投げた回数が1回のときは、2行とも同じ値です。
+</Output>
+</Exercise>
+
+<Exercise
+  id="practice-04-total-4"
+  kind="build"
+  level={2}
+  name="平均を超えた人数"
+  stdin={`5
+70
+85
+60
+90
+45`}
+  forbid={['sum(']}
+  tests={[
+    { kind: 'stdout', stdin: `5\n70\n85\n60\n90\n45\n` },
+    { kind: 'stdout', stdin: `1\n60\n` },
+    { kind: 'stdout', stdin: `4\n50\n50\n50\n50\n` },
+    { kind: 'stdout', stdin: `3\n0\n100\n0\n` },
+  ]}
+  hints={['平均は、全員の点数を足し終えてから求めます。', 'そのあと、もう一度全員の点数を見るので、点数はリストに残しておきます。']}
+  syntax={['input', 'for', 'if', 'list', 'variable', 'operators', 'print']}
+>
+小テストを受けた人の点数から、平均点より高い点数の人が、何人いるかを数えてください。平均点と同じ点数の人は、数えません。`sum()` という関数を知っている人も、ここでは使わず、繰り返しで求めてください。
+
+<Input>
+- 1行目: 受けた人数（1以上の整数）
+- 2行目から: 各人の点数（0以上100以下の整数）。人数ぶんの行があります
+</Input>
+
+<Output>
+平均点より高い点数の人数を、数だけで1行に表示します。
+</Output>
+</Exercise>
+
+<Exercise
+  id="practice-04-total-5"
+  kind="build"
+  level={3}
+  name="勤務時間の合計"
+  stdin={`4
+0
+6
+5
+0
+8
+3
+2
+5`}
+  forbid={['sum(']}
+  tests={[
+    { kind: 'stdout', stdin: `4\n0\n6\n5\n0\n8\n3\n2\n5\n` },
+    { kind: 'stdout', stdin: `4\n0\n6\n5\n0\n8\n3\n1\n7\n` },
+    { kind: 'stdout', stdin: `4\n0\n6\n5\n0\n8\n3\n3\n3\n` },
+    { kind: 'stdout', stdin: `0\n0\n0\n0\n0\n0\n0\n1\n7\n` },
+  ]}
+  hints={['ある日の勤務時間が、リストのどのインデックスにあるかを考えます。インデックスは0から数えます（第4章3節）。']}
+  syntax={['input', 'for', 'list', 'variable', 'operators', 'print']}
+>
+アルバイトの勤務時間を、1日目から7日目まで記録しました。決めた2つの日のあいだの勤務時間の合計を、求めてください。はじめの日と終わりの日も、合計に含めます。
+
+`sum()` という関数を知っている人も、ここでは使わず、繰り返しで求めてください。
+
+<Input>
+- 1〜7行目: 1日目から7日目までの勤務時間（時間、0以上の整数）
+- 8行目: はじめの日（1以上7以下の整数）
+- 9行目: 終わりの日（はじめの日以上、7以下の整数）
+</Input>
+
+<Output>
+はじめの日から終わりの日までの勤務時間の合計を、数だけで1行に表示します。
+</Output>
+</Exercise>

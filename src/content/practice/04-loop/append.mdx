@@ -7,3 +7,164 @@ sections: [python-04-append]
 order: 4
 levels: [1, 2, 3]
 ---
+
+<Exercise
+  id="practice-04-append-1"
+  kind="build"
+  level={1}
+  name="走り幅跳びの記録"
+  stdin={`3
+420
+455
+438`}
+  tests={[
+    { kind: 'stdout', stdin: `3\n420\n455\n438\n` },
+    { kind: 'stdout', stdin: `0\n` },
+    { kind: 'stdout', stdin: `1\n0\n` },
+    { kind: 'stdout', stdin: `4\n510\n498\n510\n503\n` },
+  ]}
+  hints={['空のリストを作り、値を1つずつ足していく書き方は、第4章4節の最後のコードを見てください。']}
+  syntax={['input', 'for', 'list', 'print']}
+>
+走り幅跳びで、何回か跳んだ記録が、跳んだ順に入力されます。入力された記録を、跳んだ順のリストにまとめて、表示してください。
+
+<Input>
+- 1行目: 跳んだ回数（0以上の整数）
+- 2行目から: 各回の記録（cm、0以上の整数）。回数ぶんの行があります
+</Input>
+
+<Output>
+記録を集めたリストを、`print()` でそのまま1行に表示します。回数が0のときは、空のリストを表示します。
+</Output>
+</Exercise>
+
+<Exercise
+  id="practice-04-append-2"
+  kind="build"
+  level={1}
+  name="ロッカーの返却"
+  stdin={`3`}
+  tests={[
+    { kind: 'stdout', stdin: `3\n` },
+    { kind: 'stdout', stdin: `0\n` },
+    { kind: 'stdout', stdin: `12\n` },
+    { kind: 'stdout', stdin: `8\n` },
+  ]}
+  hints={['値を指定してリストから取り除くメソッドは、第4章4節の最初のコードを見てください。']}
+  syntax={['input', 'list', 'print']}
+>
+体育館のロッカーのうち、いま使われているのは、0番、3番、5番、8番、12番の5つです。この5つの番号を、プログラムの中でリストにしてください。
+
+このうち1つのロッカーが返却されました。返却されたロッカーの番号を、リストから取り除いて、残りの番号を表示してください。
+
+<Input>
+- 1行目: 返却されたロッカーの番号（整数。使用中の5つのうちのどれか）
+</Input>
+
+<Output>
+取り除いたあとのリストを、`print()` でそのまま1行に表示します。
+</Output>
+</Exercise>
+
+<Exercise
+  id="practice-04-append-3"
+  kind="build"
+  level={2}
+  name="注文の取り消し"
+  stdin={`3
+500
+800
+500
+500`}
+  tests={[
+    { kind: 'stdout', stdin: `3\n500\n800\n500\n500\n` },
+    { kind: 'stdout', stdin: `1\n300\n300\n` },
+    { kind: 'stdout', stdin: `4\n120\n450\n450\n980\n980\n` },
+    { kind: 'stdout', stdin: `2\n700\n350\n350\n` },
+  ]}
+  hints={['注文を集める部分は第4章4節の最後のコード、取り消す部分は同じ節の最初のコードを見てください。']}
+  syntax={['input', 'for', 'list', 'print']}
+>
+食堂で、注文された品物の金額を、受けた順に記録しています。そのうち、取り消された注文を1つだけ、記録から外してください。
+
+同じ金額の注文が複数あるときは、先に受けたほうの1つを外します。
+
+<Input>
+- 1行目: 注文の数（1以上の整数）
+- 2行目から: 注文の金額（円、1以上の整数）。注文の数ぶんの行があります
+- 最後の行: 取り消された注文の金額（記録にある金額のどれか）
+</Input>
+
+<Output>
+外したあとの記録を、受けた順のまま、`print()` でそのまま1行に表示します。注文が1つで、それを取り消したときは、空のリストを表示します。
+</Output>
+</Exercise>
+
+<Exercise
+  id="practice-04-append-4"
+  kind="build"
+  level={2}
+  name="遅刻した人の番号"
+  stdin={`5
+-3
+2
+0
+7
+-1`}
+  tests={[
+    { kind: 'stdout', stdin: `5\n-3\n2\n0\n7\n-1\n` },
+    { kind: 'stdout', stdin: `3\n-5\n-2\n0\n` },
+    { kind: 'stdout', stdin: `0\n` },
+    { kind: 'stdout', stdin: `4\n10\n3\n1\n5\n` },
+  ]}
+  hints={['`i` は0から数えますが、出席番号は1から数えます。インデックスの数え方は、第4章3節を見てください。']}
+  syntax={['input', 'for', 'if', 'list', 'operators', 'print']}
+>
+授業の開始時刻を0分として、出席した人が教室に着いた時刻を、出席番号の1番から順に記録しました。開始時刻より後に着いた人は、遅刻です。
+
+遅刻した人の出席番号を、リストにまとめてください。
+
+<Input>
+- 1行目: 出席した人数（0以上の整数）
+- 2行目から: 1番の人から順に、教室に着いた時刻（分、整数）。開始より前は負の数、開始ちょうどは0です。人数ぶんの行があります
+</Input>
+
+<Output>
+遅刻した人の出席番号を、小さい順に集めたリストを、`print()` でそのまま1行に表示します。遅刻した人がいないときは、空のリストを表示します。
+</Output>
+</Exercise>
+
+<Exercise
+  id="practice-04-append-5"
+  kind="build"
+  level={3}
+  name="最高点を除く"
+  stdin={`5
+8
+9
+7
+9
+6`}
+  forbid={['max(']}
+  tests={[
+    { kind: 'stdout', stdin: `5\n8\n9\n7\n9\n6\n` },
+    { kind: 'stdout', stdin: `1\n7\n` },
+    { kind: 'stdout', stdin: `3\n0\n0\n0\n` },
+    { kind: 'stdout', stdin: `4\n5\n10\n3\n8\n` },
+  ]}
+  hints={['一番大きい値を探す書き方は、第4章2節の2つ目のコードを見てください。探す前に、点数をすべてリストに集めておきます。']}
+  syntax={['input', 'for', 'if', 'list', 'variable', 'print']}
+>
+体操の競技で、審判が出した点数のうち、最も高い点数を1つだけ除きます。
+
+最も高い点数が複数あるときは、先に出たほうの1つを除きます。除いたあとの点数を、審判が出した順のまま、リストにまとめて表示してください。`max()` という関数を知っている人も、ここでは使わず、繰り返しで求めてください。
+
+<Input>
+- 1行目: 審判の人数（1以上の整数）
+- 2行目から: 各審判の点数（0以上の整数）。人数ぶんの行があります
+</Input>
+
+<Output>
+除いたあとのリストを、`print()` でそのまま1行に表示します。審判が1人のときは、空のリストを表示します。
+</Output>
+</Exercise>

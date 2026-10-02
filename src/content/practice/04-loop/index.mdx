@@ -7,3 +7,158 @@ sections: [python-04-index]
 order: 3
 levels: [1, 2, 3]
 ---
+
+<Exercise
+  id="practice-04-index-1"
+  kind="build"
+  level={1}
+  name="最初と最後の記録"
+  stdin={`12
+30
+25
+41
+18`}
+  tests={[
+    { kind: 'stdout', stdin: `12\n30\n25\n41\n18\n` },
+    { kind: 'stdout', stdin: `0\n5\n8\n6\n9\n` },
+    { kind: 'stdout', stdin: `7\n7\n7\n7\n7\n` },
+    { kind: 'stdout', stdin: `50\n40\n30\n20\n10\n` },
+  ]}
+  hints={['インデックスは0から数えます。最後の値の位置は、`len()` で調べた個数から決まります。第4章3節の2つ目のコードを見てください。']}
+  syntax={['input', 'list', 'operators', 'print']}
+>
+5日間、毎日縄跳びをした回数が記録されています。最初の日の回数と、最後の日の回数を、取り出してください。リストの個数が変わっても動くように、最後の値は `len()` を使って取り出してください。
+
+<Input>
+- 1〜5行目: 1日目から5日目までの縄跳びの回数（0以上の整数）
+</Input>
+
+<Output>
+最初の日の回数、最後の日の回数を、この順に2行で表示します。数だけを表示します。
+</Output>
+</Exercise>
+
+<Exercise
+  id="practice-04-index-2"
+  kind="build"
+  level={1}
+  name="出席番号の点数"
+  stdin={`72
+85
+60
+91
+48
+3`}
+  tests={[
+    { kind: 'stdout', stdin: `72\n85\n60\n91\n48\n3\n` },
+    { kind: 'stdout', stdin: `72\n85\n60\n91\n48\n1\n` },
+    { kind: 'stdout', stdin: `72\n85\n60\n91\n48\n5\n` },
+    { kind: 'stdout', stdin: `0\n100\n0\n55\n100\n4\n` },
+  ]}
+  hints={['出席番号は1から数え、インデックスは0から数えます。第4章3節の最初のコードで、`numbers[0]` と `numbers[2]` が、それぞれ何番目の値かを見比べてください。']}
+  syntax={['input', 'list', 'operators', 'print']}
+>
+5人の漢字テストの点数が、出席番号の順に記録されています。調べたい出席番号が決まっているとき、その人の点数を表示してください。
+
+<Input>
+- 1〜5行目: 出席番号1番から5番までの人の点数（0以上100以下の整数）
+- 6行目: 調べたい出席番号（1以上5以下の整数）
+</Input>
+
+<Output>
+その出席番号の人の点数を、数だけで1行で表示します。
+</Output>
+</Exercise>
+
+<Exercise
+  id="practice-04-index-3"
+  kind="build"
+  level={2}
+  name="新しい記録から順に"
+  stdin={`410
+395
+402
+388
+391`}
+  tests={[
+    { kind: 'stdout', stdin: `410\n395\n402\n388\n391\n` },
+    { kind: 'stdout', stdin: `400\n400\n390\n390\n380\n` },
+    { kind: 'stdout', stdin: `0\n1\n2\n3\n4\n` },
+    { kind: 'stdout', stdin: `500\n480\n460\n440\n420\n` },
+  ]}
+  hints={['`i` が0のときに最後の値、1のときに最後から2番目の値を取り出せるように、位置を表す式を考えます。第4章3節の2つ目のコードが使えます。']}
+  syntax={['input', 'list', 'for', 'operators', 'print']}
+>
+ランニングで1kmを走ったタイムを、5回ぶん、走った順に記録しました。新しい記録から順に（5回目から1回目へ）、タイムを表示してください。
+
+<Input>
+- 1〜5行目: 1回目から5回目までのタイム（秒、0以上の整数）
+</Input>
+
+<Output>
+5回目、4回目、…、1回目の順に、1行に1つずつ、5行で表示します。数だけを表示します。
+</Output>
+</Exercise>
+
+<Exercise
+  id="practice-04-index-4"
+  kind="build"
+  level={2}
+  name="何日かごとの降水量"
+  stdin={`5
+0
+12
+3
+8
+2`}
+  tests={[
+    { kind: 'stdout', stdin: `5\n0\n12\n3\n8\n2\n` },
+    { kind: 'stdout', stdin: `5\n0\n12\n3\n8\n1\n` },
+    { kind: 'stdout', stdin: `5\n0\n12\n3\n8\n3\n` },
+    { kind: 'stdout', stdin: `5\n0\n12\n3\n8\n5\n` },
+  ]}
+  hints={['インデックス `i` は0から数えます。3日ごとなら、取り出す日のインデックスは0と3です。', '取り出す日の `i` を、何で割った余りがいくつになるかを考えます。第3章2節の、割り切れるかどうかの調べ方が使えます。']}
+  syntax={['input', 'list', 'for', 'if', 'operators', 'print']}
+>
+5日間の降水量が記録されています。1日目から始めて、決めた日数ごとに、その日の降水量を取り出して表示してください。たとえば3日ごとなら、1日目と4日目の降水量を表示します。
+
+<Input>
+- 1〜5行目: 1日目から5日目までの降水量（mm、0以上の整数）
+- 6行目: 何日ごとに取り出すか（1以上5以下の整数）
+</Input>
+
+<Output>
+取り出した日の降水量を、日の順に、1行に1つずつ表示します。数だけを表示します。
+</Output>
+</Exercise>
+
+<Exercise
+  id="practice-04-index-5"
+  kind="build"
+  level={3}
+  name="いちばん安い店"
+  stdin={`120
+98
+105
+98
+110`}
+  tests={[
+    { kind: 'stdout', stdin: `120\n98\n105\n98\n110\n` },
+    { kind: 'stdout', stdin: `80\n90\n100\n110\n120\n` },
+    { kind: 'stdout', stdin: `300\n250\n200\n150\n100\n` },
+    { kind: 'stdout', stdin: `100\n100\n100\n100\n100\n` },
+    { kind: 'stdout', stdin: `130\n140\n95\n100\n120\n` },
+  ]}
+  hints={['第4章2節の、一番大きい値を探すコードと同じ考え方です。値のほかに、何を覚えておく必要があるかを考えます。']}
+  syntax={['input', 'list', 'for', 'if', 'variable', 'operators', 'print']}
+>
+同じ商品を売っている5つの店の値段を、店の番号1番から5番の順に調べました。いちばん安い店が何番の店かと、その値段を求めてください。いちばん安い値段の店が2つ以上あるときは、番号が小さいほうの店を選びます。
+
+<Input>
+- 1〜5行目: 1番から5番までの店の値段（円、1以上の整数）
+</Input>
+
+<Output>
+いちばん安い店の番号（1以上5以下）、その店の値段を、この順に2行で表示します。数だけを表示します。
+</Output>
+</Exercise>

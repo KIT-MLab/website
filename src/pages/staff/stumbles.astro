@@ -1,0 +1,155 @@
+---
+/**
+ * つまずきの記録（design/spec/55-stumbles.md 第5節。2026-10-02 決定）。
+ *
+ *   1. 課題ごと … 期間の中に提出があった課題。落ちた回数（中央）の多い順
+ *   2. 節ごと   … 期間の中に活動した分があった教材の節。落ちたあとに読み直された回数の多い順
+ *
+ * 期間は `?days=7|28|all`（初めは28）。上に「書き出す（JSON）」（/api/staff/stumbles-export）。
+ * 見える範囲はほかの運営の画面と同じ（visibleUsers・メンバーだけ・学習者の側の記録だけ）。
+ * 数え方は src/server/stumbles.ts に1つだけ。**自分の API を fetch しない。**
+ *
+ * 見た目は運営の画面のいまの書き方をそのまま使う（表は活動の一覧と同じ .roster・.roster__who・.act-num、
+ * 期間の切り替えと書き出しは集まり・今週の演習の表の上のリンクと同じ .mt-new）。新しい色や形を足さない。
+ */
+export const prerender = false;
+
+import Base from '../../layouts/Base.astro';
+import StaffDeny from '../../components/StaffDeny.astro';
+import { serverConfig } from '../../server/auth';
+import { requireStaff } from '../../server/staff';
+import { ymd } from '../../server/staff-data';
+import { parseDays } from '../../server/stumbles';
+import { loadStumbles } from '../../server/stumbles-data';
+import '../../styles/lesson-tokens.css';
+import '../../styles/staff.css';
+
+const config = serverConfig();
+const me = config && (await requireStaff(Astro.request));
+
+Astro.response.headers.set('cache-control', 'no-store');
+if (!me) Astro.response.status = 403;
+
+const now = Date.now();
+const days = parseDays(Astro.url.searchParams.get('days'));
+const data = config && me ? await loadStumbles(config.db, me, days, now) : { exercises: [], sections: [] };
+
+const PERIODS = [
+  { days: '7', label: 'この7日' },
+  { days: '28', label: 'この4週' },
+  { days: 'all', label: '全部' },
+];
+
+/** 中央の値の出し方。整数ならそのまま、半端なら小数1桁 */
+function num(n: number): string {
+  return Number.isInteger(n) ? String(n) : n.toFixed(1);
+}
+---
+
+<Base title="つまずきの記録">
+  {
+    !me ? (
+      <StaffDeny />
+    ) : (
+      <div class="staff">
+        <div class="staff__top">
+          <h1 class="staff__title">つまずきの記録</h1>
+          <p class="staff__meta">
+            {me.displayName}（{me.cohort.name}）・
+            {me.role === 'admin' ? 'すべての所属が見えています' : 'この所属だけが見えています'}・{ymd(now)}
+          </p>
+        </div>
+
+        <nav class="staff-nav" aria-label="管理画面">
+          <a href="/staff/">詰まっているところ</a>
+          <a href="/staff/questions">質問</a>
+          <a href="/staff/meetings/">集まり</a>
+          <a href="/staff/weekly/">今週の演習</a>
+          <a href="/staff/activity/">活動</a>
+          <a href="/staff/stumbles/" aria-current="page">つまずきの記録</a>
+          <a href="/staff/lessons/">教材の公開</a>
+        </nav>
+
+        <p class="mt-new">
+          期間：
+          {PERIODS.map((p) => (
+            <>
+              {String(days) === p.days ? <b aria-current="true">{p.label}</b> : <a href={`/staff/stumbles/?days=${p.days}`}>{p.label}</a>}
+              {'　'}
+            </>
+          ))}
+          ・{'　'}
+          <a href={`/api/staff/stumbles-export?days=${days}`} download>
+            書き出す（JSON）
+          </a>
+        </p>
+
+        <h2>
+          課題ごと<span class="staff__count">{data.exercises.length}問・落ちた回数（中央）の多い順</span>
+        </h2>
+        {data.exercises.length === 0 ? (
+          <p class="staff__none">この期間の提出はありません。</p>
+        ) : (
+          <table class="roster">
+            <thead>
+              <tr>
+                <th>課題</th>
+                <th class="act-num">出した人</th>
+                <th class="act-num">通した人</th>
+                <th class="act-num">落ちた回数（中央）</th>
+                <th class="act-num">かかった分（中央）</th>
+                <th>多い落ち方</th>
+              </tr>
+            </thead>
+            <tbody>
+              {data.exercises.map((e) => (
+                <tr>
+                  <td class="roster__who">{e.href ? <a href={e.href}>{e.label}</a> : e.label}</td>
+                  <td class="act-num">{e.submitted}</td>
+                  <td class="act-num">{e.passed}</td>
+                  <td class="act-num">{num(e.medianFails)}</td>
+                  <td class="act-num">{e.medianMinutes === null ? '–' : num(e.medianMinutes)}</td>
+                  <td>{e.topFails.map((f) => `${f.mode} ×${f.count}`).join('、') || '–'}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+
+        <h2>
+          節ごと<span class="staff__count">{data.sections.length}節・落ちたあとに読み直された回数の多い順</span>
+        </h2>
+        {data.sections.length === 0 ? (
+          <p class="staff__none">この期間に読まれた節はありません。</p>
+        ) : (
+          <table class="roster">
+            <thead>
+              <tr>
+                <th>節</th>
+                <th class="act-num">読んだ人</th>
+                <th class="act-num">かかった分（中央）</th>
+                <th class="act-num">目安</th>
+                <th class="act-num">落ちたあとに読み直された回数</th>
+                <th>どの課題のあとか</th>
+              </tr>
+            </thead>
+            <tbody>
+              {data.sections.map((s) => (
+                <tr>
+                  <td class="roster__who">
+                    <a href={s.href}>{s.label}</a>
+                  </td>
+                  <td class="act-num">{s.readers}</td>
+                  <td class="act-num">{num(s.medianMinutes)}</td>
+                  <td class="act-num">{s.estimateMinutes}</td>
+                  <td class="act-num">{s.rereads === 0 ? '–' : s.rereads}</td>
+                  <td>{s.topTriggers.map((t) => `${t.label} ×${t.count}`).join('、') || '–'}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+    )
+  }
+</Base>

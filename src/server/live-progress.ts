@@ -33,7 +33,8 @@ export function columnLabel(kind: string, at: number): string {
   return `${SHORT[kind] ?? '問'}${at}`;
 }
 
-type Latest = { user_id: string; ref: string; at: number };
+/** `ex` は活動した分のときだけ: その分に取り組んでいた課題（design/spec/55-stumbles.md 第4節）。無ければ '' */
+type Latest = { user_id: string; ref: string; at: number; ex?: string };
 
 /**
  * 表の材料。`exerciseIds` はページの課題の並び、`kinds` は同じ並びの課題の種類、`pageId` はこのページの id。
@@ -74,7 +75,7 @@ export async function liveProgress(
     .all<Latest>();
   const acts = await db
     .prepare(
-      `SELECT a.user_id, a.lesson_id AS ref, MAX(a.minute) AS at
+      `SELECT a.user_id, a.lesson_id AS ref, MAX(a.minute) AS at, a.exercise_id AS ex
          FROM activity_minutes a JOIN users u ON u.id = a.user_id
         WHERE u.cohort_code = ? AND a.mode = 'learner'
         GROUP BY a.user_id`,
@@ -98,6 +99,11 @@ export async function liveProgress(
         const i = exerciseIds.indexOf(sub.ref);
         const label = i >= 0 ? columns[i] : home ? pageName(home) : 'ほかのページ';
         current = { label, at: sub.at };
+      } else if (act && act.ex) {
+        // 提出する前でも、取り組んでいる課題が分かる（55-stumbles.md 第4節）。このページの課題なら列の札、
+        // ほかのページの課題ならそのページの呼び名
+        const i = exerciseIds.indexOf(act.ex);
+        current = { label: i >= 0 ? columns[i] : pageName(homes.get(act.ex) ?? act.ref), at: act.at };
       } else if (act) {
         current = { label: pageName(act.ref), at: act.at };
       }

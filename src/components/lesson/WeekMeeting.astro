@@ -1,11 +1,14 @@
 ---
 /**
- * 今週のページ（20-platform.md 第25.4節）の1回ぶんの中身: 前半（教える）・後半（みんなでやる）・
- * 練習問題（予習にも復習にも使う。2026-09-29 に予習・復習の分けをやめた）。3列の列と、その先の回を開いたときの中身の両方で使う。
+ * 今週のページ（20-platform.md 第25.4節・design/spec/54-week-pace.md 第4.2節）の1回ぶんの中身:
+ * この回の前に（予習）・この回でやること（前半・後半）・この回のあとに（復習）を時間の順に。
+ * 3列の列と、その先の回を開いたときの中身の両方で使う。
  *
  * 行き先が見られない（章が準備中・今週の演習がまだ公開されていない）ものは、リンクにせず
  * 言葉だけを出して小さな札を添える（学習の一覧の鍵と同じ考え方。第20.1節・第19.4節）。
  * 進み具合の棒は `data-ex-ids` を置くだけで、ブラウザで src/lesson/practice-progress.ts が塗る。
+ * 各自で進める復習の帯（src/pages/learn/week.astro）も同じ `.wm-meter` `.wm__tag` を使うので、
+ * 様式は is:global にしている（名前はどれも `wm` で始まる）。
  */
 import type { WeekView } from '../../lesson/plan';
 
@@ -16,7 +19,24 @@ const { view } = Astro.props;
 ---
 
 <div class="wm">
-  <p class="wm__k">前半（新しく学ぶ）</p>
+  <p class="wm__k">この回の前に（予習）</p>
+  {
+    view.before.length === 0 ? (
+      <p class="wm__none">―</p>
+    ) : (
+      <ul class="wm__list">
+        {view.before.map((l) => (
+          <li>
+            {l.href ? <a href={l.href}>{l.label}</a> : <span class="wm__off">{l.label}</span>}
+            {l.note && <span class="wm__tag">{l.note}</span>}
+          </li>
+        ))}
+      </ul>
+    )
+  }
+
+  <p class="wm__k">この回でやること</p>
+  <p class="wm__k wm__k--sub">前半（新しく学ぶ）</p>
   {view.teachLabel === '' && view.teach.length === 0 ? <p class="wm__none">―</p> : null}
   {view.teachLabel !== '' && <p class="wm__label">{view.teachLabel}</p>}
   {
@@ -32,7 +52,7 @@ const { view } = Astro.props;
     )
   }
 
-  <p class="wm__k">後半（みんなで取り組む）</p>
+  <p class="wm__k wm__k--sub">後半（みんなで取り組む）</p>
   {
     view.together.length === 0 ? (
       <p class="wm__none">―</p>
@@ -64,34 +84,34 @@ const { view } = Astro.props;
     )
   }
 
-  <p class="wm__k">練習問題<small>（予習にも復習にも使えます）</small></p>
+  <p class="wm__k">この回のあとに（復習）</p>
   {
-    view.practice.length === 0 ? (
+    view.after.length === 0 ? (
       <p class="wm__none">―</p>
     ) : (
-      <ul class="wm__list wm__practice">
-                {view.practice.map((l) => (
-                  <li>
-                    {l.href ? <a href={l.href}>{l.label}</a> : <span class="wm__off">{l.label}</span>}
-                    {l.note && <span class="wm__tag">{l.note}</span>}
-                    {l.exIds && l.exIds.length > 0 && (
-                      <span class="wm-meter" data-ex-ids={l.exIds.join(' ')}>
-                        <span class="wm-meter__track">
-                          <span class="wm-meter__fill" data-fill style="width:0%" />
-                        </span>
-                        <span class="wm-meter__pct" data-pct>
-                          0%
-                        </span>
-                      </span>
-                    )}
-                  </li>
-                ))}
+      <ul class="wm__list">
+        {view.after.map((l) => (
+          <li>
+            {l.href ? <a href={l.href}>{l.label}</a> : <span class="wm__off">{l.label}</span>}
+            {l.note && <span class="wm__tag">{l.note}</span>}
+            {l.exIds && l.exIds.length > 0 && (
+              <span class="wm-meter" data-ex-ids={l.exIds.join(' ')}>
+                <span class="wm-meter__track">
+                  <span class="wm-meter__fill" data-fill style="width:0%" />
+                </span>
+                <span class="wm-meter__pct" data-pct>
+                  0%
+                </span>
+              </span>
+            )}
+          </li>
+        ))}
       </ul>
     )
   }
 </div>
 
-<style>
+<style is:global>
   .wm {
     font-size: 14px;
     line-height: 1.65;
@@ -105,6 +125,11 @@ const { view } = Astro.props;
   }
   .wm__k:first-child {
     margin-top: 0;
+  }
+  /* 「この回でやること」の中の前半・後半は、見出しより一段小さく（太字にしない） */
+  .wm__k--sub {
+    margin-top: 6px;
+    font-weight: 400;
   }
   .wm__label {
     margin: 0 0 2px;
@@ -142,15 +167,6 @@ const { view } = Astro.props;
     color: var(--l-ink-2);
     white-space: nowrap;
     vertical-align: 1px;
-  }
-  .wm__k small {
-    font-weight: 400;
-    color: var(--l-ink-2);
-    margin-left: 4px;
-  }
-  .wm__practice {
-    padding-left: 0;
-    list-style: none;
   }
 
   /* 進み具合の棒（学習の一覧の今週の演習の棒と同じ形。棒と百分率だけで、分数は出さない。第19.4節） */

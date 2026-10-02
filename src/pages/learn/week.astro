@@ -2,8 +2,9 @@
 /**
  * 今週のページ（20-platform.md 第25.4節。試作の案B）。`/learn/week/`。
  *
- * 今回・次回・その次の3回を横に3列（今回の列に朱の枠）。各列に前半（教える）・後半（みんなでやる）・
- * それまでに（予習・練習・復習）。その先の回は、3列の下に畳んだ行で並べ、開くと同じ中身が出る。
+ * 前回・今回・次回の3回を横に3列（今回の列に朱の枠。design/spec/54-week-pace.md 第4.1節）。各列に
+ * この回の前に（予習）・この回でやること（前半・後半）・この回のあとに（復習）。その先の回は、3列の下に
+ * 畳んだ行で並べ、開くと同じ中身が出る。3列の上に、各自で進める Python の復習の帯（第4.3節）。
  * 「今回」は `/learn/` の「次回」と同じ規則（`nextMeeting`。その日のうちはその日の回。日本時間）。
  *
  * 中身は src/lesson/plan.ts の行に書く（第25.4節）。**メンバーだけ**（第13.2節と同じ）: サーバで判じ、
@@ -20,8 +21,8 @@ import { isMember, jstFormValues } from '../../server/member';
 import { lessonIsPublic, publishView } from '../../server/lessons-publish';
 import { openWeeklyIds } from '../../server/weekly';
 import { chapterTitle } from '../../lesson/chapters';
-import { practiceProblems, topicTitleText } from '../../lesson/practice';
-import { PLAN, entranceDateLabel, titleHalves, upcomingRows, type PlanMeetRow, type PlanPractice, type WeekLink, type WeekView } from '../../lesson/plan';
+import { practiceHref, practiceProblems, topicTitleText } from '../../lesson/practice';
+import { PLAN, entranceDateLabel, selfReviewMarks, titleHalves, weekColumns, type PlanMeetRow, type PlanPractice, type WeekLink, type WeekView } from '../../lesson/plan';
 // @ts-expect-error 節への行き先の組み立ては .mjs 側に1つだけ置く（src/lesson/weekly-syntax.ts と同じ理由）
 import { sectionHref, sectionLabel } from '../../../scripts/section-refs.mjs';
 import generated from '../../generated/lesson-data.json';
@@ -36,7 +37,7 @@ const isStaff = me !== null && (me.role === 'staff' || me.role === 'admin');
 Astro.response.headers.set('cache-control', 'no-store');
 
 const today = jstFormValues(Date.now()).date;
-const rows = member ? upcomingRows(PLAN, today) : [];
+const week = member ? weekColumns(PLAN, today) : { now: null, columns: [], later: [] };
 
 // --- 行き先を引く表（メンバーのときだけ組む） ---
 const published = member && config ? await publishView(config.db) : { chapters: new Set<string>(), sections: new Set<string>() };
@@ -72,20 +73,33 @@ function weeklyLink(id: string, label?: string): WeekLink {
   return { label: text, href: `/learn/weekly/${encodeURIComponent(id)}/`, exIds: genWeekly[id]?.exerciseIds ?? [] };
 }
 
-function practiceLink(p: PlanPractice): WeekLink {
-  const topics = practiceTopics.filter((t) => t.data.chapter === p.chapter && (!p.topics || p.topics.includes(t.data.topic)));
-  const stars = p.levels.map((lv) => `★${lv}`).join('・');
-  const names = p.topics ? `（${topics.sort((a, b) => a.data.order - b.data.order).map((t) => topicTitleText(t.data.title)).join('・')}）` : '';
-  const label = `${chapterTitle(p.chapter)}${names} ${stars}`;
-  if (!chapterVisible(p.chapter)) return { label, href: null, note: '準備中' };
-  const exIds = topics.flatMap((t) => practiceProblems(generated, t.data.id).filter((q) => p.levels.includes(q.level as 1 | 2 | 3)).map((q) => q.id));
-  const href = `/learn/practice/#${p.chapter}`;
-  return exIds.length > 0 ? { label, href, exIds } : { label, href, note: 'まだ問題がありません' };
+// ★の段の言葉。続いた3つ以上なら「★1〜★3」、ほかは「★1・★2」「★3」（54-week-pace.md 第4.2節）
+function starsLabel(levels: number[]): string {
+  const lv = [...levels].sort((a, b) => a - b);
+  const run = lv.every((x, i) => i === 0 || x === lv[i - 1] + 1);
+  return run && lv.length >= 3 ? `★${lv[0]}〜★${lv[lv.length - 1]}` : lv.map((x) => `★${x}`).join('・');
+}
+
+// 練習問題集の行は話題ごとに1行。行き先は話題のページ、棒はその行の★の段の問題だけで数える
+function practiceLinks(p: PlanPractice): WeekLink[] {
+  const inChapter = practiceTopics.filter((t) => t.data.chapter === p.chapter).sort((a, b) => a.data.order - b.data.order);
+  const names = p.topics ?? inChapter.map((t) => t.data.topic);
+  const stars = starsLabel(p.levels);
+  return names.map((name) => {
+    const t = inChapter.find((x) => x.data.topic === name);
+    if (!t) return { label: `練習問題集 ${name} ${stars}`, href: null };
+    const label = `練習問題集 ${topicTitleText(t.data.title)} ${stars}`;
+    if (!chapterVisible(p.chapter)) return { label, href: null, note: '準備中' };
+    const exIds = practiceProblems(generated, t.data.id).filter((q) => p.levels.includes(q.level as 1 | 2 | 3)).map((q) => q.id);
+    const href = practiceHref(p.chapter, t.data.topic);
+    return exIds.length > 0 ? { label, href, exIds } : { label, href, note: 'まだ問題がありません' };
+  });
 }
 
 function viewOf(row: PlanMeetRow): WeekView {
   const derived = !row.teach && !row.together ? titleHalves(row) : null;
   return {
+    before: (row.before?.lessons ?? []).map((id) => lessonLink(id)),
     teachLabel: row.teach?.label ?? derived?.teach ?? '',
     teach: (row.teach?.lessons ?? []).map((id) => lessonLink(id)),
     together: derived
@@ -98,20 +112,57 @@ function viewOf(row: PlanMeetRow): WeekView {
           if (t.url) return { label: t.label ?? t.url, href: t.url, external: true };
           return { label: t.label ?? '', href: null };
         }),
-    prep: (row.prep ?? []).map((id) => lessonLink(id)),
-    practice: (row.practice ?? []).map(practiceLink),
-    review: (row.review ?? []).map((id) => weeklyLink(id)),
+    after: [...(row.after?.practice ?? []).flatMap(practiceLinks), ...(row.after?.weekly ?? []).map((id) => weeklyLink(id))],
   };
 }
 
-const meets = rows.filter((r): r is PlanMeetRow => r.kind === 'meet');
-const TAGS = ['今回', '次回', 'その次'];
-const columns = meets.slice(0, 3).map((row, i) => ({ row, tag: TAGS[i], view: viewOf(row) }));
-// 3列より後ろの行（休みの行も、表の順のまま）
-const lastShown = columns.length > 0 ? rows.indexOf(columns[columns.length - 1].row) : rows.length;
-const later = rows.slice(lastShown + 1).map((row) => (row.kind === 'meet' ? { row, view: viewOf(row) } : { row, view: null }));
+// 3列（前回・今回・次回。前回が無ければ今回・次回・その次）と、3列より後ろの行（休みの行も、表の順のまま）
+const now = week.now;
+const columns = week.columns.map((c) => ({ ...c, view: viewOf(c.row) }));
+const later = week.later.map((row) => (row.kind === 'meet' ? { row, view: viewOf(row) } : { row, view: null }));
 // 見出しは「今週（9/29）」（試作の案B）。複数回をまとめた行だけ「3/2〜3/30」
-const nowLabel = columns[0] ? (columns[0].row.until ? entranceDateLabel(columns[0].row) : shortDate(columns[0].row.date)) : '';
+const nowLabel = now ? (now.until ? entranceDateLabel(now) : shortDate(now.date)) : '';
+
+// --- 各自で進める Python の復習の帯（54-week-pace.md 第4.3節） ---
+// 章の番号だけの言葉（「第3章」）。帯の「教材 第3章・第4章」のリンクの字
+const chapterNo = (chapter: string) => chapterTitle(chapter).split(' ')[0];
+
+function chapterLessonLink(chapter: string): WeekLink {
+  const first = lessons.find((x) => x.data.chapter === chapter);
+  const label = chapterNo(chapter);
+  if (!first) return { label, href: null };
+  return lessonVisible(chapter, first.data.id) ? { label, href: sectionHref(first.id) } : { label, href: null, note: '準備中' };
+}
+
+function chapterPracticeLink(chapter: string): WeekLink {
+  const label = chapterNo(chapter);
+  return chapterVisible(chapter) ? { label, href: `/learn/practice/#${chapter}` } : { label, href: null, note: '準備中' };
+}
+
+const pace = member
+  ? selfReviewMarks(now?.date ?? null).map(({ row, here, overdue }) => {
+      // 進み具合は、見られる章の★1・★2の問題を通した割合
+      const exIds = row.chapters
+        .filter(chapterVisible)
+        .flatMap((ch) =>
+          practiceTopics
+            .filter((t) => t.data.chapter === ch)
+            .sort((a, b) => a.data.order - b.data.order)
+            .flatMap((t) => practiceProblems(generated, t.data.id).filter((q) => q.level === 1 || q.level === 2).map((q) => q.id)),
+        );
+      const w = row.weekly ? weeklySets.find((x) => x.data.id === row.weekly) : undefined;
+      return {
+        label: row.label,
+        by: shortDate(row.by),
+        here,
+        overdue,
+        exIds,
+        lessons: row.chapters.map(chapterLessonLink),
+        practice: row.chapters.map(chapterPracticeLink),
+        weekly: row.weekly ? weeklyLink(row.weekly, w ? `今週の演習 ${shortDate(w.data.date)}` : undefined) : null,
+      };
+    })
+  : [];
 ---
 
 <Base title="今週のページ">
@@ -127,20 +178,76 @@ const nowLabel = columns[0] ? (columns[0].row.until ? entranceDateLabel(columns[
         </p>
         <h1 class="page-title">今週{nowLabel !== '' && `（${nowLabel}）`}</h1>
         <p class="wkp-lead">
-          集まりの前半で新しく学ぶこと、後半にみんなで取り組むこと、その回までに家でやることをまとめています。
+          集まりの前に読んでおく節、集まりでやること、集まりのあとに解く問題を、回ごとにまとめています。
           <a href="/learn/plan/">予定をすべて見る →</a>
           <a href="/learn/project/">プロジェクトの教材へ →</a>
         </p>
+
+        {pace.length > 0 && (
+          <section class="wkp-col wkp-pace">
+            <h2 class="wkp-col__h">各自で進める Python の復習</h2>
+            <p class="wkp-col__no">集まりでは扱いません。目安の日までに、練習問題集の★1・★2を解いておきます。</p>
+            <ul class="wm wkp-pace__rows">
+              {pace.map((p) => (
+                <li class="wkp-pace__row">
+                  <span class="wkp-pace__name">{p.label}</span>
+                  <span class="wkp-pace__by">{p.by} まで</span>
+                  <span class="wkp-pace__meter">
+                    {p.exIds.length > 0 ? (
+                      <span class="wm-meter" data-ex-ids={p.exIds.join(' ')}>
+                        <span class="wm-meter__track">
+                          <span class="wm-meter__fill" data-fill style="width:0%" />
+                        </span>
+                        <span class="wm-meter__pct" data-pct>
+                          0%
+                        </span>
+                        {p.overdue && <span class="wm__tag wkp-pace__left">残っています</span>}
+                      </span>
+                    ) : (
+                      <span class="wm__tag">まだ問題がありません</span>
+                    )}
+                  </span>
+                  <span class="wkp-pace__links">
+                    教材{' '}
+                    {p.lessons.map((l, i) => (
+                      <>
+                        {i > 0 && '・'}
+                        {l.href ? <a href={l.href}>{l.label}</a> : <span class="wm__off">{l.label}</span>}
+                        {l.note && <span class="wm__tag">{l.note}</span>}
+                      </>
+                    ))}
+                    {' ／ '}練習問題集{' '}
+                    {p.practice.map((l, i) => (
+                      <>
+                        {i > 0 && '・'}
+                        {l.href ? <a href={l.href}>{l.label}</a> : <span class="wm__off">{l.label}</span>}
+                        {l.note && <span class="wm__tag">{l.note}</span>}
+                      </>
+                    ))}
+                    {p.weekly && (
+                      <>
+                        {' ／ '}
+                        {p.weekly.href ? <a href={p.weekly.href}>{p.weekly.label}</a> : <span class="wm__off">{p.weekly.label}</span>}
+                        {p.weekly.note && <span class="wm__tag">{p.weekly.note}</span>}
+                      </>
+                    )}
+                  </span>
+                  <span class="wkp-pace__here">{p.here && '今週はここ'}</span>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
 
         {columns.length === 0 ? (
           <p class="wkp-lead">予定の回はすべて終わりました。</p>
         ) : (
           <div class="wkp-cols">
-            {columns.map((c, i) => (
-              <section class={i === 0 ? 'wkp-col is-now' : 'wkp-col'}>
+            {columns.map((c) => (
+              <section class={c.row === now ? 'wkp-col is-now' : 'wkp-col'}>
                 <h2 class="wkp-col__h">
                   {entranceDateLabel(c.row)}
-                  <span class={i === 0 ? 'wkp-tag wkp-tag--now' : 'wkp-tag'}>{c.tag}</span>
+                  <span class={c.row === now ? 'wkp-tag wkp-tag--now' : 'wkp-tag'}>{c.tag}</span>
                   {c.row.online && <span class="wkp-tag">オンライン</span>}
                 </h2>
                 <p class="wkp-col__no">
@@ -275,6 +382,52 @@ const nowLabel = columns[0] ? (columns[0].row.until ? entranceDateLabel(columns[
       font-weight: 700;
     }
 
+    /* --- 各自で進める復習の帯（54-week-pace.md 第4.3節）。枠は今回でない列と同じ。棒と札は WeekMeeting の .wm-meter .wm__tag --- */
+    .wkp-pace {
+      margin-bottom: 12px;
+    }
+    .wkp-pace__rows {
+      display: grid;
+      grid-template-columns: max-content max-content max-content minmax(0, 1fr) max-content;
+      gap: 2px 14px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+    .wkp-pace__row {
+      display: grid;
+      grid-column: 1 / -1;
+      grid-template-columns: subgrid;
+      align-items: baseline;
+    }
+    .wkp-pace__by {
+      color: var(--l-ink-2);
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+    }
+    .wkp-pace .wm-meter {
+      margin-left: 0;
+    }
+    /* 全部通したら「残っています」は出さない（is-done は practice-progress.ts が付ける） */
+    .wm-meter.is-done .wkp-pace__left {
+      display: none;
+    }
+    .wkp-pace__links {
+      min-width: 0;
+    }
+    .wkp-pace__links a {
+      color: var(--l-ai);
+      text-underline-offset: 3px;
+    }
+    .wkp-pace__links a:hover {
+      color: var(--l-shu);
+    }
+    .wkp-pace__here {
+      color: var(--l-shu);
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
     /* --- その先の回（畳んだ行。開くと同じ中身） --- */
     .wkp-later {
       margin-top: 28px;
@@ -352,6 +505,26 @@ const nowLabel = columns[0] ? (columns[0].row.until ? entranceDateLabel(columns[
       }
       .wkp-row__body {
         padding-left: 8px;
+      }
+      /* 帯は行を縦に積む: 名前と目安の日（と印） → 棒 → 行き先 */
+      .wkp-pace__rows {
+        display: block;
+      }
+      .wkp-pace__row {
+        grid-template-columns: max-content max-content minmax(0, 1fr);
+        gap: 2px 10px;
+        padding: 6px 0;
+      }
+      .wkp-pace__row + .wkp-pace__row {
+        border-top: 1px solid var(--l-rule);
+      }
+      .wkp-pace__here {
+        grid-column: 3;
+        grid-row: 1;
+      }
+      .wkp-pace__meter,
+      .wkp-pace__links {
+        grid-column: 1 / -1;
       }
     }
   </style>

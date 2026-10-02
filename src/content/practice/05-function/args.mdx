@@ -7,3 +7,152 @@ sections: [python-05-args, python-05-keyword]
 order: 3
 levels: [1, 2, 3]
 ---
+
+<Exercise
+  id="practice-05-args-1"
+  kind="build"
+  level={1}
+  name="面積と体積"
+  tests={[
+    { kind: 'call', fn: 'size', args: [5] },
+    { kind: 'call', fn: 'size', args: [5, 3] },
+    { kind: 'call', fn: 'size', args: [2, 10] },
+    { kind: 'call', fn: 'size', args: [0, 3] },
+  ]}
+  hints={['デフォルト値の書き方は、第5章3節の最初のコードの1行目を見てください。']}
+  syntax={['function', 'operators']}
+>
+正方形の面積や、立方体の体積を求める関数 `size(length, dim)` を書いてください。`dim` のデフォルト値を `2` にしてください。`length` を `dim` 回掛け合わせた数を返し、たとえば `length` が `5`、`dim` が `3` なら `5 * 5 * 5` で125です。
+
+<Input>
+関数に渡す引数です。入力欄は使いません。
+
+- `length`: 一辺の長さ（整数）
+- `dim`: 掛け合わせる回数（整数。渡さないこともある）
+</Input>
+
+<Output>
+`length` を `dim` 回掛け合わせた数を、整数で返します。
+</Output>
+</Exercise>
+
+<Exercise
+  id="practice-05-args-2"
+  kind="build"
+  level={1}
+  name="あいさつの文"
+  tests={[
+    { kind: 'call', fn: 'message', args: ['佐藤'] },
+    { kind: 'call', fn: 'message', args: ['鈴木', 'おはよう'] },
+    { kind: 'call', fn: 'message', args: ['山田', ''] },
+  ]}
+  hints={['文字列と変数をつなぐ書き方は、第1章5節（f文字列で文章にまとめる）を見てください。']}
+  syntax={['function', 'print']}
+>
+名前とあいさつから、1つの文を作って返す関数 `message(name, greeting)` を書いてください。`greeting` のデフォルト値を `"こんにちは"` にしてください。
+
+<Input>
+関数に渡す引数です。入力欄は使いません。
+
+- `name`: 名前（文字列）
+- `greeting`: あいさつ（文字列。渡さないこともある）
+</Input>
+
+<Output>
+`greeting`、`name`、`さん` を、この順に空白なしでつなげた文字列を返します。
+</Output>
+</Exercise>
+
+<Exercise
+  id="practice-05-args-3"
+  kind="build"
+  level={2}
+  name="コピー代"
+  tests={[
+    { kind: 'call', fn: 'copy_cost', args: [3] },
+    { kind: 'call', fn: 'copy_cost', args: [3, 5] },
+    { kind: 'call', fn: 'copy_cost', args: [4, 2, 5] },
+    { kind: 'call', fn: 'copy_cost', args: [20, 3, 0] },
+  ]}
+  hints={['デフォルト値のある引数は、デフォルト値のない引数より後ろに書きます。第5章3節の最後の説明を見てください。']}
+  syntax={['function', 'operators']}
+>
+資料をコピーする代金を返す関数 `copy_cost(pages, copies, price)` を書いてください。代金は、資料のページ数、部数、1ページあたりの値段を掛け合わせた金額です。`copies` のデフォルト値を `1`、`price` のデフォルト値を `10` にしてください。
+
+<Input>
+関数に渡す引数です。入力欄は使いません。
+
+- `pages`: 資料のページ数（整数）
+- `copies`: 部数（整数。渡さないこともある）
+- `price`: 1ページあたりの値段（円、0以上の整数。渡さないこともある）
+</Input>
+
+<Output>
+代金（円）を、整数で返します。
+</Output>
+</Exercise>
+
+<Exercise
+  id="practice-05-args-4"
+  kind="build"
+  level={2}
+  name="日帰り旅行の費用"
+  stdin={`1200
+2`}
+  tests={[
+    { kind: 'stdout', stdin: `1200\n2\n` },
+    { kind: 'stdout', stdin: `800\n0\n` },
+    { kind: 'stdout', stdin: `3500\n3\n` },
+  ]}
+  hints={['途中の引数を飛ばして渡すには、呼び出すときに名前を付けます。第5章4節の、最後の `print` の呼び出しを見てください。', '`名前=値` の左は関数の引数の名前、右は渡す値です。右には、読み取った値を入れた変数も書けます。']}
+  syntax={['input', 'function', 'operators', 'print']}
+>
+旅行の費用を返す関数 `trip_cost(fare, nights, meals)` を書いてください。費用は、交通費、1泊7000円の宿泊費、1回1000円の食事代を足した金額です。`nights` のデフォルト値と `meals` のデフォルト値は、どちらも `0` にしてください。
+
+日帰り旅行の交通費と食事の回数を読み取り、この関数を呼び出して費用を表示するプログラムを書いてください。泊まらないので、`nights` は渡さずに、`meals` だけを `meals=` と名前を付けて渡します。
+
+<Input>
+- 1行目: 交通費（円、整数）
+- 2行目: 食事の回数（0以上の整数）
+</Input>
+
+<Output>
+費用を、数だけ1行で表示します。
+</Output>
+</Exercise>
+
+<Exercise
+  id="practice-05-args-5"
+  kind="build"
+  level={3}
+  name="買い物のポイント"
+  stdin={`3
+4
+1500
+5
+2000
+12
+990`}
+  tests={[
+    { kind: 'stdout', stdin: `3\n4\n1500\n5\n2000\n12\n990\n` },
+    { kind: 'stdout', stdin: `1\n10\n99\n` },
+    { kind: 'stdout', stdin: `4\n15\n350\n20\n100\n7\n2000\n25\n1299\n` },
+  ]}
+  hints={['5の倍数かどうかは、第3章2節の、割り切れるかを調べる書き方を見てください。', '日付によって、関数に渡す引数の数が変わります。第5章3節の最初のコードの、4行目と5行目の呼び出しを見てください。']}
+  syntax={['input', 'function', 'for', 'if', 'compare', 'operators', 'print']}
+>
+ある店では、買い物をすると、100円ごとに1ポイントがたまります。100円に満たない分はポイントになりません。
+
+ただし、日付が5の倍数の日は、そうしてたまったポイントが2倍になります。1299円なら、12ポイントの2倍で24ポイントです。
+
+1回の買い物でたまるポイントを返す関数 `points(amount, bonus)` を定義してください。`amount` は買い物の金額、`bonus` はポイントの倍率で、デフォルト値は `1` です。何回かの買い物の日付と金額を読み取り、買い物1回ごとにたまったポイントを表示するプログラムを書いてください。
+
+<Input>
+- 1行目: 買い物の回数（1以上の整数）
+- 2行目から: 買い物1回につき2行。1行目は日付（1以上31以下の整数）、2行目は金額（円、0以上の整数）
+</Input>
+
+<Output>
+買い物1回につき1行、日付とたまったポイントを表示します。日付の数の後ろに `日: `、ポイントの数の後ろに `ポイント` を付けます。形は出力例のとおりです。
+</Output>
+</Exercise>

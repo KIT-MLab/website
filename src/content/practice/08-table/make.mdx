@@ -7,3 +7,173 @@ sections: [python-08-range, python-08-reshape]
 order: 3
 levels: [1, 2, 3]
 ---
+
+<Exercise
+  id="practice-08-make-1"
+  kind="build"
+  level={1}
+  name="温度計の目盛り"
+  stdin={`0
+10
+5`}
+  forbid={['for ']}
+  tests={[
+    { kind: 'stdout', stdin: `0\n10\n5\n` },
+    { kind: 'stdout', stdin: `-10\n10\n3\n` },
+    { kind: 'stdout', stdin: `20\n30\n3\n` },
+    { kind: 'stdout', stdin: `0\n1\n5\n` },
+  ]}
+  hints={['個数を指定して、等しい間隔で並べる書き方は、第8章4節の最初のコードの6行目にあります。']}
+  syntax={['input', 'numpy', 'print']}
+>
+温度計に、等しい間隔で目盛りを付けます。いちばん下といちばん上の目盛りも、目盛りの数に入れます。
+
+いちばん下の目盛りの温度と、いちばん上の目盛りの温度から、すべての目盛りの温度を求めてください。for文は使わないでください。
+
+<Input>
+- 1行目: いちばん下の目盛りの温度（度、整数）
+- 2行目: いちばん上の目盛りの温度（度、整数）
+- 3行目: 目盛りの数（2以上の整数）
+</Input>
+
+<Output>
+目盛りの温度を、いちばん下から順に、配列のまま1行で表示します。値は小数になり、`10.` のように点が付いて表示されます。
+</Output>
+</Exercise>
+
+<Exercise
+  id="practice-08-make-2"
+  kind="build"
+  level={1}
+  name="座席表に並べる"
+  stdin={`160
+172
+158
+165
+170
+175`}
+  forbid={['append([']}
+  tests={[
+    { kind: 'stdout', stdin: `160\n172\n158\n165\n170\n175\n` },
+    { kind: 'stdout', stdin: `150\n151\n152\n153\n154\n155\n` },
+    { kind: 'stdout', stdin: `180\n150\n165\n150\n180\n165\n` },
+    { kind: 'stdout', stdin: `170\n170\n170\n170\n170\n170\n` },
+  ]}
+  hints={['6つの値を1つのリストに集めて配列にしてから、形を変えます。書き方は、第8章5節の最初のコードの5行目を見てください。']}
+  syntax={['input', 'for', 'list', 'numpy', 'print']}
+>
+6人の身長を、座席表に並べます。座席は3行2列で、読み取った順に、1行目の左から右へ、続けて2行目、3行目へと並べます。
+
+身長を1つのリストに読み取ってから、3行2列の表にして表示してください。人ごとにリストを作って集めないでください。
+
+<Input>
+- 1〜6行目: 6人の身長（cm、整数）
+</Input>
+
+<Output>
+3行2列の座席表を、配列のまま表示します。
+</Output>
+</Exercise>
+
+<Exercise
+  id="practice-08-make-3"
+  kind="build"
+  level={2}
+  name="毎日増える貯金"
+  stdin={`5`}
+  forbid={['for ']}
+  tests={[
+    { kind: 'stdout', stdin: `5\n` },
+    { kind: 'stdout', stdin: `1\n` },
+    { kind: 'stdout', stdin: `0\n` },
+    { kind: 'stdout', stdin: `8\n` },
+    { kind: 'stdout', stdin: `12\n` },
+  ]}
+  hints={['`np.arange` の終わりの値は含まれません。第8章4節の最初のコードの3行目を、`range()` と同じ考え方で読んでください。']}
+  syntax={['input', 'numpy', 'print']}
+>
+毎日、前の日より10円多く貯金します。1日目は10円、2日目は20円、3日目は30円、と増やします。
+
+日数から、1日目から最後の日までの、日ごとの貯金額を求めてください。for文は使わないでください。
+
+<Input>
+- 1行目: 日数（0以上15以下の整数）
+</Input>
+
+<Output>
+日ごとの貯金額（円）を、1日目から順に、配列のまま1行で表示します。日数が0のときは、`[]` と表示されます。
+</Output>
+</Exercise>
+
+<Exercise
+  id="practice-08-make-4"
+  kind="build"
+  level={2}
+  name="曜日ごとの来館者数"
+  stdin={`2
+30
+42
+25
+38
+51
+28
+45
+27
+40
+49`}
+  forbid={['append([']}
+  tests={[
+    { kind: 'stdout', stdin: `2\n30\n42\n25\n38\n51\n28\n45\n27\n40\n49\n` },
+    { kind: 'stdout', stdin: `1\n10\n20\n30\n40\n50\n` },
+    { kind: 'stdout', stdin: `3\n0\n0\n0\n0\n0\n5\n0\n0\n0\n0\n0\n0\n8\n0\n7\n` },
+    { kind: 'stdout', stdin: `2\n100\n80\n60\n80\n100\n20\n40\n60\n40\n20\n` },
+  ]}
+  hints={['人数のかわりに週の数で表の行の数が決まります。表にする書き方は第8章5節、曜日ごとにまとめる書き方は第7章6節です。']}
+  syntax={['input', 'for', 'list', 'numpy', 'print']}
+>
+図書館の来館者数を、月曜日から金曜日まで、何週かぶん記録しました。
+
+1行目の週の数と、来館者数から、曜日ごとの合計を求めてください。
+
+来館者数は、1つのリストに読み取ってから、週の数を行の数にした表にしてください。週ごとにリストを作って集めないでください。
+
+<Input>
+- 1行目: 週の数（1以上の整数）
+- 2行目から: 1週目の月曜日から金曜日、2週目の月曜日から金曜日、…の順に、来館者数（0以上の整数、1行に1つ。全部で週の数×5個）
+</Input>
+
+<Output>
+月曜日から金曜日まで、曜日ごとの来館者数の合計を、配列のまま1行で表示します。
+</Output>
+</Exercise>
+
+<Exercise
+  id="practice-08-make-5"
+  kind="build"
+  level={3}
+  name="座席番号の表"
+  stdin={`2
+3`}
+  forbid={['for ']}
+  tests={[
+    { kind: 'stdout', stdin: `2\n3\n` },
+    { kind: 'stdout', stdin: `4\n3\n` },
+    { kind: 'stdout', stdin: `1\n5\n` },
+    { kind: 'stdout', stdin: `3\n1\n` },
+  ]}
+  hints={['番号の個数は、行の数と列の数を掛けたものです。終わりの値を含めないことに気をつけて、番号の並びを作ります。', '行と列を入れ替える書き方は、第8章2節にあります。']}
+  syntax={['input', 'numpy', 'print']}
+>
+教室に、前から n 行、横に m 列の座席があります。座席には、1番から順に、前の行の左から右へ、続けて次の行へと、番号を付けます。
+
+この座席の番号を並べた表を、行と列を入れ替えた向きで表示してください。for文は使わないでください。
+
+<Input>
+- 1行目: 座席の行の数 n（1以上の整数）
+- 2行目: 座席の列の数 m（1以上の整数）
+</Input>
+
+<Output>
+行と列を入れ替えた座席番号の表を、配列のまま表示します。表は m 行 n 列になります。
+</Output>
+</Exercise>

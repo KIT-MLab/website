@@ -7,3 +7,155 @@ sections: [python-03-elif]
 order: 2
 levels: [1, 2, 3]
 ---
+
+<Exercise
+  id="practice-03-elif-1"
+  kind="build"
+  level={1}
+  name="歩数の目標"
+  stdin={`7500`}
+  tests={[
+    { kind: 'stdout', stdin: `7500\n` },
+    { kind: 'stdout', stdin: `12000\n` },
+    { kind: 'stdout', stdin: `10000\n` },
+    { kind: 'stdout', stdin: `5000\n` },
+    { kind: 'stdout', stdin: `4999\n` },
+    { kind: 'stdout', stdin: `0\n` },
+  ]}
+  hints={['条件を並べる順番は、第3章3節で見た気温のコードを見てください。']}
+  syntax={['input', 'compare', 'if', 'print']}
+>
+1日に歩いた歩数を、3段階で評価してください。
+
+<Input>
+- 1行目: 歩数（0以上の整数）
+</Input>
+
+<Output>
+10000歩以上なら `達成`、5000歩以上10000歩未満なら `あと少し`、5000歩未満なら `まだまだ` と1行で表示します。
+</Output>
+</Exercise>
+
+<Exercise
+  id="practice-03-elif-2"
+  kind="build"
+  level={1}
+  name="じゃんけんの手"
+  stdin={`1`}
+  tests={[
+    { kind: 'stdout', stdin: `1\n` },
+    { kind: 'stdout', stdin: `0\n` },
+    { kind: 'stdout', stdin: `2\n` },
+    { kind: 'stdout', stdin: `3\n` },
+    { kind: 'stdout', stdin: `-1\n` },
+  ]}
+  hints={['`elif` は、`==` で等しいかを調べる条件にも使えます。第3章1節の表と、3節のコードを見てください。']}
+  syntax={['input', 'compare', 'if', 'print']}
+>
+じゃんけんの手を、番号で入力します。番号に対応する手の名前を表示してください。
+
+<Input>
+- 1行目: 手の番号（整数）
+</Input>
+
+<Output>
+0なら `グー`、1なら `チョキ`、2なら `パー`、それ以外の数なら `わかりません` と1行で表示します。
+</Output>
+</Exercise>
+
+<Exercise
+  id="practice-03-elif-3"
+  kind="build"
+  level={2}
+  name="荷物の料金"
+  stdin={`180`}
+  tests={[
+    { kind: 'stdout', stdin: `180\n` },
+    { kind: 'stdout', stdin: `100\n` },
+    { kind: 'stdout', stdin: `101\n` },
+    { kind: 'stdout', stdin: `250\n` },
+    { kind: 'stdout', stdin: `500\n` },
+    { kind: 'stdout', stdin: `501\n` },
+    { kind: 'stdout', stdin: `0\n` },
+  ]}
+  hints={['重さが小さいほうから順に条件を並べると、どの条件でも「以下」で書けます。']}
+  syntax={['input', 'compare', 'if', 'print']}
+>
+荷物の重さによって、送る料金が決まります。重さから料金を求めてください。
+
+- 100g以下: 120円
+- 100gより重く250g以下: 200円
+- 250gより重く500g以下: 300円
+- 500gより重い: 450円
+
+<Input>
+- 1行目: 荷物の重さ（g、0以上の整数）
+</Input>
+
+<Output>
+料金の数だけを1行で表示します。
+</Output>
+</Exercise>
+
+<Exercise
+  id="practice-03-elif-4"
+  kind="build"
+  level={2}
+  name="昨日との気温差"
+  stdin={`20
+25`}
+  tests={[
+    { kind: 'stdout', stdin: `20\n25\n` },
+    { kind: 'stdout', stdin: `25\n25\n` },
+    { kind: 'stdout', stdin: `30\n22\n` },
+    { kind: 'stdout', stdin: `-3\n-5\n` },
+    { kind: 'stdout', stdin: `0\n0\n` },
+  ]}
+  hints={['`>` と `==` を、`elif` でつなぎます。残りの場合は `else` に書きます。']}
+  syntax={['input', 'compare', 'if', 'print']}
+>
+昨日と今日の気温を比べて、今日が昨日よりどうかを表示してください。
+
+<Input>
+- 1行目: 昨日の気温（℃、整数）
+- 2行目: 今日の気温（℃、整数）
+</Input>
+
+<Output>
+今日のほうが高ければ `昨日より高い`、同じなら `昨日と同じ`、低ければ `昨日より低い` と1行で表示します。
+</Output>
+</Exercise>
+
+<Exercise
+  id="practice-03-elif-5"
+  kind="build"
+  level={3}
+  name="買い物の支払い"
+  stdin={`1200
+3`}
+  tests={[
+    { kind: 'stdout', stdin: `1200\n3\n` },
+    { kind: 'stdout', stdin: `2500\n2\n` },
+    { kind: 'stdout', stdin: `1000\n10\n` },
+    { kind: 'stdout', stdin: `999\n5\n` },
+    { kind: 'stdout', stdin: `0\n5\n` },
+    { kind: 'stdout', stdin: `3300\n4\n` },
+  ]}
+  hints={['先に商品の合計金額を変数に求めてから、その合計で段階を分けます。', '送料を変数に入れておくと、支払う金額を求めるときに使えます。']}
+  syntax={['input', 'compare', 'if', 'variable', 'operators', 'print']}
+>
+同じ値段の商品を、何個かまとめて買います。商品の合計金額によって、送料が決まります。送料と、合計金額に送料を足した支払い金額を求めてください。
+
+- 合計金額が10000円以上: 送料は0円
+- 5000円以上10000円未満: 300円
+- 5000円未満: 600円
+
+<Input>
+- 1行目: 商品1個の値段（円、0以上の整数）
+- 2行目: 個数（1以上の整数）
+</Input>
+
+<Output>
+送料、支払い金額を、この順に2行で表示します。数だけを表示します。
+</Output>
+</Exercise>

@@ -7,3 +7,160 @@ sections: [python-07-agg, python-07-stats]
 order: 2
 levels: [1, 2, 3]
 ---
+
+<Exercise
+  id="practice-07-stats-1"
+  kind="build"
+  level={1}
+  name="5日間の平均気温"
+  stdin={`18
+21
+24
+19
+23`}
+  forbid={['for ']}
+  tests={[
+    { kind: 'stdout', stdin: `18\n21\n24\n19\n23\n` },
+    { kind: 'stdout', stdin: `-3\n0\n2\n-1\n-5\n` },
+    { kind: 'stdout', stdin: `10\n10\n10\n10\n10\n` },
+    { kind: 'stdout', stdin: `7\n8\n8\n9\n10\n` },
+  ]}
+  hints={['5つの値を配列にしてから、平均を求めます。第7章2節を見てください。']}
+  syntax={['input', 'numpy', 'print']}
+>
+5日間の気温から、平均気温を求めてください。for文は使わないでください。
+
+<Input>
+- 1〜5行目: 5日間の気温（度、整数）
+</Input>
+
+<Output>
+平均気温を1行で表示します。丸めずに、求めた値をそのまま表示します。
+</Output>
+</Exercise>
+
+<Exercise
+  id="practice-07-stats-2"
+  kind="build"
+  level={1}
+  name="歩数の最多と最少"
+  stdin={`5200
+8100
+6400
+9300
+7000`}
+  forbid={['for ']}
+  tests={[
+    { kind: 'stdout', stdin: `5200\n8100\n6400\n9300\n7000\n` },
+    { kind: 'stdout', stdin: `3000\n3000\n3000\n3000\n3000\n` },
+    { kind: 'stdout', stdin: `0\n4500\n0\n12000\n800\n` },
+  ]}
+  hints={['最大と最小は、どちらも配列の名前のあとにメソッドを付けて求めます。第7章2節を見てください。']}
+  syntax={['input', 'numpy', 'print']}
+>
+5日間の歩数から、いちばん多い日の歩数と、いちばん少ない日の歩数を求めてください。for文は使わないでください。
+
+<Input>
+- 1〜5行目: 5日間の歩数（0以上の整数）
+</Input>
+
+<Output>
+いちばん多い歩数と、いちばん少ない歩数を、この順に2行で表示します。数だけを表示します。
+</Output>
+</Exercise>
+
+<Exercise
+  id="practice-07-stats-3"
+  kind="build"
+  level={2}
+  name="読書の目標まで"
+  stdin={`60
+85
+40
+70`}
+  forbid={['for ']}
+  tests={[
+    { kind: 'stdout', stdin: `60\n85\n40\n70\n` },
+    { kind: 'stdout', stdin: `100\n100\n100\n100\n` },
+    { kind: 'stdout', stdin: `0\n0\n0\n0\n` },
+    { kind: 'stdout', stdin: `75\n50\n120\n80\n` },
+  ]}
+  hints={['合計を先に変数に入れておくと、2行目の計算が書きやすくなります。']}
+  syntax={['input', 'numpy', 'variable', 'print']}
+>
+4週間、毎週読んだページ数を記録しました。目標は4週間で300ページです。
+
+4週間の合計ページ数と、目標まであと何ページかを求めてください。目標を超えたときは、あと何ページかが負の数になります。for文は使わないでください。
+
+<Input>
+- 1〜4行目: 1週目から4週目までに読んだページ数（0以上の整数）
+</Input>
+
+<Output>
+合計ページ数と、目標までのページ数を、この順に2行で表示します。数だけを表示します。
+</Output>
+</Exercise>
+
+<Exercise
+  id="practice-07-stats-4"
+  kind="build"
+  level={2}
+  name="平均との差"
+  stdin={`60
+80
+70
+90`}
+  tests={[
+    { kind: 'stdout', stdin: `60\n80\n70\n90\n` },
+    { kind: 'stdout', stdin: `50\n50\n50\n50\n` },
+    { kind: 'stdout', stdin: `0\n100\n0\n100\n` },
+    { kind: 'stdout', stdin: `70\n71\n72\n73\n` },
+  ]}
+  hints={['平均は第7章2節の `mean()` で求められます。配列から数を引く計算は、第7章1節にあります。']}
+  syntax={['input', 'numpy', 'print']}
+>
+4回のテストの点数について、それぞれの点数が、4回の平均より何点高いか（低いときは負の数）を求めてください。
+
+<Input>
+- 1〜4行目: 4回のテストの点数（0以上100以下の整数）
+</Input>
+
+<Output>
+平均との差を、配列のまま1行で表示します。点数は、入力された順に並べます。平均が小数なので、差も小数になり、`5.` のように点が付いて表示されます。
+</Output>
+</Exercise>
+
+<Exercise
+  id="practice-07-stats-5"
+  kind="build"
+  level={3}
+  name="3店の売上の表"
+  stdin={`120
+80
+95
+150
+60
+110
+90
+100
+130`}
+  tests={[
+    { kind: 'stdout', stdin: `120\n80\n95\n150\n60\n110\n90\n100\n130\n` },
+    { kind: 'stdout', stdin: `0\n0\n0\n0\n0\n0\n0\n0\n0\n` },
+    { kind: 'stdout', stdin: `10\n20\n30\n5\n25\n15\n40\n0\n5\n` },
+  ]}
+  hints={['1店ぶんの3日の売上をリストにして `append` し、3店ぶん並べてから2次元配列にします。第7章5節を見てください。', '店ごとと曜日ごとのどちらが `axis=0` でどちらが `axis=1` かは、第7章6節で確かめます。']}
+  syntax={['input', 'list', 'numpy', 'print']}
+>
+3つの店の、月曜日・火曜日・水曜日の売上を記録しました。店ごとの3日間の合計と、曜日ごとのいちばん少ない売上を求めてください。
+
+<Input>
+- 1〜3行目: 1店目の、月曜日・火曜日・水曜日の売上（千円、0以上の整数）
+- 4〜6行目: 2店目の、月曜日・火曜日・水曜日の売上（千円、0以上の整数）
+- 7〜9行目: 3店目の、月曜日・火曜日・水曜日の売上（千円、0以上の整数）
+</Input>
+
+<Output>
+1行目に、1店目から順に、店ごとの3日間の合計を、配列のまま表示します。2行目に、月曜日から順に、曜日ごとのいちばん少ない売上を、配列のまま表示します。
+</Output>
+</Exercise>

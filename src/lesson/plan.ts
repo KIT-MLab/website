@@ -45,18 +45,17 @@ export type PlanMeetRow = {
   /** オンラインの回（第21.2節「オンラインの札」） */
   online?: boolean;
   /*
-   * ここから下は今週のページ（`/learn/week/`。第25.4節）が読む。どれも省いてよい。
+   * ここから下は今週のページ（`/learn/week/`。第25.4節・design/spec/54-week-pace.md）が読む。どれも省いてよい。
    * `teach` と `together` を両方とも省いた行は、`title` を「／」で分けて前半・後半の言葉にする。
-   * `prep` `practice` `review` は**この回までに**やること（「それまでに」の欄）。
+   * `before` は「この回の前に（予習）」、`after` は「この回のあとに（復習）」の欄。
+   * 集まりで扱わない Python の復習は、ここではなく `SELF_REVIEW` に書く。
    */
   teach?: PlanTeach;
   together?: PlanTogether[];
-  /** 予習する教材の節（節の frontmatter の id） */
-  prep?: string[];
-  /** 解いてほしい練習問題集の範囲 */
-  practice?: PlanPractice[];
-  /** 復習する今週の演習（weekly の id） */
-  review?: string[];
+  /** この回の前に読んでおく節（節の frontmatter の id） */
+  before?: { lessons?: string[] };
+  /** この回のあとに解く、この回で扱ったことの練習問題集の範囲と、今週の演習（weekly の id） */
+  after?: { practice?: PlanPractice[]; weekly?: string[] };
 };
 
 export type PlanOffRow = {
@@ -78,10 +77,6 @@ export const PLAN: PlanRow[] = [
     goal: '登録を済ませ、目的を共有する',
     teach: { lessons: ['python-08q-accuracy'] },
     together: [{ label: '今週の演習（Python の復習6問）', weekly: 'weekly-2026-09-29' }],
-    practice: [
-      { chapter: '01-python', levels: [1, 2] },
-      { chapter: '02-numbers', levels: [1, 2] },
-    ],
   },
   {
     kind: 'meet',
@@ -91,12 +86,14 @@ export const PLAN: PlanRow[] = [
     goal: '',
     teach: { label: 'numpy① 配列・平均・条件で取り出す', lessons: ['python-07-array', 'python-07-agg', 'python-07-select'] },
     together: [{ lesson: 'python-08q-rule' }],
-    prep: ['python-07-array'],
-    practice: [
-      { chapter: '03-branch', levels: [1, 2] },
-      { chapter: '04-loop', levels: [1, 2] },
-    ],
-    review: ['weekly-2026-09-29'],
+    before: { lessons: ['python-07-array'] },
+    after: {
+      practice: [
+        { chapter: '07-array', topics: ['array'], levels: [1, 2, 3] },
+        { chapter: '07-array', topics: ['stats'], levels: [1, 2] },
+        { chapter: '07-array', topics: ['select'], levels: [1, 2] },
+      ],
+    },
   },
   {
     kind: 'meet',
@@ -106,12 +103,14 @@ export const PLAN: PlanRow[] = [
     goal: '',
     teach: { label: 'numpy② スライス・2次元の表・軸', lessons: ['python-07-slice', 'python-07-shape', 'python-07-stats', 'python-08-index'] },
     together: [{ lesson: 'python-08q-learn' }],
-    prep: ['python-07-slice'],
-    practice: [
-      { chapter: '05-function', levels: [1, 2] },
-      { chapter: '06-error', levels: [1, 2] },
-    ],
-    review: ['weekly-2026-10-06'],
+    before: { lessons: ['python-07-slice'] },
+    after: {
+      practice: [
+        { chapter: '07-array', topics: ['stats'], levels: [3] },
+        { chapter: '07-array', topics: ['select'], levels: [3] },
+        { chapter: '08-table', topics: ['index'], levels: [1, 2] },
+      ],
+    },
   },
   {
     kind: 'meet',
@@ -121,14 +120,16 @@ export const PLAN: PlanRow[] = [
     goal: '',
     teach: { label: 'reshape・予測を関数にする・損失', lessons: ['python-08-reshape', 'python-12-model', 'python-12-loss'] },
     together: [{ lesson: 'python-08q-overfit' }],
-    prep: ['python-12-model'],
-    practice: [
-      { chapter: '07-array', levels: [1, 2] },
-      { chapter: '08-table', levels: [1, 2] },
-    ],
-    review: ['weekly-2026-10-13'],
+    before: { lessons: ['python-12-model'] },
+    after: {
+      practice: [
+        { chapter: '08-table', topics: ['transpose'], levels: [1, 2] },
+        { chapter: '08-table', topics: ['make'], levels: [1, 2] },
+      ],
+      weekly: ['weekly-2026-10-20'],
+    },
   },
-  { kind: 'meet', no: '5', date: '2026-10-27', title: '候補を全部試す ／ pandas① Titanic の表を読む', goal: '', review: ['weekly-2026-10-20'] },
+  { kind: 'meet', no: '5', date: '2026-10-27', title: '候補を全部試す ／ pandas① Titanic の表を読む', goal: '' },
   { kind: 'off', date: '2026-11-03', title: '休み（文化の日）' },
   { kind: 'meet', no: '6', date: '2026-11-10', title: '傾き ／ pandas② 欠けた値・文字を数に', goal: '' },
   { kind: 'meet', no: '7', date: '2026-11-17', title: '勾配降下法 ／ scikit-learn① fit と predict', goal: '' },
@@ -175,6 +176,27 @@ export const PLAN: PlanRow[] = [
     big: true,
     online: true,
   },
+];
+
+/**
+ * 各自で進める Python の復習（design/spec/54-week-pace.md 第3.2節）。集まりでは扱わず、
+ * 今週のページのいちばん上の帯に、目安の日と進み具合（練習問題集の★1・★2を通した割合）を出す。
+ */
+export type SelfReviewRow = {
+  /** 帯に出す名前。「第3〜4章」 */
+  label: string;
+  /** 目安の日（'YYYY-MM-DD'。集まりの日） */
+  by: string;
+  /** 教材の章（章のディレクトリ名）。帯から、その章の最初の節と、練習問題集のその章へつなぐ */
+  chapters: string[];
+  /** 仕上げに解く今週の演習の回（weekly の id）。無くてよい */
+  weekly?: string;
+};
+
+export const SELF_REVIEW: SelfReviewRow[] = [
+  { label: '第1〜2章', by: '2026-09-29', chapters: ['01-python', '02-numbers'], weekly: 'weekly-2026-09-29' },
+  { label: '第3〜4章', by: '2026-10-06', chapters: ['03-branch', '04-loop'], weekly: 'weekly-2026-10-06' },
+  { label: '第5〜6章', by: '2026-10-13', chapters: ['05-function', '06-error'], weekly: 'weekly-2026-10-13' },
 ];
 
 /** ページ上の1段落の説明（第21.2節）。 */
@@ -243,13 +265,35 @@ export function nextMeeting(rows: PlanRow[], todayJst: string): PlanMeetRow | nu
 }
 
 /**
- * 今週のページ（第25.4節）に出す行。次回（`nextMeeting` と同じ規則）から後ろの行を、
- * 休みの行も含めて表の順に返す。先頭は必ず集まりの行。全部の回が終わっていれば空。
+ * 今週のページの3列と、その下に畳む行（design/spec/54-week-pace.md 第4.1節）。
+ * 列は「前回・今回・次回」。今回は `nextMeeting` と同じ規則。前回が無い（最初の回より前）ときは
+ * 「今回・次回・その次」。`later` は3列より後ろの行（休みの行も、表の順のまま）。
+ * 前回より前の回は出さない。全部の回が終わっていれば列も `later` も空。
  */
-export function upcomingRows(rows: PlanRow[], todayJst: string): PlanRow[] {
-  const next = nextMeeting(rows, todayJst);
-  if (!next) return [];
-  return rows.slice(rows.indexOf(next));
+export function weekColumns(rows: PlanRow[], todayJst: string): { now: PlanMeetRow | null; columns: { row: PlanMeetRow; tag: string }[]; later: PlanRow[] } {
+  const now = nextMeeting(rows, todayJst);
+  if (!now) return { now: null, columns: [], later: [] };
+  const meets = rows.filter((r): r is PlanMeetRow => r.kind === 'meet');
+  const at = meets.indexOf(now);
+  const prev = at > 0 ? meets[at - 1] : null;
+  const shown = prev ? meets.slice(at - 1, at + 2) : meets.slice(at, at + 3);
+  const tags = prev ? ['前回', '今回', '次回'] : ['今回', '次回', 'その次'];
+  const columns = shown.map((row, i) => ({ row, tag: tags[i] }));
+  const later = rows.slice(rows.indexOf(shown[shown.length - 1]) + 1);
+  return { now, columns, later };
+}
+
+/**
+ * 各自で進める復習の帯の印（design/spec/54-week-pace.md 第4.3節）。`nowDate` は今回の集まりの日
+ * （全部の回が終わっていれば null）。目安の日が今回と同じ行が「今週はここ」、今回より前の行が
+ * 「目安を過ぎた行」（100% でなければ「残っています」の札を出す候補）。
+ */
+export function selfReviewMarks(nowDate: string | null): { row: SelfReviewRow; here: boolean; overdue: boolean }[] {
+  return SELF_REVIEW.map((row) => ({
+    row,
+    here: nowDate !== null && row.by === nowDate,
+    overdue: nowDate === null || row.by < nowDate,
+  }));
 }
 
 /**
@@ -278,10 +322,11 @@ export type WeekLink = {
 };
 
 export type WeekView = {
+  /** この回の前に（予習） */
+  before: WeekLink[];
   teachLabel: string;
   teach: WeekLink[];
   together: WeekLink[];
-  prep: WeekLink[];
-  practice: WeekLink[];
-  review: WeekLink[];
+  /** この回のあとに（復習）。練習問題集の話題ごとの行と、今週の演習 */
+  after: WeekLink[];
 };

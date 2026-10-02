@@ -155,6 +155,7 @@ const termHref = lastLesson ? lessonHref(lastLesson.id) : '';
   <script>
     import { getLessonData } from '../../../../lesson/data';
     import { getProgressStore } from '../../../../lesson/store/progress';
+    import { trackActivity } from '../../../../lesson/activity';
 
     /* 提出は採点したらすぐ送る（今週の演習のページと同じ。src/pages/learn/weekly/[id].astro）。
        このページは節のページのような30秒ごとの送信を持たないので、ここで送らないと進度が
@@ -165,6 +166,17 @@ const termHref = lastLesson ? lessonHref(lastLesson.id) : '';
       void store.openLesson(data.lessonId);
       window.addEventListener('kit:progress', () => void store.flush());
       window.addEventListener('pagehide', () => void store.flush());
+
+      /* 活動した分（20-platform.md 第13.6節・design/spec/55-stumbles.md 第3.2節）。記録に添える id は話題の id。
+         進度は30秒ごとには送らないので、活動した分だけを節の画面と同じ時機
+         （30秒ごと・裏に回ったとき・pagehide）で送る。入っているかどうかは節の画面と同じく手元の控えの owner で判じる */
+      const activity = trackActivity(data.lessonId, async () => (await store.owner()) !== null);
+      const sendActivity = () => void activity.send();
+      window.setInterval(sendActivity, 30000);
+      document.addEventListener('visibilitychange', () => {
+        if (document.hidden) sendActivity();
+      });
+      window.addEventListener('pagehide', sendActivity);
     }
   </script>
 

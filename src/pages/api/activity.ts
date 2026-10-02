@@ -1,12 +1,14 @@
 /**
  * 活動した分を受ける（20-platform.md 第13.6節）。
  *
- * 本文は `{ minutes: [{ minute, lessonId }] }`。1回200件まで。
- * 画面は教材の各節とメンバーの画面で、15秒ごとに「いま活動しているか」を見て、
+ * 本文は `{ minutes: [{ minute, lessonId, exerciseId }] }`。1回200件まで。`exerciseId` は無くてよい
+ * （その分に取り組んでいた課題。design/spec/55-stumbles.md 第3.3節）。
+ * 画面は教材の各節・メンバーの画面・今週の演習・練習問題集の話題で、15秒ごとに「いま活動しているか」を見て、
  * していればその分の始まりを手元に溜め、30秒ごとと画面を離れるときにここへ送る。
  *
- * **取り組んだ時間 = 活動した分の行数。**主キーが (user_id, minute) なので、同じ分に
- * 2つのタブで活動しても1行になる。`INSERT OR IGNORE` で二度目は黙って捨てる。
+ * **取り組んだ時間 = 活動した分の行数。**主キーが (user_id, mode, minute) なので、同じ分に
+ * 2つのタブで活動しても1行になる。二度目は行を増やさず、`lesson_id` と `exercise_id` だけを
+ * あとのもので上書きする（同じ分の中で取り組む課題が変わったときのため。第3.3節）。
  *
  * 次のものは黙って捨てる（断らない。断ると画面が同じ束を送り直し続ける）:
  *   ・minute が 60000 の倍数でない
@@ -50,14 +52,18 @@ export const POST: APIRoute = async ({ request }) => {
     if (minute >= now + AHEAD_MS || minute < now - KEEP_MS) continue;
     // 節の id は40字に届かない。長い文字列を送られても表を太らせない
     const lessonId = typeof item.lessonId === 'string' ? item.lessonId.trim().slice(0, 80) : '';
+    const exerciseId = typeof item.exerciseId === 'string' ? item.exerciseId.trim().slice(0, 80) : '';
     statements.push(
       db
-        .prepare('INSERT OR IGNORE INTO activity_minutes (user_id, mode, minute, lesson_id) VALUES (?, ?, ?, ?)')
-        .bind(user.id, user.mode, minute, lessonId),
+        .prepare(
+          `INSERT INTO activity_minutes (user_id, mode, minute, lesson_id, exercise_id) VALUES (?, ?, ?, ?, ?)
+           ON CONFLICT(user_id, mode, minute) DO UPDATE SET lesson_id = excluded.lesson_id, exercise_id = excluded.exercise_id`,
+        )
+        .bind(user.id, user.mode, minute, lessonId, exerciseId),
     );
   }
 
-  // 実際に増えた行数。INSERT OR IGNORE が捨てた分は meta.changes が 0 になる
+  // 書いた行数（増えた行と、上書きした行）
   const results = statements.length > 0 ? await db.batch(statements) : [];
   const saved = results.reduce((sum, r) => sum + (r.meta?.changes ?? 0), 0);
   return json({ saved }, 200);

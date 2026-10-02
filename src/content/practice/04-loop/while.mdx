@@ -7,3 +7,157 @@ sections: [python-04-while]
 order: 5
 levels: [1, 2, 3]
 ---
+
+<Exercise
+  id="practice-04-while-1"
+  kind="build"
+  level={1}
+  name="カウントダウン"
+  stdin={`3`}
+  forbid={['for ']}
+  tests={[
+    { kind: 'stdout', stdin: `3\n` },
+    { kind: 'stdout', stdin: `0\n` },
+    { kind: 'stdout', stdin: `1\n` },
+    { kind: 'stdout', stdin: `10\n` },
+  ]}
+  hints={['繰り返しが終わるように、繰り返しの中で数を入れ直します。第4章5節の冒頭の「この節の書き方」の表にある、`n = n - 1` の形を見てください。']}
+  syntax={['input', 'while', 'variable', 'operators', 'print']}
+>
+ロケットの打ち上げで、秒数を1秒ずつ減らしながら読み上げます。決めた秒数から1までを読み上げ、最後に `発射` と表示してください。for文は使わないでください。
+
+<Input>
+- 1行目: 読み上げを始める秒数（0以上の整数）
+</Input>
+
+<Output>
+始める秒数から1までの数を、大きいほうから順に、1行に1つずつ表示します。続けて、最後の行に `発射` と表示します。秒数が0のときは、`発射` だけを表示します。
+</Output>
+</Exercise>
+
+<Exercise
+  id="practice-04-while-2"
+  kind="build"
+  level={1}
+  name="バケツで水を運ぶ"
+  stdin={`20
+6`}
+  forbid={['/']}
+  tests={[
+    { kind: 'stdout', stdin: `20\n6\n` },
+    { kind: 'stdout', stdin: `0\n5\n` },
+    { kind: 'stdout', stdin: `12\n4\n` },
+    { kind: 'stdout', stdin: `7\n10\n` },
+  ]}
+  hints={['バケツ1杯ぶんを足すたびに、運んだ回数も数えます。回数を数える書き方は、第4章5節の最初のコードを見てください。']}
+  syntax={['input', 'while', 'variable', 'operators', 'print']}
+>
+水槽に水を足します。バケツ1杯で運べる量は毎回同じで、運んだ水は全部、水槽に入ります。水槽に入れた水の合計が必要な量以上になるまで、バケツで何回運ぶかを求めてください。
+
+割り算（`/` や `//`）は使わず、繰り返しで求めてください。
+
+<Input>
+- 1行目: 必要な水の量（L、0以上の整数）
+- 2行目: バケツ1杯の量（L、1以上の整数）
+</Input>
+
+<Output>
+運ぶ回数を、数だけで1行に表示します。必要な量が0のときは、運ぶ必要がないので0です。
+</Output>
+</Exercise>
+
+<Exercise
+  id="practice-04-while-3"
+  kind="build"
+  level={2}
+  name="積み木を積む"
+  stdin={`20
+8
+5
+9`}
+  tests={[
+    { kind: 'stdout', stdin: `20\n8\n5\n9\n` },
+    { kind: 'stdout', stdin: `0\n` },
+    { kind: 'stdout', stdin: `5\n5\n` },
+    { kind: 'stdout', stdin: `10\n3\n3\n3\n3\n` },
+  ]}
+  hints={['何個で終わるかは、先に決まりません。積み木の高さは、繰り返しの中で1個ずつ読みます。読んだ数を高さに足し、個数を1つ増やします。繰り返すかどうかは、いまの高さと目標で決めます。']}
+  syntax={['input', 'while', 'variable', 'operators', 'print']}
+>
+積み木を1個ずつ積み上げて、決めた高さ以上の塔を作ります。積み木の高さは同じとは限りません。積むたびに入力されます。
+
+塔の高さが決めた高さ以上になったら、積むのをやめます。そのとき積んだ積み木の個数と、塔の高さを求めてください。
+
+<Input>
+- 1行目: 作りたい塔の高さ（cm、0以上の整数）
+- 2行目から: 積み木1個の高さ（cm、1以上の整数）。塔が決めた高さ以上になる行まで、必ず入力されます
+</Input>
+
+<Output>
+積んだ積み木の個数、塔の高さを、この順に2行で表示します。数だけを表示します。決めた高さが0のときは、積み木を使わないので、どちらも0です。
+</Output>
+</Exercise>
+
+<Exercise
+  id="practice-04-while-4"
+  kind="build"
+  level={2}
+  name="予算内の買い物"
+  stdin={`1000
+300
+500
+400
+200
+終わり`}
+  tests={[
+    { kind: 'stdout', stdin: `1000\n300\n500\n400\n200\n終わり\n` },
+    { kind: 'stdout', stdin: `0\n100\n終わり\n` },
+    { kind: 'stdout', stdin: `500\n終わり\n` },
+    { kind: 'stdout', stdin: `300\n100\n100\n100\n100\n終わり\n` },
+  ]}
+  hints={['予算の次の行を先に読み、繰り返しの最後でも読み直す形は、第4章5節の最初のコードです。整数に直すのは、`終わり` ではないと分かってからです。読み直す行は、買えたかどうかに関係なく、毎回実行される位置に書きます。']}
+  syntax={['input', 'while', 'if', 'compare', 'variable', 'operators', 'print']}
+>
+予算の範囲で、品物を、値段が入力される順に買っていきます。残りの予算以下の値段なら買い、予算を超える値段の品物は買わずに、次の品物に進みます。
+
+買った個数と、残った予算を求めてください。
+
+<Input>
+- 1行目: 予算（円、0以上の整数）
+- 2行目から: 品物の値段（円、1以上の整数）。1行に1つです
+- 最後の行: `終わり`
+</Input>
+
+<Output>
+買った個数、残った予算を、この順に2行で表示します。数だけを表示します。
+</Output>
+</Exercise>
+
+<Exercise
+  id="practice-04-while-5"
+  kind="build"
+  level={3}
+  name="受付番号の各桁の和"
+  stdin={`4821`}
+  tests={[
+    { kind: 'stdout', stdin: `4821\n` },
+    { kind: 'stdout', stdin: `0\n` },
+    { kind: 'stdout', stdin: `7\n` },
+    { kind: 'stdout', stdin: `100\n` },
+    { kind: 'stdout', stdin: `99999\n` },
+  ]}
+  hints={['1の位の取り出し方と、1の位の取り除き方は、第2章3節の `//` と `%` を見てください。数が 0 より大きい間、繰り返します。1の位を取り除いた数は、元の数に入れ直します。入れ直さないと、繰り返しが終わりません。']}
+  syntax={['input', 'while', 'variable', 'operators', 'print']}
+>
+受付番号から、各桁の数字をすべて足した値（各桁の和）を求めてください。
+
+たとえば `205` の各桁は `2` と `0` と `5` なので、和は `7` です。
+
+<Input>
+- 1行目: 受付番号（0以上の整数）
+</Input>
+
+<Output>
+各桁の和を、数だけで1行に表示します。受付番号が0のときは、0です。
+</Output>
+</Exercise>
