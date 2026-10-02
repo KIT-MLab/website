@@ -1,10 +1,10 @@
 import numpy as np
 
-scores = np.array([
-    [int(input()), int(input()), int(input())],
-    [int(input()), int(input()), int(input())],
-])
-w = np.array([0.3, 0.3, 0.4])
+table = []
+table.append([int(input()), int(input()), int(input())])
+table.append([int(input()), int(input()), int(input())])
+scores = np.array(table)
+w = np.array([0.25, 0.25, 0.5])
 result = scores @ w
 print(result)
 print(result.shape)

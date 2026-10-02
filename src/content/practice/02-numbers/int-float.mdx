@@ -12,27 +12,27 @@ levels: [1, 2, 3]
   id="practice-02-int-float-1"
   kind="build"
   level={1}
-  name="割り算の結果"
-  stdin={`10
-4`}
+  name="テープを分ける"
+  stdin={`12
+5`}
   tests={[
-    { kind: 'stdout', stdin: `10\n4\n` },
-    { kind: 'stdout', stdin: `0\n5\n` },
-    { kind: 'stdout', stdin: `9\n3\n` },
-    { kind: 'stdout', stdin: `-7\n2\n` },
+    { kind: 'stdout', stdin: `12\n5\n` },
+    { kind: 'stdout', stdin: `0\n3\n` },
+    { kind: 'stdout', stdin: `18\n6\n` },
+    { kind: 'stdout', stdin: `7\n4\n` },
   ]}
   hints={['`/` で割った結果は、割り切れるときも浮動小数点数（小数）になります。第2章1節を見てください。']}
   syntax={['input', 'operators', 'print']}
 >
-1つ目の整数を2つ目の整数で割った結果を表示してください。2つ目は0ではないものとします。
+テープを、何人かで同じ長さずつ分けます。テープ全体の長さと人数から、1人ぶんの長さを求めてください。
 
 <Input>
-- 1行目: 割られる数（整数）
-- 2行目: 割る数（整数）
+- 1行目: テープ全体の長さ（m、整数）
+- 2行目: 人数（1以上の整数）
 </Input>
 
 <Output>
-割った結果を1行で表示します。割り切れるときも、小数の形で表示します。
+1人ぶんの長さを、数だけ1行で表示します。割り切れるときも、小数の形で表示します。
 </Output>
 </Exercise>
 
@@ -48,7 +48,7 @@ levels: [1, 2, 3]
     { kind: 'stdout', stdin: `0\n0\n` },
     { kind: 'stdout', stdin: `7.5\n7.5\n` },
   ]}
-  hints={['小数点を含む文字列は `int()` では数に直せません。第2章1節を見てください。']}
+  hints={['小数を含む入力は、`float()` で読み取ります。第2章1節を見てください。']}
   syntax={['input', 'operators', 'print']}
 >
 2回に分けて入れたガソリンの量から、入れた量の合計を求めてください。

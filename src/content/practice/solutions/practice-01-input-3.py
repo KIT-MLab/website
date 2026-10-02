@@ -1,1 +1,3 @@
-print(int(input()) - int(input()))
+year = int(input())
+age = int(input())
+print(year - age)

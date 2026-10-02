@@ -1,7 +1,7 @@
 import numpy as np
 
 threshold = 60
-weights = np.array([[0.3], [0.3], [0.4]])
+weights = np.array([0.3, 0.3, 0.4])
 count = int(input())
 flat = []
 for i in range(count * 3):
@@ -9,7 +9,7 @@ for i in range(count * 3):
 scores = np.array(flat).reshape(count, 3)
 averages = np.round(scores.mean(axis=1), 1)
 diffs = np.round(scores - scores.mean(axis=0), 1)
-weighted = np.round((scores @ weights)[:, 0], 1)
+weighted = np.round(scores @ weights, 1)
 
 for i in range(count):
     if averages[i] >= threshold:

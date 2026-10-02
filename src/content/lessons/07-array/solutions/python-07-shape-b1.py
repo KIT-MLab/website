@@ -1,8 +1,7 @@
 import numpy as np
 
-scores = np.array([
-    [int(input()), int(input()), int(input())],
-    [int(input()), int(input()), int(input())],
-])
-print(scores.shape)
+table = []
+table.append([int(input()), int(input()), int(input())])
+table.append([int(input()), int(input()), int(input())])
+scores = np.array(table)
 print(scores[1] - scores[0])

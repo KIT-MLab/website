@@ -1,9 +1,10 @@
 import numpy as np
 
-scores = np.array([
-    [int(input()), int(input()), int(input())],
-    [int(input()), int(input()), int(input())],
-])
+table = []
+table.append([int(input()), int(input()), int(input())])
+table.append([int(input()), int(input()), int(input())])
+table.append([int(input()), int(input()), int(input())])
+scores = np.array(table)
 subject = int(input())
 column = scores[:, subject]
 print(column)

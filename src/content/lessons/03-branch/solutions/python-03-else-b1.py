@@ -1,5 +1,5 @@
 number = int(input())
-if number % 2 == 0:
-    print("偶数です")
+if number % 3 == 0:
+    print("3の倍数です")
 else:
-    print("奇数です")
+    print("3の倍数ではありません")

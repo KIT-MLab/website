@@ -7,5 +7,6 @@ for i in range(n):
 arr = np.array(values)
 
 for i in range(n - 2):
-    window = arr[i:i + 3]
+    end = i + 3
+    window = arr[i:end]
     print(round(window.mean(), 1))

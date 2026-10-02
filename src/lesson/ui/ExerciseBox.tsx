@@ -748,7 +748,7 @@ function Verdict({ result, kind, exercise }: { result: GradeResult; kind: Exerci
       ) : null}
       {f.kind === 'forbidden' ? (
         <p>
-          問題文で使わないように書いた <code>{f.word}</code> が入っています。別の書き方で解いてください。
+          この問題では使わない <code>{f.word}</code> が入っています。別の書き方で解いてください。
         </p>
       ) : null}
       {f.kind === 'timeout' ? <p>時間がかかりすぎたので止めました。無限ループになっていないか確認してください。</p> : null}

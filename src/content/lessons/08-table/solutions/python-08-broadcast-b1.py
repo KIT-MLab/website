@@ -1,8 +1,9 @@
 import numpy as np
 
-scores = np.array([
-    [int(input()), int(input()), int(input())],
-    [int(input()), int(input()), int(input())],
-])
+table = []
+table.append([int(input()), int(input()), int(input())])
+table.append([int(input()), int(input()), int(input())])
+table.append([int(input()), int(input()), int(input())])
+scores = np.array(table)
 diffs = np.round(scores - scores.mean(axis=0), 1)
 print(diffs)

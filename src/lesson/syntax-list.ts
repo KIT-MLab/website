@@ -116,9 +116,11 @@ export const SYNTAX_CATEGORIES: SyntaxCategory[] = [
       { code: '5 <= 3', result: 'False', note: '以下', since: 'python-03-if' },
       { code: '5 == 5', result: 'True', note: '等しい', since: 'python-03-if' },
       { code: '5 != 5', result: 'False', note: '等しくない', since: 'python-03-if' },
+      { code: '8 % 2 == 0', result: 'True', note: '割り切れるかは、余りが0かで調べる', since: 'python-03-else' },
       { code: '60 >= 60 and 60 < 80', result: 'True', note: 'and は両方成り立つとき', since: 'python-03-andor' },
       { code: '60 < 0 or 60 > 100', result: 'False', note: 'or はどちらか一方でも成り立つとき', since: 'python-03-andor' },
       { code: 'not (60 >= 60)', result: 'False', note: 'not は条件を反転させる', since: 'python-03-andor' },
+      { code: '10 >= 10 and (50 >= 60 or 90 >= 80)', result: 'True', note: 'and と or を混ぜるときは () でまとめる', since: 'python-03-andor' },
     ],
   },
   {
@@ -156,12 +158,14 @@ export const SYNTAX_CATEGORIES: SyntaxCategory[] = [
         since: 'python-04-for',
       },
       { code: 'for i in range(3):\n    print(i)', result: '0\n1\n2', note: '1つだけ渡すと0から始まる', since: 'python-04-for' },
+      { code: 'total = 0\nfor i in range(1, 4):\n    total = total + i\nprint(total)', result: '6', note: '繰り返しながら足していく', since: 'python-04-for' },
       {
         code: 'for v in [3, 7, 2]:\n    print(v)',
         result: '3\n7\n2',
         note: 'リストの値を先頭から順に取り出す',
         since: 'python-04-list',
       },
+      { code: 'for a in [1, 2]:\n    for b in [10, 20]:\n        print(a, b)', result: '1 10\n1 20\n2 10\n2 20', note: '外側が1回進むごとに、内側を全部回る', since: 'python-12-search' },
     ],
   },
   {
@@ -187,8 +191,12 @@ export const SYNTAX_CATEGORIES: SyntaxCategory[] = [
     name: 'リスト',
     entries: [
       { code: 'print([3, 7, 2])', result: '[3, 7, 2]', note: '値をまとめて持つ', since: 'python-04-list' },
+      { code: 'largest = 3\nfor value in [7, 2, 9]:\n    if value > largest:\n        largest = value\nprint(largest)', result: '9', note: 'いまの最大を覚えておき、大きい値が出たら入れ直す', since: 'python-04-list' },
+      { code: 'numbers = [int(input()), int(input()), int(input())]\nprint(numbers)', result: '[3, 7, 2]（入力が3・7・2の3行のとき）', note: '入力の3行をリストにまとめて読む', since: 'python-04-list' },
       { code: 'numbers = [3, 7, 2]\nprint(numbers[0])', result: '3', note: 'インデックスは0から数える', since: 'python-04-index' },
       { code: 'numbers = [3, 7, 2]\nprint(len(numbers))', result: '3', note: '値の数を調べる', since: 'python-04-index' },
+      { code: 'numbers = [3, 7, 2]\nfor i in range(len(numbers)):\n    print(numbers[i])', result: '3\n7\n2', note: 'インデックスに変数を書いて、順に取り出す', since: 'python-04-index' },
+      { code: 'numbers = []\nnumbers.append(3)\nnumbers.append(7)\nprint(numbers)', result: '[3, 7]', note: '空のリストを作り、値を足していく', since: 'python-04-append' },
       {
         code: 'numbers = [3, 7, 2]\nnumbers.append(9)\nprint(numbers)',
         result: '[3, 7, 2, 9]',
@@ -245,7 +253,7 @@ export const SYNTAX_CATEGORIES: SyntaxCategory[] = [
     entries: [
       { code: 'NameError', result: '', note: '使った名前が定義されていない（綴りミスが多い）', since: 'python-06-syntax' },
       { code: 'SyntaxError', result: '', note: '文の形が読み取れない（: 忘れ・全角記号など）', since: 'python-06-syntax' },
-      { code: 'IndexError', result: '', note: 'インデックスがリストや配列の範囲の外', since: 'python-06-read' },
+      { code: 'IndentationError', result: '', note: 'インデントが合っていない（SyntaxErrorの仲間）', since: 'python-06-syntax' },
       { code: 'TypeError', result: '', note: '型が合わない操作（文字列+数など）', since: 'python-06-type' },
       { code: 'ValueError', result: '', note: '型は合っているが値が変換できない', since: 'python-06-type' },
     ],
@@ -286,12 +294,6 @@ export const SYNTAX_CATEGORIES: SyntaxCategory[] = [
         since: 'python-07-select',
       },
       {
-        code: 'scores = np.array([40, 90, 55, 70, 30])\nprint(len(scores[scores >= 60]))',
-        result: '2',
-        note: '条件に合う値の個数を数える',
-        since: 'python-07-select',
-      },
-      {
         code: 'scores = np.array([40, 90, 55, 70, 30])\nprint(scores[1:3])',
         result: '[90 55]',
         note: 'スライスで範囲を取り出す（終わりは含まない）',
@@ -303,6 +305,7 @@ export const SYNTAX_CATEGORIES: SyntaxCategory[] = [
         note: '始まりを省くと先頭から、終わりを省くと最後まで',
         since: 'python-07-slice',
       },
+      { code: 'scores = np.array([40, 90, 55, 70, 30])\nk = 2\nprint(scores[:k])', result: '[40 90]', note: '始まりや終わりには変数も書ける', since: 'python-07-slice' },
       {
         code: 'table = []\ntable.append([80, 70, 90])\ntable.append([60, 50, 40])\nprint(np.array(table))',
         result: '[[80 70 90]\n [60 50 40]]',
@@ -333,6 +336,7 @@ export const SYNTAX_CATEGORIES: SyntaxCategory[] = [
         note: 'sum・max・minにもaxisを付けられる',
         since: 'python-07-stats',
       },
+      { code: 'table = []\nfor i in range(2):\n    table.append([int(input()), int(input()), int(input())])\nprint(np.array(table))', result: '[[80 70 90]\n [60 50 40]]（入力が80・70・90・60・50・40の6行のとき）', note: '入力から1人ぶんずつ読んで、2次元配列を作る', since: 'python-07-scores' },
       {
         code: 'print(np.round(np.array([81.66, 49.24]), 1))',
         result: '[81.7 49.2]',
@@ -588,7 +592,7 @@ export const SYNTAX_CATEGORIES: SyntaxCategory[] = [
         code: 'y = np.array([1, 0])\np = np.array([0.8, 0.3])\nloss = -(y * np.log(p) + (1 - y) * np.log(1 - p))\nprint(np.round(loss, 3))',
         result: '[0.223 0.357]',
         note: '答えが1でも0でも使える交差エントロピー',
-        since: 'python-14-logistic',
+        since: 'python-14-entropy',
       },
       {
         code: 'X = np.array([[1.0, 2.0], [3.0, 4.0]])\ny = np.array([1, 0])\np = np.array([0.8, 0.3])\nprint(np.round(X.T @ (p - y) / len(y), 2))',
@@ -635,7 +639,7 @@ export const SYNTAX_CATEGORIES: SyntaxCategory[] = [
       {
         code: 'pred = np.array([1, 0, 1, 1])\ny = np.array([1, 0, 0, 1])\nprint(np.sum((pred == 1) & (y == 1)))',
         result: '2',
-        note: '& は両方に当てはまるか。当たりの数を数える',
+        note: '& は両方が True の位置だけ True。np.sum で True の個数を数える',
         since: 'python-15-confusion',
       },
     ],

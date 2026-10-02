@@ -1,5 +1,5 @@
-score = 120
-if score < 0 or score > 100:
-    print("範囲外です")
+hour = 20
+if hour < 9 or hour >= 18:
+    print("営業時間外です")
 else:
-    print("範囲内です")
+    print("営業中です")

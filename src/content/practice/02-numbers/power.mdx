@@ -37,29 +37,55 @@ levels: [1, 2, 3]
   id="practice-02-power-2"
   kind="build"
   level={1}
-  name="和に掛ける"
-  stdin={`2
-3
-4`}
+  name="セットの代金"
+  stdin={`350
+150
+3`}
   tests={[
-    { kind: 'stdout', stdin: `2\n3\n4\n` },
-    { kind: 'stdout', stdin: `0\n0\n5\n` },
-    { kind: 'stdout', stdin: `-1\n1\n9\n` },
-    { kind: 'stdout', stdin: `1\n2\n-3\n` },
+    { kind: 'stdout', stdin: `350\n150\n3\n` },
+    { kind: 'stdout', stdin: `400\n100\n0\n` },
+    { kind: 'stdout', stdin: `500\n0\n2\n` },
+    { kind: 'stdout', stdin: `280\n120\n5\n` },
   ]}
   hints={['`*` は `+` より先に計算されます。先に計算させたいところを決めます。第2章4節を見てください。']}
   syntax={['input', 'operators', 'print']}
 >
-3つの整数 a、b、c を読み取り、a と b の和に c を掛けた値を表示してください。
+ハンバーガー1個と飲み物1杯を1組にして、何組か買います。ハンバーガーの値段・飲み物の値段・組の数から、代金を求めてください。
 
 <Input>
-- 1行目: a（整数）
-- 2行目: b（整数）
-- 3行目: c（整数）
+- 1行目: ハンバーガー1個の値段（円、整数）
+- 2行目: 飲み物1杯の値段（円、整数）
+- 3行目: 組の数（整数）
 </Input>
 
 <Output>
-計算した値を1行で表示します。
+代金を、数だけ1行で表示します。
+</Output>
+</Exercise>
+
+<Exercise
+  id="practice-02-power-4"
+  kind="build"
+  level={1}
+  name="華氏を摂氏に"
+  stdin={`212`}
+  tests={[
+    { kind: 'stdout', stdin: `212\n` },
+    { kind: 'stdout', stdin: `32\n` },
+    { kind: 'stdout', stdin: `-40\n` },
+    { kind: 'stdout', stdin: `100\n` },
+  ]}
+  hints={['32を引く計算を、掛け算より先にさせます。第2章4節を見てください。', '丸め方は第2章2節にあります。']}
+  syntax={['input', 'operators', 'round-math', 'print']}
+>
+華氏で表した温度を、摂氏に直してください。摂氏は、華氏から32を引いた値に5を掛け、9で割った値です。小数第1位までに丸めます。
+
+<Input>
+- 1行目: 華氏の温度（整数）
+</Input>
+
+<Output>
+摂氏の温度を、数だけ1行で表示します。
 </Output>
 </Exercise>
 
@@ -89,32 +115,6 @@ levels: [1, 2, 3]
 </Exercise>
 
 <Exercise
-  id="practice-02-power-4"
-  kind="build"
-  level={2}
-  name="華氏を摂氏に"
-  stdin={`212`}
-  tests={[
-    { kind: 'stdout', stdin: `212\n` },
-    { kind: 'stdout', stdin: `32\n` },
-    { kind: 'stdout', stdin: `-40\n` },
-    { kind: 'stdout', stdin: `100\n` },
-  ]}
-  hints={['32を引く計算を、掛け算より先にさせます。第2章4節を見てください。', '丸め方は第2章2節にあります。']}
-  syntax={['input', 'operators', 'round-math', 'print']}
->
-華氏で表した温度を、摂氏に直してください。摂氏は、華氏から32を引いた値に5を掛け、9で割った値です。小数第1位までに丸めます。
-
-<Input>
-- 1行目: 華氏の温度（整数）
-</Input>
-
-<Output>
-摂氏の温度を、数だけ1行で表示します。
-</Output>
-</Exercise>
-
-<Exercise
   id="practice-02-power-5"
   kind="build"
   level={3}
@@ -131,7 +131,7 @@ levels: [1, 2, 3]
   hints={['年利が5なら、1年で金額が1.05倍になります。2年なら、それをもう1回掛けます。', '同じ数を年数の回だけ掛けるのは、べき乗で書けます。丸めるのは最後です。']}
   syntax={['input', 'operators', 'round-math', 'print']}
 >
-お金を預けると、1年ごとに、そのときの金額に年利を掛けた分だけ増えます。預けた金額・年利・年数から、預けたあとの金額を求めてください。金額は小数第2位までに丸めます。
+お金を預けると、1年ごとに、そのときの金額の年利（%）ぶんだけ増えます。預けた金額・年利・年数から、預けたあとの金額を求めてください。途中の年の金額は丸めず、最後の金額だけを小数第2位までに丸めます。
 
 <Input>
 - 1行目: 預けた金額（円、整数）

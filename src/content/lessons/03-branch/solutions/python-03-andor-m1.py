@@ -1,5 +1,5 @@
-score = 85
-if score >= 60 and score < 80:
-    print("合格ラインです")
+temperature = 20
+if temperature >= 15 and temperature < 25:
+    print("過ごしやすい")
 else:
-    print("合格ラインではありません")
+    print("過ごしにくい")

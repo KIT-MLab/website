@@ -12,23 +12,14 @@ def loss(w, b):
     pred = predict(X, w, b)
     return np.mean((pred - scores) ** 2)
 
-def grad_w(w, b):
-    pred = predict(X, w, b)
-    n = len(scores)
-    return X.T @ (pred - scores) * 2 / n
-
-def grad_b(w, b):
-    pred = predict(X, w, b)
-    return np.mean(2 * (pred - scores))
-
 steps = int(input())
 w = np.array([0.0, 0.0])
 b = 0.0
+n = len(scores)
 for i in range(steps):
-    gw = grad_w(w, b)
-    gb = grad_b(w, b)
-    w = w - 0.01 * gw
-    b = b - 0.01 * gb
+    pred = predict(X, w, b)
+    w = w - 0.01 * (X.T @ (pred - scores) * 2 / n)
+    b = b - 0.01 * np.mean(2 * (pred - scores))
 
 print(np.round(w, 2))
 print(round(b, 2))

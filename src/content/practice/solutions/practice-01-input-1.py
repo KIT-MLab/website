@@ -1,1 +1,2 @@
-print(int(input()) * 2)
+minutes = int(input())
+print(minutes * 60)

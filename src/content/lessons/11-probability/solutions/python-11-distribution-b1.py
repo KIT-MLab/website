@@ -11,4 +11,4 @@ for i in range(n):
 scores = np.array(values)
 dist = distribution(scores)
 print(np.round(dist, 2))
-print(round(float(np.sum(dist)), 1))
+print(round(np.sum(dist), 1))

@@ -31,9 +31,29 @@ for value in numbers:
 
 2行目の `for value in numbers:` は、リストの値を先頭から順に `value` に入れます。入れるたびに、インデントした行を繰り返します。1回目は `value` が `3`、2回目は `7` になります。
 
-この繰り返しは、リストに入っている値の数だけ続きます。3行目の `print(value)` で、そのつど `value` を表示しています。
+この繰り返しは、リストに入っている値の数だけ続きます。
 
-人数が増えても、リストの中に値を並べれば対応できます。変数を1つずつ増やす必要はありません。
+次のコードは、入力欄の4行の中から一番大きい値を探します。入力欄に `6` `2` `9` `4` と4行書いてある状態で ▶ を押してください。
+
+<Run
+  code={`largest = int(input())
+numbers = [int(input()), int(input()), int(input())]
+for value in numbers:
+    if value > largest:
+        largest = value
+print(largest)`}
+  stdin={`6
+2
+9
+4`}
+  out={`9`}
+/>
+
+1行目で最初の1行を読み、いまのところの最大として `largest` に入れます。
+
+2行目のように、`[` `]` の中に `int(input())` を並べて書くと、入力欄の残りの3行を整数にして、リストにまとめられます。
+
+4〜5行目で、`value` が `largest` より大きいときだけ `largest` を入れ直します。繰り返しが終わると、`largest` には一番大きい `9` が残ります。`largest = value` は `if` の中の行なので、さらに1段インデントします。
 
 {/* 課題 */}
 
@@ -46,7 +66,7 @@ for value in numbers:
   tests={[{ kind: 'stdout' }]}
   hints={[]}
 >
-`numbers` に値を1つ加えて、出力の最後の行が、それより上の5行の合計になるようにしてください。
+`numbers` の最後に値を1つ書き足して、表示の最後の行が、元の5つの値の合計になるようにしてください。
 </Exercise>
 
 <Exercise
@@ -56,9 +76,9 @@ for value in numbers:
 for value in numbers:
     print(value)`}
   tests={[{ kind: 'stdout' }]}
-  hints={['`print` にわたす前に `value` を2倍にします。']}
+  hints={[]}
 >
-上のコードを書き換えて、それぞれの値を2倍にして表示してください。
+下のコードを書き換えて、それぞれの値を2倍にして表示してください。
 </Exercise>
 
 <Exercise
@@ -69,21 +89,29 @@ for value in numbers:
 2
 9
 4`}
-  forbid={['max']}
+  forbid={['min(']}
   tests={[
     { kind: 'stdout', stdin: `3\n7\n2\n9\n4\n` },
     { kind: 'stdout', stdin: `-5\n-2\n-8\n-1\n-9\n` },
     { kind: 'stdout', stdin: `5\n5\n5\n5\n5\n` },
     { kind: 'stdout', stdin: `0\n0\n0\n0\n0\n` },
+    { kind: 'stdout', stdin: `1\n5\n3\n8\n2\n` },
   ]}
   hints={[
-    '先に読み取った1つ目の値を、いまのところの最大として使います。',
-    '残りの値をリストに集め、for文で1つずつ比べて、大きいほうを残します。',
+    '比べる向きが、2つ目のコードと逆になります。最初の1行を `smallest` に使うので、リストに入れるのは残りの4行です。',
   ]}
 >
-入力欄の5行を整数として読み取り、その中で最大の値を表示するプログラムを書いてください。`max` は使わないでください。
+入力欄の5行を整数として読み取り、その中で最小の値を表示してください。
+
+<Input>
+- 1〜5行目: 整数
+</Input>
+
+<Output>
+最小の値を1行で表示します。
+</Output>
 </Exercise>
 
 {/* つながり */}
 
-複数の値をリストにまとめられるようになりました。次の節では、リストの何番目かを指定して値を取り出します。
+次の節では、リストの何番目かを指定して値を取り出します。

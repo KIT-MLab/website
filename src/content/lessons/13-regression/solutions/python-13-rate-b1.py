@@ -13,4 +13,4 @@ for lr in lrs:
     if f(x) > start:
         print(lr, "発散")
     else:
-        print(lr, round(x, 4), round(f(x), 4))
+        print(lr, round(x, 2), round(f(x), 2))

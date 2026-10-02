@@ -770,19 +770,36 @@ console.log(
     `（うち問題文に出力例がそのまま入っているもの${oldLeakCount}問${expectOf.available ? '' : '。lesson-data.json が無いので数えていません'}）`,
 );
 
-if (problems.length === 0) {
+/* 目安の検査（design/AUTHORING.md 第3章）。文の長さ・段落の文の数・字数・言い回し。
+   たいていは守ったほうがよいが、外したほうが読みやすい文もある。止めると、書き手は通すために
+   文を切ったり足したりする。知らせるだけにして、外したままにするかは採る人が決める。 */
+const GUIDE_CHECKS = new Set([6, 7, 8, 9, 10, 11]);
+const guides = problems.filter((p) => GUIDE_CHECKS.has(p.check));
+const facts = problems.filter((p) => !GUIDE_CHECKS.has(p.check));
+
+const printProblems = (list, print) => {
+  let current = '';
+  for (const p of list) {
+    if (p.file !== current) {
+      current = p.file;
+      print(`\n  ${current}`);
+    }
+    print(`    検査${p.check} (${p.file}:${p.line})  ${p.message}`);
+  }
+};
+
+if (guides.length > 0) {
+  console.log(`check:lessons  目安から外れている所が${guides.length}件（止めません。外したままにするなら、報告に理由を書きます）`);
+  printProblems(guides, console.log);
+  console.log('');
+}
+
+if (facts.length === 0) {
   console.log(`check:lessons  ${files.length}節を検査して問題なし`);
   process.exit(0);
 }
 
-console.error(`check:lessons  ${problems.length}件の不合格`);
-let current = '';
-for (const p of problems) {
-  if (p.file !== current) {
-    current = p.file;
-    console.error(`\n  ${current}`);
-  }
-  console.error(`    検査${p.check} (${p.file}:${p.line})  ${p.message}`);
-}
+console.error(`check:lessons  ${facts.length}件の不合格`);
+printProblems(facts, console.error);
 console.error('\n不合格の節は採用しません（10-lesson-and-writing.md 第8章）。');
 process.exit(1);

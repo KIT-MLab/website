@@ -1,3 +1,3 @@
-a = int(input())
-b = int(input())
-print(a / b)
+length = int(input())
+people = int(input())
+print(length / people)

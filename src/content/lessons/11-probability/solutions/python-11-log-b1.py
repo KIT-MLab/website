@@ -9,7 +9,7 @@ p = np.array(values)
 product = 1.0
 for x in p:
     product = product * x
-print(round(product, 6))
+print(product)
 
 log_sum = 0.0
 for x in p:

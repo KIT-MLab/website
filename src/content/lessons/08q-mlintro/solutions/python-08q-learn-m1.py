@@ -17,5 +17,5 @@ best = 0
 for border in range(1, 81):
     if accuracy(border, 0, 30) > accuracy(best, 0, 30):
         best = border
-print(f"境目 {best}歳 学習用 {round(accuracy(best, 0, 30), 3)}")
-print(f"テスト用 {round(accuracy(best, 30, 40), 3)}")
+print(f"境目 {best}歳 訓練データ {round(accuracy(best, 0, 30), 3)}")
+print(f"テストデータ {round(accuracy(best, 30, 40), 3)}")

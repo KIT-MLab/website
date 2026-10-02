@@ -1,10 +1,10 @@
 import numpy as np
 
-scores = np.array([
-    [int(input()), int(input()), int(input())],
-    [int(input()), int(input()), int(input())],
-])
-weights = np.array([[0.3, 0.3, 0.4], [0.4, 0.2, 0.4]])
+scores = np.array([[80, 70, 90], [60, 50, 40]])
+table = []
+table.append([float(input()), float(input()), float(input())])
+table.append([float(input()), float(input()), float(input())])
+weights = np.array(table)
 result = scores @ weights.T
 print(result)
 print(result.shape)

@@ -7,7 +7,7 @@ def loss(a, b):
     pred = a * hours + b
     return np.sum((pred - scores) ** 2)
 
-a = 10
+a = 5
 b = 20
 h = 0.0001
 slope_a = (loss(a + h, b) - loss(a, b)) / h

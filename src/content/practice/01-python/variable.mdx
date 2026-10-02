@@ -12,7 +12,7 @@ levels: [1, 2, 3]
   id="practice-01-variable-1"
   kind="build"
   level={1}
-  name="長方形の周り"
+  name="長方形の周りと面積"
   stdin={`3
 5`}
   tests={[
@@ -23,7 +23,7 @@ levels: [1, 2, 3]
   hints={['読み取った値を変数に入れておくと、同じ値を何度でも使えます。第1章2節を見てください。']}
   syntax={['input', 'operators', 'print']}
 >
-長方形の縦と横の長さから、周りの長さを求めてください。
+長方形の縦と横の長さから、周りの長さと面積を求めてください。
 
 <Input>
 - 1行目: 縦の長さ（cm、整数）
@@ -31,7 +31,7 @@ levels: [1, 2, 3]
 </Input>
 
 <Output>
-周りの長さを、数だけ1行で表示します。
+周りの長さと面積を、この順に2行で表示します。数だけを表示します。
 </Output>
 </Exercise>
 
@@ -59,35 +59,6 @@ levels: [1, 2, 3]
 
 <Output>
 和を1行目、差を2行目に表示します。
-</Output>
-</Exercise>
-
-<Exercise
-  id="practice-01-variable-3"
-  kind="build"
-  level={2}
-  name="値上げの前と後"
-  stdin={`120
-30
-4`}
-  tests={[
-    { kind: 'stdout', stdin: `120\n30\n4\n` },
-    { kind: 'stdout', stdin: `100\n0\n3\n` },
-    { kind: 'stdout', stdin: `250\n50\n0\n` },
-  ]}
-  hints={['値上げしたあとの値段を、先に別の変数に入れておきます。', '2つの代金も変数に入れておくと、差の計算にそのまま使えます。']}
-  syntax={['input', 'operators', 'print']}
->
-ある品物が値上げされます。値上げの前と後で、同じ個数を買ったときの代金を求めてください。続けて、代金がいくら増えるかも求めます。
-
-<Input>
-- 1行目: 値上げ前の値段（円、整数）
-- 2行目: 値上げの額（円、整数）
-- 3行目: 買う個数（整数）
-</Input>
-
-<Output>
-値上げ前の代金、値上げ後の代金、増えた額を、この順に3行で表示します。数だけを表示します。
 </Output>
 </Exercise>
 
@@ -123,7 +94,7 @@ levels: [1, 2, 3]
 <Exercise
   id="practice-01-variable-5"
   kind="build"
-  level={3}
+  level={2}
   name="動物園の入場料"
   stdin={`2
 3`}
@@ -143,6 +114,35 @@ levels: [1, 2, 3]
 </Input>
 
 <Output>
-1行目から順に `大人`・`子ども`・`合計` と書き、それぞれ空白をはさんで金額を表示します。形は出力例のとおりです。
+1行目から順に `大人`・`子ども`・`合計` で始め、そのあとに空白をはさんで、金額を表示します。形は出力例のとおりです。
+</Output>
+</Exercise>
+
+<Exercise
+  id="practice-01-variable-3"
+  kind="build"
+  level={3}
+  name="値上げの前と後"
+  stdin={`120
+30
+4`}
+  tests={[
+    { kind: 'stdout', stdin: `120\n30\n4\n` },
+    { kind: 'stdout', stdin: `100\n0\n3\n` },
+    { kind: 'stdout', stdin: `250\n50\n0\n` },
+  ]}
+  hints={['値上げしたあとの値段を、先に別の変数に入れておきます。', '2つの代金も変数に入れておくと、差の計算にそのまま使えます。']}
+  syntax={['input', 'operators', 'print']}
+>
+ある品物が値上げされます。値上げの前と後で、同じ個数を買ったときの代金を求めてください。続けて、代金がいくら増えるかも求めます。
+
+<Input>
+- 1行目: 値上げ前の値段（円、整数）
+- 2行目: 値上げの額（円、整数）
+- 3行目: 買う個数（整数）
+</Input>
+
+<Output>
+値上げ前の代金、値上げ後の代金、増えた額を、この順に3行で表示します。数だけを表示します。
 </Output>
 </Exercise>

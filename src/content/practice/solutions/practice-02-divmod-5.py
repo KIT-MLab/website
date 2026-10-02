@@ -1,5 +1,7 @@
-items = int(input())
+cookies = int(input())
 size = int(input())
-boxes = (items + size - 1) // size
-print(boxes)
-print(boxes * size - items)
+price = int(input())
+bags = cookies // size
+print(bags)
+print(cookies % size)
+print(bags * price)
