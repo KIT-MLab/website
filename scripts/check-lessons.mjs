@@ -330,7 +330,11 @@ for (const file of files) {
   // --- 検査5 「組む」の tests に3件以上の入力があり、境界を含むこと ---
   for (const e of builds) {
     const tests = Array.isArray(e.tests) ? e.tests : [];
-    if (tests.length < LIMITS.buildTestsMin) {
+    // 入力欄を使わない問題は、何度走らせても同じ結果なので判定は1組（練習問題集の検査5 と同じ決まり。scripts/check-practice.mjs）
+    const noInput = tests.length > 0 && tests.every((t) => t?.kind === 'stdout' && (typeof t.stdin !== 'string' || t.stdin === ''));
+    if (noInput) {
+      if (tests.length !== 1) add(5, e.line, `入力欄を使わない問題の判定は1組です。いまは${tests.length}組`);
+    } else if (tests.length < LIMITS.buildTestsMin) {
       add(5, e.line, `「組む」の判定は${LIMITS.buildTestsMin}件以上です。いまは${tests.length}件`);
     }
     const inputs = tests.flatMap(testInputs);

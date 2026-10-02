@@ -120,3 +120,6 @@
 | 正解率 | accuracy | 予想が答えと一致した個数の割合。 | 08q-mlintro |
 | ベースライン | baseline accuracy | 記録を見ずに、いちばん多い答えを全員に言ったときの正解率。基準の正解率とも呼ぶ。規則やモデルの正解率は、これと比べて良し悪しを言う。 | 08q-mlintro |
 | 混同行列 | confusion matrix | 予想と答えの組み合わせを、当たり・見逃し・空振り・正しく外すの4つに分けて数えた表。 | 15-evaluate |
+| pandas | | 表の形のデータを読み込み、取り出し、直すためのモジュール。`import pandas as pd` の形で読み込む。 | 15q-pandas |
+| CSV | comma-separated values | 表の1行を1行の文字で書き、項目をコンマで区切ったファイルの形。 | 15q-pandas |
+| データフレーム | DataFrame | pandas で扱う表。1行が1件、1列が1つの項目で、列には名前が付いている。 | 15q-pandas |

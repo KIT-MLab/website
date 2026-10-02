@@ -1,0 +1,111 @@
+---
+id: python-15q-select
+chapter: 15q-pandas
+title: 条件で行を取り出す
+minutes: 15
+files: [train.csv]
+---
+
+<Facilitate>
+
+**よく詰まるところ**
+
+- `[ ]` の中の条件で、`==` を `=` と書く。`SyntaxError` になり、`Maybe you meant '==' instead of '='?` と出る
+- `&` でつなぐ条件の両側の `( )` を忘れる。`TypeError: unsupported operand type(s) for &` と出る。エラーの文に出ている行（条件を書いた行）の、`&` の両側を見る
+- `&` を `and` と書く。`ValueError: The truth value of a Series is ambiguous` と出る
+
+</Facilitate>
+
+{/* 困る例 */}
+
+タイタニック2 では、for文と if文で、乗客を1人ずつ見て数えました。891人の表では、条件を1つ書くだけで、条件に合う人をまとめて取り出せます。
+
+{/* やってみる */}
+
+次のコードの ▶ を押してください。
+
+<Run
+  code={`import pandas as pd
+
+df = pd.read_csv("train.csv")
+women = df[df["Sex"] == "female"]
+print(len(women))
+print(women["Survived"].mean())`}
+  out={`314
+0.7420382165605095`}
+/>
+
+{/* 説明 */}
+
+4行目の `df["Sex"] == "female"` は、`Sex` の列の各行が `"female"` と等しいかを比べ、`True` と `False` の列で返します。`"female"` は、列に入っている値が文字列なので、引用符で囲みます。pandas 1 で見た最初の5人なら、`False`、`True`、`True`、`True`、`False` の順に並びます。
+
+この `True` と `False` の列を `df[ ]` の中に書くと、`True` の行だけが取り出されます。`df["Sex"]` のように列の名前を書くと列が取り出され、`True` と `False` の列を書くと行が選ばれます。第7章3節の `scores[scores >= 60]` と同じ形です。
+
+```python
+scores[scores >= 60]
+df[df["Sex"] == "female"]
+```
+
+取り出した `women` も表なので、5行目の `len(women)` で女性の数、6行目の `women["Survived"].mean()` で、女性が生き残った割合が出ます。
+
+次のコードの ▶ を押してください。
+
+<Run
+  code={`import pandas as pd
+
+df = pd.read_csv("train.csv")
+third_women = df[(df["Pclass"] == 3) & (df["Sex"] == "female")]
+print(len(third_women))
+print(third_women["Survived"].mean())`}
+  out={`144
+0.5`}
+/>
+
+条件を2つ重ねるときは、それぞれの条件を `( )` で囲み、`&` でつなぎます。4行目は、`Pclass` が 3 で、かつ `Sex` が `"female"` の行を取り出しています。
+
+第3章4節の `and` は1つの値どうしをつなぐものなので、列まるごとには使えず、書くとエラーになります。
+
+{/* 課題 */}
+
+<Exercise
+  id="python-15q-select-m1"
+  kind="modify"
+  starter={`import pandas as pd
+
+df = pd.read_csv("train.csv")
+women = df[df["Sex"] == "female"]
+print(len(women))
+print(women["Survived"].mean())`}
+  tests={[{ kind: 'stdout' }]}
+  hints={[]}
+>
+運賃が100より高い人の人数と、その人たちが生き残った割合を、この順に1行ずつ表示するように、コードを書き換えてください。割合は、0から1の小数のまま、丸めずに表示します。
+</Exercise>
+
+<Exercise
+  id="python-15q-select-b1"
+  kind="build"
+  tests={[
+    { kind: 'call', fn: 'survival_rate', args: [1, 'female'] },
+    { kind: 'call', fn: 'survival_rate', args: [3, 'male'] },
+    { kind: 'call', fn: 'survival_rate', args: [2, 'female'] },
+  ]}
+  hints={[
+    '条件は、引数の `pclass` と `sex` を使って書きます。列の名前は `"Pclass"` と `"Sex"` で、大文字で始まります。',
+  ]}
+>
+等級と性別を受け取り、その等級・性別の乗客が生き残った割合を返す関数 `survival_rate(pclass, sex)` を書いてください。`train.csv` を読み込む行は、関数の外（関数より上）に書いてください。関数の中から、外で作った `df` を使えます。
+
+<Input>
+- `pclass`: 客室の等級（整数の `1`、`2`、`3`）
+- `sex`: 性別（文字列の `"male"` か `"female"`）
+</Input>
+
+<Output>
+生き残った割合を、0から1の小数で返します。%にはせず、丸めません。
+</Output>
+</Exercise>
+
+{/* つながり */}
+
+次の週は、年齢で条件を書いたときに、年齢が分からない人がどうなるかを見ます。
