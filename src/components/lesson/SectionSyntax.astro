@@ -2,7 +2,7 @@
 /**
  * 「この節の書き方」の表（DECISIONS.md「書き方のまとめ（2026-09-27）」。試作の案A）。
  *
- * 各節の「説明」の終わり（「課題」の直前）に、その節で教えた書き方を「書き方｜結果｜説明」で並べる。
+ * 各節の冒頭（節の題のすぐ下。2026-10-02 に「説明」の終わりから移した）に、その節で教える書き方を「書き方｜結果｜説明」で並べる。
  * **書き手は書かない。** 中身は構文の一覧（src/lesson/syntax-list.ts）のうち `since` がこの節の行で、
  * 置き場所は scripts/remark-section-syntax.mjs が節ごとに自動で差し込む。行が無い節では何も描かない。
  *
@@ -53,7 +53,8 @@ const rows = SYNTAX_CATEGORIES.flatMap((c) => c.entries.filter((e) => e.since ==
 <style>
   /* 試作の案A。上に墨の2px、見出しは明朝、行の罫は薄く。色は教材のトークンだけ */
   .kit-sum {
-    margin: 28px 0 8px;
+    /* 冒頭に置くので、下（本文との間）を広く取る */
+    margin: 8px 0 32px;
     border-top: 2px solid var(--l-ink);
   }
 
