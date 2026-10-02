@@ -20,17 +20,70 @@
 /**
  * タイタニック演習の章（design/spec/53-ml-intro.md）。フォルダ名の並びで練習編2のあと・第9章の前に来る
  * （`08p-practice2` < `08q-mlintro` < `09-matrix`）。道具の台帳（検査16）と語の初出（検査18）はこの並びで見る。
- * 章の番号（第N章）を持たず、節を「タイタニック1」と呼ぶ。
- * 呼び方は src/lesson/chapters.ts の practiceSectionLabel と scripts/section-refs.mjs の sectionLabel。
+ * 章の番号（第N章）を持たず、節を「タイタニック1」と呼ぶ（呼び方は下の PROJECT_CHAPTERS）。
+ * ここはタイタニック演習だけの仕組み（スライド・規則の正解率ランキングなど）が指す。
+ * メンバーだけの章ならどれでも、という所は PROJECT_CHAPTERS / MEMBERS_ONLY_CHAPTERS を見る。
  * フォルダ名と id は「機械学習の入口」と呼んでいたころのまま（本番の公開状態・進度・予想の行の鍵のため）。
  */
 export const INTRO_CHAPTER = '08q-mlintro';
 
 /**
- * プロジェクトの教材（`/learn/project/`。design/spec/53-ml-intro.md 第8節）の部。メンバーだけ。
- * 学習の一覧（PARTS）には入れない。部ごとに章を1つ持ち、その節を並べる。
+ * メンバーだけの章の表（design/spec/53-ml-intro.md 第8節・56-tools-curriculum.md 第5節 A）。**1行が1つの章**。
+ * プロジェクトの教材のページ（`/learn/project/`）には、この順に章ごとに1つの見出しで並ぶ。
+ *
+ * - chapter: 章のフォルダ名。フォルダ名の並びで検査16・18 が「教えたか」を見るので、置く場所に気をつける
+ * - name: ページに出す見出し（章の名前・部の名前を兼ねる）
+ * - label / space: 節の呼び方の頭と、番号との間に空白を入れるか（「タイタニック1」「pandas 1」）。
+ *   本文にこの形で書くと、その節へのリンクになる（scripts/section-refs.mjs の SECTION_REF_RE）
+ *
+ * 章を足すときはここに1行足すだけ。節が1つも無い章は、プロジェクトの教材のページに見出しを出さない。
+ * 新しい章の節は、最初は準備中（section_status に行が無い）。
  */
-export const PROJECT_PARTS = [{ name: 'タイタニック演習', chapters: [INTRO_CHAPTER] }];
+export const PROJECT_CHAPTERS = [
+  { chapter: INTRO_CHAPTER, name: 'タイタニック演習', label: 'タイタニック', space: false },
+  { chapter: '15q-pandas', name: 'pandas', label: 'pandas', space: true },
+  { chapter: '15r-sklearn', name: 'scikit-learn', label: 'scikit-learn', space: true },
+  { chapter: '15s-titanic', name: 'Kaggle に提出', label: 'Kaggle', space: true },
+];
+
+/** メンバーだけの章なら、その表の行。そうでなければ null */
+export function projectChapter(chapter) {
+  return PROJECT_CHAPTERS.find((c) => c.chapter === chapter) ?? null;
+}
+
+/** 表の行から、節の呼び方の番号より前の部分（「タイタニック」「pandas 」） */
+function labelHead(c) {
+  return c.space ? `${c.label} ` : c.label;
+}
+
+/** メンバーだけの章の n 番目（1から）の節の呼び方（「タイタニック2」「pandas 2」）。メンバーだけの章でなければ null */
+export function projectSectionLabel(chapter, n) {
+  const c = projectChapter(chapter);
+  return c ? `${labelHead(c)}${n}` : null;
+}
+
+/**
+ * 本文の中の、メンバーだけの章の節への参照（「タイタニック2」「pandas 2」）の正規表現の元。
+ * 当たりは2つの組: 呼び方の頭（「pandas 」）と番号。scripts/section-refs.mjs と src/lesson/ui/shared.tsx が
+ * ほかの形とつないで使う（このファイルは画面からも読むので node: を import しない）。
+ *
+ * ふつうの文の「pandas」「Kaggle」（ライブラリ・サービスの名前）を誤ってリンクにしないよう、名前・空白・数字が
+ * 続くときだけ当てる。そのうえで英字の名前は、前に英数字が続くとき（「geopandas 1」）、番号が3桁以上のとき
+ * （「Kaggle 2024」）、番号のあとに数字か「.」が続くとき（「pandas 2.2」のような版の番号）も当てない。
+ * 「タイタニック2」の当たり方は前のまま（前後を見ない）。
+ */
+const escapeRe = (s) => s.replace(/[.*+?^${}()|[\]\\-]/g, '\\$&');
+const KANA_HEADS = PROJECT_CHAPTERS.filter((c) => !/^[A-Za-z]/.test(c.label)).map((c) => escapeRe(labelHead(c)));
+const ASCII_HEADS = PROJECT_CHAPTERS.filter((c) => /^[A-Za-z]/.test(c.label)).map((c) => escapeRe(labelHead(c)));
+export const PROJECT_REF_SOURCE =
+  `(${[...KANA_HEADS, ...(ASCII_HEADS.length > 0 ? [`(?<![A-Za-z0-9_-])(?:${ASCII_HEADS.join('|')})`] : [])].join('|')})` +
+  `(\\d+)(?:(?<=(?:${KANA_HEADS.join('|') || '(?!)'})\\d+)|(?<=[A-Za-z] \\d{1,2})(?![\\d.]))`;
+
+/**
+ * プロジェクトの教材（`/learn/project/`）の部。メンバーだけ。上の表から作る（1つの章が1つの部）。
+ * 学習の一覧（PARTS）には入れない。
+ */
+export const PROJECT_PARTS = PROJECT_CHAPTERS.map((c) => ({ name: c.name, chapters: [c.chapter] }));
 
 /**
  * メンバーだけの章（design/spec/53-ml-intro.md 第6節）。プロジェクトの教材の部の章。メンバーでない人には、

@@ -43,7 +43,7 @@ import {
   splitSentences,
 } from './lesson-rules.mjs';
 import { PYTHON_TOOLS } from './python-tools.mjs';
-import { buildSectionRefs } from './section-refs.mjs';
+import { PROJECT_REF_RE, buildSectionRefs } from './section-refs.mjs';
 import { MEMBERS_ONLY_CHAPTERS, partOfChapter } from './parts.mjs';
 import { deckById, deckProblems } from '../src/lesson/slides/decks.mjs';
 
@@ -565,10 +565,10 @@ for (const file of files) {
           add(20, line, `${where}: 「第${Number(m[1])}章${Number(m[2])}節」に行き先の節がありません`);
         }
       }
-      // タイタニック演習の節は「タイタニック2」と書く（章の番号を持たないため。scripts/section-refs.mjs）
-      for (const m of text.matchAll(/タイタニック(\d+)/g)) {
-        if (!SECTION_REFS[`タイタニック${Number(m[1])}`]) {
-          add(20, line, `${where}: 「タイタニック${Number(m[1])}」に行き先の節がありません`);
+      // メンバーだけの章の節は「タイタニック2」「pandas 2」と書く（章の番号を持たないため。scripts/section-refs.mjs）
+      for (const m of text.matchAll(PROJECT_REF_RE)) {
+        if (!SECTION_REFS[`${m[1]}${Number(m[2])}`]) {
+          add(20, line, `${where}: 「${m[1]}${Number(m[2])}」に行き先の節がありません`);
         }
       }
       for (const m of text.matchAll(/(?<!!)\[([^\]\n]+)\]\(([^)\n]*)\)/g)) {

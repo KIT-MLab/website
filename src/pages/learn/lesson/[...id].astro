@@ -41,7 +41,7 @@ import Slides from '../../../components/lesson/Slides.astro';
 import SlidesInBody from '../../../components/lesson/SlidesInBody.astro';
 import LiveProgress from '../../../components/lesson/LiveProgress.astro';
 import { deckById } from '../../../lesson/slides/decks.mjs';
-import { chapterTitle, isIntroChapter, isMembersOnlyChapter, lessonHref, practiceSectionLabel } from '../../../lesson/chapters';
+import { chapterTitle, isMembersOnlyChapter, lessonHref, practiceSectionLabel } from '../../../lesson/chapters';
 import { currentUser, serverConfig } from '../../../server/auth';
 import { isMember } from '../../../server/member';
 import { isChapterPublic, notesForLesson, publicSections } from '../../../server/lessons-publish';
@@ -131,9 +131,9 @@ const oneAtATime = entry?.data.chapter === '00-start' ? '' : undefined;
    章の番号と節の番号（◯.◯）は付けない。ほかの章では null で、見え方は変わらない */
 const practiceLabel = (n: number) => (entry ? practiceSectionLabel(entry.data.chapter, n) : null);
 const isPractice = practiceLabel(1) !== null;
-/* タイタニック演習（design/spec/53-ml-intro.md）。節は「タイタニック1」と呼ぶ。練習編と同じく章の番号を付けない */
-const isIntro = entry ? isIntroChapter(entry.data.chapter) : false;
-const unitWord = isIntro ? 'この部' : 'この練習編';
+/* メンバーだけの章（design/spec/53-ml-intro.md・56-tools-curriculum.md 第5節 A）。節は「タイタニック1」「pandas 1」と
+   呼ぶ（practiceSectionLabel）。練習編と同じく章の番号を付けない */
+const unitWord = membersOnly ? 'この部' : 'この練習編';
 
 /* 集まりの進め方（<Facilitate>。53-ml-intro.md 第4節）は運営・管理者にだけ描く。
    それ以外の人には中身を描かない部品を渡すので、HTML に1文字も入らない（第13.2節と同じ） */

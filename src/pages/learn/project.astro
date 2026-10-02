@@ -2,8 +2,8 @@
 /**
  * プロジェクトの教材（design/spec/53-ml-intro.md 第8節）。`/learn/project/`。
  *
- * メンバーだけの章（scripts/parts.mjs の PROJECT_PARTS。いまはタイタニック演習だけ）を、部ごとに
- * 節の一覧で並べる。学習の一覧（/learn/）には出さない。
+ * メンバーだけの章（scripts/parts.mjs の PROJECT_CHAPTERS。タイタニック演習・pandas・scikit-learn・Kaggle に提出）を、
+ * 章ごとに1つの見出しで節の一覧に並べる。節が1つも無い章は見出しを出さない。学習の一覧（/learn/）には出さない。
  *
  * **メンバーだけ**（第13.2節と同じ）: サーバで判じ、メンバーでない人には1段落だけを返して中身を1文字も
  * 送らない。**節ごとに公開する**（第12節。section_status。行が無い節は準備中。chapter_status は見ない）。
@@ -32,6 +32,7 @@ Astro.response.headers.set('cache-control', 'no-store');
 const publicSet = member && config ? await publicSections(config.db) : new Set<string>();
 const lessons = member ? (await getCollection('lessons')).sort((a, b) => a.id.localeCompare(b.id)) : [];
 
+// 節が1つも無い章（まだ書いていない章）は見出しを出さない（下の filter）
 const parts = PROJECT_PARTS.map((part) => {
   const sections = part.chapters.flatMap((chapter) =>
     lessons
@@ -47,7 +48,7 @@ const parts = PROJECT_PARTS.map((part) => {
   );
   const soon = sections.every((s) => s.soon);
   return { name: part.name, soon, sections };
-});
+}).filter((part) => part.sections.length > 0);
 ---
 
 <Base title="プロジェクトの教材">

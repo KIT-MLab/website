@@ -14,7 +14,7 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseLesson } from './parse-lesson.mjs';
 import { PYTHON_TOOLS } from './python-tools.mjs';
-import { INTRO_CHAPTER } from './parts.mjs';
+import { projectChapter } from './parts.mjs';
 
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const LESSONS_DIR = join(ROOT, 'src', 'content', 'lessons');
@@ -55,11 +55,12 @@ for (const [group, names] of Object.entries(GROUPS)) {
 const groupNames = Object.keys(GROUPS);
 const uses = (code) => groupNames.filter((g) => GROUPS[g].some((n) => toolRe.get(n)?.test(code)));
 
-/** 04-loop → 第4章、04p-practice1 → 練習編1、08q-mlintro → タイタニック演習（src/lesson/chapters.ts と同じ呼び方の頭の部分） */
+/** 04-loop → 第4章、04p-practice1 → 練習編1、08q-mlintro → タイタニック演習、15q-pandas → pandas（src/lesson/chapters.ts と同じ呼び方の頭の部分） */
 function chapterLabel(dir) {
   const practice = /^\d\dp-practice(\d+)$/.exec(dir);
   if (practice) return `練習編${practice[1]}`;
-  if (dir === INTRO_CHAPTER) return 'タイタニック演習';
+  const project = projectChapter(dir);
+  if (project) return project.name;
   const n = Number.parseInt(dir, 10);
   return Number.isNaN(n) ? dir : `第${n}章`;
 }

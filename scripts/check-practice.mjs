@@ -29,7 +29,7 @@ import { evalAttribute, parseLesson, plainText } from './parse-lesson.mjs';
 import { checkProblemForm, loadGeneratedExpect } from './problem-form.mjs';
 import { ABSTRACT, BANNED, BANNED_CHARS, LIMITS, boundaryKinds, countChars, splitSentences } from './lesson-rules.mjs';
 import { PYTHON_TOOLS } from './python-tools.mjs';
-import { buildSectionRefs } from './section-refs.mjs';
+import { PROJECT_REF_RE, buildSectionRefs } from './section-refs.mjs';
 
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const LESSONS_DIR = join(ROOT, 'src', 'content', 'lessons');
@@ -274,8 +274,8 @@ for (const file of files) {
       for (const m of text.matchAll(/第(\d+)章(\d+)節/g)) {
         if (!SECTION_REFS[`${Number(m[1])}-${Number(m[2])}`]) add(rel, 20, line, `${where}: 「第${Number(m[1])}章${Number(m[2])}節」に行き先の節がありません`);
       }
-      for (const m of text.matchAll(/タイタニック(\d+)/g)) {
-        if (!SECTION_REFS[`タイタニック${Number(m[1])}`]) add(rel, 20, line, `${where}: 「タイタニック${Number(m[1])}」に行き先の節がありません`);
+      for (const m of text.matchAll(PROJECT_REF_RE)) {
+        if (!SECTION_REFS[`${m[1]}${Number(m[2])}`]) add(rel, 20, line, `${where}: 「${m[1]}${Number(m[2])}」に行き先の節がありません`);
       }
     }
   }

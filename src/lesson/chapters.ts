@@ -1,6 +1,6 @@
 // @ts-expect-error 部の表は .mjs 側に1つだけ置く（scripts/parts.mjs）。TypeScript の型検査は
 // どこでも走っていない（design/HANDOFF.md 第5章）ので、.mjs をそのまま読む
-import { INTRO_CHAPTER as INTRO_CHAPTER_RAW, MEMBERS_ONLY_CHAPTERS, PARTS as PARTS_RAW, PROJECT_PARTS as PROJECT_PARTS_RAW, partOfChapter as partOfChapterRaw, writtenParts as writtenPartsRaw } from '../../scripts/parts.mjs';
+import { INTRO_CHAPTER as INTRO_CHAPTER_RAW, MEMBERS_ONLY_CHAPTERS, PARTS as PARTS_RAW, PROJECT_PARTS as PROJECT_PARTS_RAW, PROJECT_REF_SOURCE as PROJECT_REF_SOURCE_RAW, partOfChapter as partOfChapterRaw, projectChapter, projectSectionLabel, writtenParts as writtenPartsRaw } from '../../scripts/parts.mjs';
 
 /**
  * 部（20-platform.md 第17.1節）。書いてある部は chapters、準備中の部は count を持つ。
@@ -14,6 +14,8 @@ export const PARTS: Part[] = PARTS_RAW;
 export const PROJECT_PARTS: { name: string; chapters: string[] }[] = PROJECT_PARTS_RAW;
 /** タイタニック演習の章（design/spec/53-ml-intro.md）。表は scripts/parts.mjs に1つだけ置く */
 export const INTRO_CHAPTER: string = INTRO_CHAPTER_RAW;
+/** 本文の中の、メンバーだけの章の節への参照（「タイタニック2」「pandas 2」）の正規表現の元。組は呼び方の頭と番号 */
+export const PROJECT_REF_SOURCE: string = PROJECT_REF_SOURCE_RAW;
 export const writtenParts: () => Extract<Part, { chapters: string[] }>[] = writtenPartsRaw;
 export const partOfChapter: (chapter: string) => Extract<Part, { chapters: string[] }> | null = partOfChapterRaw;
 
@@ -46,7 +48,7 @@ export const CHAPTER_TITLES: Record<string, string> = {
 
 export function chapterTitle(chapter: string): string {
   const practice = practiceNo(chapter);
-  return CHAPTER_TITLES[chapter] ?? (practice !== null ? `練習編${practice}` : chapter.replace(/^\d+-/, ''));
+  return CHAPTER_TITLES[chapter] ?? projectChapter(chapter)?.name ?? (practice !== null ? `練習編${practice}` : chapter.replace(/^\d+-/, ''));
 }
 
 /**
@@ -59,11 +61,6 @@ export function practiceNo(chapter: string): number | null {
   return m ? Number(m[1]) : null;
 }
 
-/** タイタニック演習の章か（design/spec/53-ml-intro.md）。 */
-export function isIntroChapter(chapter: string): boolean {
-  return chapter === INTRO_CHAPTER;
-}
-
 /** メンバーだけの章か（design/spec/53-ml-intro.md 第6節）。表は scripts/parts.mjs の MEMBERS_ONLY_CHAPTERS。 */
 export function isMembersOnlyChapter(chapter: string): boolean {
   return (MEMBERS_ONLY_CHAPTERS as string[]).includes(chapter);
@@ -71,12 +68,14 @@ export function isMembersOnlyChapter(chapter: string): boolean {
 
 /**
  * 章の番号を持たない章の節の呼び方。章の中の n 番目（1から）の節を、練習編は「練習1-2」
- * （第15.1節）、タイタニック演習は「タイタニック2」と呼ぶ（design/spec/53-ml-intro.md 第2節）。
+ * （第15.1節）、メンバーだけの章は「タイタニック2」「pandas 2」と呼ぶ（design/spec/53-ml-intro.md 第2節。
+ * 呼び方の頭は scripts/parts.mjs の PROJECT_CHAPTERS）。
  * どちらでもなければ null。ほかの章の呼び方（「7.2」「第7章2節」）は画面ごとに違うので、呼ぶ側が作る。
  * 同じ呼び方を scripts/section-refs.mjs の sectionLabel も作る。
  */
 export function practiceSectionLabel(chapter: string, n: number): string | null {
-  if (isIntroChapter(chapter)) return `タイタニック${n}`;
+  const project = projectSectionLabel(chapter, n);
+  if (project !== null) return project;
   const practice = practiceNo(chapter);
   return practice !== null ? `練習${practice}-${n}` : null;
 }
