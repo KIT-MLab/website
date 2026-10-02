@@ -32,6 +32,8 @@ const WEEKLY_SOLUTIONS_DIR = join(WEEKLY_DIR, 'solutions');
 /* 練習問題集（20-platform.md 第25.5節）。模範解答は今週の演習と同じく1か所にまとめる */
 const PRACTICE_DIR = join(ROOT, 'src', 'content', 'practice');
 const PRACTICE_SOLUTIONS_DIR = join(PRACTICE_DIR, 'solutions');
+/* 節に添えるファイル（design/spec/57-lesson-files.md） */
+const LESSON_FILES_DIR = join(ROOT, 'src', 'lesson', 'files');
 const OUT_DIR = join(ROOT, 'src', 'generated');
 const OUT_FILE = join(OUT_DIR, 'lesson-data.json');
 /* 「第N章M節」の行き先（20-platform.md 第15.2節）。採点画面の Inline（src/lesson/ui/shared.tsx）が読む。
@@ -176,6 +178,19 @@ for (const file of files) {
     }
   }
 
+  /* 節に添えたファイル（design/spec/57-lesson-files.md 第3.3節）。この節の実行はすべて、ブラウザと同じく
+     ファイルをいまのフォルダに置いてから走らせる。files の無い節では何も置かない（前の節のものも消える） */
+  const fileNames = Array.isArray(lesson.data.files) ? lesson.data.files : [];
+  const lessonFiles = [];
+  for (const name of fileNames) {
+    try {
+      lessonFiles.push({ name, data: readFileSync(join(LESSON_FILES_DIR, name)) });
+    } catch {
+      fail(rel, `files に書いたファイルがありません: src/lesson/files/${name}`);
+    }
+  }
+  const execLesson = (request) => execPython({ ...request, files: lessonFiles });
+
   // <Run> の out の照合
   for (const run of lesson.runs) {
     if (run.out === undefined && run.error === undefined) continue;
@@ -183,7 +198,7 @@ for (const file of files) {
       fail(`${rel}:${run.line}`, '<Run> に out と error の両方があります。どちらか一方です');
       continue;
     }
-    const result = await execPython({ code: run.code, stdin: run.stdin });
+    const result = await execLesson({ code: run.code, stdin: run.stdin });
     /* エラーそのものが題材の節がある（第6.1節 エラーメッセージの読み方）。
        そこでは <Run> が失敗するのが正しい。読み手は ▶ を押して、説明が指している
        メッセージを自分の目で見る。 */
@@ -266,7 +281,7 @@ for (const file of files) {
         continue;
       }
       if (test.kind === 'stdout') {
-        const result = await execPython({ code: solution, stdin: test.stdin });
+        const result = await execLesson({ code: solution, stdin: test.stdin });
         const err = describeError(result);
         if (err) {
           fail(`${rel}:${e.line}`, `模範解答が tests[${i}] で動きません: ${err}`);
@@ -274,7 +289,7 @@ for (const file of files) {
         }
         tests.push({ kind: 'stdout', stdin: test.stdin, expect: result.stdout });
       } else if (test.kind === 'call') {
-        const result = await execPython({
+        const result = await execLesson({
           code: solution,
           stdin: test.stdin,
           call: { fn: test.fn, args: test.args ?? [] },
@@ -297,7 +312,7 @@ for (const file of files) {
     if (e.kind === 'modify' && e.starter && tests.length > 0 && tests.every((t) => t.kind === 'stdout')) {
       let asIs = true;
       for (const t of tests) {
-        const r = await execPython({ code: e.starter, stdin: t.stdin });
+        const r = await execLesson({ code: e.starter, stdin: t.stdin });
         if (describeError(r) || r.stdout !== t.expect) {
           asIs = false;
           break;
@@ -361,7 +376,7 @@ for (const file of files) {
       if (run.error !== undefined) continue;
       let passes = true;
       for (const t of tests) {
-        const r = await execPython(
+        const r = await execLesson(
           t.kind === 'call'
             ? { code: run.code, stdin: t.stdin, call: { fn: t.fn, args: t.args } }
             : { code: run.code, stdin: t.stdin },
@@ -384,6 +399,8 @@ for (const file of files) {
     title: lesson.data.title ?? '',
     exerciseIds: lesson.exercises.map((e) => e.id),
     exercises,
+    /* 付いている節にだけ載せる。ほかの節の生成物は1文字も変わらない。節の画面がこれを見てファイルを取りに行く */
+    ...(fileNames.length > 0 ? { files: fileNames } : {}),
   };
 }
 

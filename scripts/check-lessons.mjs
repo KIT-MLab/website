@@ -11,6 +11,7 @@
  * 検査23（みんなの予想ボード <Guess> の置き場所と props）は design/spec/53-ml-intro.md 第7節で足した。
  * 検査24（規則の正解率ランキング <RuleBoard> の置き場所と props）は同 第9節で足した。
  * 検査25（スライド。frontmatter の slides と本文の <Slides deck> の置き場所と中身の形）は同 第10節で足した。
+ * 検査26（節に添えるファイル。frontmatter の files）は design/spec/57-lesson-files.md 第3.3節で足した。
  *
  *   node scripts/check-lessons.mjs
  */
@@ -659,6 +660,26 @@ for (const file of files) {
           add(25, line, `${where}: slides[${i}]: 画像 public${sl.src} がありません`);
         }
       });
+    }
+  }
+
+  /* --- 検査26 節に添えるファイル（frontmatter の files。design/spec/57-lesson-files.md 第2節） ---
+     名前は src/lesson/files/ の下のファイル名。英小文字・数字・_・-・. だけ。1節に3つまで、1つ 1MB まで */
+  if (fm.files !== undefined) {
+    if (!Array.isArray(fm.files)) {
+      add(26, 1, 'files は [train.csv] のように、ファイル名の並びで書きます');
+    } else {
+      if (fm.files.length > 3) add(26, 1, `files は1節に3つまでです（${fm.files.length}つ）`);
+      for (const name of fm.files) {
+        const full = join(ROOT, 'src', 'lesson', 'files', name);
+        if (!/^[a-z0-9_.-]+$/.test(name)) {
+          add(26, 1, `files: ${name}: 名前に使える字は英小文字・数字・_・-・. だけです`);
+        } else if (!existsSync(full) || !statSync(full).isFile()) {
+          add(26, 1, `files: ${name}: src/lesson/files/${name} がありません`);
+        } else if (statSync(full).size > 1024 * 1024) {
+          add(26, 1, `files: ${name}: 1MB を超えています`);
+        }
+      }
     }
   }
 }

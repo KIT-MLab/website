@@ -5,14 +5,20 @@
  * - ページを開いた時点では読み込まない。最初に exec が呼ばれたときに読み込む（第3.1節）
  * - 実行は順番に1つずつ。実行ごとに Python 側で新しい名前空間を作るので状態は残らない
  * - Python 側の5秒の見張りが効かないとき（C の中で止まっている等）のために、
- *   こちら側でも見張り、返事が来なければ Worker を捨てて作り直す
+ *   こちら側でも見張り、返事が来なければ Worker を捨てて作り直す。
+ *   見張りは、Worker がパッケージ（pandas・scikit-learn）を読み終え、節のファイルを置いたと
+ *   知らせてから数え始める（design/spec/57-lesson-files.md 第3.1節・第4節）
+ * - frontmatter に files のある節では、最初の実行の前にファイルを取りに行き、実行のたびに渡す（同 第3.1節）
  */
-import type { ExecRequest, ExecResult, LoadProgress } from './types';
+import type { ExecRequest, ExecResult, LessonFile, LoadProgress } from './types';
 import { TIME_LIMIT_SECONDS } from './types';
+import { getLessonData } from '../data';
 
-type Waiter = { resolve: (r: ExecResult) => void; timer: ReturnType<typeof setTimeout> };
+type Waiter = { resolve: (r: ExecResult) => void; timer: ReturnType<typeof setTimeout> | null };
 
 const HARD_LIMIT_MS = TIME_LIMIT_SECONDS * 1000 + 3000;
+/** パッケージの読み込みが終わるのを待つ上限。通信が止まったときに「実行中」のまま固まらないように */
+const LOAD_LIMIT_MS = 120000;
 
 let worker: Worker | null = null;
 let nextId = 1;
@@ -42,7 +48,7 @@ function dropWorker(): void {
   loadState = 'idle';
   loadPromise = null;
   for (const [id, w] of waiting) {
-    clearTimeout(w.timer);
+    if (w.timer !== null) clearTimeout(w.timer);
     w.resolve(timeoutResult());
     waiting.delete(id);
   }
@@ -58,10 +64,22 @@ function getWorker(): Worker {
       for (const fn of progressSubscribers) fn(lastProgress);
       return;
     }
+    if (msg.type === 'started') {
+      // パッケージを読み終え、ファイルを置いた。ここから時間切れを見張る
+      const w = waiting.get(msg.id);
+      if (!w) return;
+      if (w.timer !== null) clearTimeout(w.timer);
+      w.timer = setTimeout(() => {
+        waiting.delete(msg.id);
+        dropWorker();
+        w.resolve(timeoutResult());
+      }, HARD_LIMIT_MS);
+      return;
+    }
     if (msg.type === 'result') {
       const w = waiting.get(msg.id);
       if (!w) return;
-      clearTimeout(w.timer);
+      if (w.timer !== null) clearTimeout(w.timer);
       waiting.delete(msg.id);
       w.resolve(msg.result as ExecResult);
     }
@@ -94,18 +112,44 @@ export function ensurePython(): Promise<void> {
   return loadPromise;
 }
 
+/** 節に添えたファイル。取れたものは画面にいる間持っておき、2度取りに行かない */
+let filesPromise: Promise<LessonFile[] | null> | null = null;
+
+/** この節の files を取る。files の無い節では空。1つでも取れなければ null（次の実行で取り直す） */
+function lessonFiles(): Promise<LessonFile[] | null> {
+  const data = getLessonData();
+  const names = data?.files ?? [];
+  if (!data || names.length === 0) return Promise.resolve([]);
+  if (filesPromise) return filesPromise;
+  filesPromise = Promise.all(
+    names.map(async (name) => {
+      const query = new URLSearchParams({ lesson: data.lessonId, name });
+      const res = await fetch(`/api/lesson-file?${query}`, { credentials: 'same-origin' });
+      if (!res.ok) throw new Error(String(res.status));
+      return { name, data: new Uint8Array(await res.arrayBuffer()) };
+    }),
+  ).catch(() => {
+    filesPromise = null;
+    return null;
+  });
+  return filesPromise;
+}
+
 /** Python を1回動かす。返り値は必ず ExecResult（例外では返さない）。 */
 export async function execPython(request: ExecRequest): Promise<ExecResult> {
+  const files = await lessonFiles();
+  if (files === null) return { stdout: '', error: { kind: 'files' }, value: null, hasValue: false };
   await ensurePython();
   const w = getWorker();
   const id = nextId++;
   return new Promise<ExecResult>((resolve) => {
+    // 読み込みの間は長い上限だけを掛け、Worker が started を知らせたら実行の見張りに替える
     const timer = setTimeout(() => {
       waiting.delete(id);
       dropWorker();
       resolve(timeoutResult());
-    }, HARD_LIMIT_MS);
+    }, LOAD_LIMIT_MS);
     waiting.set(id, { resolve, timer });
-    w.postMessage({ type: 'exec', id, code: request.code, stdin: request.stdin ?? '', call: request.call ?? null });
+    w.postMessage({ type: 'exec', id, code: request.code, stdin: request.stdin ?? '', call: request.call ?? null, files });
   });
 }

@@ -16,6 +16,8 @@ const lessons = defineCollection({
     nobuild: z.string().optional(),
     // 本文の上の段に出すスライドの名前（src/lesson/slides/decks.mjs。検査25。design/spec/53-ml-intro.md 第10節）。本文の中には <Slides deck="…" /> で置く
     slides: z.string().optional(),
+    // その節のコードが読むファイルの名前（src/lesson/files/ の下。検査26。design/spec/57-lesson-files.md）
+    files: z.array(z.string()).optional(),
   }),
 });
 

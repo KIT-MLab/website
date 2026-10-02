@@ -6,15 +6,39 @@
 import { PYTHON_HARNESS } from './harness';
 import { PYODIDE_BASE, PYODIDE_PRELOAD } from './pyodide-source';
 import { TIME_LIMIT_SECONDS } from './types';
+import type { LessonFile } from './types';
 
 type Pyodide = {
   runPython: (code: string) => unknown;
   globals: { get: (name: string) => unknown };
   /** コードの import を見て、要る外部パッケージだけ読む（第7章の numpy） */
   loadPackagesFromImports: (code: string) => Promise<unknown>;
+  FS: { writeFile: (path: string, data: Uint8Array) => void; unlink: (path: string) => void };
 };
 
 let pyodide: Pyodide | null = null;
+
+/** 前の実行で置いたファイルの名前 */
+let placed: string[] = [];
+
+/**
+ * 節に添えたファイルを Python のいまのフォルダに置く（design/spec/57-lesson-files.md 第2節）。
+ * 学習者が書き換えたり消したりしていても、実行のたびに元の中身に戻す。
+ */
+function placeFiles(py: Pyodide, files: LessonFile[]): void {
+  for (const name of placed) {
+    try {
+      py.FS.unlink(name);
+    } catch {
+      /* 学習者が消していた */
+    }
+  }
+  placed = [];
+  for (const f of files) {
+    py.FS.writeFile(f.name, f.data);
+    placed.push(f.name);
+  }
+}
 
 /** 大きなファイルを先に読み、読んだ量を知らせる。読み終えた分はブラウザのキャッシュに残る。 */
 async function preload(): Promise<void> {
@@ -74,6 +98,13 @@ self.onmessage = async (event: MessageEvent) => {
       } catch {
         /* 握りつぶす。Python 側のエラーとして読み手に見せる */
       }
+      /* 読んだパッケージを import までしておく（harness の _kit_run も同じことをするが、2度目は一瞬で済む）。
+         scikit-learn は import だけで数秒かかるので、ページ側の見張りを始める前に済ませる
+         （design/spec/57-lesson-files.md 第4節） */
+      (py.globals.get('_kit_preimport') as (code: string) => void)(msg.code);
+      placeFiles(py, msg.files ?? []);
+      // ここからページ側が時間切れを見張る
+      self.postMessage({ type: 'started', id: msg.id });
       const run = py.globals.get('_kit_run') as (
         code: string,
         stdin: string,

@@ -317,6 +317,13 @@ export default function ExerciseBox({ id, kind, starter, stdin, choices, syntax,
     const graded = direct
       ? gradeDirect(kind === 'choose' ? picked : typed, exercise, pasted)
       : await gradeExercise(codeRef.current, exercise);
+    /* 節に添えたファイルを取れなかった（design/spec/57-lesson-files.md 第3.1節）。動かしていないので
+       提出に数えず、「試す」と同じ結果の欄に知らせだけを出す */
+    if (graded.feedback.kind === 'files') {
+      setRunOutput({ stdout: '', error: { kind: 'files' }, value: null, hasValue: false });
+      setBusy('none');
+      return;
+    }
     const store = getProgressStore();
     await store.recordSubmission({
       lessonId: lesson.lessonId,

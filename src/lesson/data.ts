@@ -47,6 +47,8 @@ export type LessonData = {
   title: string;
   exerciseIds: string[];
   exercises: Record<string, ExerciseData>;
+  /** 節に添えたファイルの名前（frontmatter の files。design/spec/57-lesson-files.md）。無い節には付かない */
+  files?: string[];
 };
 
 export const LESSON_DATA_ELEMENT_ID = 'kit-lesson-data';

@@ -35,9 +35,32 @@ export async function getPython() {
   return py;
 }
 
+/** 前の実行で置いたファイルの名前 */
+let placed = [];
+
+/**
+ * 節に添えたファイルを Python のいまのフォルダに置く（design/spec/57-lesson-files.md 第3.3節）。
+ * ブラウザ側（pyodide.worker.ts の placeFiles）と同じく、前に置いたものを消してから置く。
+ * Node では1つの Python で全部の節を走らせるので、files の無い節に前の節のファイルを残さない。
+ */
+function placeFiles(py, files) {
+  for (const name of placed) {
+    try {
+      py.FS.unlink(name);
+    } catch {
+      /* 消されていた */
+    }
+  }
+  placed = [];
+  for (const f of files) {
+    py.FS.writeFile(f.name, f.data);
+    placed.push(f.name);
+  }
+}
+
 /**
  * Python を1回動かす。返り値は ExecResult（src/lesson/runtime/types.ts）と同じ形。
- * @param {{ code: string; stdin?: string; call?: { fn: string; args: unknown[] } }} request
+ * @param {{ code: string; stdin?: string; call?: { fn: string; args: unknown[] }; files?: { name: string; data: Uint8Array }[] }} request
  */
 export async function execPython(request) {
   const py = await getPython();
@@ -50,6 +73,7 @@ export async function execPython(request) {
   } catch {
     /* 握りつぶす */
   }
+  placeFiles(py, request.files ?? []);
   const run = py.globals.get('_kit_run');
   const json = run(
     request.code,

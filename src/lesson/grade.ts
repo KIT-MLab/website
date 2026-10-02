@@ -20,6 +20,8 @@ export type Feedback =
   /** 問題文で禁じた書き方を使っている（第4.4節） */
   | { kind: 'forbidden'; word: string }
   | { kind: 'timeout' }
+  /** 節に添えたファイルを取れず、動かせなかった（design/spec/57-lesson-files.md 第3.1節）。提出に数えない */
+  | { kind: 'files' }
   | { kind: 'input-empty' }
   | { kind: 'no-function'; fn: string }
   /** エラーの型ごとの一般的な説明 */
@@ -249,6 +251,7 @@ function fromError(result: ExecResult): Feedback | null {
   const e = result.error;
   if (!e) return null;
   if (e.kind === 'timeout') return { kind: 'timeout' };
+  if (e.kind === 'files') return { kind: 'files' };
   if (e.kind === 'input-empty') return { kind: 'input-empty' };
   if (e.kind === 'no-function') return { kind: 'no-function', fn: e.fn };
   return { kind: 'error', display: e.display, line: e.line, type: e.type, advice: adviceFor(e.type) };

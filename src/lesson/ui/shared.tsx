@@ -3,7 +3,7 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { isMembersOnlyChapter, lessonHref } from '../chapters';
 import { onLoadProgress, pythonStatus } from '../runtime/runner';
 import type { ExecResult, LoadProgress } from '../runtime/types';
-import { INPUT_EMPTY_MESSAGE, TIMEOUT_MESSAGE } from '../runtime/types';
+import { FILES_MESSAGE, INPUT_EMPTY_MESSAGE, TIMEOUT_MESSAGE } from '../runtime/types';
 import sectionRefs from '../../generated/section-refs.json';
 
 const SECTION_REFS: Record<string, string> = sectionRefs;
@@ -13,6 +13,7 @@ export function outputText(result: ExecResult): string {
   const e = result.error;
   if (!e) return result.stdout;
   if (e.kind === 'timeout') return `${result.stdout}${TIMEOUT_MESSAGE}`;
+  if (e.kind === 'files') return FILES_MESSAGE;
   if (e.kind === 'input-empty') return `${result.stdout}${INPUT_EMPTY_MESSAGE}`;
   if (e.kind === 'no-function') return `${result.stdout}${e.fn} という名前の関数が見つかりません`;
   return `${result.stdout}${e.traceback || e.display}`.replace(/\n+$/, '');

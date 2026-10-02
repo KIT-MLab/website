@@ -9,8 +9,13 @@ export const TIMEOUT_MESSAGE = '時間がかかりすぎたので止めました
 /** 入力欄を読み切ったときに出す文言。仕様書 第3.2節の文をそのまま使う。 */
 export const INPUT_EMPTY_MESSAGE = '入力欄が空です。入力欄に値を書いてから実行してください';
 
+/** 節に添えたファイル（design/spec/57-lesson-files.md）を取れなかったときに出す文言。仕様書 第3.1節の文をそのまま使う。 */
+export const FILES_MESSAGE = 'データのファイルを読み込めませんでした。少し待ってから、もう一度 ▶ を押してください。';
+
 export type RunError =
   | { kind: 'timeout' }
+  /** 節に添えたファイルを取れなかった。Python は動かしていない */
+  | { kind: 'files' }
   | { kind: 'input-empty' }
   | { kind: 'no-function'; fn: string }
   | {
@@ -46,5 +51,8 @@ export type ExecRequest = {
   /** 関数を呼んで戻り値を見るとき */
   call?: { fn: string; args: unknown[] };
 };
+
+/** 実行の前に Python のいまのフォルダに置くファイル（design/spec/57-lesson-files.md） */
+export type LessonFile = { name: string; data: Uint8Array };
 
 export type LoadProgress = { loaded: number; total: number; done: boolean };
