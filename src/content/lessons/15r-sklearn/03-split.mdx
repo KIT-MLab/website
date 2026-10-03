@@ -1,0 +1,169 @@
+---
+id: python-15r-split
+chapter: 15r-sklearn
+title: 訓練データとテストデータに分ける
+minutes: 15
+terms: []
+files: [train.csv]
+---
+
+<Facilitate>
+
+**最初の問いかけ（はじめの3分）**
+
+- 前回の終わりの問い「891人で学習して891人で測った 0.787 は、新しい乗客にも当たると言える？」から入る。「タイタニック3 では、前の30人で学習して、後ろの10人で測りました」と思い出してもらう
+- すぐ下の予想ボード「深さの制限なしの決定木は、学習に使わなかった179人では何%当たると思う？」に入れてもらう（答え: 81.0%、145人 / 179人）。全員が入れたら、先へ進む。この節の2つ目のコードを全員が動かして、自分の画面で数を見たあとで「答え合わせ（運営）」を押す
+
+**答え合わせで言うこと（この回の最後の7分）**
+
+- scikit-learn 3: 訓練データ712人・テストデータ179人。訓練データの正解率 0.879、テストデータの正解率 0.810、テストデータのベースライン 0.615（110人）。確認問題1 の答えは 179（名前ではなく順番で入る）。演習問題1（`Pclass`・`Sex`・`Fare`）は 0.907・0.848・0.574
+- scikit-learn 4: 深さ1・3・6・10・20 の表。訓練データの正解率は深くするほど上がり続け、0.982 まで行く。テストデータの正解率は深さ6 の 0.827 から先は上がらず、20 では 0.793。タイタニック4 の `fine`（訓練データ 1.0・テストデータ 0.7）と同じこと（過学習）
+- テストデータは179人なので、1人で約0.006動く。0.821 と 0.827 の違い（1人）に意味を付けない。分け方（`random_state`）を変えると、テストデータでいちばん高い深さも変わる（深さ1〜10 のどれかになる）。どの分け方でも、訓練データの正解率は深くするほど上がった
+- ひとことの要点: 深さは `fit` が決めない。自分で決めて、テストデータで比べる。訓練データの正解率だけで選ばない
+- 時間が足りなければ、scikit-learn 4 の演習問題1 は「この回のあとに」解いてもらう
+
+**次につなげる問い**
+
+- 「Kaggle には、答え（`Survived`）の列が無い乗客418人の表があります。この418人に予測を出すには、いまのコードのどこを変えればよいと思う？」
+
+**よく詰まるところ**
+
+- `train_test_split` が返す4つの名前の順番を間違える。`X_train, y_train, X_test, y_test = …` のように並べて `fit(X_train, y_train)` まで進めると、`y_train` にテストデータの特徴量の表が入っているので、`ValueError: Unknown label type: continuous-multioutput.` になる。並べる順が `X_train, X_test, y_train, y_test` かを確かめる
+- `test_size=20` と書く。エラーにならず、テストデータが20人になる。整数を書くと人数、小数を書くと割合になる
+- ベースラインを891人の `y` で出す（0.616）。テストデータの `y_test` で出す（0.615）。どちらの人で測ったかを確かめる
+- `random_state` を書かないと、▶ を押すたびに分け方が変わり、正解率も変わる
+- `train_test_split` の `import` の行を忘れる。`NameError` になる
+
+</Facilitate>
+
+<Guess id="sklearn3-deep-tree" question={'深さを制限しない（いくらでも深くしてよい）決定木を、891人から選んだ712人（訓練データ）で学習させると、その712人では87.9%当たりました。学習に使わなかった179人（テストデータ）では、何%当たると思う？'} unit="%" answer={81.0} answerNote="当たりは 145人 / 179人" />
+
+{/* 困る例 */}
+
+scikit-learn 2 の正解率 0.787 は、学習に使った891人で測った数です。新しい乗客にどれだけ当たるかは、これでは分かりません。タイタニック3 でも、訓練データの正解率は、テストデータより高めに出ていました。
+
+{/* やってみる */}
+
+891人の表を、訓練データとテストデータに分けます。次のコードの ▶ を押してください。
+
+<Run
+  code={`import pandas as pd
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.model_selection import train_test_split
+
+df = pd.read_csv("train.csv")
+age_mean = df["Age"].mean()
+df["Age"] = df["Age"].fillna(age_mean)
+df["Sex"] = df["Sex"].map({"male": 0, "female": 1})
+
+X = df[["Pclass", "Sex", "Age"]]
+y = df["Survived"]
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=0)
+print(len(X_train), len(X_test))
+print(X_train.head())`}
+  out={`712 179
+     Pclass  Sex        Age
+140       3    1  29.699118
+439       2    0  31.000000
+817       2    0  31.000000
+378       3    0  20.000000
+491       3    0  21.000000`}
+/>
+
+{/* 説明 */}
+
+5〜8行目は、pandas 3・4 で書いた、読み込みと、欠けを埋めて文字を数に置き換える処理と同じです。
+
+3行目の `from sklearn.model_selection import train_test_split` は、scikit-learn の `model_selection` から、`train_test_split` という名前だけを持ってきます。
+
+12行目の `train_test_split(X, y, test_size=0.2, random_state=0)` は、表 `X` と答え `y` を、訓練データとテストデータに分けます。返すものは4つで、訓練データの特徴量、テストデータの特徴量、訓練データの答え、テストデータの答えの順です。`=` の左に名前を4つコンマで並べると、右の4つが左から順に、それぞれの名前に入ります。名前は、scikit-learn 1 で自分で付けた `X_train`・`y_train`・`X_test`・`y_test` と同じものを使いますが、並べる順は違います。`X_train`・`X_test`・`y_train`・`y_test` の順です。
+
+`test_size=0.2` は、テストデータを全体のおよそ2割にするという指定です。891人のおよそ2割にあたる179人がテストデータ、残りの712人が訓練データになります。
+
+`random_state=0` は、人を混ぜて分けるときの、混ぜ方を決める数です。同じ数を入れておくと、何度 ▶ を押しても同じ分け方になります。0 以外の数にすると、別の混ぜ方になります。混ぜ方の中身は、第15章1節で扱います。
+
+14行目の `X_train.head()` では、左端の行の番号が 140、439、817 とばらばらです。タイタニック3・4 では前の30人・後ろの10人に分けましたが、ここでは、人を混ぜてから分けています。前から順に分けると、並びに偏りがあるとき（たとえば等級順に並んでいるとき）、訓練データとテストデータの中身が違ってしまうので、混ぜます。140番の人の年齢 `29.699118` は、年齢が欠けていて平均で埋めた人です。
+
+次に、分けた訓練データで決定木を学習させ、訓練データとテストデータで正解率を出します。次のコードの ▶ を押してください。
+
+<Run
+  code={`import pandas as pd
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.model_selection import train_test_split
+
+df = pd.read_csv("train.csv")
+age_mean = df["Age"].mean()
+df["Age"] = df["Age"].fillna(age_mean)
+df["Sex"] = df["Sex"].map({"male": 0, "female": 1})
+
+X = df[["Pclass", "Sex", "Age"]]
+y = df["Survived"]
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=0)
+
+model = DecisionTreeClassifier(random_state=0)
+model.fit(X_train, y_train)
+print((model.predict(X_train) == y_train).mean())
+print((model.predict(X_test) == y_test).mean())
+print((y_test == 0).mean())`}
+  out={`0.8792134831460674
+0.8100558659217877
+0.6145251396648045`}
+/>
+
+14行目の `DecisionTreeClassifier(random_state=0)` は、`max_depth` を書いていないので、深さの制限なしの木です。訓練データの人を分けられるところまで、境目で分け続けます。`DecisionTreeClassifier` の `random_state=0` も、何度 ▶ を押しても同じ結果になるようにする数です。同じくらい良い境目が2つ以上あるとき、どれを選ぶかを、この数で決めます。
+
+15行目の `fit` には、訓練データだけを渡します。テストデータは、学習には使いません。
+
+16行目は訓練データの正解率で 0.879、17行目はテストデータの正解率で 0.810 です。訓練データの正解率のほうが高めに出ている点は、タイタニック3 と同じです。
+
+18行目は、テストデータの人に全員亡くなったと予測したときの正解率で、ベースラインです。`y_test == 0` が `True` の人の割合を出しています。テストデータの正解率 0.810 は、ベースライン 0.615 より約0.2 高くなっています。モデルが良いかどうかは、テストデータの正解率を、このベースラインと比べて判断します。
+
+{/* 課題 */}
+
+<Exercise
+  id="python-15r-split-c1"
+  kind="choose"
+  tests={[{ kind: 'choice', correct: 2 }]}
+  hints={[]}
+>
+`X` と `y` は、この節の最初のコードと同じ、891人の特徴量の表と答えです。次のコードを動かします。
+
+```python
+X_train, y_train, X_test, y_test = train_test_split(X, y, test_size=0.2, random_state=0)
+print(len(y_train))
+```
+
+表示される数はどれですか。
+
+- 712
+- 179
+- 891
+- エラーになる
+</Exercise>
+
+<Exercise
+  id="python-15r-split-b1"
+  kind="build"
+  tests={[{ kind: 'stdout' }]}
+  hints={[
+    '分ける行は、この節の最初のコードの12行目と同じ形です。`test_size` と `random_state` の数を替えます。',
+  ]}
+>
+`train.csv` を読み込み、`Sex` の列を、`male` を 0、`female` を 1 に置き換えます。特徴量は `Pclass`・`Sex`・`Fare` の3つの列、答えは `Survived` の列です。`Fare` は運賃です。`Age` は使わないので、埋めなくてかまいません。
+
+テストデータを全体の25%にして、訓練データとテストデータに分けます。分けるときの `random_state` は 1 にします。そのあと、深さの制限なしで `random_state=0` の決定木を、訓練データで学習させます。
+
+訓練データの正解率、テストデータの正解率、テストデータのベースラインを、この順に1行ずつ表示してください。
+
+<Input>
+なし
+</Input>
+
+<Output>
+1行目は訓練データの正解率、2行目はテストデータの正解率、3行目はテストデータの人に全員亡くなったと予測したときの正解率です。どれも小数第3位まで丸めた数を表示します。末尾が0になっても、0は補いません。
+</Output>
+</Exercise>
+
+{/* つながり */}
+
+次の節では、決定木の深さを変えて、訓練データとテストデータの正解率が、どう変わるかを見ます。

@@ -125,3 +125,5 @@
 | データフレーム | DataFrame | pandas で扱う表。1行が1件、1列が1つの項目で、列には名前が付いている。 | 15q-pandas |
 | 欠損値 | missing value | 表の中で、値が入っていない所。pandas では `NaN` と表示される。 | 15q-pandas |
 | 辞書 | dictionary | 「元の値」と「対応する値」の組を並べたもの。`{"male": 0, "female": 1}` のように書く。 | 15q-pandas |
+| scikit-learn | | 機械学習のモデルをまとめたモジュール。`import` では `sklearn` と書く。 | 15r-sklearn |
+| 決定木 | decision tree | 特徴量の境目で2つの組に分けることをくり返し、組ごとに予測を決めるモデル。分ける回数の上限を深さと呼ぶ。 | 15r-sklearn |

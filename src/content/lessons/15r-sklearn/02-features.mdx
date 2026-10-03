@@ -1,0 +1,145 @@
+---
+id: python-15r-features
+chapter: 15r-sklearn
+title: 特徴量を選んで入れる
+minutes: 15
+files: [train.csv]
+---
+
+<Facilitate>
+
+**よく詰まるところ**
+
+- `Sex` を数に置き換えずに入れる。`ValueError: could not convert string to float: 'male'` と出る。エラーの最後の行に、変えられなかった値が出ている
+- `[ ]` を1組にして `df["Pclass", "Sex"]` と書く。`KeyError: ('Pclass', 'Sex')` と出る。列の名前のリストなので、`[ ]` が2組要る
+- 学習させたときと違う列の表を `predict` に渡す。`ValueError: The feature names should match those that were passed during fit.` と出る
+- `Age` を埋めずに入れても、決定木はエラーにならない。聞かれたら「このモデルは入るが、入らないモデルもある（Kaggle 2 で使うロジスティック回帰は `Input X contains NaN.` で止まる）。埋めてから入れる」と答える
+
+</Facilitate>
+
+{/* 困る例 */}
+
+scikit-learn 1 では、年齢1つだけを、手で配列にして渡しました。891人の表では、等級・性別・年齢のような複数の列を、まとめてモデルに渡します。まず、pandas 3・4 で書いた、欠けを埋めて文字を数に置き換える処理をせずに、そのまま渡してみます。
+
+{/* やってみる */}
+
+次のコードの ▶ を押してください。**このコードは止まります。**
+
+<Run
+  code={`import pandas as pd
+from sklearn.tree import DecisionTreeClassifier
+
+df = pd.read_csv("train.csv")
+X = df[["Pclass", "Sex", "Age"]]
+y = df["Survived"]
+model = DecisionTreeClassifier(max_depth=1)
+model.fit(X, y)`}
+  error={`ValueError: could not convert string to float: 'male'`}
+/>
+
+{/* 説明 */}
+
+5行目の `df[["Pclass", "Sex", "Age"]]` は、`[ ]` の中に列の名前のリストを書いて、その3つの列だけの表を取り出します。外側の `[ ]` は、`df["Age"]` のように列を取り出す `[ ]`、内側の `[ ]` は、列の名前を並べたリストです。列が全部数なら、表のまま `fit` に渡せます。1人が1行、1つの特徴量が1列なので、scikit-learn 1 で `reshape` して作った形と同じです。
+
+止まったのは、8行目の `model.fit(X, y)` です。`Sex` の列が `male` と `female` の文字のままで、`'male'` を小数に変えられないためです。モデルは数しか受け取れません。読み方は、第6章の `ValueError` と同じです。
+
+欠けを埋め、文字を数に置き換えてから入れます。次のコードの ▶ を押してください。
+
+<Run
+  code={`import pandas as pd
+from sklearn.tree import DecisionTreeClassifier
+
+df = pd.read_csv("train.csv")
+age_mean = df["Age"].mean()
+df["Age"] = df["Age"].fillna(age_mean)
+df["Sex"] = df["Sex"].map({"male": 0, "female": 1})
+
+features = ["Pclass", "Sex", "Age"]
+X = df[features]
+y = df["Survived"]
+print(X.head())
+
+model = DecisionTreeClassifier(max_depth=1)
+model.fit(X, y)
+pred = model.predict(X)
+print((pred == y).mean())
+print((pred == df["Sex"]).mean())`}
+  out={`   Pclass  Sex   Age
+0       3    0  22.0
+1       1    1  38.0
+2       3    1  26.0
+3       1    1  35.0
+4       3    0  35.0
+0.7867564534231201
+1.0`}
+/>
+
+4〜7行目は、pandas 3・4 で書いた、読み込みと、欠けを埋めて文字を数に置き換える処理と同じです。
+
+9行目で、列の名前のリストを `features` に入れ、10行目の `df[features]` で取り出しています。これは、1つ目のコードの5行目の `df[["Pclass", "Sex", "Age"]]` と同じ結果になります。内側のリストを変数に入れてから渡しても同じだからです。
+
+12行目の `print(X.head())` で、3つの列が、どれも数だけになったことを確かめられます。
+
+14行目で決定木を作ります。`max_depth=1` なので、3つの列のうち1つの列の、1つの境目で分けます。15行目で、891人全員の特徴量と答えを渡して学習させます。16行目の `model.predict(X)` は、891人全員の予測で、17行目の `(pred == y).mean()` が、その正解率です。`pred` は numpy の配列、`y` は表の列ですが、タイタニック4 と同じ形で書けます。正解率は 0.787 で、タイタニック1 の「女性なら生存」の 78.7% と同じ数です。
+
+18行目の `(pred == df["Sex"]).mean()` は、予測が `Sex` の列と一致した割合で、`1.0` と出ています。`Sex` が 1 なら女性、`pred` が 1 なら生き残る、なので、両方の列が全員で一致するとは、女性なら生き残ると予測している、ということです。モデルは、3つの列のうち性別を選んだことが分かります。等級や年齢より、性別のほうがよく分けられました。
+
+ここでの正解率は、学習に使った891人で測ったものです。
+
+{/* 課題 */}
+
+<Exercise
+  id="python-15r-features-m1"
+  kind="modify"
+  starter={`import pandas as pd
+from sklearn.tree import DecisionTreeClassifier
+
+df = pd.read_csv("train.csv")
+age_mean = df["Age"].mean()
+df["Age"] = df["Age"].fillna(age_mean)
+df["Sex"] = df["Sex"].map({"male": 0, "female": 1})
+
+features = ["Pclass", "Sex", "Age"]
+X = df[features]
+y = df["Survived"]
+
+model = DecisionTreeClassifier(max_depth=1)
+model.fit(X, y)
+pred = model.predict(X)
+print((pred == y).mean())
+print((pred == df["Sex"]).mean())`}
+  tests={[{ kind: 'stdout' }]}
+  hints={[]}
+>
+性別を使わず、`Pclass` と `Age` の2つの列だけを特徴量にして学習させ、891人全員での正解率だけを1行で表示するように、コードを書き換えてください。正解率は、0から1の小数のまま、丸めずに表示します。
+</Exercise>
+
+<Exercise
+  id="python-15r-features-b1"
+  kind="build"
+  tests={[
+    { kind: 'call', fn: 'train_accuracy', args: [['Age']] },
+    { kind: 'call', fn: 'train_accuracy', args: [['Embarked']] },
+    { kind: 'call', fn: 'train_accuracy', args: [['Pclass', 'Embarked']] },
+    { kind: 'call', fn: 'train_accuracy', args: [['Sex', 'Age', 'Embarked']] },
+    { kind: 'call', fn: 'train_accuracy', args: [['Fare']] },
+  ]}
+  hints={[
+    '列の名前のリストは、`df[ ]` の中に変数のまま書けます（この節の2つ目のコードの10行目）。',
+    '`Embarked` の埋め方と置き換え方は、pandas 4 の3つ目のコードと同じです。',
+  ]}
+>
+列の名前のリストを受け取り、その列を特徴量にして、深さ1（`max_depth=1`）の決定木を891人全員で学習させ、同じ891人での正解率を返す関数 `train_accuracy(columns)` を書いてください。`train.csv` を読み込む行と、欠けを埋めて文字を数に置き換える行は、関数の外（関数より上）に書いてください。置き換え方は次のとおりです。`Age` は、欠けを平均で埋めます。`Sex` は、`male` を 0、`female` を 1 に置き換えます。`Embarked` は、欠けを `"S"` で埋めてから、`S` を 0、`C` を 1、`Q` を 2 に置き換えます。
+
+<Input>
+- `columns`: 特徴量にする列の名前のリスト。`Pclass`・`Sex`・`Age`・`Fare`・`Embarked` のうち1つ以上
+</Input>
+
+<Output>
+891人全員での正解率を、0から1の小数で返します。%にはせず、丸めません。
+</Output>
+</Exercise>
+
+{/* つながり */}
+
+次の週は、学習に使わなかった人で、正解率を測ります。

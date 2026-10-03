@@ -1,0 +1,115 @@
+---
+id: python-15r-depth
+chapter: 15r-sklearn
+title: 木を深くしすぎる
+minutes: 15
+terms: []
+files: [train.csv]
+---
+
+<Facilitate>
+
+**よく詰まるところ**
+
+- 木の `random_state=0` を付け忘れる。浅い木では数が変わらず気づかない。深い木だけ、▶ を押すたびにテストデータの正解率が変わる（深さ20 で 0.771〜0.799）
+- `max_depth=0` と書く。`InvalidParameterError` になる。深さは1以上の整数
+- 先に丸めてから引く。`round(train, 3) - round(test, 3)` では、`0.010000000000000009` のように、丸めたはずの数に長い小数が出ることがある
+- for文の外で `model = …` を1つだけ作る。`max_depth` は作るときに決める数なので、深さを変えたことにならない
+
+</Facilitate>
+
+{/* 困る例 */}
+
+scikit-learn 3 では、深さの制限なしの決定木（以後は単に木と呼びます）が、訓練データで 0.879、テストデータで 0.810 でした。木をどこまで深くするのがよいかは、まだ決めていません。深さを変えて、2つの正解率を並べてみます。
+
+{/* やってみる */}
+
+scikit-learn 3 の特徴量は `Pclass`・`Sex`・`Age` の3つでした。この節では、`Fare`、`SibSp`、`Parch` の3つの列を足して、6つにします。意味は、このあとの表にあります。次のコードの ▶ を押してください。
+
+<Run
+  code={`import pandas as pd
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.model_selection import train_test_split
+
+df = pd.read_csv("train.csv")
+age_mean = df["Age"].mean()
+df["Age"] = df["Age"].fillna(age_mean)
+df["Sex"] = df["Sex"].map({"male": 0, "female": 1})
+
+X = df[["Pclass", "Sex", "Age", "Fare", "SibSp", "Parch"]]
+y = df["Survived"]
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=0)
+
+for depth in [1, 3, 6, 10, 20]:
+    model = DecisionTreeClassifier(max_depth=depth, random_state=0)
+    model.fit(X_train, y_train)
+    train = (model.predict(X_train) == y_train).mean()
+    test = (model.predict(X_test) == y_test).mean()
+    print(depth, round(train, 3), round(test, 3))`}
+  out={`1 0.787 0.788
+3 0.834 0.821
+6 0.872 0.827
+10 0.935 0.816
+20 0.982 0.793`}
+/>
+
+{/* 説明 */}
+
+5〜8行目は、pandas 3・4 で書いた、読み込みと、欠けを埋めて文字を数に置き換える処理と同じです。10行目で、特徴量を6つにしています。
+
+深さは、1人の人が境目で分けられる回数の上限です。深さ1 は、境目1つで2つの組に分けます。scikit-learn 2 で、性別で2つに分けたのが、深さ1 です。深さ2 は、分けた2つの組を、それぞれもう一度、境目1つで分けるので、最大4組になります。深さ3 なら最大8組です。深いほど細かい組に分かれ、組ごとに、多いほうの答えを予測にします。たとえばこの訓練データで深さ2 にすると、男性の組を年齢で分けて、14歳以下の男の子は生き残ると予測します。
+
+14行目の `for depth in [1, 3, 6, 10, 20]:` で、深さを5通りに変えます。15行目の `max_depth=depth` で、for文の変数 `depth` を、木の深さとして渡しています。深さごとに新しい木を作って学習させ、訓練データとテストデータの正解率を、深さと一緒に表示します。
+
+出力の読み方です。訓練データの正解率は、深くするほど上がり続け、深さ20 で 0.982 になります。テストデータの正解率は、深さ6 の 0.827 から先は上がらず、深さ20 では 0.793 に下がります。訓練データの中の外れた人に合わせて、組を細かく分けすぎたためです。タイタニック4 でも、外れた6人に合わせて条件を5つ足した `fine` は、訓練データ 1.0、テストデータ 0.7 でした。それと同じことが起きています。
+
+テストデータは179人なので、人が1人違うと、正解率は約0.006動きます。数人ぶんの上下は、深さの違いによるものとは言えません。
+
+深さは、`fit` が決めてくれる数ではありません。自分で決めて、テストデータの正解率で比べます。訓練データの正解率だけを見て、深さを選んではいけません。
+
+次の表は、6つの特徴量の意味です。
+
+| 列 | 意味 |
+|---|---|
+| `Pclass` | 客室の等級 |
+| `Sex` | 性別（男性が 0、女性が 1） |
+| `Age` | 年齢（欠けた人は平均で埋めたもの） |
+| `Fare` | 運賃 |
+| `SibSp` | 一緒に乗った兄弟姉妹と夫・妻の人数 |
+| `Parch` | 一緒に乗った親と子の人数 |
+
+{/* 課題 */}
+
+<Exercise
+  id="python-15r-depth-b1"
+  kind="build"
+  tests={[
+    { kind: 'call', fn: 'gap', args: [['Pclass', 'Sex', 'Age'], 2] },
+    { kind: 'call', fn: 'gap', args: [['Pclass', 'Sex', 'Age'], 8] },
+    { kind: 'call', fn: 'gap', args: [['Pclass', 'Sex', 'Age', 'Fare', 'SibSp', 'Parch'], 15] },
+    { kind: 'call', fn: 'gap', args: [['Sex', 'Fare'], 1] },
+    { kind: 'call', fn: 'gap', args: [['Sex', 'Fare'], 5] },
+  ]}
+  hints={[
+    '列の名前のリストは、scikit-learn 2 の2つ目のコードと同じく、`df[ ]` に変数のまま書けます。',
+  ]}
+>
+列の名前のリストと木の深さを受け取り、訓練データの正解率からテストデータの正解率を引いた差を返す関数 `gap(columns, depth)` を書いてください。差が大きいほど、訓練データに合わせすぎている疑いが強くなります。
+
+`train.csv` を読み込み、`Age` を平均で埋め、`Sex` の `male` を 0、`female` を 1 に置き換える行は、関数の外（関数より上）に書いてください。分け方は、この節の最初のコードと同じ `test_size=0.2`、`random_state=0` です。木は `max_depth=depth` と、`random_state=0` で作ります。
+
+正解率の差は、引いてから小数第3位まで丸めます。先に丸めてから引くと、値が合わないことがあります。
+
+<Input>
+- `columns`: 特徴量に使う列の名前のリスト。`Pclass`・`Sex`・`Age`・`Fare`・`SibSp`・`Parch` のうち1つ以上
+- `depth`: 木の深さ（1以上の整数）
+</Input>
+
+<Output>
+訓練データの正解率 − テストデータの正解率 を、小数第3位まで丸めて返します。テストデータの正解率のほうが高いときは、負の数になります。
+</Output>
+</Exercise>
+
+{/* つながり */}
+
+次の章では、答えが分からない乗客に予測を出して、Kaggle に提出します。

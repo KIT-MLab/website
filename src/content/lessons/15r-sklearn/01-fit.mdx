@@ -1,0 +1,158 @@
+---
+id: python-15r-fit
+chapter: 15r-sklearn
+title: 境目を探させる
+minutes: 15
+terms: [scikit-learn, 決定木]
+---
+
+<Facilitate>
+
+**最初の問いかけ（はじめの3分）**
+
+- pandas 3 の終わりの問いから入る。「タイタニック3 で、境目を1〜80歳まで試すコードを書きました。同じ30人を scikit-learn の決定木に渡したら、同じ17歳を選ぶと思う？」
+- すぐ下の予想ボード「891人の表で、等級・性別・年齢の3つの列から、モデルに境目を1つだけ選ばせると、何%当たると思う？」（答え: 78.7%、701人 / 891人。何も見ずに「全員亡くなった」と言うと 61.6% と伝えてから入れてもらう）。全員が入れたら、先へ進む。scikit-learn 2 の2つ目のコードを全員が動かし、結果を見たあとで「答え合わせ（運営）」を押す
+
+**答え合わせで言うこと（scikit-learn 2 まで終えたあと、最後の7分）**
+
+- scikit-learn 1: 決定木の境目は16歳と18歳の間で、訓練データ 0.733、テストデータ 0.6。タイタニック3 と同じ。練習問題1 で後ろの30人で学ぶと、境目は8歳と18歳の間に動き、0.7 と 0.6。学習に使う人が変われば、境目も変わる
+- scikit-learn 2: 3つの列から性別が選ばれ、891人で 0.787（701人）。タイタニック1 の「女性なら生存」と同じ数。予測が `Sex` の列と全員一致する（1.0）ことで分かる。練習問題1 で性別を外すと、等級が選ばれ、「1等・2等なら生存、3等なら死亡」で 0.668。性別がいちばん効く
+- ひとことの要点: `fit` は自分で書いた「全部試して選ぶ」の代わり、`predict` は1人ずつの if文の代わり
+- 聞かれたら: 前半の勾配降下法は、決定木の `fit` では使わない。決定木は、境目の候補を順に試して選ぶ（タイタニック3 と同じ探し方）
+- 時間が足りなければ、scikit-learn 2 の演習問題1（`train_accuracy`）は「この回のあとに」解いてもらう
+
+**次につなげる問い（答えは次の週）**
+
+- 「0.787 は、学習に使った891人で測った正解率です。新しい乗客にも同じくらい当たると言える？ タイタニック3 では、どうやって確かめた？」（答え: 訓練データとテストデータに分ける）
+
+**よく詰まるところ**
+
+- `reshape` を忘れて1次元のまま `fit` に渡す。`ValueError: Expected 2D array, got 1D array instead:` と出て、そのあと英語で `reshape(-1, 1)` を使えと続く。`-1` は教えていないので、この節の `reshape(30, 1)` の形で直す。`predict` に1次元を渡しても同じエラーになる
+- `import scikit-learn` や `from scikit-learn.tree import …` と書く。`SyntaxError: invalid syntax` になる。モジュールの名前は `sklearn`
+- `DecisionTreeClassifier` の大文字・小文字の打ち間違い。`ImportError: cannot import name …` になり、エラーに打ち間違えた名前が出ている
+- `reshape` の行の数が人数と合わない（`reshape(4, 1)` に3人）。`ValueError: cannot reshape array of size 3 into shape (4,1)` と出る
+- 初めての ▶ は、scikit-learn の読み込みに20秒ほどかかる。押し直さずに待つ
+
+</Facilitate>
+
+<Guess id="sklearn1-three-columns" question={'タイタニック号の乗客891人の表で、等級・性別・年齢の3つの列から、モデルに境目を1つだけ選ばせます。891人の何%が当たると思う？（何も見ずに "全員亡くなった" と言うと 61.6% でした）'} unit="%" answer={78.7} answerNote="当たりは701人 / 891人" />
+
+{/* 困る例 */}
+
+タイタニック3 では、境目を1歳から80歳まで順に試し、いちばん当たる境目を選ぶくり返しを、for文と if文で自分で書きました。同じ探し方を、scikit-learn のモデルに任せます。
+
+{/* やってみる */}
+
+タイタニック3 と同じ40人の年齢と、生き残ったか（1）亡くなったか（0）を使います。次のコードの ▶ を押してください。初めて動かすときは、scikit-learn の読み込みに20秒ほどかかります。
+
+<Run
+  code={`import numpy as np
+from sklearn.tree import DecisionTreeClassifier
+
+ages = np.array([22, 30, 31, 27, 42, 32, 30, 16, 27, 51, 38, 22, 19, 18, 35, 29, 59, 5, 24, 44, 8, 19, 33, 29, 22, 30, 44, 25, 24, 37, 54, 29, 62, 30, 41, 29, 30, 35, 50, 3])
+survived = np.array([0, 0, 1, 1, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1])
+X_train = ages[:30].reshape(30, 1)
+y_train = survived[:30]
+
+model = DecisionTreeClassifier(max_depth=1)
+model.fit(X_train, y_train)
+new = np.array([10, 16, 18, 30]).reshape(4, 1)
+print(model.predict(new))`}
+  out={`[1 1 0 0]`}
+/>
+
+{/* 説明 */}
+
+2行目の `from sklearn.tree import DecisionTreeClassifier` は、scikit-learn の中の `tree` から、`DecisionTreeClassifier` という名前だけを持ってくる書き方です。scikit-learn は、機械学習のモデルをまとめたモジュールで、`import` では `sklearn` と書きます。持ってきた名前は、`np.` のような前置きなしで書けます。
+
+4行目と5行目は、リストを `np.array` で囲んだだけで、40人の値はタイタニック3 と同じです。
+
+6行目の `ages[:30].reshape(30, 1)` は、最初の30人の年齢を取り出し、30行1列の2次元の配列にします。1人を1行、特徴量を1列に並べた形です。特徴量が年齢1つだけでも、モデルにはこの形の2次元の配列で渡します。7行目の `y_train` は、最初の30人の答えで、1次元のままです。
+
+9行目の `DecisionTreeClassifier(max_depth=1)` で、決定木というモデルを1つ作り、`model` に入れます。決定木は、特徴量の境目で人を分けていくモデルです。第12章のモデルは直線の式でしたが、決定木は境目で分ける形です。`max_depth=1` は、木の深さを1にするという指定で、境目を1つだけ選んで、2つの組に分けます。
+
+10行目の `model.fit(X_train, y_train)` が、学習です。訓練データの30人を見て、いちばんよく分けられる境目を選びます。タイタニック3 で、境目を1歳から80歳まで試して `best` を選んでいた15〜18行目が、この1行になりました。
+
+11行目で10歳・16歳・18歳・30歳の4人を2次元の配列にし、12行目の `model.predict(new)` で、選んだ境目による予測を出します。10歳と16歳は `1`（生き残る）、18歳と30歳は `0` なので、境目は16歳と18歳の間です。タイタニック3 で選んだ17歳と同じ場所です。`predict` は、タイタニック3 で1人ぶんの予測を決めていた if文の代わりです。
+
+次は、同じ決定木で正解率を出します。残りの10人をテストデータにして、タイタニック3 と同じ形で表示します。次のコードの ▶ を押してください。
+
+<Run
+  code={`import numpy as np
+from sklearn.tree import DecisionTreeClassifier
+
+ages = np.array([22, 30, 31, 27, 42, 32, 30, 16, 27, 51, 38, 22, 19, 18, 35, 29, 59, 5, 24, 44, 8, 19, 33, 29, 22, 30, 44, 25, 24, 37, 54, 29, 62, 30, 41, 29, 30, 35, 50, 3])
+survived = np.array([0, 0, 1, 1, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1])
+X_train = ages[:30].reshape(30, 1)
+y_train = survived[:30]
+X_test = ages[30:].reshape(10, 1)
+y_test = survived[30:]
+
+model = DecisionTreeClassifier(max_depth=1)
+model.fit(X_train, y_train)
+train = (model.predict(X_train) == y_train).mean()
+test = (model.predict(X_test) == y_test).mean()
+print(round(train, 3), round(test, 3))`}
+  out={`0.733 0.6`}
+/>
+
+8行目と9行目は、残りの10人を、訓練データと同じ形で取り出しています。13行目と14行目の `(model.predict(X) == y).mean()` は、タイタニック4 で書いた `(pred == survived).mean()` と同じ形で、予測が答えと一致した割合を出します。訓練データでは 0.733、テストデータでは 0.6 で、タイタニック3 の出力と同じ数です。
+
+{/* 課題 */}
+
+<Exercise
+  id="python-15r-fit-m1"
+  kind="modify"
+  starter={`import numpy as np
+from sklearn.tree import DecisionTreeClassifier
+
+ages = np.array([22, 30, 31, 27, 42, 32, 30, 16, 27, 51, 38, 22, 19, 18, 35, 29, 59, 5, 24, 44, 8, 19, 33, 29, 22, 30, 44, 25, 24, 37, 54, 29, 62, 30, 41, 29, 30, 35, 50, 3])
+survived = np.array([0, 0, 1, 1, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1])
+X_train = ages[:30].reshape(30, 1)
+y_train = survived[:30]
+X_test = ages[30:].reshape(10, 1)
+y_test = survived[30:]
+
+model = DecisionTreeClassifier(max_depth=1)
+model.fit(X_train, y_train)
+train = (model.predict(X_train) == y_train).mean()
+test = (model.predict(X_test) == y_test).mean()
+print(round(train, 3), round(test, 3))`}
+  tests={[{ kind: 'stdout' }]}
+  hints={[]}
+>
+インデックス10以降の30人を訓練データ、最初の10人をテストデータにして、訓練データの正解率とテストデータの正解率を、上のコードの最後の `print` と同じ形で1行に表示してください。`survived` も同じ範囲に替えます。続けて、10歳・16歳・18歳・30歳の4人の予測を、`predict` が返す配列のまま、もう1行に表示します。
+</Exercise>
+
+<Exercise
+  id="python-15r-fit-b1"
+  kind="build"
+  tests={[
+    { kind: 'call', fn: 'tree_test', args: [[22, 30, 31, 27, 42, 32, 30, 16, 27, 51, 38, 22, 19, 18, 35, 29, 59, 5, 24, 44, 8, 19, 33, 29, 22, 30, 44, 25, 24, 37, 54, 29, 62, 30, 41, 29, 30, 35, 50, 3], [0, 0, 1, 1, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1], 20] },
+    { kind: 'call', fn: 'tree_test', args: [[5, 8, 30, 40, 10, 50], [1, 1, 0, 0, 1, 0], 4] },
+    { kind: 'call', fn: 'tree_test', args: [[20, 30, 40, 50, 25, 45], [1, 1, 0, 0, 0, 1], 4] },
+    { kind: 'call', fn: 'tree_test', args: [[12, 60, 15, 70, 40], [1, 0, 0, 0, 1], 2] },
+    { kind: 'call', fn: 'tree_test', args: [[30, 40, 10], [0, 0, 1], 2] },
+  ]}
+  hints={[
+    '受け取ったリストは `np.array()` で配列にしてから、スライスと `reshape` を使います（タイタニック4 の演習問題2 と同じです）。',
+    'テストデータの人数は、全体の人数から `n` を引いた数です。',
+    '訓練データは `reshape(n, 1)`、テストデータは `reshape(len(ages) - n, 1)` の形にします。',
+  ]}
+>
+年齢のリスト、生き残ったかのリスト、訓練データの人数を受け取る関数 `tree_test(ages, survived, n)` を書いてください。前から `n` 人を訓練データ、残りの人をテストデータとして、深さ1（`max_depth=1`）の決定木を訓練データで学習させ、テストデータでの正解率を返します。
+
+<Input>
+- `ages`: 乗客の年齢のリスト
+- `survived`: 生き残ったら `1`、亡くなったら `0` のリスト。`ages` と同じ順
+- `n`: 訓練データにする人数。1以上で、`ages` の人数より小さい整数
+</Input>
+
+<Output>
+テストデータでの正解率を、0から1の小数で返します。%にはせず、丸めません。
+</Output>
+</Exercise>
+
+{/* つながり */}
+
+次の節では、891人の表から、等級・性別・年齢の3つの列をまとめてモデルに入れます。

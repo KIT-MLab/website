@@ -98,7 +98,8 @@ export const PYTHON_TOOLS = [
   /* まだどの節でも教えていない道具。導入する節が無いので、どこで使っても落ちる（検査16）。
      第10章の書き手が a, b = 7, 30 を5か所で使い、読んで見つけた（2026-09-24）。
      教える節が決まったら、in をその節の id に直す */
-  { name: '1行で複数の変数に入れる a, b = …', in: 'python-99-unpack', re: /^[ \t]*[A-Za-z_]\w*\s*,\s*[A-Za-z_]\w*\s*=(?!=)/m },
+  // scikit-learn 3（メンバーだけの章 15r-sklearn）で train_test_split と一緒に教える（2026-10-03 代表の選択。design/spec/56-tools-curriculum.md 第5節 G）
+  { name: '1行で複数の変数に入れる a, b = …', in: 'python-15r-split', re: /^[ \t]*[A-Za-z_]\w*(\s*,\s*[A-Za-z_]\w*)+\s*=(?!=)/m, desc: '関数が返した複数の値を、コンマで並べた変数に順に入れる書き方。`a, b = 関数(…)` と書くと、1つ目が `a`、2つ目が `b` に入る。' },
   /* 1行で書く条件式 x if 条件 else y。第3章で教えたのは行を分ける if / else だけ。
      第10.5節の書き手が使い、読んで見つけた（2026-09-24） */
   { name: '1行で書く条件式 … if … else …', in: 'python-99-ternary', re: /\S[ \t]+if[ \t]+[^:\n]+[ \t]else[ \t]+\S/ },
