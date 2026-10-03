@@ -54,6 +54,8 @@
   - 構文の一覧（`syntax-list.ts`）が第3章1節の行に `True` `False` を出している。この値を教えるのは第7章3節
 - **今週のページの組み直しと復習のペースメーカー**（`spec/54-week-pace.md`、2026-10-02）。列は前回・今回・次回、各列は「この回の前に／この回でやること／この回のあとに」。各自で進める Python の復習は、ページの上の帯（`plan.ts` の `SELF_REVIEW`。進み具合は練習問題集の★1・★2）。帯の細部は 2026-10-03 に代表が試作から選んだ（`spec/54-week-pace.md` 第6節）
 - **いまどの課題にいるか・つまずきの記録**（`spec/55-stumbles.md`、2026-10-02）。`activity_minutes.exercise_id`（migration 0015。**代表が本番に当ててから push する**）、「みんなの進み具合」の「いま」の欄、`/staff/stumbles/`、書き出し `/api/staff/stumbles-export`（利用者の id だけ）。数え方は `src/server/stumbles.ts`（`node --test src/server/stumbles.test.ts`）。箱が画面から外れたら「無し」に戻る動きは、実際のブラウザでは確かめていない。**集めた記録で教材の書き方・順番を見直す**のは、記録がたまってから（代表「分からない所を報告してと言っても誰も報告してくれない」）
+- **pandas・scikit-learn・Kaggle の章（メンバーだけ。集まりの後半で使う）**。課程表 `spec/56-tools-curriculum.md`、設計メモ `briefs/15q-pandas.md`・`15r-sklearn.md`・`15s-titanic.md`。**pandas 1〜4（10/27・11/10）と scikit-learn 1〜4（11/17・11/24）は書いて読み手を通した**（準備中。代表が解いてから公開する）。**Kaggle 1〜3（12/1〜）はまだ書いていない**: 書く前に、代表が Kaggle で1回提出して手順のメモ（経路・電話番号の確認・test.csv の欠けの数・Notebook の版）を残す（分かれ道 H）。「試したことの記録」（12/1 に要る。見た目は案を出して代表が選ぶ）もまだ。CSV を節に添える仕組みは `spec/57-lesson-files.md`
+- **読み手2人に同じ報告ファイルを同時に書かせない**（2026-10-03、scikit-learn 3・4 の報告が上書きされて消えた）。報告ファイルは読み手ごとに分ける
 - **練習問題集の第3〜8章**。書き手への指示は `authoring/practice-writer.md`。第3・4・7章は書いて読み手に読ませた（`reviews/practice-*.md`）。第3・4・5・7・8章の135問を書いて読み手に読ませた（`reviews/practice-*.md`）。**第6章（エラー）の練習問題集は作らない**（2026-10-03 代表の決定。帯からも外した）
 - **練習編3**（`15p-practice3`、Titanic）。仕様は `spec/50-part3-curriculum.md` 第2.5節。フォルダはまだ無い
 - **振り分けテスト**（`spec/20-platform.md` 第12.4節）。第0章の前に約50問。まだ1問も無い
