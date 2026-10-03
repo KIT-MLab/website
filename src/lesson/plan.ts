@@ -148,7 +148,15 @@ export const PLAN: PlanRow[] = [
     teach: { label: '傾き', lessons: ['python-10-rate', 'python-10-derivative', 'python-10-direction'] },
     together: [{ lesson: 'python-15q-missing' }, { lesson: 'python-15q-encode' }],
   },
-  { kind: 'meet', no: '7', date: '2026-11-17', title: '勾配降下法 ／ scikit-learn① fit と predict', goal: '' },
+  {
+    kind: 'meet',
+    no: '7',
+    date: '2026-11-17',
+    title: '勾配降下法 ／ scikit-learn① fit と predict',
+    goal: '',
+    teach: { label: '勾配降下法', lessons: ['python-13-descent', 'python-13-rate'] },
+    together: [{ lesson: 'python-15r-fit' }, { lesson: 'python-15r-features' }],
+  },
   {
     kind: 'meet',
     no: '8',
@@ -156,6 +164,8 @@ export const PLAN: PlanRow[] = [
     title: '線形回帰 ／ scikit-learn② 訓練データとテストデータ',
     goal: '線形回帰を自分で書ける',
     big: true,
+    teach: { label: '線形回帰', lessons: ['python-13-linear'] },
+    together: [{ lesson: 'python-15r-split' }, { lesson: 'python-15r-depth' }],
   },
   {
     kind: 'meet',
