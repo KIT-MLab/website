@@ -1,0 +1,151 @@
+---
+id: python-15q-missing
+chapter: 15q-pandas
+title: 欠損値を数えて埋める
+minutes: 15
+terms: [欠損値]
+files: [train.csv]
+---
+
+<Facilitate>
+
+**最初の問いかけ（はじめの3分）**
+
+- 前回の終わりの問い「年齢が分からない人は、891人のうち何人いると思う？」の答え合わせから入る
+- すぐ下の予想ボード「年齢が分からない人は、891人のうち何%だと思う？」に入れてもらう（答え: 19.9%、177人 / 891人）。全員が入れたら、先へ進む。pandas 3 の最初のコードを全員が動かして、177人を自分の画面で見たあとで「答え合わせ（運営）」を押す
+
+**答え合わせで言うこと（この回の最後の7分）**
+
+- 年齢が分からない人は 177人（19.9%）。`Cabin`（客室の番号）は 687人（77.1%）で欠けているので、埋めずに使わない
+- ひとことの要点: 欠けを数えずに条件で比べると、黙って人が抜ける
+- 時間が足りなければ、pandas 4 の演習問題は「この回のあとに」解いてもらう
+
+**次につなげる問い**
+
+- 「`Sex` の列を、タイタニック4 のように 0 と 1 にするには、どう書けばよいと思う？」（答えは pandas 4）
+- さらに次の週へ: 「表を直し終えたら、タイタニック3 の "境目を全部試す" を、誰かが代わりにやってくれないだろうか」
+
+**よく詰まるところ**
+
+- `fillna` の結果を `df["Age"] = …` と入れ直し忘れる。`df["Age"].fillna(age_mean)` だけでは表は変わらず、あとで数えても欠けが残る
+- Web で見つかる `inplace=True` の形は、このサイトの pandas では効かない。`df["Age"] = df["Age"].fillna(…)` の形を使う
+- `isna` を `isnan` と書く。`AttributeError` になり、エラーの最後の行に、探した名前が出ている
+
+</Facilitate>
+
+<Guess id="pandas3-age-missing" question={'タイタニック号の乗客891人のうち、年齢が分からない人は何%だと思う？'} unit="%" answer={19.9} answerNote="年齢が分からないのは 177人 / 891人" />
+
+{/* 困る例 */}
+
+タイタニック2〜4 では、年齢が整数で分かっている乗客だけを使いました。891人の表で、17歳未満の人と17歳以上の人を、それぞれ数えてみます。
+
+{/* やってみる */}
+
+次のコードの ▶ を押してください。
+
+<Run
+  code={`import pandas as pd
+
+df = pd.read_csv("train.csv")
+print(len(df[df["Age"] < 17]))
+print(len(df[df["Age"] >= 17]))
+print(df["Age"].isna().sum())`}
+  out={`100
+614
+177`}
+/>
+
+{/* 説明 */}
+
+4行目の `print` は17歳未満の人数、5行目の `print` は17歳以上の人数を表示します。この2つの人数を足すと 714 で、乗客の数 891 に足りません。
+
+足りない 177人は、表の中で年齢の値が入っていない人です。pandas 1 で見た `NaN` が入っている所のように、表の中で値が入っていない所を、欠損値と呼びます。`NaN` と何かを比べた結果は、`<` でも `>=` でも `False` になります。そのため、年齢が欠損値の人は、17歳未満にも17歳以上にも入りません。
+
+6行目の `df["Age"].isna()` は、`Age` の列の各行が欠損値かどうかを、`True` と `False` の列で返します。これに `.sum()` を続けると、`True` が1として数えられ、欠損値の数が出ます。pandas 1 で `Survived` の合計が生き残った人数になったのと同じ形です。
+
+次のコードの ▶ を押してください。
+
+<Run
+  code={`import pandas as pd
+
+df = pd.read_csv("train.csv")
+print(df.isna().sum())`}
+  out={`PassengerId      0
+Survived         0
+Pclass           0
+Name             0
+Sex              0
+Age            177
+SibSp            0
+Parch            0
+Ticket           0
+Fare             0
+Cabin          687
+Embarked         2
+dtype: int64`}
+/>
+
+`df.isna().sum()` のように、列を取り出さずに表へ `.isna()` を使うと、列ごとの欠損値の数が一度に出ます。`Age` は 177、`Cabin` は 687、`Embarked` は 2 で、ほかの列には欠損値がありません。`Embarked` は、乗客が船に乗った港の頭文字（`S`、`C`、`Q`）です。
+
+出力の最後の `dtype: int64` は、数の種類を表す印で、気にしなくて構いません。
+
+`Cabin`（客室の番号）は 687人も欠けているので、この列は埋めずに、使わないことにします。`Age` は、平均で埋めます。次のコードの ▶ を押してください。
+
+<Run
+  code={`import pandas as pd
+
+df = pd.read_csv("train.csv")
+age_mean = df["Age"].mean()
+print(age_mean)
+df["Age"] = df["Age"].fillna(age_mean)
+print(df["Age"].isna().sum())
+print(len(df[df["Age"] >= 17]))`}
+  out={`29.69911764705882
+0
+791`}
+/>
+
+4行目の `df["Age"].mean()` は、`Age` の列の平均です。欠損値は飛ばして、年齢が分かっている 714人で計算します。
+
+6行目の `.fillna(age_mean)` は、列の欠損値を `age_mean` の値で埋めた列を返します。`fillna` は新しい列を返すだけで、表そのものは変わりません。そのため、`df["Age"] = …` で、`df` の `Age` の列に入れ直しています。入れ直さないと、7行目で数えても欠損値が残ったままです。
+
+埋めたあとは、欠損値が 0 になり、17歳以上の人数が 791 になりました。
+
+{/* 課題 */}
+
+<Exercise
+  id="python-15q-missing-m1"
+  kind="modify"
+  starter={`import pandas as pd
+
+df = pd.read_csv("train.csv")
+age_mean = df["Age"].mean()
+df["Age"] = df["Age"].fillna(age_mean)
+print(df["Age"].isna().sum())
+print(len(df[df["Age"] >= 17]))`}
+  tests={[{ kind: 'stdout' }]}
+  hints={[]}
+>
+`Embarked` の欠損値を、文字列 `"S"` で埋めてください。そのあと、`Embarked` の欠損値の数と、`Embarked` が `"S"` の人数を、この順に1行ずつ表示するように、コードを書き換えてください。`Age` の行は要らないので消します。表示するのは2つだけです。
+</Exercise>
+
+<Exercise
+  id="python-15q-missing-b1"
+  kind="build"
+  tests={[{ kind: 'stdout' }]}
+  hints={[]}
+>
+`train.csv` を読み込み、`Age` の欠損値を数え、平均で埋め、埋めたあとにもう一度数えます。最後に、埋めたあとで17歳以上の人数を数えます。この3つの数を、この順に1行ずつ表示してください。
+
+<Input>
+なし
+</Input>
+
+<Output>
+1行目は埋める前の欠損値の数、2行目は埋めたあとの欠損値の数、3行目は埋めたあとの17歳以上の人数です。どれも、求めた数をそのまま表示します。
+</Output>
+</Exercise>
+
+{/* つながり */}
+
+次の節では、`Sex` の列の `male` と `female` を、0 と 1 の数に置き換えます。

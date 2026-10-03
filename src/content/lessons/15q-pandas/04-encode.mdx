@@ -1,0 +1,124 @@
+---
+id: python-15q-encode
+chapter: 15q-pandas
+title: 文字を数に置き換える
+minutes: 15
+terms: [辞書]
+files: [train.csv]
+---
+
+<Facilitate>
+
+**よく詰まるところ**
+
+- `.map` の結果を入れ直し忘れる。`df["Sex"].map({…})` だけでは表は変わらず、`df["Sex"] = df["Sex"].map({…})` と書く（pandas 3 の `fillna` と同じ）
+- 辞書の `:` や `,` の打ち間違い。`SyntaxError` になり、エラーに出ている行の、`{` から `}` までを見る
+
+</Facilitate>
+
+{/* 困る例 */}
+
+タイタニック4 では、性別を 1 と 0 の配列で持ち、`sex == 1` のように比べていました。`train.csv` の `Sex` は、`male` と `female` の文字のままです。
+
+{/* やってみる */}
+
+次のコードの ▶ を押してください。
+
+<Run
+  code={`import pandas as pd
+
+df = pd.read_csv("train.csv")
+df["Sex"] = df["Sex"].map({"male": 0, "female": 1})
+print(df["Sex"].head())
+print(df["Sex"].mean())`}
+  out={`0    0
+1    1
+2    1
+3    1
+4    0
+Name: Sex, dtype: int64
+0.35241301907968575`}
+/>
+
+{/* 説明 */}
+
+4行目の `{"male": 0, "female": 1}` は、辞書と呼ぶ対応表です。`:` の左が元の値、右が置き換えたあとの値で、組どうしをコンマで区切り、全体を `{ }` で囲みます。
+
+`.map(辞書)` は、列の各行を、辞書にしたがって置き換えた列を返します。pandas 3 の `fillna` と同じで、表そのものは変わらないので、`df["Sex"] = …` で入れ直します。
+
+5行目の `print(df["Sex"].head())` で、`Sex` の列の最初の5人が `0`、`1`、`1`、`1`、`0` に置き換わっています。最後の行の `Name: Sex, dtype: int64` は、列の名前と数の種類の印で、pandas 3 の `dtype: int64` と同じものです。
+
+6行目の `.mean()` は、`Sex` の列の平均です。女性が `1`、男性が `0` なので、平均は女性の割合になります。性別が 1 と 0 になり、タイタニック4 の `sex` と同じ形になりました。
+
+港の `Embarked` も数に置き換えます。まず、埋めずにそのまま置き換えてみます。次のコードの ▶ を押してください。
+
+<Run
+  code={`import pandas as pd
+
+df = pd.read_csv("train.csv")
+df["Embarked"] = df["Embarked"].map({"S": 0, "C": 1, "Q": 2})
+print(df["Embarked"].isna().sum())`}
+  out={`2`}
+/>
+
+辞書に無い値は、置き換えたあとに欠損値になります。`Embarked` には欠損値が2人ぶんあり、欠損値は辞書に無いので、置き換えたあとも欠損値のままです。
+
+pandas 3 の演習問題と同じように、先に `"S"` で埋めてから置き換えます。次のコードの ▶ を押してください。
+
+<Run
+  code={`import pandas as pd
+
+df = pd.read_csv("train.csv")
+df["Embarked"] = df["Embarked"].fillna("S")
+df["Embarked"] = df["Embarked"].map({"S": 0, "C": 1, "Q": 2})
+print(df["Embarked"].isna().sum())
+print(df["Embarked"].head())`}
+  out={`0
+0    0
+1    1
+2    0
+3    0
+4    0
+Name: Embarked, dtype: int64`}
+/>
+
+先に埋めておけば、置き換えたあとに欠損値が残りません。
+
+{/* 課題 */}
+
+<Exercise
+  id="python-15q-encode-m1"
+  kind="modify"
+  starter={`import pandas as pd
+
+df = pd.read_csv("train.csv")
+df["Sex"] = df["Sex"].map({"male": 0, "female": 1})
+print(df["Sex"].mean())`}
+  tests={[{ kind: 'stdout' }]}
+  hints={[]}
+>
+`Embarked` の欠損値を `"S"` で埋めてから、`S` を 1、`C` を 2、`Q` を 3 に置き換え、`Embarked` の列の平均を1行で表示するように、コードを書き換えてください。
+</Exercise>
+
+<Exercise
+  id="python-15q-encode-b1"
+  kind="build"
+  tests={[{ kind: 'stdout' }]}
+  hints={[
+    '3行目は、`Sex` が 1 の人だけを取り出してから、`Survived` の平均を出します。',
+  ]}
+>
+`train.csv` を読み込み、`Sex` の列を、`male` を 0、`female` を 1 に置き換えます。そのあと、`Sex` の列の合計、`Sex` の列の平均、女性のうち生き残った人の割合を、この順に1行ずつ表示してください。
+
+<Input>
+なし
+</Input>
+
+<Output>
+1行目は `Sex` の列の合計（女性の人数）、2行目は `Sex` の列の平均（女性の割合）、3行目は女性のうち生き残った人の割合です。割合は、0から1の小数のまま、丸めずに表示します。
+</Output>
+</Exercise>
+
+{/* つながり */}
+
+次の週は、直した表をモデルに入れます。

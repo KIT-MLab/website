@@ -123,3 +123,5 @@
 | pandas | | 表の形のデータを読み込み、取り出し、直すためのモジュール。`import pandas as pd` の形で読み込む。 | 15q-pandas |
 | CSV | comma-separated values | 表の1行を1行の文字で書き、項目をコンマで区切ったファイルの形。 | 15q-pandas |
 | データフレーム | DataFrame | pandas で扱う表。1行が1件、1列が1つの項目で、列には名前が付いている。 | 15q-pandas |
+| 欠損値 | missing value | 表の中で、値が入っていない所。pandas では `NaN` と表示される。 | 15q-pandas |
+| 辞書 | dictionary | 「元の値」と「対応する値」の組を並べたもの。`{"male": 0, "female": 1}` のように書く。 | 15q-pandas |
