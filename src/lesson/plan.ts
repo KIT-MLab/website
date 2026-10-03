@@ -138,7 +138,16 @@ export const PLAN: PlanRow[] = [
     together: [{ lesson: 'python-15q-read' }, { lesson: 'python-15q-select' }],
   },
   { kind: 'off', date: '2026-11-03', title: '休み（文化の日）' },
-  { kind: 'meet', no: '6', date: '2026-11-10', title: '傾き ／ pandas② 欠けた値・文字を数に', goal: '' },
+  {
+    kind: 'meet',
+    no: '6',
+    date: '2026-11-10',
+    title: '傾き ／ pandas② 欠けた値・文字を数に',
+    goal: '',
+    // 前半は第10章の「傾き」。どの節までかは、代表が前半の進み具合で決める（1〜3節を仮に置く）
+    teach: { label: '傾き', lessons: ['python-10-rate', 'python-10-derivative', 'python-10-direction'] },
+    together: [{ lesson: 'python-15q-missing' }, { lesson: 'python-15q-encode' }],
+  },
   { kind: 'meet', no: '7', date: '2026-11-17', title: '勾配降下法 ／ scikit-learn① fit と predict', goal: '' },
   {
     kind: 'meet',
