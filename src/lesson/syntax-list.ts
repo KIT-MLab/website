@@ -343,7 +343,7 @@ export const SYNTAX_CATEGORIES: SyntaxCategory[] = [
       {
         code: 'def divide(a, b):\n    return a // b, a % b\n\nprint(divide(7, 2))',
         result: '(3, 1)',
-        note: '1つの変数で受け取ると、(3, 1) のように（ ）で囲んだ組（タプル）になる',
+        note: '2つに分けずにそのまま使うと、(3, 1) のように（ ）で囲んだ組（タプル）になる',
         since: 'python-05-return',
       },
       {
