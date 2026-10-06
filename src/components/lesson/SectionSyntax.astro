@@ -19,12 +19,15 @@ interface Props {
 const { id } = Astro.props;
 // `also` は、軽く触れる節やホームの節にも同じ行を出すための欄（2026-10-06。design/reviews/home-audit-2026-10-06.md）
 const rows = SYNTAX_CATEGORIES.flatMap((c) => c.entries.filter((e) => e.since === id || (e.also ?? []).includes(id)));
+// pandas の行は、どれも表を読み込み直したところから動かした結果。続けて読むと、前の行で直した表の続きに見えるので断る（2026-10-06 読み手の指摘）
+const hasPandas = SYNTAX_CATEGORIES.some((c) => c.key === 'pandas' && c.entries.some((e) => e.since === id || (e.also ?? []).includes(id)));
 ---
 
 {
   rows.length > 0 && (
     <section class="kit-sum" aria-label="この節の書き方">
       <p class="kit-sum__h">この節の書き方</p>
+      {hasPandas && <p class="kit-sum__note">pandas の行は、どれも <code>df = pd.read_csv("train.csv")</code> で読み込み直したところから動かした結果です。</p>}
       <table class="kit-sum__t">
         <thead>
           <tr>
@@ -59,6 +62,11 @@ const rows = SYNTAX_CATEGORIES.flatMap((c) => c.entries.filter((e) => e.since ==
     border-top: 2px solid var(--l-ink);
   }
 
+  .kit-sum__note {
+    margin: 0 0 6px;
+    font-size: 12.5px;
+    color: var(--l-ink-2);
+  }
   .kit-sum__h {
     margin: 8px 0 4px;
     font-family: var(--font-head);
