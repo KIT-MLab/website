@@ -38,6 +38,7 @@
 | float | | 文字列や整数を小数に変える関数。小数を表す型の名前でもある。 | 02-numbers |
 | 浮動小数点数 | floating-point number | コンピュータの中で小数を表す形式。`float` はこの形式で値を持つ。 | 02-numbers |
 | round | | 数値を指定した桁数に丸める関数。第2引数に残す桁数を書く。 | 02-numbers |
+| 演算子 | operator | 計算に使う `+` `-` `*` `/` `//` `%` `**` などの記号。 | 02-numbers |
 | べき乗 | exponentiation | ある数を何回か掛け合わせる計算。Python では `**` を使う。 | 02-numbers |
 | 余り | remainder | 割り算で割り切れずに残った数。剰余とも呼ぶ。Python では `%` を使う。 | 02-numbers |
 | 切り捨て除算 | floor division | 割り算の商を整数で求める計算。整数除算とも呼ぶ。Python では `//` を使う。 | 02-numbers |

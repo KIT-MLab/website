@@ -76,7 +76,7 @@ print(X_train.head())`}
 
 3行目の `from sklearn.model_selection import train_test_split` は、scikit-learn の `model_selection` から、`train_test_split` という名前だけを持ってきます。
 
-12行目の `train_test_split(X, y, test_size=0.2, random_state=0)` は、表 `X` と答え `y` を、訓練データとテストデータに分けます。返すものは4つで、訓練データの特徴量、テストデータの特徴量、訓練データの答え、テストデータの答えの順です。`=` の左に名前を4つコンマで並べると、右の4つが左から順に、それぞれの名前に入ります。名前は、scikit-learn 1 で自分で付けた `X_train`・`y_train`・`X_test`・`y_test` と同じものを使いますが、並べる順は違います。`X_train`・`X_test`・`y_train`・`y_test` の順です。
+12行目の `train_test_split(X, y, test_size=0.2, random_state=0)` は、表 `X` と答え `y` を、訓練データとテストデータに分けます。返すものは4つで、訓練データの特徴量、テストデータの特徴量、訓練データの答え、テストデータの答えの順です。`=` の左に名前を4つコンマで並べると、右の4つが左から順に、それぞれの名前に入ります。第1章2節の表にある書き方です。名前は、scikit-learn 1 で自分で付けた `X_train`・`y_train`・`X_test`・`y_test` と同じものを使いますが、並べる順は違います。`X_train`・`X_test`・`y_train`・`y_test` の順です。
 
 `test_size=0.2` は、テストデータを全体のおよそ2割にするという指定です。891人のおよそ2割にあたる179人がテストデータ、残りの712人が訓練データになります。
 
