@@ -400,7 +400,7 @@ export const SYNTAX_CATEGORIES: SyntaxCategory[] = [
       {
         code: 'scores = np.array([40, 55, 50])\nprint(scores + 10)',
         result: '[50 65 60]',
-        note: '要素ごとにまとめて計算する',
+        note: '値ごとにまとめて計算する',
         since: 'python-07-array',
       },
       {
@@ -428,7 +428,7 @@ export const SYNTAX_CATEGORIES: SyntaxCategory[] = [
       {
         code: 'print(np.maximum(np.array([-2, 0, 3]), 0))',
         result: '[0 0 3]',
-        note: '値ごとに大きいほう',
+        note: '各値と0を比べて、大きいほう',
         since: 'python-07-array',
       },
       {
@@ -466,7 +466,7 @@ export const SYNTAX_CATEGORIES: SyntaxCategory[] = [
       {
         code: 'p = np.array([300, 120, 450, 120])\nprint(p.argmax())\nprint(p.argmin())',
         result: '2\n1',
-        note: '最大・最小の値の位置。同じ値なら前のほう',
+        note: '最大・最小の値がある位置。同じ値が複数あれば、前のほうの位置',
         since: 'python-07-agg',
       },
       { code: 'print(np.sort(np.array([55, 90, 40])))', result: '[40 55 90]', note: '小さい順に並べる', since: 'python-07-agg' },
@@ -503,7 +503,7 @@ export const SYNTAX_CATEGORIES: SyntaxCategory[] = [
       {
         code: 's = np.array([40, 90, 55, 70, 30])\nprint(len(s[s >= 60]))',
         result: '2',
-        note: '取り出した値の個数でも同じ',
+        note: '条件に合う値を取り出して、その個数を数えても同じ',
         since: 'python-07-select',
       },
       {
@@ -513,15 +513,21 @@ export const SYNTAX_CATEGORIES: SyntaxCategory[] = [
         since: 'python-07-select',
       },
       {
+        code: 's = np.array([40, 90, 55, 70, 30])\nprint((s >= 50) & (s < 80))',
+        result: '[False False  True  True False]',
+        note: '両方が True の位置だけ True',
+        since: 'python-07-select',
+      },
+      {
         code: 's = np.array([40, 90, 55, 70, 30])\nprint(s[(s >= 50) & (s < 80)])',
         result: '[55 70]',
-        note: '2つの条件の両方。それぞれを ( ) で囲む',
+        note: '2つの条件の両方を満たす値。それぞれの条件を ( ) で囲む',
         since: 'python-07-select',
       },
       {
         code: 's = np.array([40, 90, 55, 70, 30])\nprint(s[(s < 40) | (s >= 90)])',
         result: '[90 30]',
-        note: '2つの条件のどちらか。それぞれを ( ) で囲む',
+        note: '2つの条件のどちらかを満たす値。それぞれの条件を ( ) で囲む',
         since: 'python-07-select',
       },
       {
@@ -601,7 +607,7 @@ export const SYNTAX_CATEGORIES: SyntaxCategory[] = [
       {
         code: 't = np.array([[80, 70, 90], [60, 50, 40]])\nprint(t.argmax(axis=1))',
         result: '[2 0]',
-        note: '行ごとに最大の位置',
+        note: '行ごとの、最大の値の位置',
         since: 'python-07-stats',
       },
       { code: 'table = []\nfor i in range(2):\n    table.append([int(input()), int(input()), int(input())])\nprint(np.array(table))', result: '[[80 70 90]\n [60 50 40]]（入力が80・70・90・60・50・40の6行のとき）', note: '入力から1人ぶんずつ読んで、2次元配列を作る', since: 'python-07-scores' },
@@ -656,13 +662,13 @@ export const SYNTAX_CATEGORIES: SyntaxCategory[] = [
       {
         code: 'ages = np.array([22, 30, 31])\nprint(ages.reshape(3, 1).shape)',
         result: '(3, 1)',
-        note: '1列の2次元にする（scikit-learn に渡す形）',
+        note: '1列の2次元にする（あとの章でよく使う形）',
         since: 'python-08-reshape',
       },
       {
         code: 'ages = np.array([22, 30, 31])\nprint(ages.reshape(-1, 1))',
         result: '[[22]\n [30]\n [31]]',
-        note: '-1 は個数から自動で決まる',
+        note: '-1 の所は、全体の値の個数から自動で決まる',
         since: 'python-08-reshape',
       },
       {
@@ -704,6 +710,12 @@ export const SYNTAX_CATEGORIES: SyntaxCategory[] = [
         note: '種を決めて0〜4をランダムに並べる（何度実行しても同じ並び）',
         since: 'python-08-range',
         also: ['python-15-split'],
+      },
+      {
+        code: 'x = np.array([10, 20, 30, 40, 50])\nrng = np.random.default_rng(3)\nprint(x[rng.permutation(5)])',
+        result: '[50 30 20 40 10]',
+        note: '自分の配列を混ぜる（位置の並びで取り出す。第7章4節）',
+        since: 'python-08-range',
       },
       {
         code: 'rng = np.random.default_rng(3)\nprint(rng.integers(1, 7, 5))',

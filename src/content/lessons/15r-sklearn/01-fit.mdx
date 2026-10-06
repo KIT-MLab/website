@@ -27,7 +27,7 @@ terms: [scikit-learn, 決定木]
 
 **よく詰まるところ**
 
-- `reshape` を忘れて1次元のまま `fit` に渡す。`ValueError: Expected 2D array, got 1D array instead:` と出て、そのあと英語で `reshape(-1, 1)` を使えと続く。`-1` は第8章5節の「この節の書き方」の表にあるが、この節の本文は `reshape(30, 1)` の形なので、その形で直す。`predict` に1次元を渡しても同じエラーになる
+- `reshape` を忘れて1次元のまま `fit` に渡す。`ValueError: Expected 2D array, got 1D array instead:` と出て、そのあと英語で `reshape(-1, 1)` を使えと続く。`-1` は第8章5節の冒頭の表（「この節の書き方」）に出ているが、この節（決定木の節）の本文は `reshape(30, 1)` の形なので、その形で直す。`predict` に1次元を渡しても同じエラーになる
 - `import scikit-learn` や `from scikit-learn.tree import …` と書く。`SyntaxError: invalid syntax` になる。モジュールの名前は `sklearn`
 - `DecisionTreeClassifier` の大文字・小文字の打ち間違い。`ImportError: cannot import name …` になり、エラーに打ち間違えた名前が出ている
 - `reshape` の行の数が人数と合わない（`reshape(4, 1)` に3人）。`ValueError: cannot reshape array of size 3 into shape (4,1)` と出る
