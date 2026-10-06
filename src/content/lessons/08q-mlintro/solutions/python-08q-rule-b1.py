@@ -4,7 +4,7 @@ for i in range(n):
     sex = input()
     pclass = int(input())
     survived = int(input())
-    if sex == "女" and pclass != 3:
+    if sex == "female" and pclass != 3:
         pred = 1
     else:
         pred = 0

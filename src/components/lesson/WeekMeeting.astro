@@ -1,7 +1,7 @@
 ---
 /**
  * 今週のページ（20-platform.md 第25.4節・design/spec/54-week-pace.md 第4.2節）の1回ぶんの中身:
- * この回の前に（予習）・この回でやること（行の頭に前半・後半）・この回のあとに（復習）を時間の順に。
+ * 予習・今週の教材（行の頭に前半・後半）・復習を時間の順に（見出しは 2026-10-06 代表の選択で短くした）。
  * 3列の列と、その先の回を開いたときの中身の両方で使う。
  *
  * 行き先が見られない（章が準備中・今週の演習がまだ公開されていない）ものは、リンクにせず
@@ -19,7 +19,7 @@ const { view } = Astro.props;
 ---
 
 <div class="wm">
-  <p class="wm__k">この回の前に（予習）</p>
+  <p class="wm__k">予習</p>
   {
     view.before.length === 0 ? (
       <p class="wm__none">―</p>
@@ -35,7 +35,7 @@ const { view } = Astro.props;
     )
   }
 
-  <p class="wm__k">この回でやること</p>
+  <p class="wm__k">今週の教材</p>
   <div class="wm__halves">
     <span class="wm__half">前半</span>
     <div>
@@ -85,7 +85,7 @@ const { view } = Astro.props;
     </div>
   </div>
 
-  <p class="wm__k">この回のあとに（復習）</p>
+  <p class="wm__k">復習</p>
   {
     view.after.length === 0 ? (
       <p class="wm__none">―</p>
@@ -127,7 +127,7 @@ const { view } = Astro.props;
   .wm__k:first-child {
     margin-top: 0;
   }
-  /* 「この回でやること」の中は、行の頭に灰色の「前半」「後半」を置く（2026-10-03 代表の選択） */
+  /* 「今週の教材」の中は、行の頭に灰色の「前半」「後半」を置く（2026-10-03 代表の選択） */
   .wm__halves {
     display: grid;
     grid-template-columns: max-content minmax(0, 1fr);

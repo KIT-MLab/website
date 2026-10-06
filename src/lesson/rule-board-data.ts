@@ -13,13 +13,13 @@
 export type RulePassengers = { sex: string[]; pclass: number[]; age: number[] };
 
 export const RULE_TRAIN: RulePassengers = {
-  sex: ['男', '男', '女', '女', '男', '女', '男', '男', '男', '男', '男', '男', '男', '男', '女', '男', '男', '女', '男', '男'],
+  sex: ['male', 'male', 'female', 'female', 'male', 'female', 'male', 'male', 'male', 'male', 'male', 'male', 'male', 'male', 'female', 'male', 'male', 'female', 'male', 'male'],
   pclass: [3, 2, 1, 3, 2, 1, 2, 3, 2, 3, 1, 3, 2, 2, 1, 3, 2, 3, 2, 2],
   age: [22, 30, 31, 27, 42, 32, 30, 16, 27, 51, 38, 22, 19, 18, 35, 29, 59, 5, 24, 44],
 };
 
 export const RULE_TEST: RulePassengers = {
-  sex: ['男', '男', '女', '男', '男', '男', '女', '男', '男', '男', '男', '女', '男', '男', '男', '女', '男', '女', '男', '女'],
+  sex: ['male', 'male', 'female', 'male', 'male', 'male', 'female', 'male', 'male', 'male', 'male', 'female', 'male', 'male', 'male', 'female', 'male', 'female', 'male', 'female'],
   pclass: [1, 3, 3, 3, 1, 3, 1, 2, 3, 3, 2, 3, 1, 3, 3, 2, 2, 3, 2, 1],
   age: [61, 4, 1, 21, 56, 18, 50, 30, 36, 9, 1, 4, 45, 40, 36, 32, 19, 19, 3, 44],
 };

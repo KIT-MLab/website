@@ -1,11 +1,11 @@
-sex = ["男", "男", "女", "女", "男", "女", "男", "男", "男", "男", "男", "男", "男", "男", "女", "男", "男", "女", "男", "男", "女", "男", "男", "男", "男", "男", "男", "女", "女", "男", "男", "女", "男", "男", "女", "女", "女", "女", "女", "男"]
+sex = ["male", "male", "female", "female", "male", "female", "male", "male", "male", "male", "male", "male", "male", "male", "female", "male", "male", "female", "male", "male", "female", "male", "male", "male", "male", "male", "male", "female", "female", "male", "male", "female", "male", "male", "female", "female", "female", "female", "female", "male"]
 ages = [22, 30, 31, 27, 42, 32, 30, 16, 27, 51, 38, 22, 19, 18, 35, 29, 59, 5, 24, 44, 8, 19, 33, 29, 22, 30, 44, 25, 24, 37, 54, 29, 62, 30, 41, 29, 30, 35, 50, 3]
 survived = [0, 0, 1, 1, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1]
 
 def accuracy(border, start, end):
     hits = 0
     for i in range(start, end):
-        if sex[i] == "女" or ages[i] < border:
+        if sex[i] == "female" or ages[i] < border:
             pred = 1
         else:
             pred = 0

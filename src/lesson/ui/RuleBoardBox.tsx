@@ -26,7 +26,7 @@ const DESCRIPTION_MAX = 40;
 /** テストデータがこれだけ下がったら ▼ を付ける（20人なら2人ぶん） */
 const DROP = 0.1;
 
-const STARTER = `if sex[i] == "女":
+const STARTER = `if sex[i] == "female":
     pred = 1
 else:
     pred = 0`;
@@ -62,7 +62,7 @@ function program(rule: string): string {
  * 書きかけの規則と説明の置き場所（ボードの id → 中身）。ExerciseBox の書きかけと同じく、この端末で
  * 書いた人のためだけのもの。保存領域が使えない環境では黙って何もしない。
  */
-const DRAFT_KEY = 'kit-rule-board-draft-v1';
+const DRAFT_KEY = 'kit-rule-board-draft-v2';
 type Draft = { code?: string; description?: string };
 
 function loadDraft(id: string): Draft {
@@ -309,7 +309,7 @@ export default function RuleBoardBox({ id }: { id: string }) {
         <p className="kit-rules__q">規則の正解率ランキング</p>
         <p className="kit-rules__note">
           1人ぶんの予測 <code>pred</code> を決める if文を書き、説明を付けて「出す」を押します。使える記録は{' '}
-          <code>sex[i]</code>（"女" か "男"）・<code>pclass[i]</code>（等級 1〜3）・<code>age[i]</code>（年齢）です。
+          <code>sex[i]</code>（"female" か "male"）・<code>pclass[i]</code>（等級 1〜3）・<code>age[i]</code>（年齢）です。
         </p>
         <p className="kit-rules__note">
           規則は、上の20人（訓練データ）と、答えを伏せた別の20人（テストデータ）の両方に当てます。順位は訓練データの正解率で決まります。
