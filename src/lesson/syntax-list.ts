@@ -674,7 +674,7 @@ export const SYNTAX_CATEGORIES: SyntaxCategory[] = [
       {
         code: 't = np.array([[80, 70, 90], [60, 50, 40]])\nm = t.mean(axis=1)\nprint(t - m.reshape(-1, 1))',
         result: '[[  0. -10.  10.]\n [ 10.   0. -10.]]',
-        note: '行ごとに引く（引く値を1列の形にする）',
+        note: '人ごとの平均を各行から引く。1列の形にすると、行ごとに違う値を引ける',
         since: 'python-08-reshape',
       },
       {
@@ -707,14 +707,14 @@ export const SYNTAX_CATEGORIES: SyntaxCategory[] = [
       {
         code: 'rng = np.random.default_rng(3)\nprint(rng.permutation(5))',
         result: '[4 2 1 3 0]',
-        note: '種を決めて0〜4をランダムに並べる（何度実行しても同じ並び）',
+        note: '種を決めて0〜4をランダムに並べる（同じ種で作り直せば同じ並び）',
         since: 'python-08-range',
         also: ['python-15-split'],
       },
       {
         code: 'x = np.array([10, 20, 30, 40, 50])\nrng = np.random.default_rng(3)\nprint(x[rng.permutation(5)])',
         result: '[50 30 20 40 10]',
-        note: '自分の配列を混ぜる（位置の並びで取り出す。第7章4節）',
+        note: 'permutation で作った位置の並びで、配列の順を混ぜる（第7章4節）',
         since: 'python-08-range',
       },
       {
