@@ -27,7 +27,7 @@ const hasPandas = SYNTAX_CATEGORIES.some((c) => c.key === 'pandas' && c.entries.
   rows.length > 0 && (
     <section class="kit-sum" aria-label="この節の書き方">
       <p class="kit-sum__h">この節の書き方</p>
-      {hasPandas && <p class="kit-sum__note">pandas の行は、どれも <code>df = pd.read_csv("train.csv")</code> で読み込み直したところから動かした結果です。</p>}
+      {hasPandas && <p class="kit-sum__note">pandas の行は、どれも、先に <code>df = pd.read_csv("train.csv")</code> で表を読み込み直してから実行した結果です。</p>}
       <table class="kit-sum__t">
         <thead>
           <tr>

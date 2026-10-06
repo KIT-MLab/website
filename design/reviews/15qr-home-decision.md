@@ -21,3 +21,8 @@
 
 - 課題の別解（pandas 2 b1、scikit-learn 1〜3。学習者の目が「実質は同じ考え方、または起きにくい」とした分）: 解き方として誤りではない
 - `taught.mjs` がメンバーだけの章の id で止まる件: 教材ではなく道具の話。別に直す（`HANDOFF.md` に書く）
+
+## 2回目（`-learner2.md`・`-japanese2.md`）
+
+「止まる」0件。表54行は Pyodide で一致。本体が直した: K1（roc_auc の「答えが 1 になる確率の列」）、K2（pandas の断りの文）、K3（pandas 3 の Embarked の段落の入り方）、M1（fillna の行に「inplace=True と書く形は、このサイトの pandas では表が変わらない」を場所を絞って戻した）、M2（`pd.get_dummies(df[["Pclass", "Sex"]])` を X にする行を足した。Pyodide で確かめた）。
+採らない: M3（LogisticRegression の行はエラーの行のまま。欠けた値を埋めてから使う理由を見せる行として残す）、M4（軽い）、M5（SibSp の言い方の差。どちらも意味は同じ）、M6（scikit-learn の表は行の中に前提を書いてある）
