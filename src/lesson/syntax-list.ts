@@ -164,7 +164,7 @@ export const SYNTAX_CATEGORIES: SyntaxCategory[] = [
       { code: 'print(60 < 0 or 60 > 100)', result: 'False', note: 'or はどちらか一方でも成り立つとき', since: 'python-03-andor' },
       { code: 'print(not (60 >= 60))', result: 'False', note: 'not は条件を反転させる', since: 'python-03-andor' },
       { code: 'print(10 >= 10 and (50 >= 60 or 90 >= 80))', result: 'True', note: 'and と or を混ぜるときは () でまとめる', since: 'python-03-andor' },
-      { code: 'print(60 <= 72 < 80)', result: 'True', note: '範囲は続けて書いてもよい', since: 'python-03-andor' },
+      { code: 'print(60 <= 72 < 80)', result: 'True', note: '範囲に入っているかは、比較を続けて書いても調べられる', since: 'python-03-andor' },
     ],
   },
   {
@@ -343,7 +343,7 @@ export const SYNTAX_CATEGORIES: SyntaxCategory[] = [
       {
         code: 'def divide(a, b):\n    return a // b, a % b\n\nprint(divide(7, 2))',
         result: '(3, 1)',
-        note: 'まとめて受け取ると、（ ）の組（タプル）になる',
+        note: '1つの変数で受け取ると、(3, 1) のように（ ）で囲んだ組（タプル）になる',
         since: 'python-05-return',
       },
       {
@@ -370,6 +370,12 @@ export const SYNTAX_CATEGORIES: SyntaxCategory[] = [
         note: '外で作った名前は、中から読める',
         since: 'python-05-scope',
       },
+      {
+        code: 'total = 100\n\ndef apply_discount():\n    total = total - 20\n    print(total)\n\napply_discount()',
+        result: "UnboundLocalError: cannot access local variable 'total' where it is not associated with a value",
+        note: '中で入れる名前は、外の値を読めない',
+        since: 'python-05-scope',
+      },
     ],
   },
   {
@@ -381,7 +387,7 @@ export const SYNTAX_CATEGORIES: SyntaxCategory[] = [
       { code: 'if 5 > 3:\nprint("合格")', result: "IndentationError: expected an indented block after 'if' statement on line 1", note: 'インデントが合っていない（SyntaxErrorの仲間）', since: 'python-06-syntax' },
       { code: 'print("合計" + 5)', result: 'TypeError: can only concatenate str (not "int") to str', note: '型が合わない操作（文字列+数など）', since: 'python-06-type' },
       { code: 'print(int("5円"))', result: "ValueError: invalid literal for int() with base 10: '5円'", note: '型は合っているが値が変換できない', since: 'python-06-type' },
-      { code: 'numbers = [3, 7, 2]\nprint(numbers[3])', result: 'IndexError: list index out of range', note: 'インデックスがリストの長さを超えている', since: 'python-06-type' },
+      { code: 'numbers = [3, 7, 2]\nprint(numbers[3])', result: 'IndexError: list index out of range', note: 'リストに無い位置のインデックスを指定した', since: 'python-06-type', also: ['python-04-index'] },
       { code: 'numbers = [3, 7]\nnumbers.add(5)', result: "AttributeError: 'list' object has no attribute 'add'", note: 'その値に無いメソッドを呼んだ（綴りミスが多い）', since: 'python-06-type' },
       { code: 'import maths', result: "ModuleNotFoundError: No module named 'maths'", note: '読み込もうとしたモジュールが無い（綴りミスが多い）', since: 'python-06-type' },
     ],
