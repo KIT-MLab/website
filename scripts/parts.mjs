@@ -95,7 +95,7 @@ export const MEMBERS_ONLY_CHAPTERS = PROJECT_PARTS.flatMap((p) => p.chapters);
 export const PARTS = [
   { name: '第0部 準備', chapters: ['00-start'] },
   {
-    name: '第1部 Python',
+    name: '第1部 Python と numpy',
     chapters: [
       '01-python',
       '02-numbers',

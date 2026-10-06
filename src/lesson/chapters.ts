@@ -24,26 +24,29 @@ export const partOfChapter: (chapter: string) => Extract<Part, { chapters: strin
  *
  * 仕様書（00-overview.md 第2.2節）は部と章数を決めているが、章の題は決めていない。
  * 決まったものからここに足す。無いものはディレクトリ名から作る。
+ * 2026-10-06 代表の選択で、章の題は目次のような名詞（その章で覚える Python の言葉や分野の名前）にした
+ * （DECISIONS.md「章と節の題の付け方」、design/reviews/titles-audit-2026-10-06.md）。
  */
 export const CHAPTER_TITLES: Record<string, string> = {
   '00-start': '第0章 パソコンの操作',
-  '01-python': '第1章 Python を書きはじめる',
-  '02-numbers': '第2章 数と計算',
-  '03-branch': '第3章 場合で分ける',
-  '04-loop': '第4章 繰り返す',
-  '04p-practice1': '練習編1',
-  '05-function': '第5章 まとめて名前を付ける',
+  '01-python': '第1章 print・input・変数',
+  '02-numbers': '第2章 演算子・数の型・math',
+  '03-branch': '第3章 if 文による条件分岐',
+  '04-loop': '第4章 for 文・while 文とリスト',
+  '04p-practice1': '練習編1（第1〜4章）',
+  '05-function': '第5章 関数',
   '06-error': '第6章 エラーを読む',
-  '07-array': '第7章 数をまとめて扱う',
-  '08-table': '第8章 表の形を扱う',
+  '07-array': '第7章 numpy の配列',
+  '08-table': '第8章 numpy の2次元配列と形',
+  '08p-practice2': '練習編2（第1〜8章）',
   '08q-mlintro': 'タイタニック演習',
   '09-matrix': '第9章 ベクトルと行列',
-  '10-slope': '第10章 変化率と傾き',
-  '11-probability': '第11章 確率の初歩',
-  '12-predict': '第12章 予測とは何か',
-  '13-regression': '第13章 回帰',
-  '14-classify': '第14章 分類',
-  '15-evaluate': '第15章 評価',
+  '10-slope': '第10章 傾きと微分',
+  '11-probability': '第11章 確率・対数・標準偏差',
+  '12-predict': '第12章 予測のモデルと損失',
+  '13-regression': '第13章 勾配降下法と線形回帰',
+  '14-classify': '第14章 分類とロジスティック回帰',
+  '15-evaluate': '第15章 評価と過学習',
 };
 
 export function chapterTitle(chapter: string): string {
