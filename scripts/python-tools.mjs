@@ -96,6 +96,22 @@ export const PYTHON_TOOLS = [
   { name: 'np.random.default_rng / .permutation', in: 'python-08-range', re: /np\.random\.default_rng\s*\(|\.permutation\s*\(/, desc: '乱数の種を固定して、配列の並びをランダムに混ぜる書き方。`np.random.default_rng(7)` は種7の乱数の生成器を作り、`.permutation(n)` はその生成器を使って0からn-1の整数をランダムな順に並べた配列を返す。種が同じなら、並びは何度実行しても同じになる。' },
   { name: 'np.polyfit / np.polyval', in: 'python-15-overfit', re: /np\.polyfit\s*\(|np\.polyval\s*\(/, desc: 'データに当てはまる曲線を求める関数。`np.polyfit(x, y, 次数)` は、指定した次数までの曲線のうち誤差の2乗の平均が最も小さくなる係数を一度に求め、`np.polyval(係数, x)` はその係数で予測の値を求める。' },
 
+  /* 第15章 pandas・scikit-learn（56-tools-curriculum.md 第7節の表。2026-10-06 に足した）。
+     表にだけ載せた書き方（isnull・dropna・get_dummies・RandomForestClassifier など）は、後の節で使ってよいので台帳に入れない。
+     辞書と & | は、本文で教える節が pandas の節より前にある（第4章7節・第7章3節）ので、そちらを `in` にした。
+     from … import … は、第2章5節の「この節の書き方」の表で教えているため入れない */
+  { name: '辞書 {"キー": 値}', in: 'python-04-dict',      re: /\{\s*["'][^"'\n]*["']\s*:/, term: '辞書' },
+  { name: '要素ごとの and / or（& と |）', in: 'python-07-select', re: /(?<!&)&(?!&)|(?<!\|)\|(?!\|)/, desc: '2つの条件（True と False の並び）を、要素ごとにつなぐ書き方。`&` は両方が True の位置だけ True、`|` はどちらかが True の位置が True になる。それぞれの条件は `( )` で囲む。' },
+  { name: 'pandas',         in: 'python-15q-read',      re: /\bpandas\b|\bpd\./ },
+  { name: 'pd.read_csv',    in: 'python-15q-read',      re: /\.read_csv\s*\(/, desc: 'CSV ファイルを読み込んで、表（データフレーム）にする書き方。`pd.read_csv("train.csv")` は、`train.csv` の表を読み込む。' },
+  { name: '.head()',        in: 'python-15q-read',      re: /\.head\s*\(/, desc: '表の最初の数行を取り出す書き方。`df.head(3)` は最初の3行で、数を省くと5行になる。' },
+  { name: '.isna()',        in: 'python-15q-missing',   re: /\.isna\s*\(/, desc: '値が欠けているか（欠損値か）を調べる書き方。`df["Age"].isna()` は、欠けた所が True の列を返し、`.sum()` を続けると欠けた数になる。' },
+  { name: '.fillna()',      in: 'python-15q-missing',   re: /\.fillna\s*\(/, desc: '欠損値を、決めた値で埋める書き方。`df["Age"].fillna(30)` は、欠けた所を 30 にした列を返す。表そのものは変わらないので、`df["Age"] = …` で入れ直す。' },
+  { name: '.map()',         in: 'python-15q-encode',    re: /\.map\s*\(/, desc: '列の値を、辞書にしたがって別の値に置き換える書き方。`df["Sex"].map({"male": 0, "female": 1})` は、`male` を 0、`female` を 1 にした列を返す。' },
+  { name: '.fit() / .predict()', in: 'python-15r-fit',  re: /\.(fit|predict)\s*\(/, desc: 'scikit-learn のモデルで、学習と予測をする書き方。`model.fit(X, y)` は特徴量 X と答え y から学習し、`model.predict(X)` は X の予測を返す。' },
+  { name: 'DecisionTreeClassifier', in: 'python-15r-fit', re: /DecisionTreeClassifier/, term: '決定木' },
+  { name: 'train_test_split', in: 'python-15r-split',  re: /train_test_split/, desc: 'データを訓練データとテストデータに分ける関数。`train_test_split(X, y, test_size=0.2, random_state=0)` は、2割をテストデータにして、`X_train, X_test, y_train, y_test` の順に返す。' },
+
   /* まだどの節でも教えていない道具。導入する節が無いので、どこで使っても落ちる（検査16）。
      第10章の書き手が a, b = 7, 30 を5か所で使い、読んで見つけた（2026-09-24）。
      教える節が決まったら、in をその節の id に直す */
