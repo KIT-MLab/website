@@ -64,7 +64,7 @@ export const SYNTAX_CATEGORIES: SyntaxCategory[] = [
       { code: 'print((1 + 2) * 3)', result: '9', note: 'かっこの中が先', since: 'python-02-precedence' },
       { code: 'print(8 / 4 / 2)', result: '1.0', note: '同じ順位は左から順に計算する（** だけは右から）', since: 'python-02-precedence' },
       { code: 'print(2 ** 3 ** 2)', result: '512', note: '** だけは右から計算する', since: 'python-02-precedence' },
-      { code: 'print(-2 ** 2)', result: '-4', note: '- より ** が先。(-2) ** 2 は 4', since: 'python-02-precedence' },
+      { code: 'print(-2 ** 2)', result: '-4', note: '符号の - より ** が先。(-2) ** 2 は 4', since: 'python-02-precedence' },
     ],
   },
   {
