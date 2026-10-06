@@ -49,7 +49,7 @@ print(numbers[len(numbers) - 2])`}
 
 2行目の `range(len(numbers))` は `range(5)` と同じで、`i` は `0` から `4` まで順に変わります。3行目の `numbers[i]` は、そのときの `i` の位置の値です。
 
-4行目の `len(numbers) - 2` は `3` になるので、後ろから2番目の `9` が出ます。
+4行目の `len(numbers) - 2` は `3` になるので、後ろから2番目の `9` が出ます。後ろから数えるだけなら、`numbers[-2]` のように負の数を書く方法もあります。`[-1]` は後ろから1つ目、`[-2]` は後ろから2つ目です。
 
 {/* 課題 */}
 
@@ -69,7 +69,7 @@ print(len(numbers))`}
 <Exercise
   id="python-04-index-m2"
   kind="modify"
-  forbid={['numbers[4]']}
+  forbid={['numbers[4]', '[-']}
   starter={`numbers = [3, 7, 2, 9, 4]
 print(numbers[0])
 print(numbers[2])
