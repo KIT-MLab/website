@@ -40,7 +40,7 @@ const index = lessonIndex(
 );
 const places = exercisePlaces(generated);
 
-/** 節の呼び方「7.2 形と2次元配列」。教材から消えた節は id のまま出す */
+/** 節の呼び方「7.5 2次元配列と形（shape）」。教材から消えた節は id のまま出す */
 function lessonName(lessonId: string): string {
   const ref = index.get(lessonId);
   return ref ? `${ref.no} ${ref.title}` : lessonId;

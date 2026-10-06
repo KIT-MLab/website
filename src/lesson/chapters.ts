@@ -32,7 +32,7 @@ export const CHAPTER_TITLES: Record<string, string> = {
   '01-python': '第1章 print・input・変数',
   '02-numbers': '第2章 演算子・数の型・math',
   '03-branch': '第3章 if 文による条件分岐',
-  '04-loop': '第4章 for 文・while 文とリスト',
+  '04-loop': '第4章 for・while・リスト・辞書',
   '04p-practice1': '練習編1（第1〜4章）',
   '05-function': '第5章 関数',
   '06-error': '第6章 エラーを読む',
