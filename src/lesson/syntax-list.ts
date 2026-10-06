@@ -6,13 +6,17 @@
  * 同じデータから、各節の冒頭の「この節の書き方」の表も作る（`since` がその節の行だけ。
  * src/components/lesson/SectionSyntax.astro。DECISIONS.md「書き方のまとめ（2026-09-27）」）。
  *
- * 中身は第1〜15章で実際に教えたものだけ。`code` を `py`（numpy 入り）で実際に実行し、
+ * **2026-10-06 から、行は「本文で教えた書き方」だけでなく、その節の話題で調べに戻ったとき役に立つ書き方も載せる**
+ * （代表の決定。design/reviews/home-audit-2026-10-06.md）。基本は本文で文付きで教え、それ以外はこの表にだけ置く。
+ * 表に載せた書き方は「教えた」と数え、その節より後の課題の答えに使ってよい（taught.mjs もそう数える）。
+ * `code` を `py`（numpy 入り）で実際に実行し、
  * `result` がその通りの出力になることを確かめてある（確かめ方は design/HANDOFF.md の引き継ぎに書く
  * 代わりに、このファイルを作った作業のやり取りに残す）。分類名は Python の言葉そのまま（第22.1節）。
  * numpy の行は `import numpy as np` を済ませた前提で書く（`import numpy as np` の行を除く）。
  *
- * `since` は、その書き方をはじめて教える節の frontmatter の `id`。**節の表に出る場所でもある**ので、
- * 本文でその書き方を扱っている節にする。今週の演習の画面（src/pages/learn/weekly/[id].astro）が、
+ * `since` は、その書き方をはじめて教える節の frontmatter の `id`。**節の表に出る場所でもある。**
+ * その話題のホーム（体系的に教える節）が `since` より後にあるときや、後の章で軽く触れるときは、
+ * その節の id を `also` に並べると、その節の表にも同じ行が出る（今週の演習の範囲と taught.mjs は `since` だけを見る）。今週の演習の画面（src/pages/learn/weekly/[id].astro）が、
  * この節の属する章の並び順と、回の frontmatter の `chapters` の最後の章を比べて、範囲外の行を落とす。
  * 分類の中は `since` の節の順に並べる（節の表はこの順に出る）。
  */
@@ -26,6 +30,8 @@ export type SyntaxEntry = {
   note: string;
   /** これをはじめて教える節の id（frontmatter の id） */
   since: string;
+  /** `since` の節のほかに、この行を「この節の書き方」の表に出す節の id（ホームの節・軽く触れる節） */
+  also?: string[];
 };
 
 export type SyntaxCategory = {

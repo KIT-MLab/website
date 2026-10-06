@@ -17,7 +17,8 @@ interface Props {
 }
 
 const { id } = Astro.props;
-const rows = SYNTAX_CATEGORIES.flatMap((c) => c.entries.filter((e) => e.since === id));
+// `also` は、軽く触れる節やホームの節にも同じ行を出すための欄（2026-10-06。design/reviews/home-audit-2026-10-06.md）
+const rows = SYNTAX_CATEGORIES.flatMap((c) => c.entries.filter((e) => e.since === id || (e.also ?? []).includes(id)));
 ---
 
 {
