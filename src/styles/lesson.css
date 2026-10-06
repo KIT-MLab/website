@@ -225,6 +225,38 @@
   text-decoration: none;
 }
 
+/* 章の並び（2026-10-06 代表の選択「案B」）。いまの章だけ節の一覧を開く。ほかの章は題だけ */
+.rail__chapters {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.rail__chapters > li {
+  padding: 5px 0;
+  border-bottom: 1px solid var(--l-rule);
+}
+
+.rail__chapters > li.is-here {
+  padding: 10px 0 12px;
+}
+
+/* いまの章の題は、ほかの章の題と同じ大きさ・濃さの太字にする */
+.rail__chapters > li.is-here > .rail__label {
+  font-size: 14px;
+  letter-spacing: 0;
+  color: var(--l-ink);
+}
+
+.rail__chapters > li > a {
+  color: var(--l-ink);
+  text-underline-offset: 3px;
+}
+
+.rail__chapters > li.is-here .rail__list li:last-child {
+  border-bottom: 0;
+}
+
 /* タイタニック演習の準備中の節（メンバーにはリンクにしない。53-ml-intro.md 第12節） */
 .rail__locked {
   color: var(--l-ink-2);

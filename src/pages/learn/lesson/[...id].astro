@@ -4,7 +4,7 @@
  *
  * ・本文は1カラム最大720px。上に細い帯、左に節の欄を固定する（20-platform.md 第14.2節）
  * ・コード例と演習は本文中のその場で実行・採点する。別画面に飛ばさない
- * ・左の欄は章の中の位置を示す。章をまたぐ移動はここからはしない
+ * ・左の欄は全部の章の題を並べ、いまの章の下にだけ節を出す。ほかの章へもここから移れる（2026-10-06 代表の選択）
  *
  * **章ごとに公開・準備中がある（第20.1節）。** 準備中の章は、運営・管理者だけが中身まで
  * 見られる。それ以外の人には「この章は準備中です。」の1段落だけを返し、本文も課題の
@@ -41,10 +41,10 @@ import Slides from '../../../components/lesson/Slides.astro';
 import SlidesInBody from '../../../components/lesson/SlidesInBody.astro';
 import LiveProgress from '../../../components/lesson/LiveProgress.astro';
 import { deckById } from '../../../lesson/slides/decks.mjs';
-import { chapterTitle, isMembersOnlyChapter, lessonHref, practiceSectionLabel } from '../../../lesson/chapters';
+import { PROJECT_PARTS, chapterTitle, isMembersOnlyChapter, lessonHref, practiceSectionLabel, writtenParts } from '../../../lesson/chapters';
 import { currentUser, serverConfig } from '../../../server/auth';
 import { isMember } from '../../../server/member';
-import { isChapterPublic, notesForLesson, publicSections } from '../../../server/lessons-publish';
+import { isChapterPublic, notesForLesson, publicChapters, publicSections } from '../../../server/lessons-publish';
 import generated from '../../../generated/lesson-data.json';
 import '../../../styles/lesson.css';
 
@@ -83,6 +83,27 @@ if (!entry || !chapterPublic || isStaff || membersOnly) {
 
 const siblings = entry ? lessons.filter((l) => l.data.chapter === entry.data.chapter) : [];
 const at = entry ? siblings.findIndex((l) => l.id === entry.id) : -1;
+
+/* 左の欄の章の並び（2026-10-06 代表の選択「案B」）。全部の章の題を順に並べ、いまの章の下にだけ節を出す。
+   ほかの章の題は、その章の最初の節へのリンク。準備中の章（運営でない人）はリンクにせず「（準備中）」を添える。
+   並べるのは、いまの章と同じ側の章だけ（学習の一覧の章か、メンバーだけのプロジェクトの教材の章か）。
+   メンバーだけの章は節ごとに公開するので、公開した最初の節へつなぐ */
+const railChapterIds: string[] = entry
+  ? membersOnly
+    ? PROJECT_PARTS.flatMap((p) => p.chapters)
+    : writtenParts()
+        .flatMap((p) => p.chapters)
+        .filter((c) => !isMembersOnlyChapter(c))
+  : [];
+const openChapters = canSee && config && !membersOnly ? await publicChapters(config.db) : new Set<string>();
+const railChapters = canSee
+  ? railChapterIds.map((chapter) => {
+      const inChapter = lessons.filter((l) => l.data.chapter === chapter);
+      const first = membersOnly ? inChapter.find((l) => sectionOpen(l.data.id)) : inChapter[0];
+      const open = isStaff || (membersOnly ? first !== undefined : openChapters.has(chapter));
+      return { chapter, title: chapterTitle(chapter), href: open && first ? lessonHref(first.id) : null };
+    })
+  : [];
 
 const Content = canSee && entry ? (await render(entry)).Content : null;
 
@@ -192,18 +213,28 @@ const notes = isStaff && entry && config ? await notesForLesson(config.db, entry
               <p class="lesson-staffnote">運営だけに見えています。まだ公開していません。</p>
             )}
             <div class="rail__block">
-              <p class="rail__label">{chapterTitle(entry.data.chapter)}</p>
-              <ol class="rail__list">
-                {siblings.map((s, i) => (
-                  <li data-lesson-id={s.data.id} class={s.id === entry.id ? 'is-now' : ''}>
-                    <span class="rail__state">{s.id === entry.id ? 'いま' : '未'}</span>
-                    {membersOnly && !sectionOpen(s.data.id) ? (
-                      <span class="rail__locked">{practiceLabel(i + 1)} {s.data.title}（準備中）</span>
-                    ) : (
-                      <a href={lessonHref(s.id)}>{isPractice ? `${practiceLabel(i + 1)} ${s.data.title}` : s.data.title}</a>
-                    )}
-                  </li>
-                ))}
+              <ol class="rail__chapters">
+                {railChapters.map((c) =>
+                  c.chapter === entry.data.chapter ? (
+                    <li class="is-here">
+                      <p class="rail__label">{c.title}</p>
+                      <ol class="rail__list">
+                        {siblings.map((s, i) => (
+                          <li data-lesson-id={s.data.id} class={s.id === entry.id ? 'is-now' : ''}>
+                            <span class="rail__state">{s.id === entry.id ? 'いま' : '未'}</span>
+                            {membersOnly && !sectionOpen(s.data.id) ? (
+                              <span class="rail__locked">{practiceLabel(i + 1)} {s.data.title}（準備中）</span>
+                            ) : (
+                              <a href={lessonHref(s.id)}>{isPractice ? `${practiceLabel(i + 1)} ${s.data.title}` : s.data.title}</a>
+                            )}
+                          </li>
+                        ))}
+                      </ol>
+                    </li>
+                  ) : (
+                    <li>{c.href ? <a href={c.href}>{c.title}</a> : <span class="rail__locked">{c.title}（準備中）</span>}</li>
+                  ),
+                )}
               </ol>
             </div>
           </div>
