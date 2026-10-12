@@ -232,6 +232,25 @@ export const SELF_REVIEW: SelfReviewRow[] = [
   { label: '第8章2〜4節', by: '2026-10-20', chapters: ['08-table'], from: 'python-08-transpose', topics: ['transpose'] },
 ];
 
+/**
+ * 今週の課題（2026-10-13 代表の決定。学習の一覧 /learn/ のいちばん上の帯、案A）。
+ * 集まりで代表が出す「次の集まりまでにやる1つ」。メンバーにだけ、まだ解いていない問題の数と
+ * 「次の1問を解く」を出す。帯に出すのは、`by` が今日より後の行のうち最も早い1行（集まりの日には次の週の行）。
+ * まずは練習問題集の★1だけを出す（代表「まずは星一の問題だけでも進めてもらう」）。
+ */
+export type HomeworkRow = {
+  /** 締め切り（次の集まりの日。'YYYY-MM-DD'） */
+  by: string;
+  /** 帯の題。「第5章 練習問題 ★1」 */
+  label: string;
+  /** 練習問題集の範囲（今週のページの「復習」と同じ形） */
+  practice: PlanPractice[];
+};
+
+export const HOMEWORK: HomeworkRow[] = [
+  { by: '2026-10-20', label: '第5章 関数 の練習問題 ★1', practice: [{ chapter: '05-function', levels: [1] }] },
+];
+
 /** ページ上の1段落の説明（第21.2節）。 */
 export const PLAN_INTRO = '毎週火曜・70分。前半30分で新しいことを学び、後半30分でみんなで取り組みます（やることの「／」の左が前半、右が後半）。Python の復習は家で進めます。';
 
