@@ -105,8 +105,8 @@ const dataJson = JSON.stringify(sections).replace(/</g, '\\u003c');
 /* 今週の課題（2026-10-13 代表の選択「案A」。src/lesson/plan.ts の HOMEWORK）。どの行を出すかは今日の日付で決まるので、
    全部の行を隠して置き、メンバーにだけブラウザで1行を選んで出す。問題は練習問題集の画面の順（★の段の順） */
 const practiceTopics = await getCollection('practice');
-const homeworkViews = HOMEWORK.map((row) => {
-  const problems = row.practice.flatMap((pr) => {
+function homeworkProblems(practice: typeof HOMEWORK[number]['practice']) {
+  return practice.flatMap((pr) => {
     const topics = practiceTopics
       .filter((t) => t.data.chapter === pr.chapter && (!pr.topics || pr.topics.includes(t.data.topic)))
       .sort((a, b) => a.data.order - b.data.order);
@@ -116,8 +116,11 @@ const homeworkViews = HOMEWORK.map((row) => {
         .map((q) => ({ id: q.id, href: `${practiceHref(pr.chapter, t.data.topic)}#${q.id}` })),
     );
   });
+}
+const homeworkViews = HOMEWORK.map((row) => {
   const [, m, d] = row.by.split('-').map(Number);
-  return { by: row.by, byLabel: `${m}/${d}`, label: row.label, problems };
+  const extra = row.extra ? { label: row.extra.label, problems: homeworkProblems(row.extra.practice) } : null;
+  return { by: row.by, byLabel: `${m}/${d}`, label: row.label, problems: homeworkProblems(row.practice), extra };
 });
 ---
 
@@ -141,6 +144,12 @@ const homeworkViews = HOMEWORK.map((row) => {
       </span>
       <a class="hw-band__go" data-hw-next href={hw.problems[0]?.href ?? '/learn/practice/'}>次の1問を解く →</a>
       <span class="hw-band__done" data-hw-done hidden>全部解きました。</span>
+      {hw.extra && hw.extra.problems.length > 0 && (
+        <p class="hw-band__extra" data-hw-extra={JSON.stringify(hw.extra.problems)}>
+          余裕があれば {hw.extra.label}（<span data-hw-extra-rest>あと {hw.extra.problems.length}問</span>）
+          <a data-hw-extra-next href={hw.extra.problems[0].href}>解く →</a>
+        </p>
+      )}
     </section>
   ))}
   <h1 class="page-title">学習</h1>
@@ -327,6 +336,17 @@ const homeworkViews = HOMEWORK.map((row) => {
     go.hidden = !next;
     fin.hidden = Boolean(next);
     band.classList.toggle('is-done', !next);
+    // 余裕がある人向けの行（★2・★3）
+    const extra = band.querySelector<HTMLElement>('[data-hw-extra]');
+    if (extra) {
+      const ex = JSON.parse(extra.dataset.hwExtra ?? '[]') as { id: string; href: string }[];
+      const exPassed = await Promise.all(ex.map(async (q) => (await store.exerciseResult(q.id)).passed));
+      const exNext = ex.find((_, i) => !exPassed[i]);
+      extra.querySelector<HTMLElement>('[data-hw-extra-rest]')!.textContent = exNext ? `あと ${ex.length - exPassed.filter(Boolean).length}問` : '全部解きました';
+      const exGo = extra.querySelector<HTMLAnchorElement>('[data-hw-extra-next]')!;
+      if (exNext) exGo.href = exNext.href;
+      exGo.hidden = !exNext;
+    }
     band.hidden = false;
   }
 
@@ -426,6 +446,17 @@ const homeworkViews = HOMEWORK.map((row) => {
   }
   .hw-band__go:hover {
     color: var(--color-accent);
+  }
+  .hw-band__extra {
+    grid-column: 1 / -1;
+    margin: 0;
+    font-size: 13px;
+    color: var(--color-ink-2);
+  }
+  .hw-band__extra a {
+    margin-left: 6px;
+    color: var(--color-ink);
+    text-underline-offset: 3px;
   }
   .hw-band__done {
     grid-column: 1 / -1;

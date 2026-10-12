@@ -95,89 +95,96 @@ export const PLAN: PlanRow[] = [
       ],
     },
   },
+  // 2026-10-13 の組み直し（design/proposals/replan-2026-10-13.md、代表が方向を決めた）。前半は numpy・pandas・scikit-learn を
+  // その場で解く時間、後半は15分ほどで機械学習の考え方（タイタニック。コードはほぼ書かない）。数学寄りの節は今年の集まりから外した
   {
     kind: 'meet',
     no: '3',
     date: '2026-10-13',
-    title: 'numpy② スライス・2次元の表・軸 ／ タイタニック3 規則を自動で探す',
+    title: 'numpy① 配列・集計・条件で取り出す ／ 考え方: 規則と正解率（タイタニック2）',
     goal: '',
-    teach: { label: 'numpy② スライス・2次元の表・軸', lessons: ['python-07-slice', 'python-07-shape', 'python-07-stats', 'python-08-index'] },
-    together: [{ lesson: 'python-08q-learn' }],
-    before: { lessons: ['python-07-slice'] },
+    teach: { label: 'numpy① 配列・集計・条件で取り出す', lessons: ['python-07-array', 'python-07-agg', 'python-07-select'] },
+    together: [{ label: '考え方: 規則と正解率（タイタニック2）', lesson: 'python-08q-rule' }],
+    before: { lessons: ['python-07-array'] },
     after: {
-      practice: [
-        { chapter: '07-array', topics: ['stats'], levels: [3] },
-        { chapter: '07-array', topics: ['select'], levels: [3] },
-        { chapter: '08-table', topics: ['index'], levels: [1, 2] },
-      ],
+      practice: [{ chapter: '07-array', levels: [1] }],
     },
   },
   {
     kind: 'meet',
     no: '4',
     date: '2026-10-20',
-    title: 'reshape・予測を関数にする・損失 ／ タイタニック4 合わせすぎ',
+    title: 'numpy② スライス・2次元配列・軸 ／ 考え方: 学習とは数を選ぶこと（タイタニック3）',
     goal: '',
-    teach: { label: 'reshape・予測を関数にする・損失', lessons: ['python-08-reshape', 'python-12-model', 'python-12-loss'] },
-    together: [{ lesson: 'python-08q-overfit' }],
-    before: { lessons: ['python-12-model'] },
+    teach: { label: 'numpy② スライス・2次元配列・軸', lessons: ['python-07-slice', 'python-07-shape', 'python-07-stats'] },
+    together: [{ label: '考え方: 学習とは数を選ぶこと（タイタニック3）', lesson: 'python-08q-learn' }],
+    before: { lessons: ['python-07-slice'] },
     after: {
-      practice: [
-        { chapter: '08-table', topics: ['make'], levels: [1, 2] },
-      ],
-      weekly: ['weekly-2026-10-20'],
+      practice: [{ chapter: '07-array', levels: [1] }],
     },
   },
   {
     kind: 'meet',
     no: '5',
     date: '2026-10-27',
-    title: '候補を全部試す ／ pandas① Titanic の表を読む',
+    title: 'numpy③ 2次元のインデックス・reshape・ブロードキャスト ／ 考え方: 合わせすぎ（タイタニック4）',
     goal: '',
-    teach: { label: '候補を全部試す', lessons: ['python-12-search'] },
-    together: [{ lesson: 'python-15q-read' }, { lesson: 'python-15q-select' }],
+    teach: { label: 'numpy③ 2次元のインデックス・reshape・ブロードキャスト', lessons: ['python-08-index', 'python-08-broadcast', 'python-08-reshape'] },
+    together: [{ label: '考え方: 合わせすぎ（タイタニック4）', lesson: 'python-08q-overfit' }],
+    before: { lessons: ['python-08-index'] },
+    after: {
+      practice: [{ chapter: '08-table', levels: [1] }],
+    },
   },
   { kind: 'off', date: '2026-11-03', title: '休み（文化の日）' },
   {
     kind: 'meet',
     no: '6',
     date: '2026-11-10',
-    title: '傾き ／ pandas② 欠けた値・文字を数に',
+    title: 'pandas① 表を読む ／ 考え方: 機械学習の全体の流れ',
     goal: '',
-    // 前半は第10章の「傾き」。どの節までかは、代表が前半の進み具合で決める（1〜3節を仮に置く）
-    teach: { label: '傾き', lessons: ['python-10-rate', 'python-10-derivative', 'python-10-direction'] },
-    together: [{ lesson: 'python-15q-missing' }, { lesson: 'python-15q-encode' }],
+    teach: { label: 'pandas① 表を読む', lessons: ['python-15q-read'] },
+    together: [{ label: '考え方: 機械学習の全体の流れ（タイタニック1〜4 でやったことを、5つの段に並べ直す）' }],
   },
   {
     kind: 'meet',
     no: '7',
     date: '2026-11-17',
-    title: '勾配降下法 ／ scikit-learn① fit と predict',
+    title: 'pandas② 条件と集計・欠損値 ／ 考え方: 前処理はなぜ要るか',
     goal: '',
-    teach: { label: '勾配降下法', lessons: ['python-13-descent', 'python-13-rate'] },
-    together: [{ lesson: 'python-15r-fit' }, { lesson: 'python-15r-features' }],
+    teach: { label: 'pandas② 条件と集計・欠損値', lessons: ['python-15q-select', 'python-15q-missing'] },
+    together: [{ label: '考え方: 前処理はなぜ要るか' }],
   },
   {
     kind: 'meet',
     no: '8',
     date: '2026-11-24',
-    title: '線形回帰 ／ scikit-learn② 訓練データとテストデータ',
-    goal: '線形回帰を自分で書ける',
-    big: true,
-    teach: { label: '線形回帰', lessons: ['python-13-linear'] },
-    together: [{ lesson: 'python-15r-split' }, { lesson: 'python-15r-depth' }],
+    title: 'pandas③・scikit-learn① 文字を数に・fit と predict ／ 考え方: 決定木も「数を選ぶ」',
+    goal: '',
+    teach: { label: 'pandas③・scikit-learn① 文字を数に・fit と predict', lessons: ['python-15q-encode', 'python-15r-fit'] },
+    together: [{ label: '考え方: 決定木も「数を選ぶ」（タイタニック3 の続き）' }],
   },
   {
     kind: 'meet',
     no: '9',
     date: '2026-12-01',
-    title: '標準化・訓練データとテストデータ ／ Titanic① まず1回提出',
+    title: 'scikit-learn② 特徴量・分けて測る ／ 考え方: 見ていないデータで測る',
+    goal: '',
+    teach: { label: 'scikit-learn② 特徴量・分けて測る', lessons: ['python-15r-features', 'python-15r-split'] },
+    together: [{ label: '考え方: 見ていないデータで測る（タイタニック2〜4 の呼び戻し）' }],
+  },
+  {
+    kind: 'meet',
+    no: '10',
+    date: '2026-12-08',
+    title: 'scikit-learn③ 木の深さ・Titanic① まず1回提出 ／ 考え方: 順位表に合わせすぎない',
     goal: '全員が1回提出する',
     big: true,
+    teach: { label: 'scikit-learn③ 木の深さ・Titanic① まず1回提出', lessons: ['python-15r-depth'] },
+    together: [{ label: '考え方: 順位表に合わせすぎない' }],
   },
-  { kind: 'meet', no: '10', date: '2026-12-08', title: '過学習 ／ Titanic② 特徴量を足す・モデルを変える', goal: '' },
-  { kind: 'meet', no: '11', date: '2026-12-15', title: '分類・シグモイド ／ Titanic③ 点数を並べる', goal: '' },
-  { kind: 'meet', no: '12', date: '2026-12-22', title: 'ロジスティック回帰 ／ 過去の月例コンペで練習', goal: '1月の段取りを決める' },
+  { kind: 'meet', no: '11', date: '2026-12-15', title: 'Titanic② 1つずつ変えて比べる', goal: '' },
+  { kind: 'meet', no: '12', date: '2026-12-22', title: 'Titanic③・過去の月例コンペで練習', goal: '1月の段取りを決める' },
   { kind: 'off', date: '2026-12-29', dateLabel: '12/29・1/5', title: '冬休み' },
   { kind: 'meet', no: '13', date: '2027-01-12', title: '正解率と混同行列 ／ 1月の月例コンペ①', goal: '初めての本番', big: true },
   { kind: 'meet', no: '14', date: '2027-01-19', title: '1月の月例コンペ②', goal: '' },
@@ -227,9 +234,8 @@ export const SELF_REVIEW: SelfReviewRow[] = [
   { label: '第1〜2章', by: '2026-09-29', chapters: ['01-python', '02-numbers'], weekly: 'weekly-2026-09-29' },
   { label: '第3〜4章', by: '2026-10-06', chapters: ['03-branch', '04-loop'], weekly: 'weekly-2026-10-06' },
   // 第6章（エラーを読む）は目安に入れない。練習問題集も作らない（2026-10-03 代表の決定）
-  { label: '第5章', by: '2026-10-13', chapters: ['05-function'], weekly: 'weekly-2026-10-13' },
-  // 集まりで扱わない第8章の節（転置・形の違う配列の計算・並びを作る）。「並びを作る」は 10/27 の回で使う
-  { label: '第8章2〜4節', by: '2026-10-20', chapters: ['08-table'], from: 'python-08-transpose', topics: ['transpose'] },
+  // 2026-10-13 の組み直しで、第5章の目安を家の課題（HOMEWORK）と同じ 10/20 にそろえた。第8章は集まりで扱うので帯から外した
+  { label: '第5章', by: '2026-10-20', chapters: ['05-function'], weekly: 'weekly-2026-10-13' },
 ];
 
 /**
@@ -245,14 +251,33 @@ export type HomeworkRow = {
   label: string;
   /** 練習問題集の範囲（今週のページの「復習」と同じ形） */
   practice: PlanPractice[];
+  /** 余裕がある人向けの範囲（★2・★3 など）。帯に「余裕があれば」として添える */
+  extra?: { label: string; practice: PlanPractice[] };
 };
 
 export const HOMEWORK: HomeworkRow[] = [
-  { by: '2026-10-20', label: '第5章 関数 の練習問題 ★1', practice: [{ chapter: '05-function', levels: [1] }] },
+  {
+    by: '2026-10-20',
+    label: '第5章 関数 の練習問題 ★1',
+    practice: [{ chapter: '05-function', levels: [1] }],
+    extra: { label: '★2・★3', practice: [{ chapter: '05-function', levels: [2, 3] }] },
+  },
+  {
+    by: '2026-10-27',
+    label: '第7章 numpy の配列 の練習問題 ★1',
+    practice: [{ chapter: '07-array', levels: [1] }],
+    extra: { label: '★2・★3', practice: [{ chapter: '07-array', levels: [2, 3] }] },
+  },
+  {
+    by: '2026-11-10',
+    label: '第8章 numpy の2次元配列と形 の練習問題 ★1',
+    practice: [{ chapter: '08-table', levels: [1] }],
+    extra: { label: '★2・★3', practice: [{ chapter: '08-table', levels: [2, 3] }] },
+  },
 ];
 
 /** ページ上の1段落の説明（第21.2節）。 */
-export const PLAN_INTRO = '毎週火曜・70分。前半30分で新しいことを学び、後半30分でみんなで取り組みます（やることの「／」の左が前半、右が後半）。Python の復習は家で進めます。';
+export const PLAN_INTRO = '毎週火曜・70分。前半はその場で手を動かして解き、後半の15分ほどで機械学習の考え方を話し合います（やることの「／」の左が前半、右が後半）。毎週の課題は、学習のページのいちばん上に出ます。';
 
 /** 目標の枠（第21.2節）。 */
 export const PLAN_GOAL = {
