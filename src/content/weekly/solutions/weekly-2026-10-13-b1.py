@@ -1,2 +1,2 @@
-def charge(minutes, rate=20):
-    return minutes * rate
+def charge(days, rate=20):
+    return days * rate
