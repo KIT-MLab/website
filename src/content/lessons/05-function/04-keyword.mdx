@@ -45,6 +45,7 @@ print(price_with_tax(1000, shipping=500))`}
 
 print(price_with_tax(1000, 500))`}
   tests={[{ kind: 'stdout' }]}
+  vary={[{ from: 'def price_with_tax(amount, rate=0.1, shipping=0):', to: 'def price_with_tax(amount, rate=0.2, shipping=0):' }]}
   hints={['いまの4行目で、`500` がどの引数に渡っているかを確かめてください。']}
 >
 `rate` の値は書かずに、`1600.0` と表示されるように、4行目の呼び出し方を直してください。

@@ -95,6 +95,7 @@ df = pd.read_csv("train.csv")
 df["Sex"] = df["Sex"].map({"male": 0, "female": 1})
 print(df["Sex"].mean())`}
   tests={[{ kind: 'stdout' }]}
+  vary={[{ from: 'df = pd.read_csv("train.csv")', to: 'df = pd.read_csv("train.csv").head(100)' }]}
   hints={[]}
 >
 `Embarked` の欠損値を `"S"` で埋めてから、`S` を 1、`C` を 2、`Q` を 3 に置き換え、`Embarked` の列の平均を1行で表示するように、コードを書き換えてください。

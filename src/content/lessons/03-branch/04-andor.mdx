@@ -87,6 +87,7 @@ if temperature >= 15 and temperature < 25:
 else:
     print("過ごしにくい")`}
   tests={[{ kind: 'stdout' }]}
+  vary={[{ from: 'if temperature >= 15 and temperature < 25:', to: 'if temperature < 15 or temperature >= 25:' }]}
   hints={[]}
 >
 `過ごしやすい` と表示されるように、1行目の `temperature` の値を決めてください。
@@ -101,6 +102,7 @@ if hour < 9 or hour >= 18:
 else:
     print("営業中です")`}
   tests={[{ kind: 'stdout' }]}
+  vary={[{ from: 'if hour < 9 or hour >= 18:', to: 'if hour >= 9 and hour < 18:' }]}
   hints={[]}
 >
 `営業時間外です` と表示されるように、1行目の `hour` の値を決めてください。

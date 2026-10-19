@@ -51,6 +51,7 @@ for value in scores:
         count = count + 1
 print(count)`}
   tests={[{ kind: 'stdout' }]}
+  vary={[{ from: 'scores = [40, 65, 82]', to: 'scores = [70, 45, 50, 62, 91]' }]}
   hints={['上から順に、条件が成り立つたびにcountが増えるかどうかを目で追ってください。']}
 >
 60点以上の人数を数えるプログラムです。`2` と表示されるように、直してください。
@@ -63,6 +64,7 @@ print(count)`}
 for i in range(len(scores)):
     print(scores[0])`}
   tests={[{ kind: 'stdout' }]}
+  vary={[{ from: 'scores = [40, 65, 82]', to: 'scores = [55, 10, 93, 70]' }]}
   hints={['インデックスを使うと、繰り返しのたびに取り出す位置を変えられます。第4章のrange(len(...))の書き方を見てください。']}
 >
 `40`、`65`、`82` が1行ずつこの順に表示されるように、直してください。

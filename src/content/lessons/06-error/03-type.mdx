@@ -54,6 +54,7 @@ bonus = 5
 print(f"合計{score + bonus}点")`}
   stdin={`70`}
   tests={[{ kind: 'stdout', stdin: `70\n` }]}
+  vary={[{ from: 'bonus = 5', to: 'bonus = 8' }]}
   hints={['この節の1つ目の例と見比べてください。`score` は文字列のままで、`bonus` は整数です。']}
 >
 `合計75点` と表示されるように、直してください。

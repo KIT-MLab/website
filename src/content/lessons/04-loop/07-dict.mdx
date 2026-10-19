@@ -69,6 +69,7 @@ for name in price:
 print(menu["コーヒー"])
 print(menu["ココア"])`}
   tests={[{ kind: 'stdout' }]}
+  vary={[{ from: 'menu = {"コーヒー": 400, "紅茶": 350}', to: 'menu = {"コーヒー": 400, "紅茶": 360}' }, { from: 'print(menu["コーヒー"])', to: 'print(menu["紅茶"])' }]}
   hints={[]}
 >
 `420` と `450` がこの順に表示されるように、2行目の前に、`menu` の中身を変える行を足してください。`menu` に `"ココア"` はまだ入っていません。1行目の辞書は書き換えないでください。

@@ -125,6 +125,7 @@ male_died = 468
 rule = (female_survived + male_died) / passengers
 print(f"女性なら生存: {round(rule, 3)}")`}
   tests={[{ kind: 'stdout' }]}
+  vary={[{ from: 'female_survived = 233', to: 'female_survived = 223' }, { from: 'female_died = 81', to: 'female_died = 91' }, { from: 'male_survived = 109', to: 'male_survived = 129' }, { from: 'male_died = 468', to: 'male_died = 448' }]}
   hints={[
     '予測と答えが同じになった人が、当たりです。上の表で、男性を生存、女性を死亡と予測したときに当たるのはどの2つかを探してください。',
   ]}

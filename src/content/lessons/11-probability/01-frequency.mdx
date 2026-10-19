@@ -46,6 +46,7 @@ for day in records:
 
 print(count / len(records))`}
   tests={[{ kind: 'stdout' }]}
+  vary={[{ from: 'print(count / len(records))', to: 'print(count / len(records) + 1)' }, { from: 'if day == "雨":', to: 'if day == "雨":' }]}
   hints={[
     '"雨"の個数を10で割った値が0.7になる並びを考えてください。',
   ]}

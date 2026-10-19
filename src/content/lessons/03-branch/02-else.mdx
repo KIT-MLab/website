@@ -57,6 +57,7 @@ if score >= 60:
 else:
     print("不合格です")`}
   tests={[{ kind: 'stdout' }]}
+  vary={[{ from: 'if score >= 60:', to: 'if score < 60:' }]}
   hints={[]}
 >
 `合格です` と表示されるように、`score` の値を決めてください。
@@ -71,6 +72,7 @@ if number >= 0:
 else:
     print("負の数です")`}
   tests={[{ kind: 'stdout' }]}
+  vary={[{ from: 'if number >= 0:', to: 'if number < 0:' }]}
   hints={[]}
 >
 `負の数です` と表示されるように、`number` の値を決めてください。

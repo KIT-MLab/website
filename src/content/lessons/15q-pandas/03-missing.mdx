@@ -126,6 +126,7 @@ df["Age"] = df["Age"].fillna(age_mean)
 print(df["Age"].isna().sum())
 print(len(df[df["Age"] >= 17]))`}
   tests={[{ kind: 'stdout' }]}
+  vary={[{ from: 'df = pd.read_csv("train.csv")', to: 'df = pd.read_csv("train.csv").head(100)' }]}
   hints={[]}
 >
 `Embarked` の欠損値を、文字列 `"S"` で埋めてください。そのあと、`Embarked` の欠損値の数と、`Embarked` が `"S"` の人数を、この順に1行ずつ表示するように、コードを書き換えてください。`Age` の行は要らないので消します。表示するのは2つだけです。

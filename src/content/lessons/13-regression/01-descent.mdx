@@ -57,6 +57,7 @@ for i in range(steps):
 print(round(x, 4))
 print(round(f(x), 4))`}
   tests={[{ kind: 'stdout' }]}
+  vary={[{ from: 'x = 0', to: 'x = 1' }, { from: 'return (x - 3) ** 2 + 1', to: 'return (x - 4) ** 2 + 1' }]}
   hints={[
     'まず、いまのコードをそのまま実行して、出力を確かめてください。',
     'くり返す回数を減らすと、x はまだ3に近づく途中の値で止まります。',

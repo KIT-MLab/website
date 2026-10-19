@@ -48,6 +48,7 @@ print(result + 10)`}
 result = average(80, 90)
 print(result + 10)`}
   tests={[{ kind: 'stdout' }]}
+  vary={[{ from: 'return (a + b) / 2', to: 'return (a + b) / 4' }, { from: 'print(result + 10)', to: 'print(result + 20)' }]}
   hints={[]}
 >
 4行目の `average` に渡す2つの値を書き換えて、`70.0` と表示されるようにしてください。

@@ -50,6 +50,7 @@ positive = np.exp(scores)
 print(np.round(positive, 2))
 print(np.round(positive / np.sum(positive), 3))`}
   tests={[{ kind: 'stdout' }]}
+  vary={[{ from: 'positive = np.exp(scores)', to: 'positive = np.exp(scores) * 2' }, { from: 'print(round(np.exp(1), 3))', to: 'print(round(np.exp(2), 3))' }]}
   hints={[
     '3つとも同じ数にします。`np.exp(…)` の結果が `1` になる数を探してください。3行目は `2.718` を表示する行なので、変えずに残します。',
   ]}

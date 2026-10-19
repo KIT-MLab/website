@@ -51,6 +51,7 @@ print(np.zeros(3))`}
 x = np.arange(0, 5, 1)
 print(x)`}
   tests={[{ kind: 'stdout' }]}
+  vary={[{ from: 'print(x)', to: 'print(x + 1)' }]}
   hints={['終わりの値と、きざみの値の両方を見直してください。']}
 >
 `[0 2 4 6 8]` と表示されるように、2行目を書き換えてください。

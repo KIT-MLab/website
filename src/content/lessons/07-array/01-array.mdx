@@ -51,6 +51,7 @@ print(retest - scores)`}
 prices = np.array([100, 200, 300])
 print(prices * 2)`}
   tests={[{ kind: 'stdout' }]}
+  vary={[{ from: 'prices = np.array([100, 200, 300])', to: 'prices = np.array([130, 240, 360])' }]}
   hints={['3行目の書き方を、最初のコードと見比べてください。']}
 >
 `[110 210 310]` と表示されるように、3行目を書き換えてください。

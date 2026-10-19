@@ -47,6 +47,7 @@ a = np.array([80, 70, 90])
 b = np.array([70, 70, 90])
 print(np.sqrt(np.sum((a - b) ** 2)))`}
   tests={[{ kind: 'stdout' }]}
+  vary={[{ from: 'print(np.sqrt(np.sum((a - b) ** 2)))', to: 'print(np.sqrt(np.sum((a - b) ** 2)) + 1)' }, { from: 'a = np.array([80, 70, 90])', to: 'a = np.array([80, 70, 90])' }]}
   hints={[
     '距離は、aとbの差を2乗して足し、平方根を取った値です。',
     '差の2乗の和が225になる3つの数の組を探してください。',

@@ -48,6 +48,7 @@ print(dist)
 print(round(np.sum(dist), 1))`}
   forbid={['0.5', '0.3', '0.2']}
   tests={[{ kind: 'stdout' }]}
+  vary={[{ from: 'dist = scores / total', to: 'dist = scores / total / 2' }, { from: 'total = np.sum(scores)', to: 'total = np.sum(scores)' }]}
   hints={[
     '合計が10になる3つの正の整数を探してください。',
   ]}

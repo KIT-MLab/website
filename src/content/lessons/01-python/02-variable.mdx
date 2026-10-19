@@ -83,6 +83,7 @@ print(price)`}
 print(age + 5)
 print(age - 5)`}
   tests={[{ kind: 'stdout' }]}
+  vary={[{ from: 'print(age + 5)', to: 'print(age + 6)' }, { from: 'print(age - 5)', to: 'print(age - 6)' }]}
   hints={['最初の `print(age + 5)` が `33` になるには、`age` がいくつならよいかを考えます。']}
 >
 `33` と `23` が表示されるように、`age` の値を決めてください。
@@ -96,6 +97,7 @@ b = 5
 print(a)
 print(b)`}
   tests={[{ kind: 'stdout' }]}
+  vary={[{ from: 'a = 3', to: 'a = 10' }, { from: 'b = 5', to: 'b = 7' }]}
   hints={['`=` で名前に値を結び付ける書き方を使います。右には `a + b` を書けます。']}
 >
 下のコードを書き換えて、`a` と `b` の和を `c` という変数に入れ、`c` の値だけを表示してください。
@@ -108,6 +110,7 @@ print(b)`}
 2nd_price = 80
 print(first price + 2nd_price)`}
   tests={[{ kind: 'stdout' }]}
+  vary={[{ from: '120', to: '125' }, { from: '80', to: '85' }]}
   hints={['名前の決まりの表で、使えない名前のわけを見ます。空白が入った名前と、数字で始まる名前があります。']}
 >
 このコードは、変数の名前が決まりに合っていないので、エラーで止まります。名前を直して、2つの値段の合計 `200` が表示されるようにしてください。

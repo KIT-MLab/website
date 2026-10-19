@@ -79,6 +79,7 @@ lr = 0.02
 w = w - lr * grad(w)
 print(np.round(w, 2))`}
   tests={[{ kind: 'stdout' }]}
+  vary={[{ from: 'hours = np.array([2.0, 3.0, 5.0', to: 'hours = np.array([2.5, 3.0, 5.0' }, { from: 'scores = np.array([45, 52, 65', to: 'scores = np.array([40, 52, 65' }, { from: 'w = w - lr * grad(w)', to: 'w = w - lr * grad(w)' }]}
   hints={[
     'まず、いまのコードをそのまま実行して、出力を確かめてください。',
     '学習率を小さくすると、1回に動く量も小さくなります。',

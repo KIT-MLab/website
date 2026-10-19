@@ -64,6 +64,7 @@ print(largest)`}
 for value in numbers:
     print(value)`}
   tests={[{ kind: 'stdout' }]}
+  vary={[{ from: 'for value in numbers:', to: 'for value in numbers[::-1]:' }]}
   hints={[]}
 >
 `numbers` の最後に値を1つ書き足して、表示の最後の行が、元の5つの値の合計になるようにしてください。
@@ -76,6 +77,7 @@ for value in numbers:
 for value in numbers:
     print(value)`}
   tests={[{ kind: 'stdout' }]}
+  vary={[{ from: 'numbers = [3, 7, 2, 9, 4]', to: 'numbers = [5, 1, 8, 6, 2]' }]}
   hints={[]}
 >
 下のコードを書き換えて、それぞれの値を2倍にして表示してください。

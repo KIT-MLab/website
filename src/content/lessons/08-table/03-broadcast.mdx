@@ -48,6 +48,7 @@ scores = np.array([[80, 70, 90], [60, 50, 40]])
 average = np.array([70, 60, 65])
 print((scores - average)[0])`}
   tests={[{ kind: 'stdout' }]}
+  vary={[{ from: 'scores = np.array([[80, 70, 90], [60, 50, 40]])', to: 'scores = np.array([[84, 73, 99], [60, 50, 40]])' }]}
   hints={['`[5 5 5]` になるには、1人目の点数 `[80 70 90]` から、それぞれいくつを引けばよいかを考えてください。']}
 >
 `[5 5 5]` と表示されるように、3行目の `average` の値を書き換えてください。

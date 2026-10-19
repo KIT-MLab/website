@@ -77,6 +77,7 @@ women = df[df["Sex"] == "female"]
 print(len(women))
 print(women["Survived"].mean())`}
   tests={[{ kind: 'stdout' }]}
+  vary={[{ from: 'df = pd.read_csv("train.csv")', to: 'df = pd.read_csv("train.csv").head(100)' }]}
   hints={[]}
 >
 運賃が100より高い人の人数と、その人たちが生き残った割合を、この順に1行ずつ表示するように、コードを書き換えてください。割合は、0から1の小数のまま、丸めずに表示します。

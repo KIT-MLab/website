@@ -95,6 +95,7 @@ show_counts(pred_a, passed)
 print((pred_b == passed).mean())
 show_counts(pred_b, passed)`}
   tests={[{ kind: 'stdout' }]}
+  vary={[{ from: 'print((pred_a == passed).mean())', to: 'print((pred_a == passed).mean() + 1)' }, { from: 'passed = np.array([1, 1, 1, 0, 0, 0, 0, 0])', to: 'passed = np.array([1, 1, 1, 0, 0, 0, 0, 0])' }, { from: 'pred_b = np.array([1, 1, 1, 1, 1, 0, 0, 0])', to: 'pred_b = np.array([1, 1, 1, 1, 1, 0, 0, 0])' }]}
   hints={[
     '空振りは、実際は不合格なのに、合格と予測した人数です。',
   ]}

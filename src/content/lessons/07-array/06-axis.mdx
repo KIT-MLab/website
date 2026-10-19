@@ -47,6 +47,7 @@ print(scores.mean(axis=1))`}
 scores = np.array([[80, 70, 90], [60, 50, 40]])
 print(scores.mean(axis=0))`}
   tests={[{ kind: 'stdout' }]}
+  vary={[{ from: 'scores = np.array([[80, 70, 90], [60, 50, 40]])', to: 'scores = np.array([[60, 90, 75], [40, 80, 60]])' }]}
   hints={['`axis` の値を、最初のコードの `axis=0` と `axis=1` の出力と見比べてください。']}
 >
 `[80. 50.]` と表示されるように、3行目を書き換えてください。

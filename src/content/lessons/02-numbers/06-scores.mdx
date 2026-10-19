@@ -44,6 +44,7 @@ english = 70
 average = (japanese + mathematics + english) / 3
 print(f"平均{round(average, 1)}点")`}
   tests={[{ kind: 'stdout' }]}
+  vary={[{ from: 'japanese = 90', to: 'japanese = 81' }, { from: 'mathematics = 55', to: 'mathematics = 59' }, { from: 'english = 70', to: 'english = 76' }]}
   hints={[]}
 >
 下のコードの先頭に `threshold = 60` の行を足し、表示の末尾に ` 基準60点` が付くようにしてください。`平均71.7点 基準60点` と表示されれば合っています。
@@ -59,6 +60,7 @@ english = 70
 average = (japanese + mathematics + english) / 3
 print(f"平均{round(average, 1)}点 基準{threshold}点")`}
   tests={[{ kind: 'stdout' }]}
+  vary={[{ from: 'japanese = 90', to: 'japanese = 84' }, { from: 'mathematics = 55', to: 'mathematics = 61' }, { from: 'english = 70', to: 'english = 73' }, { from: '基準{threshold}点', to: '基準{threshold + 1}点' }]}
   hints={[]}
 >
 `平均71.7点 基準80点` と表示されるように、`threshold` の値を決めてください。

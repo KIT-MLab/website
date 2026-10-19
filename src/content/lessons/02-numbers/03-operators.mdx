@@ -64,6 +64,7 @@ print(13 // 5)`}
 minutes = seconds // 60
 print(minutes)`}
   tests={[{ kind: 'stdout' }]}
+  vary={[{ from: 'seconds = 90', to: 'seconds = 200' }]}
   hints={['余りを求める演算子は、この節の表に載っています。']}
 >
 下のコードを書き換えて、`print(minutes)` の次の行に、90秒を60で割った余りを表示する行を足してください。`1` と `30` が2行で表示されれば合っています。

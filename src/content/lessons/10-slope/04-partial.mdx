@@ -69,6 +69,7 @@ slope_b = (loss(a + h, b) - loss(a, b)) / h
 print(round(slope_a, 1))
 print(round(slope_b, 1))`}
   tests={[{ kind: 'stdout' }]}
+  vary={[{ from: 'a = 5', to: 'a = 7' }, { from: 'b = 20', to: 'b = 10' }, { from: 'print(round(slope_b, 1))', to: 'print(round(slope_b, 1))' }]}
   hints={[
     '`b` の向きの傾きでは、動かすのは `b` だけで、`a` はそのままにします。',
   ]}

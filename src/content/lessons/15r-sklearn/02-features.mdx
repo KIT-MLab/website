@@ -109,6 +109,7 @@ pred = model.predict(X)
 print((pred == y).mean())
 print((pred == df["Sex"]).mean())`}
   tests={[{ kind: 'stdout' }]}
+  vary={[{ from: 'df = pd.read_csv("train.csv")', to: 'df = pd.read_csv("train.csv").head(100)' }]}
   hints={[]}
 >
 性別を使わず、`Pclass` と `Age` の2つの列だけを特徴量にして学習させ、891人全員での正解率だけを1行で表示するように、コードを書き換えてください。正解率は、0から1の小数のまま、丸めずに表示します。

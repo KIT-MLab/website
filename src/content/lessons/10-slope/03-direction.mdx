@@ -51,6 +51,7 @@ if slope > 0:
 else:
     print("右へ動かす")`}
   tests={[{ kind: 'stdout' }]}
+  vary={[{ from: 'return x ** 2 - 4 * x + 5', to: 'return x ** 2 - 8 * x + 5' }]}
   hints={[
     '`x**2 - 4*x + 5` の微分は `2x - 4` です。`2x - 4` が `2` になる `x0` を探してください。',
   ]}

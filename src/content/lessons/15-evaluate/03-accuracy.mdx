@@ -65,6 +65,7 @@ else:
 print(round(accuracy, 2))
 print(round(baseline, 2))`}
   tests={[{ kind: 'stdout' }]}
+  vary={[{ from: 'print(round(accuracy, 2))', to: 'print(round(accuracy, 2) + 1)' }, { from: 'passed = np.array([0, 0, 0, 0, 0, 0, 0, 0, 0, 1])', to: 'passed = np.array([0, 0, 0, 0, 0, 0, 0, 0, 0, 1])' }, { from: 'accuracy = (pred == passed).mean()', to: 'accuracy = (pred == passed).mean()' }]}
   hints={[
     'baselineはpassedだけで決まります。predを変えてもbaselineは変わりません。',
   ]}

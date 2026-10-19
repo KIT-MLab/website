@@ -52,6 +52,7 @@ if average >= threshold:
 else:
     print(f"平均{round(average, 1)}点 不合格")`}
   tests={[{ kind: 'stdout' }]}
+  vary={[{ from: 'if average >= threshold:', to: 'if average < threshold:' }, { from: 'japanese = 40', to: 'japanese = 46' }, { from: 'mathematics = 55', to: 'mathematics = 58' }, { from: 'english = 50', to: 'english = 52' }]}
   hints={[]}
 >
 `平均48.3点 合格` と表示されるように、`threshold` の値を決めてください。
@@ -70,6 +71,7 @@ if average >= threshold:
 else:
     print(f"平均{round(average, 1)}点 不合格")`}
   tests={[{ kind: 'stdout' }]}
+  vary={[{ from: 'japanese = 60', to: 'japanese = 66' }, { from: 'mathematics = 60', to: 'mathematics = 63' }]}
   hints={[]}
 >
 `平均59.7点 不合格` と表示されるように、`english` の値を決めてください。

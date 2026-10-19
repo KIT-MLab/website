@@ -64,6 +64,7 @@ print((pred == y).mean())`}
 scores = np.array([40, 90, 55, 70, 30])
 print(scores[scores >= 60])`}
   tests={[{ kind: 'stdout' }]}
+  vary={[{ from: 'scores = np.array([40, 90, 55, 70, 30])', to: 'scores = np.array([85, 35, 62, 20, 58])' }]}
   hints={['60点に届かない値を取り出す条件に書き換えます。']}
 >
 `[40 55 30]` と表示されるように、3行目を書き換えてください。

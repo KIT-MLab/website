@@ -49,6 +49,7 @@ scores = np.array([[80, 70, 90], [60, 50, 40]])
 weights = np.array([[0.3, 0.3, 0.4]])
 print((scores @ weights.T).shape)`}
   tests={[{ kind: 'stdout' }]}
+  vary={[{ from: 'print((scores @ weights.T).shape)', to: 'print((scores @ weights.T).shape[1] + 1)' }, { from: 'scores = np.array([[80, 70, 90], [60, 50, 40]])', to: 'scores = np.array([[80, 70, 90], [60, 50, 40]])' }]}
   hints={[
     '結果の列の数は、weights.Tの列の数、つまりweightsの行の数と同じです。',
     'weightsに、3科目分の重みの組を4つ並べてください。',

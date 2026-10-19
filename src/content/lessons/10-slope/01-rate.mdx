@@ -42,6 +42,7 @@ score_b = 68
 rate = (score_b - score_a) / (hours_b - hours_a)
 print(rate)`}
   tests={[{ kind: 'stdout' }]}
+  vary={[{ from: 'hours_a = 2', to: 'hours_a = 1' }, { from: 'score_a = 50', to: 'score_a = 44' }, { from: 'hours_b = 5', to: 'hours_b = 7' }]}
   hints={[
     '変化率は、点数の差を勉強時間の差で割った値です。',
     '5行目は書き換えず、4行目の `score_b` だけを変えて、目標の値になるようにします。',

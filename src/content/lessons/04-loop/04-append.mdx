@@ -68,6 +68,7 @@ numbers.append(9)
 numbers.remove(7)
 print(numbers)`}
   tests={[{ kind: 'stdout' }]}
+  vary={[{ from: 'numbers = [3, 7, 2]', to: 'numbers = [3, 7, 5]' }]}
   hints={[]}
 >
 `[2, 9]` と表示されるように、`print(numbers)` の前に1行足してください。

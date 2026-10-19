@@ -44,6 +44,7 @@ a = np.array([80, 70, 90])
 w = np.array([0.5, 0.5, 0.0])
 print(a @ w)`}
   tests={[{ kind: 'stdout' }]}
+  vary={[{ from: 'print(a @ w)', to: 'print(a @ w + 1)' }, { from: 'a = np.array([80, 70, 90])', to: 'a = np.array([80, 70, 90])' }]}
   hints={[
     '内積は、同じ位置の成分どうしを掛けて足した合計です。',
     '重みを3つ足して1になる組で、70と90に同じ重みを付けると、その2つは80と同じに数えられます。',

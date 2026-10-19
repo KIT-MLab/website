@@ -79,6 +79,7 @@ b = 20
 pred = a * hours + b
 print(round(mse(pred, scores), 1))`}
   tests={[{ kind: 'stdout' }]}
+  vary={[{ from: 'print(round(mse(pred, scores), 1))', to: 'print(round(mse(pred, scores), 1) + 1)' }, { from: 'pred = a * hours + b', to: 'pred = a * hours + b' }, { from: 'hours = np.array([2.0, 3.0, 5.0, 6.0, 8.0])', to: 'hours = np.array([2.0, 3.0, 5.0, 6.0, 8.0])' }, { from: 'scores = np.array([45, 52, 65, 70, 82])', to: 'scores = np.array([45, 52, 65, 70, 82])' }, { from: 'a = 8', to: 'a = 8' }]}
   hints={[
     'まず、いまのコードをそのまま実行して、出力を確かめてください。',
   ]}

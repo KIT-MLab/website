@@ -47,6 +47,7 @@ print(scores.T)`}
 table = np.array([[1, 2, 3], [4, 5, 6]])
 print(table.T.shape)`}
   tests={[{ kind: 'stdout' }]}
+  vary={[{ from: 'print(table.T.shape)', to: 'print(table.shape)' }]}
   hints={[
     '転置すると、行の数と列の数が入れ替わります。目標の形から、元の表が何行何列かを逆算してください。',
     '行の数と列の数さえ合えば、表の中の値は何でもかまいません。',

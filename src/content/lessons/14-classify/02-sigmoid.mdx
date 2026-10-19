@@ -47,6 +47,7 @@ sig_form = 1 / (1 + np.exp(-z))
 print(np.round(exp_form, 3))
 print(np.round(sig_form, 3))`}
   tests={[{ kind: 'stdout' }]}
+  vary={[{ from: 'sig_form = 1 / (1 + np.exp(-z))', to: 'sig_form = 1 / (1 + np.exp(-z)) + 1' }, { from: 'exp_form = np.exp(z) / (np.exp(0) + np.exp(z))', to: 'exp_form = np.exp(z) / (np.exp(0) + np.exp(z))' }, { from: 'print(np.round(exp_form, 3))', to: 'print(np.round(exp_form, 3))' }, { from: 'print(np.round(sig_form, 3))', to: 'print(np.round(sig_form, 3))' }]}
   hints={[
     'まず、いまのコードをそのまま実行して、出力を確かめてください。',
     '確率が0.5になる `z` は0です。0.269 と 0.731 は足すと1になる組なので、`z` は符号だけ反対の数です。',

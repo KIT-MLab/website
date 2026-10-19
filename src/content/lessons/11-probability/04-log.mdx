@@ -63,6 +63,7 @@ for x in p:
     log_sum = log_sum + np.log(x)
 print(round(log_sum, 1))`}
   tests={[{ kind: 'stdout' }]}
+  vary={[{ from: 'log_sum = log_sum + np.log(x)', to: 'log_sum = log_sum + np.log(x) + 1' }, { from: 'product = product * x', to: 'product = product * x' }]}
   hints={[
     '`e` の後ろの `-200` を0に近づけると、掛けても0.0になりません。',
   ]}

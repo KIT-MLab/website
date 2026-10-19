@@ -190,6 +190,7 @@ print(total_score(m, s, e))`}
     { kind: 'stdout', stdin: `0\n0\n0\n` },
     { kind: 'stdout', stdin: `50\n50\n50\n` },
   ]}
+  vary={[{ from: 'print(total_score(m, s, e))', to: 'print(total_score(m, s, e) + 1)' }]}
   hints={[
     '実行すると出るエラーの、いちばん下の行を見てください。読み方は第6章1節（エラーメッセージの読み方）にあります。',
     '`def` の行の `()` の中に書いてある名前と、returnの行で使っている名前を見比べてください。第6章2節（SyntaxErrorとNameError）を読んでください。',

@@ -121,6 +121,7 @@ train = (model.predict(X_train) == y_train).mean()
 test = (model.predict(X_test) == y_test).mean()
 print(round(train, 3), round(test, 3))`}
   tests={[{ kind: 'stdout' }]}
+  vary={[{ from: 'ages = np.array([22, 30, 31, 27, 42, 32', to: 'ages = np.array([52, 30, 31, 27, 12, 32' }, { from: 'survived = np.array([0, 0, 1, 1, 0, 1, 0, 1', to: 'survived = np.array([1, 0, 1, 0, 0, 1, 0, 1' }]}
   hints={[]}
 >
 インデックス10以降の30人を訓練データ、最初の10人をテストデータにして、訓練データの正解率とテストデータの正解率を、上のコードの最後の `print` と同じ形で1行に表示してください。`survived` も同じ範囲に替えます。続けて、10歳・16歳・18歳・30歳の4人の予測を、`predict` が返す配列のまま、もう1行に表示します（4人の配列の作り方は、最初のコードの11〜12行目と同じです）。

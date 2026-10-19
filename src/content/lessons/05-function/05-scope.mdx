@@ -56,6 +56,7 @@ def apply_discount(total):
 apply_discount(total)
 print(total)`}
   tests={[{ kind: 'stdout' }]}
+  vary={[{ from: 'total = 100', to: 'total = 200' }, { from: 'total = total - 20', to: 'total = total - 30' }]}
   hints={[
     'まず、いまのコードをそのまま実行して、1行目と2行目に何が表示されるか確かめてください。',
     '関数の中の `total` を外に持ち帰るには、第5章2節の `return` を使います。',

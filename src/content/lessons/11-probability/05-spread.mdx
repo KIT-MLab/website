@@ -55,6 +55,7 @@ print(round(variance, 1))
 print(round(np.var(class_b), 1))
 print(round(np.std(class_b), 1))`}
   tests={[{ kind: 'stdout' }]}
+  vary={[{ from: 'print(round(np.std(class_b), 1))', to: 'print(round(np.std(class_b) + 1, 1))' }, { from: 'class_a = np.array([70, 70, 70, 70])', to: 'class_a = np.array([70, 70, 70, 70])' }, { from: 'print(class_a.mean(), class_b.mean())', to: 'print(class_a.mean(), class_b.mean())' }, { from: 'variance = np.mean((class_b - class_b.mean()) ** 2)', to: 'variance = np.mean((class_b - class_b.mean()) ** 2)' }, { from: 'print(round(variance, 1))', to: 'print(round(variance, 1))' }, { from: 'print(round(np.var(class_b), 1))', to: 'print(round(np.var(class_b), 1))' }]}
   hints={[
     '平均が70のまま、散らばりだけを小さくする4つの数を探してください。',
   ]}

@@ -113,6 +113,7 @@ df = pd.read_csv("train.csv")
 survived = df["Survived"]
 print(survived.sum())`}
   tests={[{ kind: 'stdout' }]}
+  vary={[{ from: 'df = pd.read_csv("train.csv")', to: 'df = pd.read_csv("train.csv").head(100)' }]}
   hints={[
     '運賃の列の名前は、この節の、列の名前と意味を並べた一覧にあります。',
   ]}

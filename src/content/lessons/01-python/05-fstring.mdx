@@ -49,6 +49,7 @@ print(f"名前:{name} 点数:{score}")`}
 score = 95
 print(f"名前:{name} 点数:{score}")`}
   tests={[{ kind: 'stdout' }]}
+  vary={[{ from: 'name = "鈴木"', to: 'name = "佐藤"' }, { from: 'score = 95', to: 'score = 82' }]}
   hints={[]}
 >
 下のコードを書き換えて、点数の後ろに `点` を付けて、`名前:鈴木 点数:95点` と表示してください。
@@ -61,6 +62,7 @@ print(f"名前:{name} 点数:{score}")`}
 score = 95
 print(f"名前:{name} 点数:{score}点")`}
   tests={[{ kind: 'stdout' }]}
+  vary={[{ from: 'name = "鈴木"', to: 'name = "佐藤"' }, { from: 'score = 95', to: 'score = 82' }]}
   hints={[]}
 >
 下のコードを書き換えて、点数を先に、名前をあとにして、`点数:95点 名前:鈴木` と表示してください。

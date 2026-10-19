@@ -54,6 +54,7 @@ while line != "終わり":
     line = input()
 print(count)`}
   tests={[{ kind: 'stdout', stdin: `a\nb\nc\n終わり\n` }]}
+  vary={[{ from: 'while line != "終わり":', to: 'while line != "c":' }]}
   hints={[]}
 >
 下のコードを書き換えて、`終わり` より前に読み取った行を、そのまま1行ずつ表示するようにしてください。行の数は表示しません。

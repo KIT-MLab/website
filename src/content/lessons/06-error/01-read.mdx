@@ -46,6 +46,7 @@ NameError: name 'average' is not defined. Did you mean: 'avarage'?
 mesage = f"ようこそ、{name}さん"
 print(message)`}
   tests={[{ kind: 'stdout' }]}
+  vary={[{ from: 'name = "はじめ"', to: 'name = "あおい"' }]}
   hints={['実行して止まったら、いちばん下の行に書かれた名前を確かめてください。']}
 >
 `ようこそ、はじめさん` と表示されるように、直してください。

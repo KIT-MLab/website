@@ -43,6 +43,7 @@ print(scores[1, :])`}
 scores = np.array([[80, 70, 90], [60, 50, 40]])
 print(scores[:, 0])`}
   tests={[{ kind: 'stdout' }]}
+  vary={[{ from: 'scores = np.array([[80, 70, 90], [60, 50, 40]])', to: 'scores = np.array([[85, 65, 20], [45, 75, 95]])' }]}
   hints={['列のインデックスを、最初のコードの `scores[:, 1]` と見比べてください。']}
 >
 `[90 40]` と表示されるように、3行目を書き換えてください。

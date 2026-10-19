@@ -58,6 +58,7 @@ print(round(average, 1))`}
   starter={`value = 19 / 6
 print(round(value, 1))`}
   tests={[{ kind: 'stdout' }]}
+  vary={[{ from: 'value = 19 / 6', to: 'value = 23 / 6' }]}
   hints={[]}
 >
 下のコードを書き換えて、小数第2位まで表示してください。`3.17` と表示されれば合っています。
@@ -72,6 +73,7 @@ english = 80
 total = japanese + mathematics + english
 print(f"合計{total}点")`}
   tests={[{ kind: 'stdout' }]}
+  vary={[{ from: 'japanese = 60', to: 'japanese = 63' }, { from: 'mathematics = 70', to: 'mathematics = 72' }, { from: 'english = 80', to: 'english = 83' }]}
   hints={['平均は合計を教科の数で割れば求まります。']}
 >
 下のコードを書き換えて、合計の代わりに平均を表示してください。平均は小数第1位まで丸め、`平均70.0点` とだけ表示されれば合っています。

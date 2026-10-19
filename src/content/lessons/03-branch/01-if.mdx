@@ -61,6 +61,7 @@ print("判定を終えました")`}
 if number < 0:
     print("負の数です")`}
   tests={[{ kind: 'stdout' }]}
+  vary={[{ from: 'if number < 0:', to: 'if number >= 0:' }]}
   hints={[]}
 >
 下のコードの `number` の値を、`負の数です` と表示されないように決めてください。
@@ -73,6 +74,7 @@ if number < 0:
 if number > 0:
     print("正の数です")`}
   tests={[{ kind: 'stdout' }]}
+  vary={[{ from: 'number = 0', to: 'number = 5' }]}
   hints={['今ある `if number > 0:` の行と、その下のインデントした行が1組です。同じ形の組を、もう1組下に足します。']}
 >
 下のコードに、`number` が `0` のとき `0です` と表示するif文（`if` の行とその中身の行）を足してください。

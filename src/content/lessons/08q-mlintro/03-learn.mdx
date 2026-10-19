@@ -165,6 +165,7 @@ for border in range(1, 81):
 print(f"境目 {best}歳 訓練データ {round(accuracy(best, 0, 30), 3)}")
 print(f"テストデータ {round(accuracy(best, 30, 40), 3)}")`}
   tests={[{ kind: 'stdout' }]}
+  vary={[{ from: 'sex = ["male", "male", "female", "female", "male", "female"', to: 'sex = ["female", "male", "male", "female", "male", "male"' }, { from: 'ages = [22, 30, 31, 27, 42, 32', to: 'ages = [52, 30, 31, 27, 12, 32' }, { from: 'survived = [0, 0, 1, 1, 0, 1', to: 'survived = [1, 0, 1, 0, 0, 1' }]}
   hints={[
     '書き換えるのは、1人ぶんの予測を決める if文だけです。境目を探すくり返しは、そのまま使えます。',
     '2つの条件のどちらかが成り立つときの書き方は、第3章4節で読めます。',

@@ -63,6 +63,7 @@ print(numbers[0])
 print(numbers[2])
 print(len(numbers))`}
   tests={[{ kind: 'stdout' }]}
+  vary={[{ from: 'numbers = [3, 7, 2, 9, 4]', to: 'numbers = [5, 1, 8, 6, 2]' }]}
   hints={[]}
 >
 `7` と `4` と `5` がこの順で表示されるように、2つのインデックスを決めてください。
@@ -77,6 +78,7 @@ print(numbers[0])
 print(numbers[2])
 print(len(numbers))`}
   tests={[{ kind: 'stdout' }]}
+  vary={[{ from: 'numbers = [3, 7, 2, 9, 4]', to: 'numbers = [3, 7, 2, 9, 4, 8, 6]' }]}
   hints={[]}
 >
 `numbers` の最後の値だけを表示してください。`4` と表示されれば合っています。リストの個数が変わっても動くよう、`len()` を使ってください。（この問題では、`[` `]` の中に負の数を書かず、`len()` で位置を求めてください）

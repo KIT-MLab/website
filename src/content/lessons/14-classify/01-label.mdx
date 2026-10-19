@@ -64,6 +64,7 @@ for i in range(3000):
 z = a * hours + b
 print(round(z.min(), 2), round(z.max(), 2))`}
   tests={[{ kind: 'stdout' }]}
+  vary={[{ from: 'hours = np.array([2.0, 3.0, 5.0', to: 'hours = np.array([2.5, 3.0, 5.0' }, { from: 'scores = np.array([45, 52, 65, 70, 82, 84', to: 'scores = np.array([45, 72, 65, 70, 82, 68' }]}
   hints={[
     'まず、いまのコードをそのまま実行して、出力を確かめてください。',
     '5行目の `scores >= 60` が、合格を1にする条件です。',

@@ -62,6 +62,7 @@ squared = (1 - p) ** 2
 print(np.round(cross_entropy, 4))
 print(np.round(squared, 4))`}
   tests={[{ kind: 'stdout' }]}
+  vary={[{ from: 'cross_entropy = -np.log(p)', to: 'cross_entropy = -np.log(p) + 1' }, { from: 'squared = (1 - p) ** 2', to: 'squared = (1 - p) ** 2' }, { from: 'print(np.round(cross_entropy, 4))', to: 'print(np.round(cross_entropy, 4))' }, { from: 'print(np.round(squared, 4))', to: 'print(np.round(squared, 4))' }]}
   hints={[
     'まず、いまのコードをそのまま実行して、出力を確かめてください。',
     '`squared` が `0.81` と `0.01` になるには、`1 - p` がいくつならよいかを考えます。',

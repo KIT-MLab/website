@@ -53,6 +53,7 @@ print(scores[1][2])`}
 table = np.array([[1, 2, 3], [4, 5, 6]])
 print(table[0][1])`}
   tests={[{ kind: 'stdout' }]}
+  vary={[{ from: 'table = np.array([[1, 2, 3], [4, 5, 6]])', to: 'table = np.array([[9, 2, 3], [4, 5, 7]])' }]}
   hints={['行と列のどちらのインデックスを変えれば、その値にたどり着くかを考えてください。']}
 >
 `6` と表示されるように、3行目を書き換えてください。

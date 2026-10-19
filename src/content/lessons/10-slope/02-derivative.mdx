@@ -52,6 +52,7 @@ x0 = 4
 h = 0.001
 print(round((f(x0 + h) - f(x0)) / h, 2))`}
   tests={[{ kind: 'stdout' }]}
+  vary={[{ from: 'return x ** 2', to: 'return x ** 3' }]}
   hints={[
     '`x**2` の微分は `2x` です。目標の値になる `x0` を探してください。',
   ]}

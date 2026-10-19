@@ -42,6 +42,7 @@ mathematics = 82
 total = japanese + mathematics
 print(f"合計{total}点")`}
   tests={[{ kind: 'stdout' }]}
+  vary={[{ from: 'japanese = 65', to: 'japanese = 75' }, { from: 'mathematics = 82', to: 'mathematics = 80' }]}
   hints={[]}
 >
 下のコードを書き換えて、`english = 70` も合計に加えてください。`合計217点` と表示されれば合っています。
@@ -56,6 +57,7 @@ english = 80
 total = japanese + mathematics + english
 print(f"合計{total}点")`}
   tests={[{ kind: 'stdout' }]}
+  vary={[{ from: 'japanese = 60', to: 'japanese = 66' }, { from: 'mathematics = 70', to: 'mathematics = 73' }, { from: 'english = 80', to: 'english = 83' }]}
   hints={['平均は合計を教科の数で割れば求まります。']}
 >
 下のコードを書き換えて、合計のあとに平均も表示してください。`合計210点 平均70.0点` と表示されれば合っています。

@@ -89,6 +89,7 @@ test_loss = np.mean((a * test_hours + b - test_scores) ** 2)
 print(round(train_loss, 1))
 print(round(test_loss, 1))`}
   tests={[{ kind: 'stdout' }]}
+  vary={[{ from: 'hours  = np.array([2.0, 3.0, 5.0', to: 'hours  = np.array([2.5, 3.0, 5.0' }, { from: 'scores = np.array([45, 52, 65', to: 'scores = np.array([40, 52, 65' }, { from: 'rng = np.random.default_rng(3)', to: 'rng = np.random.default_rng(4)' }]}
   hints={[
     '8行目と9行目の両方に、区切る位置の数があります。',
   ]}

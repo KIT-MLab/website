@@ -50,6 +50,7 @@ elif temperature >= 15:
 else:
     print("寒い")`}
   tests={[{ kind: 'stdout' }]}
+  vary={[{ from: 'elif temperature >= 15:', to: 'elif temperature >= 40:' }]}
   hints={[]}
 >
 `ちょうどいい` と表示されるように、`temperature` の値を決めてください。
@@ -66,6 +67,7 @@ elif number >= 10:
 else:
     print("小さい")`}
   tests={[{ kind: 'stdout' }]}
+  vary={[{ from: 'if number >= 100:', to: 'if number < 100:' }]}
   hints={[]}
 >
 `小さい` と表示されるように、`number` の値を決めてください。
