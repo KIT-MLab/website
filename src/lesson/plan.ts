@@ -134,6 +134,8 @@ export const PLAN: PlanRow[] = [
     before: { lessons: ['python-08-index'] },
     after: {
       practice: [{ chapter: '08-table', levels: [1] }],
+      // 今週の演習 10/20（第7〜8章と練習編2）は、第8章を集まりでやった 10/27 のあとに出す（2026-10-20 代表）
+      weekly: ['weekly-2026-10-20'],
     },
   },
   { kind: 'off', date: '2026-11-03', title: '休み（文化の日）' },
