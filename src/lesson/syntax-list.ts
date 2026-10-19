@@ -187,6 +187,12 @@ export const SYNTAX_CATEGORIES: SyntaxCategory[] = [
         since: 'python-03-else',
       },
       {
+        code: 'score = 45\nif score >= 60:\n    message = "合格"\nelse:\n    message = "不合格"\nprint(score, message)',
+        result: '45 不合格',
+        note: 'ifやelseの中で変数に値を入れ、あとで使う',
+        since: 'python-03-else',
+      },
+      {
         code: 'score = 85\nif score >= 90:\n    print("優")\nelif score >= 80:\n    print("良")\nelse:\n    print("可")',
         result: '良',
         note: 'elifで3段階以上に分ける',
@@ -244,6 +250,12 @@ export const SYNTAX_CATEGORIES: SyntaxCategory[] = [
         code: 'count = 0\nline = input()\nwhile line != "終わり":\n    count = count + 1\n    line = input()\nprint(count)',
         result: '2（入力が a・b・終わり の3行のとき）',
         note: '終わりの行が来るまで読み続ける',
+        since: 'python-04-while',
+      },
+      {
+        code: 'numbers = []\nline = input()\nwhile line != "終わり":\n    numbers.append(int(line))\n    line = input()\nprint(numbers)',
+        result: '[3, 7]（入力が 3・7・終わり の3行のとき）',
+        note: '終わりの行まで読みながら、リストに足していく',
         since: 'python-04-while',
       },
       {
@@ -379,6 +391,12 @@ export const SYNTAX_CATEGORIES: SyntaxCategory[] = [
         note: '中で入れる名前は、外の値を読めない',
         since: 'python-05-scope',
       },
+      {
+        code: 'def double(v):\n    return v * 2\n\nprint(double(np.array([3, 4])))',
+        result: '[6 8]',
+        note: '配列を受け取って、配列を返す関数',
+        since: 'python-09-vector',
+      },
     ],
   },
   {
@@ -410,6 +428,12 @@ export const SYNTAX_CATEGORIES: SyntaxCategory[] = [
         code: 'a = np.array([60, 70, 80])\nb = np.array([40, 55, 50])\nprint(a - b)',
         result: '[20 15 30]',
         note: '配列どうしは同じ位置の値で計算',
+        since: 'python-07-array',
+      },
+      {
+        code: 'x = np.array([int(input()), int(input())])\nprint(x)',
+        result: '[3 5]（入力が3・5の2行のとき）',
+        note: '読み取った値を、変数に入れずにそのまま並べてもよい',
         since: 'python-07-array',
       },
       { code: 'print(np.array([1, 2, 3]) ** 2)', result: '[1 4 9]', note: '2乗も値ごと', since: 'python-07-array' },

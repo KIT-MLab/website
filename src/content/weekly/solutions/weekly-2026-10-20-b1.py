@@ -1,5 +1,10 @@
 import numpy as np
 
-times = np.array([int(input()), int(input()), int(input()), int(input()), int(input())])
+t1 = int(input())
+t2 = int(input())
+t3 = int(input())
+t4 = int(input())
+t5 = int(input())
+times = np.array([t1, t2, t3, t4, t5])
 average = times.mean()
 print(times[times < average])
