@@ -19,6 +19,10 @@ export type Feedback =
   | { kind: 'pass' }
   /** 問題文で禁じた書き方を使っている（第4.4節） */
   | { kind: 'forbidden'; word: string }
+  /** 書き換えてはいけないデータの行（vary の from）が、提出したコードにそのまま無い。line は starter の中の行（第4.4節） */
+  | { kind: 'vary-line'; line: number }
+  /** データの行を差し替えてもう一度動かすと、答えが合わない（答えを直接書いている。第4.4節） */
+  | { kind: 'vary-miss' }
   | { kind: 'timeout' }
   /** 節に添えたファイルを取れず、動かせなかった（design/spec/57-lesson-files.md 第3.1節）。提出に数えない */
   | { kind: 'files' }
@@ -257,10 +261,23 @@ function fromError(result: ExecResult): Feedback | null {
   return { kind: 'error', display: e.display, line: e.line, type: e.type, advice: adviceFor(e.type) };
 }
 
+/** from → to をすべて当てる。scripts/build-tests.mjs の applyVary と同じ規則 */
+function applyVary(code: string, vary: { from: string; to: string }[]): string {
+  return vary.reduce((c, v) => c.split(v.from).join(v.to), code);
+}
+
 /** 採点を1回走らせる。 */
 export async function gradeExercise(code: string, exercise: ExerciseData): Promise<GradeResult> {
   // 第0章の型（type / choose）は Python を動かさない。こちらには来ない（第11.4節）
   if (isDirectKind(exercise.kind)) return gradeDirect(code, exercise);
+
+  // データの行は書き換えさせない（第4.4節）。どのテストも試していないので failedTest は null
+  const vary = exercise.vary ?? [];
+  for (const v of vary) {
+    if (!code.includes(v.from)) {
+      return { passed: false, feedback: { kind: 'vary-line', line: v.line }, failedTest: null, errorType: null };
+    }
+  }
 
   // 書き方の指定は、問題文に書いた範囲だけを文字列で見る（第4.4節）
   for (const word of exercise.forbid) {
@@ -318,6 +335,33 @@ export async function gradeExercise(code: string, exercise: ExerciseData): Promi
       const valueText = showValue(result.value);
       const output = result.stdout ? `${normalizeOutput(result.stdout)}\n戻り値: ${valueText}` : valueText;
       runs.push({ input: showInput(test), output });
+    }
+  }
+
+  /* データの行を差し替えて、同じ入力でもう一度動かす（第4.4節）。答えを直接書いていると合わない。
+     元のテストはすべて通っているので、どのテストで落ちたかは出さない（failedTest は null） */
+  if (vary.length > 0) {
+    const varied = applyVary(code, vary);
+    const miss: GradeResult = { passed: false, feedback: { kind: 'vary-miss' }, failedTest: null, errorType: null };
+    for (let i = 0; i < exercise.tests.length; i++) {
+      const test = exercise.tests[i];
+      if (test.kind !== 'stdout' && test.kind !== 'call') continue;
+      const result = await execPython({
+        code: varied,
+        stdin: test.kind === 'stdout' ? test.stdin : undefined,
+        call: test.kind === 'call' ? { fn: test.fn, args: test.args } : undefined,
+      });
+      // ファイルを取れなかったときは、ほかと同じく提出に数えない
+      if (result.error?.kind === 'files') {
+        return { passed: false, feedback: { kind: 'files' }, failedTest: null, errorType: null };
+      }
+      if (result.error) return miss;
+      const expect = exercise.varyExpects?.[i];
+      if (test.kind === 'stdout') {
+        if (normalizeOutput(result.stdout) !== normalizeOutput(String(expect ?? ''))) return miss;
+      } else if (!valuesEqual(result.value, expect)) {
+        return miss;
+      }
     }
   }
 

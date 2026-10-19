@@ -758,6 +758,12 @@ function Verdict({ result, kind, exercise }: { result: GradeResult; kind: Exerci
           この問題では使わない <code>{f.word}</code> が入っています。別の書き方で解いてください。
         </p>
       ) : null}
+      {f.kind === 'vary-line' ? (
+        <p>{f.line}行目は書き換えないでください。問題文で書き換えるように言っている行だけを書き換えます。</p>
+      ) : null}
+      {f.kind === 'vary-miss' ? (
+        <p>データを別の値にしてもう一度動かすと、答えが合いませんでした。答えの値をそのまま書かず、計算で求めてください。</p>
+      ) : null}
       {f.kind === 'timeout' ? <p>時間がかかりすぎたので止めました。無限ループになっていないか確認してください。</p> : null}
       {f.kind === 'input-empty' ? <p>入力欄が空です。入力欄に値を書いてから実行してください。</p> : null}
       {f.kind === 'no-function' ? (

@@ -116,6 +116,81 @@ function describeError(result) {
   return `${e.display}${e.line ? `（${e.line}行目）` : ''}`;
 }
 
+/** text の中に part が何回出てくるか（重ならない数え方） */
+function countOf(text, part) {
+  return String(text ?? '').split(part).length - 1;
+}
+
+/** from → to をすべて当てる。src/lesson/grade.ts の applyVary と同じ規則 */
+function applyVary(code, vary) {
+  return vary.reduce((c, v) => c.split(v.from).join(v.to), code);
+}
+
+/**
+ * データの行の差し替え（20-platform.md 第4.4節）。vary の無い課題には何も足さない。
+ * 各 from が starter と模範解答にちょうど1回ずつ出てくるかを確かめ、差し替えた模範解答を
+ * 各テストと同じ入力で走らせて、差し替えたときの期待値（tests と同じ並び）を作る。
+ * 差し替えても期待値が変わらないテストがあれば止める（抜け道を塞げていないので）。
+ */
+async function buildVary(rel, e, solution, tests, exec) {
+  const raw = evalAttribute(e.rawAttrs.vary);
+  if (raw === undefined) return {};
+  const where = `${rel}:${e.line}`;
+  if (!Array.isArray(raw) || raw.length === 0 ||
+      !raw.every((v) => v && typeof v.from === 'string' && v.from !== '' && typeof v.to === 'string')) {
+    fail(where, `${e.id} の vary は [{ from: '…', to: '…' }] の形で書いてください`);
+    return {};
+  }
+  if (typeof e.starter !== 'string' || !solution) {
+    fail(where, `${e.id} の vary は、starter と模範解答のある課題にだけ付けられます`);
+    return {};
+  }
+  let ok = true;
+  const vary = [];
+  for (const v of raw) {
+    const inStarter = countOf(e.starter, v.from);
+    const inSolution = countOf(solution, v.from);
+    if (inStarter !== 1 || inSolution !== 1) {
+      fail(where, `${e.id} の vary の from「${v.from}」が、starter に${inStarter}回・模範解答に${inSolution}回出てきます。どちらにもちょうど1回ずつ出てくる文字列にしてください`);
+      ok = false;
+      continue;
+    }
+    const line = e.starter.slice(0, e.starter.indexOf(v.from)).split('\n').length;
+    vary.push({ from: v.from, to: v.to, line });
+  }
+  if (!ok) return {};
+
+  const varied = applyVary(solution, vary);
+  const varyExpects = [];
+  for (let i = 0; i < tests.length; i++) {
+    const t = tests[i];
+    if (t.kind !== 'stdout' && t.kind !== 'call') {
+      fail(where, `${e.id} の vary は、tests が stdout か call の課題にだけ付けられます`);
+      return {};
+    }
+    // 元の期待値を作ったときと同じ入力で走らせる（call の stdin は tests には載らないので書き手の側から取る）
+    const stdin = e.tests[i]?.stdin;
+    const result = await exec(
+      t.kind === 'call' ? { code: varied, stdin, call: { fn: t.fn, args: t.args } } : { code: varied, stdin },
+    );
+    const err = describeError(result);
+    if (err) {
+      fail(where, `${e.id} の vary で差し替えた模範解答が tests[${i}] で動きません: ${err}`);
+      return {};
+    }
+    const expect = t.kind === 'call' ? result.value : result.stdout;
+    const same = t.kind === 'call'
+      ? JSON.stringify(expect) === JSON.stringify(t.expect)
+      : normalize(expect) === normalize(t.expect);
+    if (same) {
+      fail(where, `${e.id} の vary で差し替えても、tests[${i}] の期待値が変わりません。答えが変わる差し替えにしてください`);
+      return {};
+    }
+    varyExpects.push(expect);
+  }
+  return { vary, varyExpects };
+}
+
 const files = listMdx(LESSONS_DIR).sort();
 const lessons = {};
 /* 教材の順（course order）で節を集める。検索の索引（第18章）が使う。
@@ -325,6 +400,8 @@ for (const file of files) {
 
     checkExampleLeak(rel, e, tests);
 
+    const varyData = await buildVary(rel, e, solution, tests, execLesson);
+
     exercises[e.id] = {
       id: e.id,
       kind: e.kind,
@@ -333,6 +410,7 @@ for (const file of files) {
       forbid: e.forbid,
       /* 付いている課題にだけ載せる。ほかの節の生成物は1文字も変わらない（第11.7節） */
       ...(e.requirePaste ? { requirePaste: true } : {}),
+      ...varyData,
     };
   }
 
@@ -513,6 +591,7 @@ async function buildSet(file, solutionsDir, extra = () => ({})) {
     }
 
     const tests = await buildSetTests(rel, e, solution);
+    const varyData = await buildVary(rel, e, solution, tests, execPython);
 
     exercises[e.id] = {
       id: e.id,
@@ -521,6 +600,7 @@ async function buildSet(file, solutionsDir, extra = () => ({})) {
       hints: e.hints,
       forbid: e.forbid,
       ...(e.requirePaste ? { requirePaste: true } : {}),
+      ...varyData,
       ...extra(e),
     };
   }

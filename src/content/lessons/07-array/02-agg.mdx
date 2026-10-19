@@ -47,6 +47,7 @@ print(scores.min())`}
 prices = np.array([300, 120, 450, 200])
 print(prices.max())`}
   tests={[{ kind: 'stdout' }]}
+  vary={[{ from: 'prices = np.array([300, 120, 450, 200])', to: 'prices = np.array([310, 460, 130, 210])' }]}
   hints={['3行目で呼び出している `max()` を、`sum()` `min()` などの書き方と見比べてください。']}
 >
 `120` と表示されるように、3行目を書き換えてください。

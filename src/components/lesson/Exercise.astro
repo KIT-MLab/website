@@ -41,6 +41,11 @@ interface Props {
   hints?: string[];
   forbid?: string[];
   /**
+   * データの行の差し替え（20-platform.md 第4.4節）。from は starter の中の文字列、to は差し替える文字列。
+   * forbid と同じく scripts/build-tests.mjs が読む。ここでは受け取るだけで使わない
+   */
+  vary?: { from: string; to: string }[];
+  /**
    * 構文の一覧（20-platform.md 第22.1節）で開く分類の key（src/lesson/syntax-list.ts）。
    * 今週の演習の build / choose 問題だけに付く。レッスンの節では使わない
    * （付けなければボタンごと出ない。既存のレッスンは影響を受けない）

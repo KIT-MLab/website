@@ -40,6 +40,14 @@ export type ExerciseData = {
    * 入力欄で貼り付けが起きていなければ通さない。貼り付けの中身は見ない。
    */
   requirePaste?: boolean;
+  /**
+   * データの行の差し替え（第4.4節）。付いている課題にだけ載る。
+   * 提出したコードに from がそのまま無ければ通さない（line は starter の中で from がある行。1始まり）。
+   * 通ったあと、from → to に差し替えてもう一度動かし、varyExpects と比べる。
+   */
+  vary?: { from: string; to: string; line: number }[];
+  /** tests と同じ並び。差し替えた模範解答が各テストで出したもの（stdout は出力、call は戻り値） */
+  varyExpects?: unknown[];
 };
 
 export type LessonData = {
