@@ -144,6 +144,25 @@
   padding-right: 0;
 }
 
+/* 狭い画面では余白を詰め、それでも収まらない表は表の中だけで横に送る。
+   ページ全体が横にはみ出さないように（2026-10-20、第2章1節の4列の表が 375px で13px はみ出した） */
+@media (max-width: 600px) {
+  .lesson-body > table {
+    display: block;
+    max-width: 100%;
+    overflow-x: auto;
+  }
+
+  .lesson-body > table th,
+  .lesson-body > table td {
+    padding-right: 12px;
+  }
+
+  .lesson-body > table th {
+    white-space: normal;
+  }
+}
+
 /* --- 左の欄（20-platform.md 第14.2節。試作の案A「帯を固定」） ---
  * 帯（高さ48px＋二重罫3px、Base.astro の .topbar）の下から画面の下まで固定する。
  * 中身が長ければ欄の中だけでスクロールする。本文と一緒には動かない。
