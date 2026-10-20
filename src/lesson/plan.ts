@@ -147,7 +147,8 @@ export const PLAN: PlanRow[] = [
     goal: '',
     teach: { label: 'pandas① 表を読む', lessons: ['python-15q-read'] },
     // 後半は30分まるごと使う（2026-10-13 代表「30分でまとめてやるほうが、学習者の頭の中がごちゃごちゃしない」）
-    together: [{ label: '考え方（30分）: 機械学習の全体の流れ（タイタニック1〜4 でやったことを、5つの段に並べ直す）' }],
+    // 機械学習の全体図（design/briefs/11z-mlmap.md）の3節を10分ずつ。label を省くと「全体図1 機械学習とは何か」の形になる
+    together: [{ lesson: 'python-mlmap-what' }, { lesson: 'python-mlmap-learn' }, { lesson: 'python-mlmap-flow' }],
   },
   {
     kind: 'meet',

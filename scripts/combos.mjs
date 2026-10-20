@@ -14,7 +14,7 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseLesson } from './parse-lesson.mjs';
 import { PYTHON_TOOLS } from './python-tools.mjs';
-import { projectChapter } from './parts.mjs';
+import { labeledChapter } from './parts.mjs';
 
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const LESSONS_DIR = join(ROOT, 'src', 'content', 'lessons');
@@ -59,8 +59,8 @@ const uses = (code) => groupNames.filter((g) => GROUPS[g].some((n) => toolRe.get
 function chapterLabel(dir) {
   const practice = /^\d\dp-practice(\d+)$/.exec(dir);
   if (practice) return `練習編${practice[1]}`;
-  const project = projectChapter(dir);
-  if (project) return project.name;
+  const labeled = labeledChapter(dir);
+  if (labeled) return labeled.name;
   const n = Number.parseInt(dir, 10);
   return Number.isNaN(n) ? dir : `第${n}章`;
 }

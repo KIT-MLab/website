@@ -1,6 +1,6 @@
 /** <Run> と <Exercise> が共に使う小さな部品。 */
 import { useEffect, useState, type ReactNode } from 'react';
-import { PROJECT_REF_SOURCE, isMembersOnlyChapter, lessonHref } from '../chapters';
+import { LABELED_REF_SOURCE, isMembersOnlyChapter, lessonHref } from '../chapters';
 import { onLoadProgress, pythonStatus } from '../runtime/runner';
 import type { ExecResult, LoadProgress } from '../runtime/types';
 import { FILES_MESSAGE, INPUT_EMPTY_MESSAGE, TIMEOUT_MESSAGE } from '../runtime/types';
@@ -73,14 +73,14 @@ function membersPage(): boolean {
 }
 
 /**
- * `…` と、節への参照「第N章M節」（メンバーだけの章は「タイタニック2」「pandas 2」）だけを組む、ごく小さな記法の表示。
+ * `…` と、節への参照「第N章M節」（章の番号を持たない章は「全体図2」「タイタニック2」「pandas 2」）だけを組む、ごく小さな記法の表示。
  *
  * リンクにするのは src/generated/section-refs.json（scripts/build-tests.mjs が書き出す）に
  * 行き先がある形だけ（20-platform.md 第15.2節）。無ければ文字のまま出す。同じタブで開く。
  * 本文（MDX）側の同じ変換は scripts/remark-section-links.mjs が受け持つ。
  * 同じ形を scripts/check-lessons.mjs（検査20）が見て、リンク先の節が実在することを確かめる。
  */
-const INLINE_RE = new RegExp(`\`([^\`]*)\`|第(\\d+)章(\\d+)節|${PROJECT_REF_SOURCE}`, 'g');
+const INLINE_RE = new RegExp(`\`([^\`]*)\`|第(\\d+)章(\\d+)節|${LABELED_REF_SOURCE}`, 'g');
 
 export function Inline({ text }: { text: string }) {
   const parts: ReactNode[] = [];
@@ -91,7 +91,9 @@ export function Inline({ text }: { text: string }) {
     if (m[1] !== undefined) {
       parts.push(<code key={parts.length}>{m[1]}</code>);
     } else {
-      const entry = m[4] !== undefined && !membersPage() ? undefined : SECTION_REFS[m[4] !== undefined ? `${m[4]}${Number(m[5])}` : `${Number(m[2])}-${Number(m[3])}`];
+      const target = SECTION_REFS[m[4] !== undefined ? `${m[4]}${Number(m[5])}` : `${Number(m[2])}-${Number(m[3])}`];
+      // 行き先がメンバーだけの章なら、メンバーでない人が開けないページにいるときだけリンクにする（全体図2 はどこでもリンク）
+      const entry = target !== undefined && isMembersOnlyChapter(target.split('/')[0]) && !membersPage() ? undefined : target;
       parts.push(
         entry ? (
           <a key={parts.length} className="kit-lessonlink" href={lessonHref(entry)}>

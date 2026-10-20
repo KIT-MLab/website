@@ -28,6 +28,7 @@ import {
   EXERCISE_KINDS,
   LESSON_LINK_PATH,
   LIMITS,
+  NO_CODE_CHAPTERS,
   PRACTICE_CHAPTER,
   PRACTICE_EXERCISE_KINDS,
   PRACTICE_SECTION_OPTIONAL,
@@ -43,7 +44,7 @@ import {
   splitSentences,
 } from './lesson-rules.mjs';
 import { PYTHON_TOOLS } from './python-tools.mjs';
-import { PROJECT_REF_RE, buildSectionRefs } from './section-refs.mjs';
+import { LABELED_REF_RE, buildSectionRefs } from './section-refs.mjs';
 import { MEMBERS_ONLY_CHAPTERS, partOfChapter } from './parts.mjs';
 import { deckById, deckProblems } from '../src/lesson/slides/decks.mjs';
 
@@ -225,14 +226,14 @@ for (const file of files) {
   }
 
   // --- 検査2 <Run> が「説明」より前にあること ---
-  // 第0章は Python を動かさないので <Run> を置かない（第11.5節）
+  // 第0章は Python を動かさないので <Run> を置かない（第11.5節）。コードを書かない章（機械学習の全体図）も同じ
   const runTags = lesson.components.filter((c) => c.name === 'Run');
   const explain = lesson.sections.find((s) => s.name === '説明');
   // 練習編は「やってみる」を置かないので <Run> も置かない（第15.1節）。動かすのは読み手の手である
   if (isPractice) {
     for (const run of runTags) add(2, run.line, '練習編に <Run> は置きません（第15.1節）');
   } else if (runTags.length === 0) {
-    if (!isStart) add(2, 1, '<Run> がありません。実行できるコードと実行結果を「やってみる」に置いてください');
+    if (!isStart && !NO_CODE_CHAPTERS.includes(String(fm.chapter ?? ''))) add(2, 1, '<Run> がありません。実行できるコードと実行結果を「やってみる」に置いてください');
   } else if (explain && runTags[0].start > explain.start) {
     add(2, runTags[0].line, '<Run> が「説明」より後ろにあります');
   }
@@ -569,8 +570,8 @@ for (const file of files) {
           add(20, line, `${where}: 「第${Number(m[1])}章${Number(m[2])}節」に行き先の節がありません`);
         }
       }
-      // メンバーだけの章の節は「タイタニック2」「pandas 2」と書く（章の番号を持たないため。scripts/section-refs.mjs）
-      for (const m of text.matchAll(PROJECT_REF_RE)) {
+      // 章の番号を持たない章の節は「全体図2」「タイタニック2」「pandas 2」と書く（scripts/section-refs.mjs）
+      for (const m of text.matchAll(LABELED_REF_RE)) {
         if (!SECTION_REFS[`${m[1]}${Number(m[2])}`]) {
           add(20, line, `${where}: 「${m[1]}${Number(m[2])}」に行き先の節がありません`);
         }

@@ -9,7 +9,7 @@
  */
 import { getCollection } from 'astro:content';
 import Base from '../../layouts/Base.astro';
-import { PARTS, chapterTitle, isMembersOnlyChapter, lessonHref, practiceSectionLabel } from '../../lesson/chapters';
+import { PARTS, chapterTitle, isMembersOnlyChapter, lessonHref, practiceNo, practiceSectionLabel } from '../../lesson/chapters';
 import { sectionLabel } from '../../../scripts/section-refs.mjs';
 import generated from '../../generated/lesson-data.json';
 import { practiceHref, practiceProblems } from '../../lesson/practice';
@@ -81,7 +81,8 @@ const partViews: PartView[] = PARTS.map((part) => {
     return {
       chapter,
       title: chapterTitle(chapter),
-      isPractice: practiceSectionLabel(chapter, 1) !== null,
+      // 練習編だけ。機械学習の全体図（節は「全体図1」）は章として数える
+      isPractice: practiceNo(chapter) !== null,
       total: chSections.reduce((n, s) => n + s.exerciseIds.length, 0),
       sections: chSections,
     };

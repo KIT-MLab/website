@@ -46,9 +46,21 @@ export const PROJECT_CHAPTERS = [
   { chapter: '15s-titanic', name: 'Kaggle に提出', label: 'Kaggle', space: true },
 ];
 
-/** メンバーだけの章なら、その表の行。そうでなければ null */
-export function projectChapter(chapter) {
-  return PROJECT_CHAPTERS.find((c) => c.chapter === chapter) ?? null;
+/**
+ * 章の番号を持たない、だれでも読める章の表（メンバーだけの章ではない。学習の一覧の部に入れる）。
+ * 形は PROJECT_CHAPTERS と同じで、節の呼び方（「全体図2」）を本文に書くと、その節へのリンクになる。
+ *
+ * - 機械学習の全体図（design/briefs/11z-mlmap.md）。フォルダ名の並びで第11章と第12章の間に来る
+ *   （`11-probability` < `11z-mlmap` < `12-predict`）。第12章以降の章・節の番号は変わらない
+ */
+export const NAMED_CHAPTERS = [{ chapter: '11z-mlmap', name: '機械学習の全体図', label: '全体図', space: false }];
+
+/** 章の番号を持たず、節を呼び方の頭と番号で呼ぶ章（上の2つの表） */
+const LABELED_CHAPTERS = [...NAMED_CHAPTERS, ...PROJECT_CHAPTERS];
+
+/** 章の番号を持たない章（NAMED_CHAPTERS・PROJECT_CHAPTERS）なら、その表の行。そうでなければ null */
+export function labeledChapter(chapter) {
+  return LABELED_CHAPTERS.find((c) => c.chapter === chapter) ?? null;
 }
 
 /** 表の行から、節の呼び方の番号より前の部分（「タイタニック」「pandas 」） */
@@ -56,26 +68,26 @@ function labelHead(c) {
   return c.space ? `${c.label} ` : c.label;
 }
 
-/** メンバーだけの章の n 番目（1から）の節の呼び方（「タイタニック2」「pandas 2」）。メンバーだけの章でなければ null */
-export function projectSectionLabel(chapter, n) {
-  const c = projectChapter(chapter);
+/** 章の番号を持たない章の n 番目（1から）の節の呼び方（「全体図2」「タイタニック2」「pandas 2」）。そうでない章なら null */
+export function labeledSectionLabel(chapter, n) {
+  const c = labeledChapter(chapter);
   return c ? `${labelHead(c)}${n}` : null;
 }
 
 /**
- * 本文の中の、メンバーだけの章の節への参照（「タイタニック2」「pandas 2」）の正規表現の元。
+ * 本文の中の、章の番号を持たない章の節への参照（「全体図2」「タイタニック2」「pandas 2」）の正規表現の元。
  * 当たりは2つの組: 呼び方の頭（「pandas 」）と番号。scripts/section-refs.mjs と src/lesson/ui/shared.tsx が
  * ほかの形とつないで使う（このファイルは画面からも読むので node: を import しない）。
  *
  * ふつうの文の「pandas」「Kaggle」（ライブラリ・サービスの名前）を誤ってリンクにしないよう、名前・空白・数字が
  * 続くときだけ当てる。そのうえで英字の名前は、前に英数字が続くとき（「geopandas 1」）、番号が3桁以上のとき
  * （「Kaggle 2024」）、番号のあとに数字か「.」が続くとき（「pandas 2.2」のような版の番号）も当てない。
- * 「タイタニック2」の当たり方は前のまま（前後を見ない）。
+ * 「タイタニック2」「全体図2」の当たり方は前のまま（前後を見ない）。
  */
 const escapeRe = (s) => s.replace(/[.*+?^${}()|[\]\\-]/g, '\\$&');
-const KANA_HEADS = PROJECT_CHAPTERS.filter((c) => !/^[A-Za-z]/.test(c.label)).map((c) => escapeRe(labelHead(c)));
-const ASCII_HEADS = PROJECT_CHAPTERS.filter((c) => /^[A-Za-z]/.test(c.label)).map((c) => escapeRe(labelHead(c)));
-export const PROJECT_REF_SOURCE =
+const KANA_HEADS = LABELED_CHAPTERS.filter((c) => !/^[A-Za-z]/.test(c.label)).map((c) => escapeRe(labelHead(c)));
+const ASCII_HEADS = LABELED_CHAPTERS.filter((c) => /^[A-Za-z]/.test(c.label)).map((c) => escapeRe(labelHead(c)));
+export const LABELED_REF_SOURCE =
   `(${[...KANA_HEADS, ...(ASCII_HEADS.length > 0 ? [`(?<![A-Za-z0-9_-])(?:${ASCII_HEADS.join('|')})`] : [])].join('|')})` +
   `(\\d+)(?:(?<=(?:${KANA_HEADS.join('|') || '(?!)'})\\d+)|(?<=[A-Za-z] \\d{1,2})(?![\\d.]))`;
 
@@ -110,7 +122,7 @@ export const PARTS = [
     ],
   },
   { name: '第2部 数学の基礎', chapters: ['09-matrix', '10-slope', '11-probability'] },
-  { name: '第3部 機械学習', chapters: ['12-predict', '13-regression', '14-classify', '15-evaluate'] },
+  { name: '第3部 機械学習', chapters: ['11z-mlmap', '12-predict', '13-regression', '14-classify', '15-evaluate'] },
   { name: '第4部 深層学習', count: 4 },
   { name: '第5部 自分の環境', count: 2 },
   { name: '第6部 深層学習を式から', count: 5 },

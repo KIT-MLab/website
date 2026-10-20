@@ -36,6 +36,12 @@ export const START_CHAPTER = '00-start';
 export const START_SECTION_ORDER = ['困る例', 'やってみる', '説明', '課題', 'つながり'];
 
 /**
+ * コードを書かない章（機械学習の全体図。design/briefs/11z-mlmap.md）。例は表と文で見せるので <Run> を置かない。
+ * 緩めるのは検査2（<Run> が無い）だけ。「組む」課題を置かない理由は、ほかの章と同じく節ごとに nobuild に書く
+ */
+export const NO_CODE_CHAPTERS = ['11z-mlmap'];
+
+/**
  * 練習編だけの例外（20-platform.md 第15.1節）。chapter が `04p-practice1` の形のときだけ。
  * 新しいことを教えない章なので、「はじめに」の1段落と課題（すべて「組む」）だけを置く。
  * 同じ形を src/lesson/chapters.ts の practiceNo も見ている。
