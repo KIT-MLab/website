@@ -2496,3 +2496,20 @@
   text-decoration: underline;
   text-underline-offset: 2px;
 }
+
+/* 幅1280px未満で右の欄（用語の検索・質問）が隠れていることの知らせ（2026-10-20。src/lesson/term-search.ts が出す）。
+   色と罫は今ある注記と同じトークン */
+.kit-narrow-note {
+  margin: 0 0 16px;
+  padding: 8px 12px;
+  font-size: 13.5px;
+  line-height: 1.7;
+  color: var(--l-ink);
+  background: var(--l-card);
+  border: 1px solid var(--l-rule);
+  border-left: 3px solid var(--color-accent);
+}
+
+.kit-narrow-note[hidden] {
+  display: none;
+}

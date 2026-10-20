@@ -334,6 +334,25 @@ export async function setupTermSearch(opts: { currentHref: string }): Promise<vo
     if (panel.classList.contains('is-open')) closePanel();
     else openPanel();
   });
+
+  /* 節のページで幅1280px未満のとき、右の欄（用語の検索・質問）が隠れていることを本文の上で知らせる
+     （2026-10-20 代表「学習者が該当するかを知りたい。とりあえず警告を出す」。メンバーの画面で欄が見えていなかった） */
+  const lessonTop = document.querySelector<HTMLElement>('.lesson-top');
+  if (lessonTop) {
+    const note = document.createElement('p');
+    note.className = 'kit-narrow-note';
+    note.setAttribute('role', 'note');
+    lessonTop.before(note);
+    const paintNote = (): void => {
+      const narrow = isDrawer();
+      note.hidden = !narrow;
+      if (narrow) {
+        note.textContent = `画面の幅が狭いため（いまの幅 ${Math.round(window.innerWidth)}px。1280px 以上で常に表示）、右側の「用語を検索」と「この節について質問する」の欄が隠れています。上の「用語を検索」ボタンで開けます。`;
+      }
+    };
+    paintNote();
+    window.addEventListener('resize', paintNote);
+  }
   close?.addEventListener('click', closePanel);
   scrim?.addEventListener('click', closePanel);
 
