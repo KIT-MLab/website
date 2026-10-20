@@ -115,8 +115,16 @@ const hasPandas = SYNTAX_CATEGORIES.some((c) => c.key === 'pandas' && c.entries.
     line-height: 1.7;
   }
 
+  /* 結果は折り返す。（入力が…のとき）のような長い結果が、説明の欄を1文字幅まで押しつぶさないように（2026-10-20） */
   .kit-sum__r {
     color: var(--l-ink-2);
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    min-width: 6em;
+  }
+
+  .kit-sum__t td:last-child {
+    min-width: 9em;
   }
 
   @media (min-width: 601px) {
