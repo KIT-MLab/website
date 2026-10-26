@@ -118,10 +118,18 @@ function homeworkProblems(practice: typeof HOMEWORK[number]['practice']) {
     );
   });
 }
+/* 節の問題を課題にする行（第12章以降。2026-10-27）。行き先は節のページのその問題 */
+function lessonProblems(ids: string[]) {
+  return ids.flatMap((id) => {
+    const l = lessons.find((x) => x.data.id === id);
+    if (!l) return [];
+    return (genLessons[id]?.exerciseIds ?? []).map((ex) => ({ id: ex, href: `${lessonHref(l.id)}#${ex}` }));
+  });
+}
 const homeworkViews = HOMEWORK.map((row) => {
   const [, m, d] = row.by.split('-').map(Number);
   const extra = row.extra ? { label: row.extra.label, problems: homeworkProblems(row.extra.practice) } : null;
-  return { by: row.by, byLabel: `${m}/${d}`, label: row.label, problems: homeworkProblems(row.practice), extra };
+  return { by: row.by, byLabel: `${m}/${d}`, label: row.label, problems: [...homeworkProblems(row.practice), ...lessonProblems(row.lessons ?? [])], extra };
 });
 ---
 

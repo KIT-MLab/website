@@ -112,7 +112,16 @@ function viewOf(row: PlanMeetRow): WeekView {
           if (t.url) return { label: t.label ?? t.url, href: t.url, external: true };
           return { label: t.label ?? '', href: null };
         }),
-    after: [...(row.after?.practice ?? []).flatMap(practiceLinks), ...(row.after?.weekly ?? []).map((id) => weeklyLink(id))],
+    after: [
+      ...(row.after?.practice ?? []).flatMap(practiceLinks),
+      // 練習問題集の無い章（第12章以降）は、節の問題を復習にする（2026-10-27）。棒はその節の問題の全部
+      ...(row.after?.lessons ?? []).map((id) => {
+        const link = lessonLink(id);
+        const exIds = (generated as { lessons: Record<string, { exerciseIds?: string[] }> }).lessons[id]?.exerciseIds ?? [];
+        return link.href ? { ...link, label: `節の問題 ${link.label}`, exIds } : { ...link, label: `節の問題 ${link.label}` };
+      }),
+      ...(row.after?.weekly ?? []).map((id) => weeklyLink(id)),
+    ],
   };
 }
 

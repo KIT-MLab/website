@@ -55,7 +55,7 @@ export type PlanMeetRow = {
   /** この回の前に読んでおく節（節の frontmatter の id） */
   before?: { lessons?: string[] };
   /** この回のあとに解く、この回で扱ったことの練習問題集の範囲と、今週の演習（weekly の id） */
-  after?: { practice?: PlanPractice[]; weekly?: string[] };
+  after?: { practice?: PlanPractice[]; weekly?: string[]; lessons?: string[] };
 };
 
 export type PlanOffRow = {
@@ -139,77 +139,143 @@ export const PLAN: PlanRow[] = [
     },
   },
   { kind: 'off', date: '2026-11-03', title: '休み（文化の日）' },
+  // 2026-10-27 代表「案の通りにしよう」（design/proposals/replan-2026-10-20.md）。11/10 から今年度の芯は機械学習（第12〜15章）。
+  // 前提の節（第9〜11章）は、使う回の「予習」の欄に置き、集まりでは短く入れる。道具（pandas・scikit-learn）は1月末から、Kaggle は2〜3月
   {
     kind: 'meet',
     no: '6',
     date: '2026-11-10',
-    title: 'pandas① 表を読む ／ 考え方（30分）: 機械学習の全体の流れ',
-    goal: '',
-    teach: { label: 'pandas① 表を読む', lessons: ['python-15q-read'] },
-    // 後半は30分まるごと使う（2026-10-13 代表「30分でまとめてやるほうが、学習者の頭の中がごちゃごちゃしない」）
-    // 機械学習の全体図（design/briefs/11z-mlmap.md）の3節を10分ずつ。label を省くと「全体図1 機械学習とは何か」の形になる
-    together: [{ lesson: 'python-mlmap-what' }, { lesson: 'python-mlmap-learn' }, { lesson: 'python-mlmap-flow' }],
+    title: '機械学習の全体図（30分） ／ 予測を関数にする',
+    goal: '機械学習の流れを自分の言葉で言える',
+    big: true,
+    // 前半は全体図の3節を10分ずつ（30分まるごと。2026-10-13 代表「30分でまとめてやるほうが、学習者の頭の中がごちゃごちゃしない」）
+    teach: { label: '機械学習の全体図（30分）', lessons: ['python-mlmap-what', 'python-mlmap-learn', 'python-mlmap-flow'] },
+    together: [{ lesson: 'python-12-model' }],
+    before: { lessons: ['python-mlmap-what'] },
+    after: { lessons: ['python-12-model'] },
   },
   {
     kind: 'meet',
     no: '7',
     date: '2026-11-17',
-    title: 'pandas② 条件と集計・欠損値 ／ 考え方: 前処理はなぜ要るか',
+    title: '損失 ／ パラメータの候補を全部試す（学習は数を選ぶこと）',
     goal: '',
-    teach: { label: 'pandas② 条件と集計・欠損値', lessons: ['python-15q-select', 'python-15q-missing'] },
-    together: [{ label: '考え方: 前処理はなぜ要るか' }],
+    teach: { label: '損失', lessons: ['python-12-loss'] },
+    together: [{ lesson: 'python-12-search' }],
+    after: { lessons: ['python-12-loss', 'python-12-search'] },
   },
   {
     kind: 'meet',
     no: '8',
     date: '2026-11-24',
-    title: 'pandas③・scikit-learn① 文字を数に・fit と predict ／ 考え方: 決定木も「数を選ぶ」',
+    title: '全部は試せない ／ 勾配降下法',
     goal: '',
-    teach: { label: 'pandas③・scikit-learn① 文字を数に・fit と predict', lessons: ['python-15q-encode', 'python-15r-fit'] },
-    together: [{ label: '考え方: 決定木も「数を選ぶ」（タイタニック3 の続き）' }],
+    teach: { label: '全部は試せない', lessons: ['python-12-count'] },
+    together: [{ lesson: 'python-13-descent' }],
+    // 前提（傾き・微分の符号）は第10章1〜3節。集まりでは短く入れる
+    before: { lessons: ['python-10-rate', 'python-10-derivative', 'python-10-direction'] },
+    after: { lessons: ['python-13-descent'] },
   },
   {
     kind: 'meet',
     no: '9',
     date: '2026-12-01',
-    title: 'scikit-learn② 特徴量・分けて測る ／ 考え方: 見ていないデータで測る',
-    goal: '',
-    teach: { label: 'scikit-learn② 特徴量・分けて測る', lessons: ['python-15r-features', 'python-15r-split'] },
-    together: [{ label: '考え方: 見ていないデータで測る（タイタニック2〜4 の呼び戻し）' }],
+    title: '学習率 ／ 直線を学習する（線形回帰）',
+    goal: '線形回帰を自分で書ける',
+    big: true,
+    teach: { label: '学習率', lessons: ['python-13-rate'] },
+    together: [{ lesson: 'python-13-linear' }],
+    // 前提（偏微分）は第10章4節
+    before: { lessons: ['python-10-partial'] },
+    after: { lessons: ['python-13-rate', 'python-13-linear'] },
   },
   {
     kind: 'meet',
     no: '10',
     date: '2026-12-08',
-    title: 'scikit-learn③ 木の深さ・Titanic① まず1回提出 ／ 考え方: 順位表に合わせすぎない',
-    goal: '全員が1回提出する',
-    big: true,
-    teach: { label: 'scikit-learn③ 木の深さ・Titanic① まず1回提出', lessons: ['python-15r-depth'] },
-    together: [{ label: '考え方: 順位表に合わせすぎない' }],
+    title: '入力が複数の線形回帰 ／ 標準化',
+    goal: '',
+    teach: { label: '入力が複数の線形回帰', lessons: ['python-13-multi'] },
+    together: [{ lesson: 'python-13-standardize' }],
+    // 前提（行列とベクトルの積・標準偏差）は第9章3節・第11章5節
+    before: { lessons: ['python-09-matvec', 'python-11-spread'] },
+    after: { lessons: ['python-13-multi', 'python-13-standardize'] },
   },
-  { kind: 'meet', no: '11', date: '2026-12-15', title: 'Titanic② 1つずつ変えて比べる', goal: '' },
-  { kind: 'meet', no: '12', date: '2026-12-22', title: 'Titanic③・過去の月例コンペで練習', goal: '1月の段取りを決める' },
+  {
+    kind: 'meet',
+    no: '11',
+    date: '2026-12-15',
+    title: '合否をラベルで表す ／ シグモイド関数',
+    goal: '',
+    teach: { label: '合否をラベルで表す', lessons: ['python-14-label'] },
+    together: [{ lesson: 'python-14-sigmoid' }],
+    // 前提（指数関数）は第11章3節
+    before: { lessons: ['python-11-exp'] },
+    after: { lessons: ['python-14-label', 'python-14-sigmoid'] },
+  },
+  {
+    kind: 'meet',
+    no: '12',
+    date: '2026-12-22',
+    title: '交差エントロピー ／ ロジスティック回帰',
+    goal: '分類を自分で書ける',
+    big: true,
+    teach: { label: '交差エントロピー', lessons: ['python-14-entropy'] },
+    together: [{ lesson: 'python-14-logistic' }],
+    // 前提（対数）は第11章4節
+    before: { lessons: ['python-11-log'] },
+    after: { lessons: ['python-14-entropy', 'python-14-logistic'] },
+  },
   { kind: 'off', date: '2026-12-29', dateLabel: '12/29・1/5', title: '冬休み' },
-  { kind: 'meet', no: '13', date: '2027-01-12', title: '正解率と混同行列 ／ 1月の月例コンペ①', goal: '初めての本番', big: true },
-  { kind: 'meet', no: '14', date: '2027-01-19', title: '1月の月例コンペ②', goal: '' },
+  {
+    kind: 'meet',
+    no: '13',
+    date: '2027-01-12',
+    title: '訓練データとテストデータ ／ 過学習',
+    goal: '',
+    teach: { label: '訓練データとテストデータ', lessons: ['python-15-split'] },
+    together: [{ lesson: 'python-15-overfit' }],
+    after: { lessons: ['python-15-split', 'python-15-overfit'] },
+  },
+  {
+    kind: 'meet',
+    no: '14',
+    date: '2027-01-19',
+    title: '正解率とベースライン ／ 混同行列',
+    goal: '学習と評価の流れを自分のコードで説明できる',
+    big: true,
+    teach: { label: '正解率とベースライン', lessons: ['python-15-accuracy'] },
+    together: [{ lesson: 'python-15-confusion' }],
+    after: { lessons: ['python-15-accuracy', 'python-15-confusion'] },
+  },
   {
     kind: 'meet',
     no: '15',
     date: '2027-01-26',
-    title: '1月の月例コンペ③',
-    goal: '全員が自分の名前で提出する',
-    big: true,
+    title: '自分で作ったものを道具で: pandas ／ scikit-learn',
+    goal: '',
+    teach: { label: 'pandas 1・2', lessons: ['python-15q-read', 'python-15q-select'] },
+    together: [{ lesson: 'python-15r-fit' }],
   },
   { kind: 'off', date: '2027-02-02', dateLabel: '2/2・2/9', title: '試験の前の週と試験期間' },
-  { kind: 'meet', no: '16', date: '2027-02-16', title: '1月の振り返り', goal: '', online: true },
-  { kind: 'meet', no: '17', date: '2027-02-23', title: '3月に向けた練習・発表の準備', goal: '', online: true },
+  {
+    kind: 'meet',
+    no: '16',
+    date: '2027-02-16',
+    title: 'pandas 3・4 ／ scikit-learn 2〜4',
+    goal: '',
+    online: true,
+    teach: { label: 'pandas 3・4', lessons: ['python-15q-missing', 'python-15q-encode'] },
+    together: [{ lesson: 'python-15r-features' }, { lesson: 'python-15r-split' }, { lesson: 'python-15r-depth' }],
+  },
+  { kind: 'meet', no: '17', date: '2027-02-23', title: 'Kaggle に提出① まず1回提出', goal: '全員が1回提出する', big: true, online: true },
   {
     kind: 'meet',
     no: '18〜22',
     date: '2027-03-02',
     until: '2027-03-30',
-    title: '3月の月例コンペ・発表の資料づくり',
-    goal: '全員が提出する・報告の材料をまとめる',
+    title: 'Kaggle に提出②③・練習のコンペ・発表の資料づくり',
+    goal: '全員が自分の名前で提出する・報告の材料をまとめる',
     big: true,
     online: true,
   },
@@ -255,6 +321,8 @@ export type HomeworkRow = {
   label: string;
   /** 練習問題集の範囲（今週のページの「復習」と同じ形） */
   practice: PlanPractice[];
+  /** 練習問題集の無い章（第12章以降）で、課題にする節（節の id）。その節の問題を全部出す（2026-10-27） */
+  lessons?: string[];
   /** 余裕がある人向けの範囲（★2・★3 など）。帯に「余裕があれば」として添える */
   extra?: { label: string; practice: PlanPractice[] };
 };
@@ -278,6 +346,16 @@ export const HOMEWORK: HomeworkRow[] = [
     practice: [{ chapter: '08-table', levels: [1] }],
     extra: { label: '★2・★3', practice: [{ chapter: '08-table', levels: [2, 3] }] },
   },
+  // 11/10 から第12〜15章。練習問題集が無いので、その回で扱った節の問題を課題にする（plan の after.lessons と同じ）
+  { by: '2026-11-17', label: '12.1 予測を関数にする の問題', practice: [], lessons: ['python-12-model'] },
+  { by: '2026-11-24', label: '12.2 損失・12.3 パラメータの候補を全部試す の問題', practice: [], lessons: ['python-12-loss', 'python-12-search'] },
+  { by: '2026-12-01', label: '13.1 勾配降下法 の問題', practice: [], lessons: ['python-13-descent'] },
+  { by: '2026-12-08', label: '13.2 学習率・13.3 線形回帰 の問題', practice: [], lessons: ['python-13-rate', 'python-13-linear'] },
+  { by: '2026-12-15', label: '13.4 入力が複数の線形回帰・13.5 標準化 の問題', practice: [], lessons: ['python-13-multi', 'python-13-standardize'] },
+  { by: '2026-12-22', label: '14.1 ラベル・14.2 シグモイド関数 の問題', practice: [], lessons: ['python-14-label', 'python-14-sigmoid'] },
+  { by: '2027-01-12', label: '14.3 交差エントロピー・14.4 ロジスティック回帰 の問題', practice: [], lessons: ['python-14-entropy', 'python-14-logistic'] },
+  { by: '2027-01-19', label: '15.1 訓練データとテストデータ・15.2 過学習 の問題', practice: [], lessons: ['python-15-split', 'python-15-overfit'] },
+  { by: '2027-01-26', label: '15.3 正解率・15.4 混同行列 の問題', practice: [], lessons: ['python-15-accuracy', 'python-15-confusion'] },
 ];
 
 /** ページ上の1段落の説明（第21.2節）。 */
@@ -285,8 +363,8 @@ export const PLAN_INTRO = '毎週火曜・70分。前半はその場で手を動
 
 /** 目標の枠（第21.2節）。 */
 export const PLAN_GOAL = {
-  headline: '3月の月例コンペに、全員が自分の名前で提出する',
-  body: 'その前に、12月に Titanic で全員が1回提出し、1月の月例コンペを初めての本番にする。',
+  headline: '機械学習を自分で作って説明でき、3月に全員が自分の名前で Kaggle に提出する',
+  body: '11月〜1月に、機械学習の芯（モデル・損失・勾配降下法・線形回帰・分類・評価）を自分で作る。2月に Titanic で全員が1回提出し、3月を本番にする。',
 };
 
 const WEEKDAY_KANJI = ['日', '月', '火', '水', '木', '金', '土'];
