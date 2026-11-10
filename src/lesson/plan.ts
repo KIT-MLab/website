@@ -209,8 +209,7 @@ export const PLAN: PlanRow[] = [
     goal: '',
     teach: { label: '合否をラベルで表す', lessons: ['python-14-label'] },
     together: [{ lesson: 'python-14-sigmoid' }],
-    // 前提（指数関数）は第11章3節
-    before: { lessons: ['python-11-exp'] },
+    // 前提（指数関数）は 14.2 の本文がその場で説明する（第11章3節は予習に置かない。2026-11-10）
     after: { lessons: ['python-14-label', 'python-14-sigmoid'] },
   },
   {
@@ -222,8 +221,7 @@ export const PLAN: PlanRow[] = [
     big: true,
     teach: { label: '交差エントロピー', lessons: ['python-14-entropy'] },
     together: [{ lesson: 'python-14-logistic' }],
-    // 前提（対数）は第11章4節
-    before: { lessons: ['python-11-log'] },
+    // 前提（対数）は 14.3 の本文がその場で説明する（第11章4節は予習に置かない。2026-11-10）
     after: { lessons: ['python-14-entropy', 'python-14-logistic'] },
   },
   { kind: 'off', date: '2026-12-29', dateLabel: '12/29・1/5', title: '冬休み' },
