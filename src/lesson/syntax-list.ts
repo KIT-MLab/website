@@ -445,12 +445,14 @@ export const SYNTAX_CATEGORIES: SyntaxCategory[] = [
         result: '[1.    2.718]',
         note: 'e の累乗（意味は第11章3節）',
         since: 'python-07-array',
+        also: ['python-14-sigmoid'],
       },
       {
         code: 'print(np.round(np.log(np.array([1, 10])), 3))',
         result: '[0.    2.303]',
         note: '対数（意味は第11章4節）',
         since: 'python-07-array',
+        also: ['python-14-entropy'],
       },
       {
         code: 'print(np.maximum(np.array([-2, 0, 3]), 0))',
