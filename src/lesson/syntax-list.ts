@@ -602,6 +602,12 @@ export const SYNTAX_CATEGORIES: SyntaxCategory[] = [
         since: 'python-07-shape',
       },
       {
+        code: 'a = np.array([80, 70, 90])\nprint(a.shape)',
+        result: '(3,)',
+        note: '1次元の形は数が1つ（値の個数）。数が1つのときは後ろにコンマが付く',
+        since: 'python-07-shape',
+      },
+      {
         code: 't = np.array([[80, 70, 90], [60, 50, 40]])\nprint(len(t))',
         result: '2',
         note: '2次元では行の数（1次元なら値の個数）',
