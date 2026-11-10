@@ -429,9 +429,12 @@ export function nextMeeting(rows: PlanRow[], todayJst: string): PlanMeetRow | nu
  * 「今回・次回・その次」。`later` は3列より後ろの行（休みの行も、表の順のまま）。
  * 前回より前の回は出さない。全部の回が終わっていれば列も `later` も空。
  */
-export function weekColumns(rows: PlanRow[], todayJst: string): { now: PlanMeetRow | null; columns: { row: PlanMeetRow; tag: string }[]; later: PlanRow[] } {
+export function weekColumns(
+  rows: PlanRow[],
+  todayJst: string,
+): { now: PlanMeetRow | null; columns: { row: PlanMeetRow; tag: string }[]; later: PlanRow[]; all: { row: PlanMeetRow; tag: string }[]; start: number } {
   const now = nextMeeting(rows, todayJst);
-  if (!now) return { now: null, columns: [], later: [] };
+  if (!now) return { now: null, columns: [], later: [], all: [], start: 0 };
   const meets = rows.filter((r): r is PlanMeetRow => r.kind === 'meet');
   const at = meets.indexOf(now);
   const prev = at > 0 ? meets[at - 1] : null;
@@ -439,7 +442,10 @@ export function weekColumns(rows: PlanRow[], todayJst: string): { now: PlanMeetR
   const tags = prev ? ['前回', '今回', '次回'] : ['今回', '次回', 'その次'];
   const columns = shown.map((row, i) => ({ row, tag: tags[i] }));
   const later = rows.slice(rows.indexOf(shown[shown.length - 1]) + 1);
-  return { now, columns, later };
+  // ‹ › で送るための全部の回（2026-11-10）。札は最初に見せる3列にだけ付く
+  const start = meets.indexOf(shown[0]);
+  const all = meets.map((row, i) => ({ row, tag: i >= start && i < start + shown.length ? tags[i - start] : '' }));
+  return { now, columns, later, all, start };
 }
 
 /**

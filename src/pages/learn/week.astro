@@ -37,7 +37,7 @@ const isStaff = me !== null && (me.role === 'staff' || me.role === 'admin');
 Astro.response.headers.set('cache-control', 'no-store');
 
 const today = jstFormValues(Date.now()).date;
-const week = member ? weekColumns(PLAN, today) : { now: null, columns: [], later: [] };
+const week = member ? weekColumns(PLAN, today) : { now: null, columns: [], later: [], all: [], start: 0 };
 
 // --- 行き先を引く表（メンバーのときだけ組む） ---
 const published = member && config ? await publishView(config.db) : { chapters: new Set<string>(), sections: new Set<string>() };
@@ -127,7 +127,9 @@ function viewOf(row: PlanMeetRow): WeekView {
 
 // 3列（前回・今回・次回。前回が無ければ今回・次回・その次）と、3列より後ろの行（休みの行も、表の順のまま）
 const now = week.now;
-const columns = week.columns.map((c) => ({ ...c, view: viewOf(c.row) }));
+// 列は全部の回を描き、見せるのは3つずつ。‹ › で1回ずつ送る（2026-11-10 代表「過去や未来の分も似た形で見れるように」）
+const columns = week.all.map((c) => ({ ...c, view: viewOf(c.row) }));
+const shownCount = week.columns.length;
 const later = week.later.map((row) => (row.kind === 'meet' ? { row, view: viewOf(row) } : { row, view: null }));
 // 見出しは「今週（9/29）」（試作の案B）。複数回をまとめた行だけ「3/2〜3/30」
 const nowLabel = now ? (now.until ? entranceDateLabel(now) : shortDate(now.date)) : '';
@@ -253,20 +255,33 @@ const pace = member
         {columns.length === 0 ? (
           <p class="wkp-lead">予定の回はすべて終わりました。</p>
         ) : (
-          <div class="wkp-cols">
-            {columns.map((c) => (
-              <section class={c.row === now ? 'wkp-col is-now' : 'wkp-col'}>
-                <h2 class="wkp-col__h">
-                  {entranceDateLabel(c.row)}
-                  <span class={c.row === now ? 'wkp-tag wkp-tag--now' : 'wkp-tag'}>{c.tag}</span>
-                  {c.row.online && <span class="wkp-tag">オンライン</span>}
-                </h2>
-                <p class="wkp-col__no">
-                  第{c.row.no}回{c.row.goal !== '' && <span class={c.row.big ? 'wkp-goal wkp-goal--big' : 'wkp-goal'}>{c.row.goal}</span>}
-                </p>
-                <WeekMeeting view={c.view} />
-              </section>
-            ))}
+          <div class="wkp-slide" data-start={week.start} data-count={shownCount}>
+            <button type="button" class="wkp-slide__btn" data-step="-1" aria-label="前の回へ">
+              ‹
+            </button>
+            <div class="wkp-cols">
+              {columns.map((c, i) => (
+                <section class={c.row === now ? 'wkp-col is-now' : 'wkp-col'} data-i={i} hidden={i < week.start || i >= week.start + shownCount}>
+                  <h2 class="wkp-col__h">
+                    {entranceDateLabel(c.row)}
+                    {c.tag !== '' && <span class={c.row === now ? 'wkp-tag wkp-tag--now' : 'wkp-tag'}>{c.tag}</span>}
+                    {c.row.online && <span class="wkp-tag">オンライン</span>}
+                  </h2>
+                  <p class="wkp-col__no">
+                    第{c.row.no}回{c.row.goal !== '' && <span class={c.row.big ? 'wkp-goal wkp-goal--big' : 'wkp-goal'}>{c.row.goal}</span>}
+                  </p>
+                  <WeekMeeting view={c.view} />
+                </section>
+              ))}
+            </div>
+            <button type="button" class="wkp-slide__btn" data-step="1" aria-label="次の回へ">
+              ›
+            </button>
+            <p class="wkp-slide__home" hidden>
+              <button type="button" data-home>
+                今回へ戻る
+              </button>
+            </p>
           </div>
         )}
 
@@ -307,6 +322,28 @@ const pace = member
       void paintPracticeProgress();
       window.addEventListener('kit:account', () => void paintPracticeProgress());
     }
+
+    /* 列を ‹ › で1回ずつ送る。見せる3つの外の列は hidden */
+    const slide = document.querySelector<HTMLElement>('.wkp-slide');
+    if (slide) {
+      const cols = [...slide.querySelectorAll<HTMLElement>('.wkp-col')];
+      const count = Number(slide.dataset.count);
+      const home = Number(slide.dataset.start);
+      const prev = slide.querySelector<HTMLButtonElement>('[data-step="-1"]')!;
+      const next = slide.querySelector<HTMLButtonElement>('[data-step="1"]')!;
+      const back = slide.querySelector<HTMLElement>('.wkp-slide__home')!;
+      let at = home;
+      const show = () => {
+        cols.forEach((c, i) => (c.hidden = i < at || i >= at + count));
+        prev.disabled = at === 0;
+        next.disabled = at + count >= cols.length;
+        back.hidden = at === home;
+      };
+      prev.addEventListener('click', () => ((at = Math.max(0, at - 1)), show()));
+      next.addEventListener('click', () => ((at = Math.min(cols.length - count, at + 1)), show()));
+      back.querySelector('button')!.addEventListener('click', () => ((at = home), show()));
+      show();
+    }
   </script>
 
   <style>
@@ -337,6 +374,66 @@ const pace = member
     .wkp-lead a {
       margin-left: 6px;
       white-space: nowrap;
+    }
+
+    /* --- 列を送る ‹ ›（2026-11-10 代表が選んだ「カードの左右の端」）。今回から離れたら「今回へ戻る」 --- */
+    .wkp-slide {
+      display: grid;
+      grid-template-columns: 28px minmax(0, 1fr) 28px;
+      gap: 6px;
+      align-items: start;
+    }
+    .wkp-slide__btn {
+      position: sticky;
+      top: 40vh;
+      margin-top: 40px;
+      width: 28px;
+      height: 44px;
+      padding: 0;
+      border: 1px solid var(--l-rule);
+      border-radius: 3px;
+      background: var(--l-card);
+      color: var(--l-ink-2);
+      font-size: 22px;
+      line-height: 1;
+      cursor: pointer;
+    }
+    .wkp-slide__btn:hover:not(:disabled) {
+      color: var(--l-shu);
+      border-color: var(--l-shu);
+    }
+    .wkp-slide__btn:disabled {
+      opacity: 0.35;
+      cursor: default;
+    }
+    .wkp-slide > * {
+      grid-row: 2;
+    }
+    .wkp-slide > .wkp-slide__home {
+      grid-column: 2;
+      grid-row: 1;
+      justify-self: end;
+      margin: 0;
+      font-size: 13px;
+    }
+    .wkp-slide__home[hidden] {
+      display: none;
+    }
+    .wkp-slide__home button {
+      border: 0;
+      padding: 0;
+      background: none;
+      color: var(--l-ink-2);
+      text-decoration: underline;
+      text-underline-offset: 3px;
+      font: inherit;
+      cursor: pointer;
+    }
+    .wkp-slide__home button:hover {
+      color: var(--l-shu);
+    }
+    .wkp-col[hidden] {
+      display: none;
     }
 
     /* --- 3列（試作の案B）。今回の列に朱の枠 --- */
